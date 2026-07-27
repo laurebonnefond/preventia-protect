@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Fiche EPI — PréventIA Protect</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',system-ui,sans-serif;background:#f1f5f9;color:#1e293b;line-height:1.5}
+.serif{font-family:'DM Serif Display',serif}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@media print{header,.no-print{display:none!important}main{padding:0!important}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState}=React;
+const WH="https://hook.eu2.make.com/qhvt4lylqgbykqljwd1sdybpdaoapedu";
+const today=()=>new Date().toLocaleDateString("fr-FR");
+const nextYear=()=>{const d=new Date();d.setFullYear(d.getFullYear()+1);return d.toLocaleDateString("fr-FR")};
+
+/* ═══ BASE MÉTIERS ═══ */
+const DB={
+"Opérateur de maintenance industrielle":{secteur:"Industrie / Maintenance",environnement:["Atelier","Bruit","Poussières","Risques mécaniques"],missions:["Maintenance préventive et corrective","Diagnostic de pannes","Interventions mécaniques, électriques et pneumatiques","Utilisation d'outils électroportatifs","Travail en hauteur ponctuel","Déplacements dans l'atelier"],epiI:["Casque de sécurité","Lunettes de protection","Protections auditives","Gants de protection","Pantalon de travail","Chaussures de sécurité"],epiN:["Vêtements de travail","Protection respiratoire","Harnais antichute"],epc:["Aspiration à la source","Ventilation mécanique","Garde-corps","Balisage de zone","Consignation LOTO","Écran de protection machine"]},
+"Aide-soignant(e) en EHPAD":{secteur:"Santé / Médico-social",environnement:["Établissement de soins","Risques biologiques","Manutention","RPS"],missions:["Aide à la toilette et à l'habillage","Aide aux repas","Transferts et mobilisation des résidents","Entretien de l'environnement proche","Accompagnement des résidents","Transmissions équipe soignante"],epiI:["Gants de protection (vinyle/nitrile)","Chaussures de sécurité antidérapantes","Tenue professionnelle"],epiN:["Lunettes de protection","Protection respiratoire (FFP2)","Tablier de protection","Surblouse jetable"],epc:["Lève-personne / Verticalisateur","Rails de transfert plafond","Lit médicalisé à hauteur variable","Chariot douche","Distributeur SHA","Containers DASRI"]},
+"Soudeur":{secteur:"Industrie / Métallurgie",environnement:["Atelier","Fumées","Bruit","Rayonnements","Chaleur"],missions:["Soudure MIG/MAG/TIG","Préparation des pièces","Meulage et ébavurage","Contrôle des soudures","Lecture de plans","Manutention de pièces métalliques"],epiI:["Casque de soudeur (EN 175)","Lunettes de protection teintées","Gants de soudeur (EN 407)","Chaussures de sécurité","Tablier de soudeur cuir","Protections auditives"],epiN:["Protection respiratoire (APR ventilé)","Guêtres de protection","Combinaison ignifugée"],epc:["Rideau de soudure","Aspiration fumées de soudage","Ventilation générale","Écran anti-UV","Extincteur à proximité"]},
+"Cariste / Magasinier":{secteur:"Logistique / Entrepôt",environnement:["Entrepôt","Circulation engins","Bruit","Manutention"],missions:["Conduite chariot élévateur (CACES R489)","Chargement / déchargement","Stockage en racks","Préparation de commandes","Contrôle des marchandises","Gestion des stocks"],epiI:["Chaussures de sécurité","Gilet haute visibilité","Gants de manutention","Casque de sécurité"],epiN:["Protections auditives","Protection respiratoire","Genouillères"],epc:["Barrières de circulation","Miroirs de sécurité","Marquage au sol","Butées de racks","Portiques de gabarit","Détecteurs de recul"]},
+"Peintre en bâtiment":{secteur:"BTP / Second œuvre",environnement:["Chantier","Solvants","Poussières","Travail en hauteur"],missions:["Préparation des surfaces","Application peintures et revêtements","Ponçage et enduit","Pose de papier peint","Travaux de finition","Montage échafaudage"],epiI:["Protection respiratoire (A2P3)","Lunettes de protection","Gants de protection chimique","Chaussures de sécurité","Combinaison de travail"],epiN:["Casque de chantier","Harnais antichute","Protections auditives"],epc:["Ventilation du local","Échafaudage conforme","Garde-corps","Balisage de zone","Aspiration poussières ponçage"]},
+"Électricien":{secteur:"BTP / Industrie",environnement:["Chantier","Risque électrique","Travail en hauteur ponctuel"],missions:["Installation électrique","Câblage et raccordement","Mise en conformité","Diagnostic de pannes","Maintenance préventive","Consignation / déconsignation"],epiI:["Gants isolants (EN 60903)","Chaussures de sécurité isolantes","Casque isolant avec écran facial","Lunettes de protection"],epiN:["Vêtements anti-arc","Harnais antichute","Protections auditives"],epc:["VAT (Vérificateur d'Absence de Tension)","Tapis isolant","Cadenas de consignation LOTO","Balisage de zone","Écran de protection"]},
+"Agent d'entretien":{secteur:"Services / Propreté",environnement:["Intérieur/Extérieur","Produits chimiques","Sol glissant","Gestes répétitifs"],missions:["Nettoyage des locaux","Désinfection des surfaces","Utilisation d'autolaveuse","Gestion des déchets","Entretien des sanitaires","Vitrerie"],epiI:["Gants de protection chimique","Chaussures de sécurité antidérapantes","Lunettes de protection"],epiN:["Protection respiratoire","Genouillères","Tenue de travail"],epc:["Balisage sol mouillé","Chariot de ménage ergonomique","Système de dosage automatique produits","Ventilation du local"]},
+"Cuisinier":{secteur:"Restauration / Hôtellerie",environnement:["Cuisine professionnelle","Chaleur","Sol glissant","Coupures","Brûlures"],missions:["Préparation des repas","Cuisson","Découpe","Nettoyage cuisine","Réception marchandises","Gestion stocks alimentaires"],epiI:["Chaussures de sécurité antidérapantes","Tenue de cuisine","Charlotte / calot","Tablier de protection"],epiN:["Gants anti-coupure","Gants thermiques","Protections auditives"],epc:["Hotte aspirante","Sol antidérapant","Extincteur","Couverture anti-feu","Trousse premiers secours"]},
+};
+const METIERS=Object.keys(DB);
+
+/* ═══ POSITIONS EPI SUR SILHOUETTE ═══ */
+const POS={
+"Casque de sécurité":{z:"head",s:"L"},"Casque de soudeur (EN 175)":{z:"head",s:"L"},"Casque de chantier":{z:"head",s:"L"},"Casque isolant avec écran facial":{z:"head",s:"L"},"Charlotte / calot":{z:"head",s:"L"},
+"Lunettes de protection":{z:"eyes",s:"R"},"Lunettes de protection teintées":{z:"eyes",s:"R"},
+"Protections auditives":{z:"ears",s:"R"},"Protection auditive":{z:"ears",s:"R"},
+"Protection respiratoire":{z:"mouth",s:"R"},"Protection respiratoire (FFP2)":{z:"mouth",s:"R"},"Protection respiratoire (A2P3)":{z:"mouth",s:"R"},"Protection respiratoire (APR ventilé)":{z:"mouth",s:"R"},
+"Gants de protection":{z:"hands",s:"L"},"Gants de soudeur (EN 407)":{z:"hands",s:"L"},"Gants de protection chimique":{z:"hands",s:"L"},"Gants de protection (vinyle/nitrile)":{z:"hands",s:"L"},"Gants de manutention":{z:"hands",s:"L"},"Gants isolants (EN 60903)":{z:"hands",s:"L"},"Gants anti-coupure":{z:"hands",s:"L"},"Gants thermiques":{z:"hands",s:"L"},
+"Chaussures de sécurité":{z:"feet",s:"L"},"Chaussures de sécurité antidérapantes":{z:"feet",s:"L"},"Chaussures de sécurité isolantes":{z:"feet",s:"L"},
+"Pantalon de travail":{z:"legs",s:"L"},
+"Vêtements de travail":{z:"torso",s:"R"},"Tenue professionnelle":{z:"torso",s:"R"},"Tenue de cuisine":{z:"torso",s:"R"},"Combinaison de travail":{z:"torso",s:"R"},"Combinaison ignifugée":{z:"torso",s:"R"},"Vêtements anti-arc":{z:"torso",s:"R"},"Tenue de travail":{z:"torso",s:"R"},
+"Gilet haute visibilité":{z:"torso",s:"R"},
+"Harnais antichute":{z:"harness",s:"R"},
+"Tablier de protection":{z:"apron",s:"L"},"Tablier de soudeur cuir":{z:"apron",s:"L"},
+"Surblouse jetable":{z:"apron",s:"R"},
+"Genouillères":{z:"knees",s:"R"},"Guêtres de protection":{z:"legs2",s:"R"},
+};
+
+/* ═══ APP ═══ */
+function App(){
+  const[page,setPage]=useState("gen");
+  const[data,setData]=useState(null);
+  return(<div style={{minHeight:"100vh",background:"#f1f5f9"}}>
+    <header className="no-print" style={{background:"linear-gradient(135deg,#0c1e3c,#0f766e)",color:"white",padding:"0 16px"}}>
+      <div style={{maxWidth:1100,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0"}}>
+        <a href="../../../index.html" style={{display:"flex",alignItems:"center",gap:8,color:"white",textDecoration:"none"}}>
+          <div style={{width:34,height:34,borderRadius:9,background:"rgba(255,255,255,.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>🛡️</div>
+          <div><div style={{fontFamily:"'DM Serif Display',serif",fontSize:17}}>PréventIA Protect</div><div style={{fontSize:8,opacity:.6,letterSpacing:1.5,textTransform:"uppercase"}}>Fiche EPI personnalisée</div></div>
+        </a>
+        {data&&<nav style={{display:"flex",gap:4}}>
+          <button onClick={()=>setPage("gen")} style={{padding:"6px 12px",border:"none",borderRadius:8,cursor:"pointer",fontSize:11,fontWeight:600,fontFamily:"inherit",background:page==="gen"?"rgba(255,255,255,.9)":"rgba(255,255,255,.12)",color:page==="gen"?"#0c1e3c":"white"}}>📋 Générer</button>
+          <button onClick={()=>setPage("view")} style={{padding:"6px 12px",border:"none",borderRadius:8,cursor:"pointer",fontSize:11,fontWeight:600,fontFamily:"inherit",background:page==="view"?"rgba(255,255,255,.9)":"rgba(255,255,255,.12)",color:page==="view"?"#0c1e3c":"white"}}>👁️ Fiche</button>
+        </nav>}
+      </div>
+    </header>
+    <main style={{maxWidth:1100,margin:"0 auto",padding:"16px"}}>
+      {page==="gen"&&<Generator onDone={d=>{setData(d);setPage("view")}}/>}
+      {page==="view"&&data&&<FicheView d={data} onBack={()=>setPage("gen")}/>}
+    </main>
+  </div>);
+}
+
+/* ═══ GENERATOR ═══ */
+function Generator({onDone}){
+  const[mode,setMode]=useState("select");
+  const[metier,setMetier]=useState("");
+  const[cMetier,setCMetier]=useState("");
+  const[cSecteur,setCSecteur]=useState("");
+  const[cMissions,setCMissions]=useState("");
+  const[loading,setLoading]=useState(false);
+  const[error,setError]=useState(null);
+
+  function fromDB(m){const d=DB[m];if(!d)return;onDone({metier:m,...d,date:today(),version:"1.0",source:"base"});}
+
+  async function fromAI(){
+    if(!cMetier.trim()){setError("Précisez le métier");return;}
+    setLoading(true);setError(null);
+    try{
+      const prompt=`Tu es un expert IPRP. Pour le métier "${cMetier}"${cSecteur?` secteur "${cSecteur}"`:""}${cMissions?`, missions: ${cMissions}`:""}, génère la fiche EPI.
+Réponds UNIQUEMENT en JSON: {"metier":"...","secteur":"...","environnement":["..."],"missions":["..."],"epiI":["EPI indispensables"],"epiN":["EPI nécessaires"],"epc":["EPC conseillés"]}`;
+      const body={model:"claude-sonnet-4-5-20250514",max_tokens:1500,messages:[{role:"user",content:prompt}]};
+      const r=await fetch(WH,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({token:"preventia-protect",payload:JSON.stringify(body)})});
+      const txt=await r.text();let p;
+      try{const j=JSON.parse(txt);p=JSON.parse((j?.content?.[0]?.text||txt).replace(/```json\n?|```/g,"").trim())}catch{throw new Error("Réponse IA invalide")}
+      onDone({...p,date:today(),version:"1.0",source:"ia"});
+    }catch(e){setError(e.message||"Erreur IA")}
+    setLoading(false);
+  }
+
+  const btnP={padding:"10px 20px",borderRadius:10,border:"none",background:"#0f766e",color:"white",cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"inherit"};
+  const inp={width:"100%",padding:"8px 12px",borderRadius:8,border:"1px solid #cbd5e1",fontSize:13,fontFamily:"inherit",boxSizing:"border-box"};
+
+  return(<div style={{maxWidth:700,margin:"0 auto"}}>
+    <h2 className="serif" style={{fontSize:22,marginBottom:4}}>📋 Générer une Fiche EPI</h2>
+    <p style={{color:"#64748b",fontSize:13,marginBottom:16}}>Sélectionnez un métier prédéfini ou décrivez un poste personnalisé (IA).</p>
+    <div style={{display:"flex",gap:4,marginBottom:16,background:"#e2e8f0",borderRadius:10,padding:3,maxWidth:360}}>
+      {[["select","📂 Métiers prédéfinis"],["custom","🤖 Personnalisé (IA)"]].map(([k,l])=>
+        <button key={k} onClick={()=>setMode(k)} style={{flex:1,padding:"8px 12px",borderRadius:8,border:"none",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"inherit",background:mode===k?"white":"transparent",color:mode===k?"#0c1e3c":"#64748b",boxShadow:mode===k?"0 1px 3px rgba(0,0,0,.1)":"none"}}>{l}</button>
+      )}
+    </div>
+
+    {mode==="select"&&<div style={{background:"white",borderRadius:16,padding:20,boxShadow:"0 1px 4px rgba(0,0,0,.06)"}}>
+      <p style={{fontSize:12,fontWeight:600,color:"#475569",marginBottom:8}}>Choisir un métier :</p>
+      <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+        {METIERS.map(m=><button key={m} onClick={()=>setMetier(m)} style={{padding:"7px 14px",borderRadius:20,border:metier===m?"2px solid #0f766e":"1px solid #cbd5e1",background:metier===m?"#ecfdf5":"white",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:metier===m?700:400,color:metier===m?"#065f46":"#334155"}}>{m}</button>)}
+      </div>
+      {DB[metier]&&<div style={{marginTop:16,padding:14,background:"#f0fdf4",borderRadius:12}}>
+        <p style={{margin:"0 0 4px",fontSize:13}}><strong>Secteur :</strong> {DB[metier].secteur}</p>
+        <p style={{margin:"0 0 4px",fontSize:13}}><strong>EPI indispensables :</strong> {DB[metier].epiI.length} | <strong>EPI nécessaires :</strong> {DB[metier].epiN.length}</p>
+        <button onClick={()=>fromDB(metier)} style={{...btnP,marginTop:8}}>✅ Générer la fiche</button>
+      </div>}
+    </div>}
+
+    {mode==="custom"&&<div style={{background:"white",borderRadius:16,padding:20,boxShadow:"0 1px 4px rgba(0,0,0,.06)"}}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+        <label style={{gridColumn:"1/-1"}}><span style={{fontSize:11,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>Métier / Poste *</span><input value={cMetier} onChange={e=>setCMetier(e.target.value)} placeholder="Ex: Technicien de laboratoire" style={inp}/></label>
+        <label><span style={{fontSize:11,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>Secteur</span><input value={cSecteur} onChange={e=>setCSecteur(e.target.value)} placeholder="Ex: Chimie" style={inp}/></label>
+        <label style={{gridColumn:"1/-1"}}><span style={{fontSize:11,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>Missions principales</span><textarea value={cMissions} onChange={e=>setCMissions(e.target.value)} rows={3} placeholder="Décrivez les tâches du poste…" style={{...inp,resize:"vertical"}}/></label>
+      </div>
+      <div style={{marginTop:14,display:"flex",gap:10,alignItems:"center"}}>
+        <button onClick={fromAI} disabled={loading} style={{...btnP,opacity:loading?.6:1}}>{loading?"⏳ Génération IA…":"🤖 Générer avec l'IA"}</button>
+        {loading&&<div style={{width:18,height:18,border:"3px solid #e2e8f0",borderTopColor:"#0f766e",borderRadius:"50%",animation:"spin 1s linear infinite"}}/>}
+      </div>
+      {error&&<div style={{marginTop:10,padding:10,background:"#fee2e2",borderRadius:10,fontSize:12,color:"#991b1b"}}>⚠️ {error}</div>}
+    </div>}
+  </div>);
+}
+
+/* ═══ FICHE VIEW — SILHOUETTE ═══ */
+function FicheView({d,onBack}){
+  const left=[],right=[];const used=new Set();
+  [...(d.epiI||d.epiIndispensables||[]),...(d.epiN||d.epiNecessaires||[])].forEach(epi=>{
+    const isI=(d.epiI||d.epiIndispensables||[]).includes(epi);
+    const p=POS[epi]||{z:"other",s:left.length<=right.length?"L":"R"};
+    const item={name:epi,indispensable:isI};
+    if(used.has(p.z+p.s)){(left.length<=right.length?left:right).push(item)}
+    else{used.add(p.z+p.s);(p.s==="L"?left:right).push(item)}
+  });
+
+  return(<div>
+    <div className="no-print" style={{display:"flex",gap:8,marginBottom:12}}>
+      <button onClick={onBack} style={{padding:"8px 18px",borderRadius:10,border:"1px solid #cbd5e1",background:"white",cursor:"pointer",fontSize:12,fontFamily:"inherit"}}>← Nouveau métier</button>
+      <button onClick={()=>window.print()} style={{padding:"8px 18px",borderRadius:10,border:"none",background:"#0f766e",color:"white",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"inherit"}}>🖨️ Imprimer</button>
+    </div>
+
+    <div style={{background:"white",borderRadius:16,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,.08)"}}>
+      {/* HEADER */}
+      <div style={{background:"linear-gradient(135deg,#0c1e3c,#0f766e)",color:"white",padding:"18px 22px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:10}}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <span style={{fontSize:26}}>🛡️</span>
+            <div><p style={{margin:0,fontSize:10,opacity:.7,fontWeight:600,letterSpacing:1}}>PréventIA Protect</p><h2 className="serif" style={{fontSize:18,margin:0}}>FICHE EPI PERSONNALISÉE</h2><p style={{margin:0,fontSize:11,opacity:.8}}>Les équipements nécessaires à votre sécurité</p></div>
+          </div>
+          <div style={{textAlign:"right",fontSize:10,opacity:.8}}><div>Mise à jour : {d.date}</div><div>Version : {d.version}</div>{d.source==="ia"&&<div style={{marginTop:2,padding:"2px 8px",background:"rgba(255,255,255,.15)",borderRadius:8,fontSize:9}}>🤖 Généré par IA</div>}</div>
+        </div>
+      </div>
+
+      {/* INFO BAR */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:1,background:"#e2e8f0"}}>
+        {[["👤","MÉTIER",d.metier],["🏭","SECTEUR",d.secteur],["🌍","ENVIRONNEMENT",(d.environnement||[]).join(" • ")]].map(([ic,lb,vl],i)=>
+          <div key={i} style={{background:"white",padding:"8px 12px"}}><div style={{fontSize:9,fontWeight:600,color:"#64748b",marginBottom:2}}>{ic} {lb}</div><div style={{fontSize:12,fontWeight:600,color:"#0c1e3c"}}>{vl}</div></div>
+        )}
+      </div>
+
+      {/* MAIN — 3 colonnes */}
+      <div style={{display:"grid",gridTemplateColumns:"190px 1fr 190px",gap:0,minHeight:500}}>
+        {/* GAUCHE — Missions + Légende */}
+        <div style={{padding:"14px 12px",background:"#f8fafc",borderRight:"1px solid #e2e8f0"}}>
+          <h4 style={{fontSize:10,fontWeight:700,color:"#0f766e",letterSpacing:.5,textTransform:"uppercase",marginBottom:6}}>MISSIONS PRINCIPALES</h4>
+          <ul style={{margin:0,padding:"0 0 0 12px",fontSize:10,color:"#334155",lineHeight:1.6}}>{(d.missions||[]).map((m,i)=><li key={i}>{m}</li>)}</ul>
+          <div style={{marginTop:14,padding:8,background:"#ecfdf5",borderRadius:8}}>
+            <h4 style={{fontSize:10,fontWeight:700,color:"#0f766e",marginBottom:6,textTransform:"uppercase"}}>LÉGENDE</h4>
+            <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:5,fontSize:10}}><Dot green/><span><strong>INDISPENSABLE</strong><br/>EPI obligatoires</span></div>
+            <div style={{display:"flex",alignItems:"center",gap:5,fontSize:10}}><Dot/><span><strong>NÉCESSAIRE</strong><br/>Selon la situation</span></div>
+          </div>
+        </div>
+
+        {/* CENTRE — Silhouette */}
+        <div style={{padding:"14px 6px",position:"relative",display:"flex",flexDirection:"column",alignItems:"center"}}>
+          <h4 style={{fontSize:10,fontWeight:700,color:"#0c1e3c",letterSpacing:.5,textTransform:"uppercase",marginBottom:8,textAlign:"center"}}>VOS EPI SELON LES RISQUES DE VOTRE POSTE</h4>
+          <div style={{position:"relative",width:"100%",maxWidth:420,flex:1,minHeight:420}}>
+            {/* SVG Silhouette */}
+            <div style={{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",width:130,height:370}}>
+              <svg viewBox="0 0 140 400" fill="none" style={{width:"100%",height:"100%"}}>
+                <circle cx="70" cy="35" r="25" fill="#1e3a5f"/>
+                <rect x="60" y="58" width="20" height="15" rx="4" fill="#1e3a5f"/>
+                <path d="M35 73 L105 73 L110 200 L30 200 Z" fill="#1e3a5f"/>
+                <path d="M35 78 L10 140 L5 180 L18 182 L25 145 L35 105" fill="#1e3a5f"/>
+                <path d="M105 78 L130 140 L135 180 L122 182 L115 145 L105 105" fill="#1e3a5f"/>
+                <path d="M40 198 L35 320 L25 360 L55 360 L50 320 L55 198" fill="#1e3a5f"/>
+                <path d="M85 198 L80 320 L70 360 L100 360 L95 320 L90 198" fill="#1e3a5f"/>
+                <rect x="30" y="195" width="80" height="8" rx="3" fill="#14b8a6" opacity=".6"/>
+                <path d="M50 73 L70 83 L90 73" stroke="#14b8a6" strokeWidth="2" fill="none" opacity=".6"/>
+              </svg>
+            </div>
+            {/* Labels EPI */}
+            {left.map((it,i)=><EpiLabel key={"l"+i} item={it} index={i} side="left" total={left.length}/>)}
+            {right.map((it,i)=><EpiLabel key={"r"+i} item={it} index={i} side="right" total={right.length}/>)}
+          </div>
+        </div>
+
+        {/* DROITE — Listes */}
+        <div style={{padding:"14px 12px",background:"#f8fafc",borderLeft:"1px solid #e2e8f0"}}>
+          <h4 style={{fontSize:10,fontWeight:700,color:"#166534",letterSpacing:.5,textTransform:"uppercase",marginBottom:6}}>EPI INDISPENSABLES</h4>
+          {(d.epiI||d.epiIndispensables||[]).map((e,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:5,marginBottom:5,fontSize:10}}><Dot green small/><span>{e}</span></div>)}
+
+          <h4 style={{fontSize:10,fontWeight:700,color:"#b45309",letterSpacing:.5,textTransform:"uppercase",marginTop:14,marginBottom:4}}>EPI NÉCESSAIRES</h4>
+          <p style={{fontSize:9,color:"#64748b",margin:"0 0 5px"}}>(selon les situations)</p>
+          {(d.epiN||d.epiNecessaires||[]).map((e,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:5,marginBottom:5,fontSize:10}}><Dot small/><span>{e}</span></div>)}
+
+          {(d.epc||[]).length>0&&<>
+            <h4 style={{fontSize:10,fontWeight:700,color:"#1e40af",letterSpacing:.5,textTransform:"uppercase",marginTop:14,marginBottom:6}}>EPC CONSEILLÉS</h4>
+            {d.epc.map((e,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:5,marginBottom:5,fontSize:10}}><span style={{fontSize:9,color:"#1e40af"}}>◆</span><span>{e}</span></div>)}
+          </>}
+        </div>
+      </div>
+
+      {/* BAS — Bonnes pratiques */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:1,background:"#e2e8f0"}}>
+        <BottomCell icon="✅" title="BONNES PRATIQUES" items={["Vérifiez vos EPI avant utilisation","Utilisez-les selon les consignes","Nettoyez et rangez après usage","Remplacez si usé ou endommagé"]}/>
+        <BottomCell icon="🔧" title="ENTRETIEN DES EPI" items={["Nettoyage selon recommandations fabricant","Stockage propre et sec","Contrôle périodique","Remplacement selon durée de vie"]}/>
+        <BottomCell icon="📅" title="VÉRIFICATION ANNUELLE" items={["Réévaluation annuelle ou si changement","Prochaine révision : "+nextYear()]}/>
+      </div>
+
+      {/* FOOTER */}
+      <div style={{background:"#0c1e3c",color:"white",padding:"10px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:10,flexWrap:"wrap",gap:6}}>
+        <div style={{display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:14}}>🛡️</span><div><strong>LA SÉCURITÉ, NOTRE PRIORITÉ</strong><br/><span style={{opacity:.7}}>Ensemble, adoptons les bons réflexes.</span></div></div>
+        <div style={{display:"flex",gap:10,opacity:.7,fontSize:9}}><span>🧥 Je m'équipe</span><span>👀 Je reste vigilant</span><span>📢 Je signale</span><span>🏠 Je rentre sain et sauf</span></div>
+        <span className="serif" style={{fontSize:12}}>PréventIA</span>
+      </div>
+    </div>
+  </div>);
+}
+
+function EpiLabel({item,index,side,total}){
+  const spacing=Math.min(65,400/(total+1));
+  const top=10+index*spacing;
+  const isL=side==="left";
+  return(<div style={{position:"absolute",[isL?"left":"right"]:0,top,width:"37%",display:"flex",flexDirection:isL?"row":"row-reverse",alignItems:"center",gap:5,animation:"fadeIn .5s ease-out",animationDelay:index*0.08+"s",animationFillMode:"both"}}>
+    <div style={{background:"white",border:`2px solid ${item.indispensable?"#22c55e":"#f59e0b"}`,borderRadius:9,padding:"5px 7px",boxShadow:"0 1px 4px rgba(0,0,0,.1)",flex:1,minWidth:0}}>
+      <div style={{display:"flex",alignItems:"center",gap:3,marginBottom:1}}><Dot green={item.indispensable} small/><strong style={{fontSize:9,lineHeight:1.2,color:"#0c1e3c"}}>{item.name.split("(")[0].trim().toUpperCase()}</strong></div>
+      {item.name.includes("(")&&<p style={{margin:0,fontSize:8,color:"#64748b"}}>({item.name.split("(")[1]}</p>}
+    </div>
+    <div style={{width:16,height:2,background:item.indispensable?"#22c55e":"#f59e0b",flexShrink:0}}/>
+  </div>);
+}
+
+function Dot({green,small}){
+  const s=small?13:16;
+  return <div style={{width:s,height:s,borderRadius:"50%",flexShrink:0,background:green?"#22c55e":"#f59e0b",display:"flex",alignItems:"center",justifyContent:"center",fontSize:small?7:9,color:"white",fontWeight:700}}>{green?"✓":"!"}</div>;
+}
+
+function BottomCell({icon,title,items}){
+  return <div style={{background:"white",padding:"12px 14px"}}><div style={{display:"flex",alignItems:"center",gap:5,marginBottom:6}}><span style={{fontSize:16}}>{icon}</span><strong style={{fontSize:11,color:"#0c1e3c"}}>{title}</strong></div>{items.map((t,i)=><div key={i} style={{fontSize:10,color:"#334155",marginBottom:2,display:"flex",gap:3,alignItems:"flex-start"}}><span style={{color:"#0f766e",fontSize:9,marginTop:1}}>✓</span><span>{t}</span></div>)}</div>;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

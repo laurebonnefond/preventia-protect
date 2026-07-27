@@ -1,0 +1,33 @@
+# ─── PréventIA Protect .gitignore ───
+
+# Dépendances
+node_modules/
+.pnp.*
+
+# Build
+dist/
+build/
+.cache/
+
+# Environnement
+.env
+.env.local
+.env.production
+
+# ⚠️ Décommenter en production pour protéger les webhooks
+# config/webhooks.config.js
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# Logs
+*.log
+npm-debug.log*

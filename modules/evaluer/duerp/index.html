@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DUERP — PréventIA Protect</title>
+  <link rel="stylesheet" href="../../../assets/styles/design-tokens.css">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app"></div>
+
+  <script type="module">
+    /**
+     * Module DUERP — Aide au Document Unique
+     * ═══════════════════════════════════════
+     * Importe les services core/ nécessaires
+     * Utilise son propre namespace de stockage
+     */
+
+    // ─── Imports core (couche transversale) ───
+    import { createStore } from '../../../core/storage.js';
+    import { createAssistant } from '../../../core/ai-assistant.js';
+    import { checkAlerts, ALERT_LEVELS } from '../../../core/alerts.js';
+    import { countBy, pct } from '../../../core/stats.js';
+    import { getByDomain } from '../../../core/reglementation.js';
+    import { createVoiceInput } from '../../../core/ai-voice.js';
+
+    // ─── Store isolé pour ce module ───
+    const store = createStore('duerp');
+
+    // ─── Assistant IA contextualisé ───
+    const assistant = createAssistant('duerp', {
+      systemPrompt: `Tu es un IPRP expert spécialisé DUERP.
+        Aide à l'évaluation des risques professionnels.
+        Cite les articles du Code du travail (Art. L4121, R4121).
+        Applique les 9 principes de prévention (Art. L4121-2).`,
+      context: () => {
+        const uts = store.get('unites', []);
+        return `${uts.length} unité(s) de travail : ${uts.map(u => u.nom).join(', ')}`;
+      },
+    });
+
+    // ─── Réglementation applicable ───
+    const regles = getByDomain('DUERP');
+    console.log('Réglementation DUERP :', regles);
+
+    // ─── Dictée vocale (terrain) ───
+    const voice = createVoiceInput({ lang: 'fr-FR' });
+
+    // ─── Données ───
+    let unites = store.get('unites', []);
+
+    // ─── Rendu (vanilla JS — remplacer par React/Lit en Phase 2) ───
+    const app = document.getElementById('app');
+    app.innerHTML = `
+      <div style="max-width:900px;margin:0 auto;padding:20px">
+        <nav style="margin-bottom:20px">
+          <a href="../../../index.html" style="color:var(--pp-teal);text-decoration:none;font-size:13px">← PréventIA Protect</a>
+        </nav>
+        <h1 class="pp-serif" style="font-size:24px;margin-bottom:4px">📝 Aide au DUERP</h1>
+        <p style="color:var(--pp-text-muted);font-size:14px;margin-bottom:24px">
+          Document Unique d'Évaluation des Risques Professionnels
+        </p>
+
+        <div class="pp-card" style="margin-bottom:16px">
+          <h3 style="font-size:15px;margin-bottom:12px">🏭 Unités de travail (${unites.length})</h3>
+          <p style="font-size:13px;color:var(--pp-text-muted)">
+            ${unites.length === 0
+              ? 'Aucune unité créée. Ce module est un template architectural — l\'outil complet est dans le prototype React.'
+              : unites.map(u => `<strong>${u.nom}</strong>`).join(' • ')}
+          </p>
+        </div>
+
+        <div class="pp-card" style="margin-bottom:16px">
+          <h3 style="font-size:15px;margin-bottom:12px">📖 Réglementation applicable</h3>
+          ${regles.map(r => `
+            <div style="padding:6px 0;border-bottom:1px solid var(--pp-border);font-size:13px">
+              <strong style="color:var(--pp-teal)">${r.code}</strong> — ${r.titre}
+            </div>
+          `).join('')}
+        </div>
+
+        <div class="pp-card">
+          <h3 style="font-size:15px;margin-bottom:12px">🧠 Services core/ disponibles</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px">
+            ${['🧠 AI Assistant','📷 Analyse photo','📄 OCR','🎤 Dictée vocale','📊 Statistiques','🔔 Alertes','📅 Planification','📚 Réglementation']
+              .map(s => `<div style="padding:8px;background:var(--pp-bg);border-radius:8px;font-size:12px">${s}</div>`).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+  </script>
+</body>
+</html>

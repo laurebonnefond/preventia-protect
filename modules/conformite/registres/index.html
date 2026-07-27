@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registres obligatoires — PréventIA Protect</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'DM Sans',system-ui,sans-serif;background:#f1f5f9;color:#1e293b;line-height:1.6}
+    .container{max-width:960px;margin:0 auto;padding:16px}
+    header{background:linear-gradient(135deg,#0c1e3c,#1e40af);color:white;padding:20px 24px}
+    header .inner{max-width:960px;margin:0 auto}
+    .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin:16px 0}
+    .stat{background:white;border-radius:12px;padding:12px;box-shadow:0 1px 2px rgba(0,0,0,.05);border-left:3px solid var(--c)}
+    .stat-v{font-size:26px;font-weight:700;color:var(--c);line-height:1}
+    .stat-l{font-size:10px;color:#64748b;margin-top:2px}
+    .card{background:white;border-radius:14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.06);overflow:hidden}
+    .card-h{padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;border-left:4px solid var(--c)}
+    .card-h:hover{background:#f8fafc}
+    .card-b{display:none;padding:0 14px 14px;border-top:1px solid #f1f5f9}
+    .card.open .card-b{display:block}
+    .card.open .arrow{transform:rotate(180deg)}
+    .arrow{font-size:16px;color:#94a3b8;transition:transform .2s;flex-shrink:0}
+    .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:9px;font-weight:600}
+    .sect{margin-top:10px}
+    .sect h4{font-size:11px;font-weight:700;color:#475569;margin-bottom:4px;text-transform:uppercase;letter-spacing:.3px}
+    .sect ul{list-style:none;padding:0}
+    .sect li{font-size:11px;padding:2px 0;display:flex;align-items:flex-start;gap:5px;color:#334155}
+    .sect li::before{content:'✓';color:#0f766e;font-weight:700;flex-shrink:0}
+    .meta{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid #f1f5f9;font-size:10px;color:#64748b}
+    .meta strong{color:#334155}
+    .status-btns{margin-top:10px;display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+    .status-btns span{font-size:10px;color:#475569;margin-right:4px}
+    .sbtn{padding:3px 10px;border-radius:14px;font-size:10px;cursor:pointer;font-family:inherit;transition:all .15s}
+    .info{margin-top:16px;padding:14px;background:#eff6ff;border-radius:12px;font-size:11px;color:#1e40af;line-height:1.7}
+    .filters{display:flex;gap:4px;margin-bottom:14px;flex-wrap:wrap}
+    .fbtn{padding:5px 12px;border-radius:20px;border:1px solid #cbd5e1;background:white;font-size:10px;cursor:pointer;font-family:inherit}
+    .fbtn.on{background:#0f766e;color:white;border-color:#0f766e}
+    @media print{header{-webkit-print-color-adjust:exact;print-color-adjust:exact}.no-print{display:none!important}}
+    @media(max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="inner">
+    <a href="../../../index.html" class="no-print" style="color:rgba(255,255,255,.7);font-size:11px;text-decoration:none;display:block;margin-bottom:8px">← PréventIA Protect</a>
+    <div style="display:flex;align-items:center;gap:10">
+      <span style="font-size:26px">📖</span>
+      <div><h1 style="font-family:'DM Serif Display',serif;font-size:20px;margin:0">14 Registres obligatoires</h1><p style="font-size:12px;opacity:.8;margin:0">Hub central de conformité HSE</p></div>
+    </div>
+  </div>
+</header>
+<div class="container">
+  <div class="stats" id="stats"></div>
+  <div class="filters no-print" id="filters"></div>
+  <div id="list"></div>
+  <div class="info">
+    <strong>📖 Pourquoi un hub registres ?</strong><br>
+    L'employeur doit tenir à jour plusieurs registres obligatoires. En pratique, ils sont souvent dispersés (classeurs, fichiers Excel, armoires…). Ce hub centralise leur suivi en un seul endroit : état de conformité, contenu attendu, base réglementaire, périodicité et durée de conservation. Chaque registre est cliquable pour voir le détail.<br><br>
+    <strong>💡 Astuce :</strong> Cliquez sur ✅ Complet / ⚠️ Partiel / ❌ Absent pour marquer l'état de chaque registre dans votre entreprise. L'état est sauvegardé localement.
+  </div>
+  <footer style="text-align:center;padding:20px;font-size:10px;color:#94a3b8">🛡️ PréventIA Protect — IDE-ST / Préventrice</footer>
+</div>
+<script>
+const R=[
+  {id:"securite",label:"Registre de sécurité",icon:"🛡️",color:"#0f766e",reg:"Art. D4711-3 C. travail",desc:"Résultats vérifications périodiques, observations inspection, mises en demeure, consignes",contenu:["Résultats des vérifications et contrôles périodiques","Observations de l'inspection du travail","Mises en demeure","Observations du médecin du travail","Consignes de sécurité"],per:"Continue",cons:"5 ans min.",app:"Tout employeur"},
+  {id:"incendie",label:"Registre de sécurité incendie",icon:"🔥",color:"#dc2626",reg:"Art. R4227-39 / MS 46-73 (ERP)",desc:"Vérifications installations, exercices évacuation, EPI incendie, maintenance extincteurs",contenu:["Vérifications installations (élec, gaz, désenfumage)","Exercices d'évacuation (2×/an minimum)","Formation EPI (Équipiers Première Intervention)","Maintenance extincteurs et RIA","Visites commission de sécurité (ERP)"],per:"Évacuation 2×/an — Extincteurs 1×/an",cons:"5 ans",app:"Tout établissement"},
+  {id:"accidents",label:"Registre des accidents bénins",icon:"🩹",color:"#f97316",reg:"Art. L441-4 CSS / Arrêté 28/12/2023",desc:"Accidents sans arrêt ni soins médicaux — sur autorisation CARSAT/CGSS",contenu:["Nom de la victime","Date, heure et lieu","Circonstances et nature des lésions","Témoins","Soins dispensés (premier secours)"],per:"À chaque accident bénin",cons:"5 ans (fin année civile)",app:"Sur autorisation CARSAT"},
+  {id:"radioprotection",label:"Registre de radioprotection",icon:"☢️",color:"#a855f7",reg:"Art. R4451-1 et suivants C. travail",desc:"Sources ionisantes, dosimétrie individuelle, zonage, contrôles PCR",contenu:["Inventaire des sources","Résultats dosimétrie (passifs + opérationnels)","Zonage radiologique","Contrôles techniques PCR","Formation travailleurs exposés"],per:"Dosimétrie mensuelle/trimestrielle",cons:"50 ans (dosimétrie)",app:"Si sources ionisantes"},
+  {id:"vgp",label:"Registre des VGP",icon:"✅",color:"#22c55e",reg:"Arrêté 01/03/2004 / Art. R4323-22",desc:"Vérifications Générales Périodiques — résultats, organismes, réserves",contenu:["Identification équipement (type, marque, n° série)","Nature et périodicité","Date et organisme accrédité","Résultat (conforme / non conforme / réserves)","Actions correctives"],per:"3, 6 ou 12 mois selon équipement",cons:"5 ans",app:"Si équipements soumis"},
+  {id:"maintenance",label:"Registre de maintenance",icon:"🔧",color:"#64748b",reg:"Art. R4322-1 C. travail",desc:"Maintenance préventive et curative sur équipements de travail",contenu:["Identification équipement","Date et nature intervention","Pièces remplacées","Identité intervenant","Essais et remise en service"],per:"À chaque intervention",cons:"Durée de vie équipement",app:"Tout équipement de travail"},
+  {id:"levage",label:"Registre appareils de levage",icon:"🏗️",color:"#0891b2",reg:"Arrêté 01/03/2004 / Art. R4323-22",desc:"Appareils de levage, élingues, accessoires — VGP renforcées + épreuves",contenu:["Identification (type, CMU, n° série, fabricant)","Épreuves statiques et dynamiques","VGP semestrielles (appareils) / annuelles (accessoires)","Examen d'adéquation","Carnet de maintenance"],per:"6 mois (appareils) / 12 mois (accessoires)",cons:"Durée de vie appareil",app:"Si appareils de levage"},
+  {id:"epi",label:"Registre des EPI",icon:"🦺",color:"#0f766e",reg:"Art. R4323-95 à R4323-103",desc:"Attribution, vérifications, péremption, remplacement des EPI",contenu:["Type et référence EPI","Norme EN applicable","Date mise en service / péremption","Attribution par poste ou nominative","Vérifications périodiques","Motif de remplacement"],per:"Selon durée de vie fabricant",cons:"5 ans après retrait",app:"Si EPI fournis"},
+  {id:"formations",label:"Registre des formations sécurité",icon:"🎓",color:"#eab308",reg:"Art. L4141-1 à L4141-4 / R4141-1 à R4141-20",desc:"Accueil sécurité, formation au poste, formation renforcée, recyclages",contenu:["Formation à l'embauche (accueil sécurité)","Formation au poste de travail","Formation renforcée (CDD, intérim, postes à risque)","Recyclages périodiques","Attestations et émargements"],per:"À l'embauche + recyclages",cons:"Durée relation travail + 5 ans",app:"Tout employeur"},
+  {id:"habilitations",label:"Registre des habilitations",icon:"🪪",color:"#8b5cf6",reg:"R4544-9 (élec) / R4323-55 (CACES) / R4462-28 (ATEX)",desc:"Habilitations électriques, CACES, ATEX, SST, travail en hauteur, amiante",contenu:["Type (BR, B2V, H0, CACES R489/R482…)","Organisme formateur","Date obtention et expiration","Recyclage planifié","Titulaire (nom, poste)"],per:"3 ans (élec/ATEX/SST) / 5 ans (CACES)",cons:"Durée validité + 5 ans",app:"Si personnel habilité"},
+  {id:"controles",label:"Registre contrôles réglementaires",icon:"🔍",color:"#475569",reg:"Art. R4226-14 (élec) / divers arrêtés",desc:"Contrôles électriques, gaz, ascenseurs, portes automatiques, thermique",contenu:["Nature du contrôle et installation","Date et organisme accrédité","Résultat et observations","Réserves et levée","Prochaine échéance"],per:"Annuelle (élec, gaz) — variable",cons:"5 ans",app:"Selon installations"},
+  {id:"chimique",label:"Registre produits chimiques",icon:"🧪",color:"#be185d",reg:"Art. R4412-1 à R4412-93 C. travail",desc:"Inventaire agents chimiques, FDS, évaluation risque chimique, CMR",contenu:["Identité produit (nom, CAS, fournisseur)","Classification CLP/GHS","Quantités stockées et utilisées","FDS à jour","Évaluation risque chimique","Substitution CMR"],per:"À chaque nouveau produit",cons:"40 ans (CMR) / 5 ans (ACD)",app:"Si produits chimiques"},
+  {id:"dechets",label:"Registre des déchets",icon:"♻️",color:"#16a34a",reg:"Art. R541-43 à R541-48 C. environnement",desc:"Déchets dangereux, BSD, filières d'élimination, DASRI",contenu:["Nature et code du déchet","Quantité produite","Date enlèvement et transporteur","Installation de destination","BSD signé (retour)"],per:"À chaque enlèvement — bilan annuel",cons:"5 ans (BSD) / 3 ans (registre)",app:"Si déchets dangereux / DASRI"},
+  {id:"ee",label:"Registre entreprises extérieures",icon:"🏭",color:"#1e40af",reg:"Art. R4512-6 à R4512-12 C. travail",desc:"Interventions EE, plans de prévention, protocoles sécurité, permis",contenu:["Identification de l'entreprise extérieure","Nature et durée de l'intervention","Plan de prévention (≥ 400h ou travaux dangereux)","Protocole de sécurité (chargement/déchargement)","Inspection préalable commune","Permis spéciaux (feu, fouille, consignation)"],per:"À chaque intervention EE",cons:"Durée intervention + 5 ans",app:"Si recours à des EE"},
+];
+const SK='pp_registres_v1_status';
+let st={};try{st=JSON.parse(localStorage.getItem(SK))||{}}catch{}
+function save(){localStorage.setItem(SK,JSON.stringify(st))}
+function gs(id){return st[id]||'absent'}
+function ss(id,s){st[id]=s;save();render()}
+const SM={complet:{l:'Complet',c:'#22c55e',bg:'#dcfce7',i:'✅'},partiel:{l:'Partiel',c:'#eab308',bg:'#fef9c3',i:'⚠️'},absent:{l:'Absent',c:'#dc2626',bg:'#fee2e2',i:'❌'},na:{l:'N/A',c:'#64748b',bg:'#f1f5f9',i:'—'}};
+let cf='all';
+function render(){
+  const cn={complet:0,partiel:0,absent:0,na:0};R.forEach(r=>cn[gs(r.id)]++);
+  const pct=Math.round(cn.complet/R.length*100);
+  document.getElementById('stats').innerHTML=`<div class="stat" style="--c:#334155"><div class="stat-v">14</div><div class="stat-l">Registres</div></div><div class="stat" style="--c:#22c55e"><div class="stat-v">${cn.complet}</div><div class="stat-l">Complets</div></div><div class="stat" style="--c:#eab308"><div class="stat-v">${cn.partiel}</div><div class="stat-l">Partiels</div></div><div class="stat" style="--c:#dc2626"><div class="stat-v">${cn.absent}</div><div class="stat-l">Absents</div></div><div class="stat" style="--c:#0f766e"><div class="stat-v">${pct}%</div><div class="stat-l">Conformité</div></div>`;
+  document.getElementById('filters').innerHTML=['all','complet','partiel','absent'].map(f=>`<button class="fbtn${cf===f?' on':''}" onclick="cf='${f}';render()">${f==='all'?'Tous (14)':SM[f]?.i+' '+SM[f]?.l+' ('+cn[f]+')'}</button>`).join('')+`<button class="fbtn" onclick="window.print()" style="margin-left:auto">🖨️</button>`;
+  const list=cf==='all'?R:R.filter(r=>gs(r.id)===cf);
+  document.getElementById('list').innerHTML=list.map(r=>{const s=SM[gs(r.id)];return`<div class="card" id="c-${r.id}" style="--c:${r.color}"><div class="card-h" onclick="document.getElementById('c-${r.id}').classList.toggle('open')"><span style="font-size:22px">${r.icon}</span><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">${r.label}</div><div style="font-size:10px;color:#64748b">${r.desc}</div><div style="margin-top:3px;display:flex;gap:3px;flex-wrap:wrap"><span class="badge" style="background:${s.bg};color:${s.c}">${s.i} ${s.l}</span><span class="badge" style="background:#eff6ff;color:#1e40af">${r.reg}</span>${r.app?`<span class="badge" style="background:#f8fafc;color:#64748b">${r.app}</span>`:''}</div></div><span class="arrow">▼</span></div><div class="card-b"><div class="sect"><h4>📋 Contenu attendu</h4><ul>${r.contenu.map(c=>`<li>${c}</li>`).join('')}</ul></div><div class="meta"><div><strong>Périodicité :</strong> ${r.per}</div><div><strong>Conservation :</strong> ${r.cons}</div></div><div class="status-btns"><span>État :</span>${Object.entries(SM).map(([k,v])=>`<button class="sbtn" style="border:1px solid ${v.c};background:${gs(r.id)===k?v.bg:'white'};color:${v.c};font-weight:${gs(r.id)===k?700:400}" onclick="event.stopPropagation();ss('${r.id}','${k}')">${v.i} ${v.l}</button>`).join('')}</div></div></div>`}).join('');
+}
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Fiche EPI — PréventIA Protect</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',system-ui,sans-serif;background:#f1f5f9;color:#1e293b;line-height:1.5}
+.sf{font-family:'DM Serif Display',serif}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@media print{header,.noP{display:none!important}main{padding:0!important}.fiche{box-shadow:none!important;border-radius:0!important}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useRef,useEffect}=React;
+const WH="https://hook.eu2.make.com/qhvt4lylqgbykqljwd1sdybpdaoapedu";
+const SIL="silhouette-body.png";
+const today=()=>new Date().toLocaleDateString("fr-FR");
+const nextY=()=>{const d=new Date();d.setFullYear(d.getFullYear()+1);return d.toLocaleDateString("fr-FR")};
+
+/* ═══ Zone classifier — keyword → body zone ═══ */
+function classifyEPI(name){
+  const n=name.toLowerCase();
+  if(/casque|calot|chapeau|charlotte|cagoule|casquette/.test(n)) return "tete";
+  if(/lunette|visière|écran facial/.test(n)) return "yeux";
+  if(/antibruit|bouchon|coquille|auditiv|picb/.test(n)) return "oreilles";
+  if(/masque|ffp|respirat|ari |aération|abek/.test(n)) return "respiratoire";
+  if(/gant/.test(n)) return "mains";
+  if(/chaussure|botte|surchaussure|semelle/.test(n)) return "pieds";
+  if(/harnais|antichute|longe/.test(n)) return "harnais";
+  if(/tablier|blouse|surblouse|combinaison|tenue|vêtement|gilet|chasuble|manch/.test(n)) return "torse";
+  if(/genouillère/.test(n)) return "genoux";
+  if(/pantalon|guêtre|jambière/.test(n)) return "jambes";
+  return "torse";
+}
+const ZONE_SIDE={tete:"L",yeux:"R",oreilles:"R",respiratoire:"R",mains:"L",pieds:"L",harnais:"R",torse:"R",genoux:"R",jambes:"L"};
+
+/* ═══ APP ═══ */
+function App(){
+  const[page,setPage]=useState("gen");
+  const[data,setData]=useState(null);
+  const[metiersDB,setMetiersDB]=useState([]);
+  
+  useEffect(()=>{
+    fetch("metiers.json").then(r=>r.json()).then(d=>{
+      if(d.metiers) setMetiersDB(d.metiers);
+    }).catch(()=>console.warn("metiers.json non trouvé — mode IA uniquement"));
+  },[]);
+
+  return(<div style={{minHeight:"100vh",background:"#f1f5f9"}}>
+    <header className="noP" style={{background:"linear-gradient(135deg,#0c1e3c,#0f766e)",color:"white",padding:"0 16px"}}>
+      <div style={{maxWidth:1100,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0"}}>
+        <a href="../../../index.html" style={{display:"flex",alignItems:"center",gap:8,color:"white",textDecoration:"none"}}>
+          <div style={{width:34,height:34,borderRadius:9,background:"rgba(255,255,255,.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>🛡️</div>
+          <div><div className="sf" style={{fontSize:17}}>PréventIA Protect</div><div style={{fontSize:8,opacity:.6,letterSpacing:1.5,textTransform:"uppercase"}}>Fiche EPI personnalisée</div></div>
+        </a>
+        {data&&<nav style={{display:"flex",gap:4}}>
+          {[["gen","📋 Générer"],["view","👁️ Fiche"]].map(([k,l])=>
+            <button key={k} onClick={()=>setPage(k)} style={{padding:"6px 12px",border:"none",borderRadius:8,cursor:"pointer",fontSize:11,fontWeight:600,fontFamily:"inherit",background:page===k?"rgba(255,255,255,.9)":"rgba(255,255,255,.12)",color:page===k?"#0c1e3c":"white"}}>{l}</button>
+          )}
+        </nav>}
+      </div>
+    </header>
+    <main style={{maxWidth:1100,margin:"0 auto",padding:"16px"}}>
+      {page==="gen"&&<Gen db={metiersDB} onDone={d=>{setData(d);setPage("view")}}/>}
+      {page==="view"&&data&&<FicheView d={data} onBack={()=>setPage("gen")}/>}
+    </main>
+  </div>);
+}
+
+/* ═══ GENERATOR — 119 métiers + recherche + IA ═══ */
+function Gen({db,onDone}){
+  const[mode,setMode]=useState("select");
+  const[search,setSearch]=useState("");
+  const[sel,setSel]=useState(null);
+  const[cm,setCm]=useState("");const[cs,setCs]=useState("");const[cmi,setCmi]=useState("");
+  const[ld,setLd]=useState(false);const[err,setErr]=useState(null);
+
+  const filtered=search.length>=2?db.filter(m=>m.metier.toLowerCase().includes(search.toLowerCase())||m.secteur.toLowerCase().includes(search.toLowerCase())).slice(0,20):[];
+  const sectors=[...new Set(db.map(m=>m.secteur))].sort();
+
+  function go(m){
+    const epiList=m.epi.split(",").map(e=>e.trim()).filter(Boolean);
+    const epcList=m.epc.split(",").map(e=>e.trim()).filter(Boolean);
+    // First 60% as indispensable, rest as necessary
+    const cut=Math.ceil(epiList.length*.65);
+    onDone({metier:m.metier,secteur:m.secteur,environnement:m.risques.split(",").slice(0,4).map(r=>r.trim()),missions:[],epiI:epiList.slice(0,cut),epiN:epiList.slice(cut),epc:epcList,ref:m.ref||"",suivi:m.suivi||"",date:today(),version:"1.0",source:"base"});
+  }
+
+  async function goAI(){
+    if(!cm.trim())return setErr("Précisez le métier");
+    setLd(true);setErr(null);
+    try{
+      const body={model:"claude-sonnet-4-5-20250514",max_tokens:2000,messages:[{role:"user",content:`Expert IPRP. Métier "${cm}"${cs?` secteur "${cs}"`:""}${cmi?`, missions: ${cmi}`:""}. Fiche EPI complète. JSON UNIQUEMENT: {"metier":"...","secteur":"...","environnement":["3-5 éléments"],"missions":["6-8 missions"],"epiI":["EPI indispensables détaillés avec normes"],"epiN":["EPI nécessaires selon situations"],"epc":["EPC conseillés"],"ref":"articles Code du travail applicables"}`}]};
+      const r=await fetch(WH,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({token:"preventia-protect",payload:JSON.stringify(body)})});
+      const t=await r.text();let p;
+      try{const j=JSON.parse(t);p=JSON.parse((j?.content?.[0]?.text||t).replace(/```json\n?|```/g,"").trim())}catch{throw new Error("Réponse IA invalide")}
+      onDone({...p,date:today(),version:"1.0",source:"ia"});
+    }catch(e){setErr(e.message)}setLd(false);
+  }
+  const S={width:"100%",padding:"8px 12px",borderRadius:8,border:"1px solid #cbd5e1",fontSize:13,fontFamily:"inherit",boxSizing:"border-box"};
+
+  return(<div style={{maxWidth:750,margin:"0 auto"}}>
+    <h2 className="sf" style={{fontSize:22,marginBottom:4}}>📋 Générer une Fiche EPI</h2>
+    <p style={{color:"#64748b",fontSize:13,marginBottom:16}}>{db.length} métiers en base + génération IA illimitée.</p>
+    <div style={{display:"flex",gap:4,marginBottom:16,background:"#e2e8f0",borderRadius:10,padding:3,maxWidth:400}}>
+      {[["select",`📂 Base métiers (${db.length})`],["custom","🤖 IA personnalisée"]].map(([k,l])=><button key={k} onClick={()=>setMode(k)} style={{flex:1,padding:"8px 12px",borderRadius:8,border:"none",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"inherit",background:mode===k?"white":"transparent",color:mode===k?"#0c1e3c":"#64748b"}}>{l}</button>)}
+    </div>
+
+    {mode==="select"?<div style={{background:"white",borderRadius:16,padding:20,boxShadow:"0 1px 4px rgba(0,0,0,.06)"}}>
+      <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Rechercher un métier (ex: soudeur, aide-soignant, cariste…)" style={{...S,fontSize:14,padding:"10px 14px",marginBottom:12}}/>
+      
+      {search.length>=2&&filtered.length>0&&<div style={{maxHeight:300,overflowY:"auto",border:"1px solid #e2e8f0",borderRadius:10,marginBottom:12}}>
+        {filtered.map(m=><button key={m.id} onClick={()=>{setSel(m);setSearch(m.metier)}} style={{display:"block",width:"100%",padding:"8px 12px",border:"none",borderBottom:"1px solid #f1f5f9",background:sel?.id===m.id?"#ecfdf5":"white",textAlign:"left",cursor:"pointer",fontFamily:"inherit",fontSize:12}}
+          onMouseOver={e=>e.currentTarget.style.background="#f8fafc"} onMouseOut={e=>e.currentTarget.style.background=sel?.id===m.id?"#ecfdf5":"white"}>
+          <b>{m.metier}</b><br/><span style={{color:"#64748b",fontSize:10}}>{m.secteur} — {m.suivi} — EPI: {m.epi.split(",").length}</span>
+        </button>)}
+      </div>}
+      
+      {search.length>=2&&filtered.length===0&&<p style={{fontSize:12,color:"#64748b",marginBottom:12}}>Aucun résultat. Essayez le mode <b>IA personnalisée</b>.</p>}
+
+      {sel&&<div style={{padding:14,background:"#f0fdf4",borderRadius:12,marginBottom:12}}>
+        <h4 style={{fontSize:14,margin:"0 0 4px"}}>{sel.metier}</h4>
+        <p style={{fontSize:11,color:"#64748b",margin:"0 0 4px"}}>{sel.secteur} — Suivi : <b>{sel.suivi}</b></p>
+        <p style={{fontSize:11,margin:"0 0 4px"}}><b>EPI :</b> {sel.epi}</p>
+        <p style={{fontSize:11,margin:"0 0 4px"}}><b>EPC :</b> {sel.epc}</p>
+        {sel.ref&&<p style={{fontSize:10,color:"#1e40af",margin:"0 0 8px"}}>📖 {sel.ref}</p>}
+        <button onClick={()=>go(sel)} style={{padding:"10px 20px",borderRadius:10,border:"none",background:"#0f766e",color:"white",cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"inherit"}}>✅ Générer la fiche</button>
+      </div>}
+
+      {!search&&<div>
+        <p style={{fontSize:11,fontWeight:600,color:"#475569",marginBottom:8}}>Par secteur :</p>
+        <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+          {sectors.slice(0,15).map(s=><button key={s} onClick={()=>setSearch(s.split(".")[0])} style={{padding:"4px 10px",borderRadius:16,border:"1px solid #cbd5e1",background:"white",fontSize:10,cursor:"pointer",fontFamily:"inherit"}}>{s.split(".")[0].trim()}</button>)}
+        </div>
+      </div>}
+    </div>
+
+    :<div style={{background:"white",borderRadius:16,padding:20,boxShadow:"0 1px 4px rgba(0,0,0,.06)"}}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+        <label style={{gridColumn:"1/-1"}}><span style={{fontSize:11,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>Métier / Poste *</span><input value={cm} onChange={e=>setCm(e.target.value)} placeholder="Ex: Technicien de laboratoire" style={S}/></label>
+        <label><span style={{fontSize:11,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>Secteur</span><input value={cs} onChange={e=>setCs(e.target.value)} style={S}/></label>
+        <label style={{gridColumn:"1/-1"}}><span style={{fontSize:11,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>Missions</span><textarea value={cmi} onChange={e=>setCmi(e.target.value)} rows={3} style={{...S,resize:"vertical"}}/></label>
+      </div>
+      <div style={{marginTop:14,display:"flex",gap:10,alignItems:"center"}}>
+        <button onClick={goAI} disabled={ld} style={{padding:"10px 20px",borderRadius:10,border:"none",background:"#0f766e",color:"white",cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"inherit",opacity:ld?.6:1}}>{ld?"⏳ Génération IA…":"🤖 Générer avec l'IA"}</button>
+        {ld&&<div style={{width:18,height:18,border:"3px solid #e2e8f0",borderTopColor:"#0f766e",borderRadius:"50%",animation:"spin 1s linear infinite"}}/>}
+      </div>
+      {err&&<div style={{marginTop:10,padding:10,background:"#fee2e2",borderRadius:10,fontSize:12,color:"#991b1b"}}>⚠️ {err}</div>}
+    </div>}
+  </div>);
+}
+
+/* ═══ FICHE VIEW — SILHOUETTE IMAGE TEMPLATE ═══ */
+function FicheView({d,onBack}){
+  const ref=useRef(null);
+  const epiI=d.epiI||[];const epiN=d.epiN||[];
+
+  // Map EPI to zones and sides
+  const leftItems=[],rightItems=[];
+  [...epiI,...epiN].forEach(name=>{
+    const isI=epiI.includes(name);
+    const zone=classifyEPI(name);
+    const side=ZONE_SIDE[zone]||"R";
+    const item={name,green:isI,zone};
+    (side==="L"?leftItems:rightItems).push(item);
+  });
+
+  async function toPDF(){
+    const el=ref.current;if(!el)return;
+    const c=await html2canvas(el,{scale:2,useCORS:true,backgroundColor:"#fff"});
+    const{jsPDF}=window.jspdf;
+    const pdf=new jsPDF("portrait","mm","a4");
+    const w=210,h=c.height*w/c.width;
+    pdf.addImage(c.toDataURL("image/jpeg",.95),"JPEG",0,0,w,Math.min(h,297));
+    if(h>297)pdf.addPage(),pdf.addImage(c.toDataURL("image/jpeg",.95),"JPEG",0,-297,w,h);
+    pdf.save(`Fiche_EPI_${d.metier.replace(/[\s/]/g,'_')}.pdf`);
+  }
+
+  return(<div>
+    <div className="noP" style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
+      <button onClick={onBack} style={bS}>← Nouveau métier</button>
+      <button onClick={()=>window.print()} style={bP}>🖨️ Imprimer</button>
+      <button onClick={toPDF} style={{...bP,background:"#dc2626"}}>📄 Export PDF</button>
+    </div>
+
+    <div ref={ref} className="fiche" style={{background:"white",borderRadius:14,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,.08)"}}>
+      {/* HEADER */}
+      <div style={{background:"linear-gradient(135deg,#0c1e3c,#0f766e)",color:"white",padding:"14px 20px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8}}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <span style={{fontSize:22}}>🛡️</span>
+            <div><p style={{margin:0,fontSize:9,opacity:.7,fontWeight:600,letterSpacing:1}}>PréventIA Protect</p><h2 className="sf" style={{fontSize:17,margin:0}}>FICHE EPI PERSONNALISÉE</h2><p style={{margin:0,fontSize:10,opacity:.8}}>Les équipements nécessaires à votre sécurité</p></div>
+          </div>
+          <div style={{textAlign:"right",fontSize:10,opacity:.8}}><div>{d.date}</div><div>v{d.version}</div>{d.source==="ia"&&<span style={{fontSize:9,background:"rgba(255,255,255,.15)",padding:"2px 8px",borderRadius:8}}>🤖 IA</span>}</div>
+        </div>
+      </div>
+
+      {/* INFO */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:1,background:"#e2e8f0"}}>
+        {[["👤","MÉTIER",d.metier],["🏭","SECTEUR",d.secteur],["🌍","ENVIRONNEMENT",(d.environnement||[]).join(" • ")]].map(([i,l,v],k)=>
+          <div key={k} style={{background:"white",padding:"7px 12px"}}><div style={{fontSize:9,fontWeight:600,color:"#64748b"}}>{i} {l}</div><div style={{fontSize:12,fontWeight:600,color:"#0c1e3c"}}>{v||"—"}</div></div>)}
+      </div>
+
+      {/* CORPS — image silhouette au centre, labels dynamiques autour */}
+      <div style={{display:"grid",gridTemplateColumns:"200px 1fr 200px",gap:0,minHeight:560}}>
+        {/* GAUCHE */}
+        <div style={{padding:"12px",background:"#f8fafc",borderRight:"1px solid #e2e8f0"}}>
+          {d.missions?.length>0&&<><H c="#0f766e">MISSIONS PRINCIPALES</H>
+          <ul style={{margin:"0 0 12px",padding:"0 0 0 12px",fontSize:10,color:"#334155",lineHeight:1.7}}>{d.missions.map((m,i)=><li key={i}>{m}</li>)}</ul></>}
+          <div style={{padding:8,background:"#ecfdf5",borderRadius:8,marginBottom:8}}>
+            <H c="#0f766e">LÉGENDE</H>
+            <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:5,fontSize:10}}><D g/><span><b>INDISPENSABLE</b><br/>EPI obligatoires</span></div>
+            <div style={{display:"flex",alignItems:"center",gap:5,fontSize:10}}><D/><span><b>NÉCESSAIRE</b><br/>Selon la situation</span></div>
+          </div>
+          <div style={{padding:8,background:"#f1f5f9",borderRadius:8,fontSize:9,color:"#64748b"}}>
+            <b style={{color:"#334155",fontSize:10}}>COMMENT LIRE ?</b><br/>
+            <span style={{color:"#22c55e"}}>■</span> Indispensables en vert<br/>
+            <span style={{color:"#f59e0b"}}>■</span> Nécessaires en orange
+          </div>
+          {d.ref&&<div style={{marginTop:8,padding:8,background:"#eff6ff",borderRadius:8,fontSize:9,color:"#1e40af"}}>📖 <b>Réf.</b> {d.ref}</div>}
+        </div>
+
+        {/* CENTRE — SILHOUETTE IMAGE + LABELS */}
+        <div style={{padding:"8px 4px",position:"relative"}}>
+          <H c="#0c1e3c" center>VOS EPI SELON LES RISQUES DE VOTRE POSTE</H>
+          <div style={{position:"relative",width:"100%",height:520}}>
+            {/* Image silhouette pro */}
+            <div style={{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",height:"96%",display:"flex",alignItems:"center"}}>
+              <img src={SIL} alt="" style={{height:"100%",objectFit:"contain"}} onError={e=>{e.target.style.display="none"}}/>
+            </div>
+
+            {/* Labels GAUCHE */}
+            {leftItems.map((it,i)=>{
+              const top=6+i*(500/(leftItems.length||1));
+              return <div key={"l"+i} style={{position:"absolute",left:0,top,width:"30%",animation:`fadeIn .4s ease-out ${i*.06}s both`}}>
+                <ECard name={it.name} green={it.green}/>
+              </div>;
+            })}
+
+            {/* Labels DROITE */}
+            {rightItems.map((it,i)=>{
+              const top=6+i*(500/(rightItems.length||1));
+              return <div key={"r"+i} style={{position:"absolute",right:0,top,width:"30%",animation:`fadeIn .4s ease-out ${i*.06}s both`}}>
+                <ECard name={it.name} green={it.green}/>
+              </div>;
+            })}
+          </div>
+          <div style={{background:"#f0fdf4",borderRadius:8,padding:"6px 10px",textAlign:"center",fontSize:9,color:"#065f46",marginTop:2}}>
+            🛡️ Fiche personnalisée — Respectez les EPI pour votre sécurité et celle de vos collègues.
+          </div>
+        </div>
+
+        {/* DROITE */}
+        <div style={{padding:"12px",background:"#f8fafc",borderLeft:"1px solid #e2e8f0"}}>
+          <H c="#166534">EPI INDISPENSABLES ({epiI.length})</H>
+          {epiI.map((e,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:5,marginBottom:4,fontSize:10}}><D g s/><span>{e}</span></div>)}
+          {epiN.length>0&&<div style={{marginTop:12}}><H c="#b45309">EPI NÉCESSAIRES ({epiN.length})</H>
+          {epiN.map((e,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:5,marginBottom:4,fontSize:10}}><D s/><span>{e}</span></div>)}</div>}
+          {(d.epc||[]).length>0&&<div style={{marginTop:12}}><H c="#1e40af">EPC CONSEILLÉS</H>
+          {d.epc.map((e,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:5,marginBottom:4,fontSize:10}}><span style={{color:"#1e40af",fontSize:9}}>◆</span><span>{e}</span></div>)}</div>}
+          {d.suivi&&<div style={{marginTop:12,padding:8,background:"#dbeafe",borderRadius:8}}><H c="#1e40af">SUIVI MÉDICAL</H><p style={{fontSize:10,color:"#1e40af",margin:0}}>{d.suivi}</p></div>}
+          <div style={{marginTop:10,padding:8,background:"#fef9c3",borderRadius:8}}>
+            <H c="#854d0e">⚠️ SIGNALEZ</H>
+            <p style={{fontSize:9,color:"#713f12",margin:0}}>EPI manquant ou endommagé ? Signalez-le immédiatement.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* BAS */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:1,background:"#e2e8f0"}}>
+        <BC i="✅" t="BONNES PRATIQUES" l={["Vérifiez vos EPI avant utilisation","Utilisez conformément aux consignes","Nettoyez et rangez après usage","Remplacez si usé ou endommagé"]}/>
+        <BC i="🔧" t="ENTRETIEN" l={["Nettoyage selon fabricant","Stockage propre et sec","Contrôle périodique","Remplacement selon durée de vie"]}/>
+        <BC i="📅" t="VÉRIFICATION ANNUELLE" l={["Réévaluation annuelle ou si changement de poste","Prochaine : "+nextY()]}/>
+      </div>
+
+      {/* FOOTER */}
+      <div style={{background:"#0c1e3c",color:"white",padding:"10px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:10,flexWrap:"wrap",gap:6}}>
+        <div style={{display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:14}}>🛡️</span><div><b>LA SÉCURITÉ, NOTRE PRIORITÉ</b><br/><span style={{opacity:.7}}>Ensemble, adoptons les bons réflexes.</span></div></div>
+        <div style={{display:"flex",gap:10,opacity:.7,fontSize:9}}><span>🧥 Je m'équipe</span><span>👀 Je veille</span><span>📢 Je signale</span><span>🏠 Sain et sauf</span></div>
+        <span className="sf" style={{fontSize:12}}>PréventIA</span>
+      </div>
+    </div>
+  </div>);
+}
+
+/* ═══ Composants ═══ */
+function ECard({name,green}){
+  return <div style={{background:"white",border:`2px solid ${green?"#22c55e":"#f59e0b"}`,borderRadius:10,padding:"5px 7px",boxShadow:"0 1px 3px rgba(0,0,0,.08)"}}>
+    <div style={{display:"flex",alignItems:"center",gap:3}}><D g={green} s/><b style={{fontSize:9,color:"#0c1e3c",textTransform:"uppercase",lineHeight:1.2}}>{name}</b></div>
+  </div>;
+}
+function D({g,s}){const z=s?12:15;return<div style={{width:z,height:z,borderRadius:"50%",flexShrink:0,background:g?"#22c55e":"#f59e0b",display:"flex",alignItems:"center",justifyContent:"center",fontSize:s?7:9,color:"white",fontWeight:700}}>{g?"✓":"!"}</div>}
+function H({children,c,center}){return<h4 style={{margin:"0 0 5px",fontSize:10,fontWeight:700,color:c,letterSpacing:.4,textTransform:"uppercase",textAlign:center?"center":"left"}}>{children}</h4>}
+function BC({i,t,l}){return<div style={{background:"white",padding:"10px 12px"}}><div style={{display:"flex",alignItems:"center",gap:4,marginBottom:5}}><span style={{fontSize:14}}>{i}</span><b style={{fontSize:10,color:"#0c1e3c"}}>{t}</b></div>{l.map((x,k)=><div key={k} style={{fontSize:9,color:"#334155",marginBottom:2,display:"flex",gap:3}}><span style={{color:"#0f766e",fontSize:8,marginTop:1}}>✓</span><span>{x}</span></div>)}</div>}
+const bP={padding:"8px 18px",borderRadius:10,border:"none",background:"#0f766e",color:"white",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"inherit"};
+const bS={padding:"8px 18px",borderRadius:10,border:"1px solid #cbd5e1",background:"white",cursor:"pointer",fontSize:12,fontFamily:"inherit"};
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

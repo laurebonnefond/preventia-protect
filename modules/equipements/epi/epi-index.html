@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Fiche EPI — PréventIA Protect</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',system-ui,sans-serif;background:#f1f5f9;color:#1e293b;line-height:1.5}
+.sf{font-family:'DM Serif Display',serif}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media print{header,.noP{display:none!important}main{padding:0!important}.fiche{box-shadow:none!important;border-radius:0!important}}
+
+/* Connector line from label toward body */
+.epi-label{position:relative;display:flex;align-items:center;gap:4px;margin-bottom:6px}
+.epi-label.left{flex-direction:row}
+.epi-label.right{flex-direction:row-reverse}
+.epi-label .connector{width:20px;height:2px;flex-shrink:0}
+.epi-label .connector::after{content:'';display:block;width:6px;height:6px;border-radius:50%;position:absolute}
+.epi-label.left .connector::after{right:-3px;top:50%;transform:translateY(-50%)}
+.epi-label.right .connector::after{left:-3px;top:50%;transform:translateY(-50%)}
+.epi-box{background:white;border:2px solid var(--epi-color);border-radius:10px;padding:5px 7px;box-shadow:0 1px 3px rgba(0,0,0,.06);flex:1;min-width:0}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useRef,useEffect}=React;
+const WH="https://hook.eu2.make.com/qhvt4lylqgbykqljwd1sdybpdaoapedu";
+const today=()=>new Date().toLocaleDateString("fr-FR");
+const nextY=()=>{const d=new Date();d.setFullYear(d.getFullYear()+1);return d.toLocaleDateString("fr-FR")};
+
+/* ═══ MAPPING EPI → Zone + Picto + Description contextuelle ═══ */
+const EPI_DB=[
+  {rx:/casque(?! de soud)/i,        zone:"tete",   s:"L",pic:"M013",desc:"Protection contre les chutes d'objets et les chocs — Port obligatoire en zone de circulation engins et sur chantier."},
+  {rx:/casque de soud|soudeur/i,    zone:"tete",   s:"L",pic:"M019",desc:"Protection yeux et visage contre rayonnements UV/IR et projections lors du soudage."},
+  {rx:/calot|charlotte/i,           zone:"tete",   s:"L",pic:"M013",desc:"Hygiène — Protège la chevelure en cuisine ou salle blanche."},
+  {rx:/chapeau|casquette/i,         zone:"tete",   s:"L",pic:"M013",desc:"Protection solaire lors de travaux extérieurs prolongés."},
+  {rx:/cagoule/i,                   zone:"tete",   s:"L",pic:"M016",desc:"Protection intégrale tête et voies respiratoires — Milieux à forte exposition chimique."},
+  {rx:/lunette|visière|écran.?fac/i,zone:"yeux",   s:"R",pic:"M004",desc:"Protection contre les projections, poussières et particules — Opérations d'usinage, meulage, découpe."},
+  {rx:/antibruit|bouchon|coquille|auditiv|picb/i,zone:"oreilles",s:"R",pic:"M003",desc:"Protection contre le bruit en atelier — Obligatoire si Lex,8h ≥ 85 dB(A)."},
+  {rx:/masque|ffp|respirat|ari |abek|aération/i,zone:"respir",s:"R",pic:"M016",desc:"À utiliser en cas de poussières, fumées ou produits chimiques — Adapté au type de polluant."},
+  {rx:/gant(?! therm)/i,            zone:"mains",  s:"L",pic:"M009",desc:"Protection contre les coupures, abrasions et produits dangereux — Choisir selon le risque (mécanique, chimique, biologique)."},
+  {rx:/gant.?therm/i,               zone:"mains",  s:"L",pic:"M009",desc:"Protection thermique des mains — Manipulation d'objets chauds ou froids."},
+  {rx:/harnais|antichute|longe/i,   zone:"harnais",s:"L",pic:"M018",desc:"Protection antichute — Obligatoire pour tout travail en hauteur > 3m sans garde-corps."},
+  {rx:/tablier/i,                   zone:"tablier",s:"L",pic:"M026",desc:"Protection du torse contre les projections, la chaleur ou les produits chimiques."},
+  {rx:/gilet|chasuble|hv/i,         zone:"gilet",  s:"R",pic:"M015",desc:"Haute visibilité — Zones de circulation véhicules/engins, travaux routiers, entrepôt."},
+  {rx:/blouse|surblouse/i,          zone:"torse",  s:"R",pic:"M010",desc:"Protection contre les projections biologiques ou chimiques — Usage unique ou lavable."},
+  {rx:/combinaison|tenue(?! de cuis)|vêtement/i,zone:"torse",s:"R",pic:"M010",desc:"Vêtements adaptés : résistants, couvrants et confortables selon l'environnement de travail."},
+  {rx:/tenue de cuis/i,             zone:"torse",  s:"R",pic:"M010",desc:"Tenue professionnelle cuisine — Résistante à la chaleur, facilement lavable."},
+  {rx:/pantalon/i,                  zone:"jambes", s:"L",pic:"M010",desc:"Protection des jambes contre les risques mécaniques et les projections."},
+  {rx:/genouillère/i,               zone:"genoux", s:"R",pic:"M008",desc:"Protection des genoux lors de travaux au sol — Carrelage, plomberie, câblage."},
+  {rx:/guêtre|jambière/i,           zone:"mollets",s:"R",pic:"M008",desc:"Protection complémentaire des jambes — Soudage, travaux forestiers."},
+  {rx:/chaussure|botte|surchaussure/i,zone:"pieds",s:"L",pic:"M008",desc:"Protection contre les chutes d'objets, perforations et glissades — Semelle anti-perforation."},
+];
+function classify(name){
+  const n=name.toLowerCase();
+  for(const m of EPI_DB) if(m.rx.test(n)) return m;
+  return {zone:"torse",s:"R",pic:"M001",desc:"Équipement de protection individuelle adapté au risque identifié."};
+}
+
+/* ═══ Positions verticales fixes des zones sur la silhouette (% hauteur) ═══ */
+const ZONE_Y={tete:4,yeux:12,oreilles:16,respir:22,torse:34,gilet:34,harnais:30,tablier:40,mains:48,jambes:62,genoux:70,mollets:76,pieds:88};
+
+/* ═══ APP ═══ */
+function App(){
+  const[page,setPage]=useState("gen");
+  const[data,setData]=useState(null);
+  const[db,setDb]=useState([]);
+  useEffect(()=>{fetch("metiers.json").then(r=>r.json()).then(d=>{if(d.metiers)setDb(d.metiers)}).catch(()=>{});},[]);
+  return(<div style={{minHeight:"100vh",background:"#f1f5f9"}}>
+    <header className="noP" style={{background:"linear-gradient(135deg,#0c1e3c,#0f766e)",color:"white",padding:"0 16px"}}>
+      <div style={{maxWidth:1100,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0"}}>
+        <a href="../../../index.html" style={{display:"flex",alignItems:"center",gap:8,color:"white",textDecoration:"none"}}>
+          <div style={{width:34,height:34,borderRadius:9,background:"rgba(255,255,255,.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>🛡️</div>
+          <div><div className="sf" style={{fontSize:17}}>PréventIA Protect</div><div style={{fontSize:8,opacity:.6,letterSpacing:1.5,textTransform:"uppercase"}}>Fiche EPI personnalisée</div></div>
+        </a>
+        {data&&<nav style={{display:"flex",gap:4}}>
+          {[["gen","📋 Générer"],["view","👁️ Fiche"]].map(([k,l])=>
+            <button key={k} onClick={()=>setPage(k)} style={{padding:"6px 12px",border:"none",borderRadius:8,cursor:"pointer",fontSize:11,fontWeight:600,fontFamily:"inherit",background:page===k?"rgba(255,255,255,.9)":"rgba(255,255,255,.12)",color:page===k?"#0c1e3c":"white"}}>{l}</button>)}
+        </nav>}
+      </div>
+    </header>
+    <main style={{maxWidth:1100,margin:"0 auto",padding:"16px"}}>
+      {page==="gen"&&<Gen db={db} onDone={d=>{setData(d);setPage("view")}}/>}
+      {page==="view"&&data&&<FV d={data} onBack={()=>setPage("gen")}/>}
+    </main>
+  </div>);
+}
+
+/* ═══ GENERATOR ═══ */
+function Gen({db,onDone}){
+  const[mode,setMode]=useState("select");const[q,setQ]=useState("");const[sel,setSel]=useState(null);
+  const[cm,setCm]=useState("");const[cs,setCs]=useState("");const[cmi,setCmi]=useState("");
+  const[ld,setLd]=useState(false);const[err,setErr]=useState(null);
+  const filt=q.length>=2?db.filter(m=>m.metier.toLowerCase().includes(q.toLowerCase())||m.secteur?.toLowerCase().includes(q.toLowerCase())).slice(0,20):[];
+  function go(m){
+    const epi=m.epi.split(",").map(e=>e.trim()).filter(e=>e&&e!=="—");
+    const epc=m.epc.split(",").map(e=>e.trim()).filter(e=>e&&e!=="—");
+    const cut=Math.ceil(epi.length*.65);
+    const missions=m.risques?m.risques.split(",").map(r=>r.trim()):[];
+    onDone({metier:m.metier,secteur:m.secteur,environnement:missions.slice(0,4),missions:missions,epiI:epi.slice(0,cut),epiN:epi.slice(cut),epc,ref:m.ref||"",suivi:m.suivi||"",date:today(),version:"1.0",source:"base"});
+  }
+  async function goAI(){
+    if(!cm.trim())return setErr("Précisez le métier");setLd(true);setErr(null);
+    try{
+      const body={model:"claude-sonnet-4-5-20250514",max_tokens:2000,messages:[{role:"user",content:`Expert IPRP. Métier "${cm}"${cs?` secteur "${cs}"`:""}${cmi?`, missions: ${cmi}`:""}. JSON: {"metier":"...","secteur":"...","environnement":["..."],"missions":["6-8 missions détaillées"],"epiI":["EPI indispensables avec norme si possible"],"epiN":["EPI nécessaires selon situations"],"epc":["EPC conseillés"],"ref":"articles Code du travail"}`}]};
+      const r=await fetch(WH,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({token:"preventia-protect",payload:JSON.stringify(body)})});
+      const t=await r.text();let p;
+      try{const j=JSON.parse(t);p=JSON.parse((j?.content?.[0]?.text||t).replace(/```json\n?|```/g,"").trim())}catch{throw new Error("Réponse IA invalide")}
+      onDone({...p,date:today(),version:"1.0",source:"ia"});
+    }catch(e){setErr(e.message)}setLd(false);
+  }
+  const S={width:"100%",padding:"8px 12px",borderRadius:8,border:"1px solid #cbd5e1",fontSize:13,fontFamily:"inherit",boxSizing:"border-box"};
+  return(<div style={{maxWidth:750,margin:"0 auto"}}>
+    <h2 className="sf" style={{fontSize:22,marginBottom:4}}>📋 Générer une Fiche EPI</h2>
+    <p style={{color:"#64748b",fontSize:13,marginBottom:16}}>{db.length} métiers + IA personnalisée</p>
+    <div style={{display:"flex",gap:4,marginBottom:16,background:"#e2e8f0",borderRadius:10,padding:3,maxWidth:400}}>
+      {[["select",`📂 Base (${db.length})`],["custom","🤖 IA"]].map(([k,l])=><button key={k} onClick={()=>setMode(k)} style={{flex:1,padding:"8px 12px",borderRadius:8,border:"none",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"inherit",background:mode===k?"white":"transparent",color:mode===k?"#0c1e3c":"#64748b"}}>{l}</button>)}
+    </div>
+    {mode==="select"?<div style={{background:"white",borderRadius:16,padding:20,boxShadow:"0 1px 4px rgba(0,0,0,.06)"}}>
+      <input value={q} onChange={e=>{setQ(e.target.value);setSel(null)}} placeholder="🔍 Rechercher un métier…" style={{...S,fontSize:14,padding:"10px 14px",marginBottom:12}}/>
+      {q.length>=2&&filt.length>0&&<div style={{maxHeight:280,overflowY:"auto",border:"1px solid #e2e8f0",borderRadius:10,marginBottom:12}}>{filt.map(m=><button key={m.id} onClick={()=>{setSel(m);setQ(m.metier)}} style={{display:"block",width:"100%",padding:"8px 12px",border:"none",borderBottom:"1px solid #f1f5f9",background:sel?.id===m.id?"#ecfdf5":"white",textAlign:"left",cursor:"pointer",fontFamily:"inherit",fontSize:12}}><b>{m.metier}</b><br/><span style={{color:"#64748b",fontSize:10}}>{m.secteur} — {m.suivi}</span></button>)}</div>}
+      {sel&&<div style={{padding:14,background:"#f0fdf4",borderRadius:12}}><h4 style={{fontSize:14,margin:"0 0 4px"}}>{sel.metier}</h4><p style={{fontSize:11,color:"#64748b",margin:"0 0 4px"}}>{sel.secteur} — <b>{sel.suivi}</b></p><p style={{fontSize:11,margin:"0 0 8px"}}><b>EPI :</b> {sel.epi}</p><button onClick={()=>go(sel)} style={{padding:"10px 20px",borderRadius:10,border:"none",background:"#0f766e",color:"white",cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"inherit"}}>✅ Générer</button></div>}
+    </div>
+    :<div style={{background:"white",borderRadius:16,padding:20,boxShadow:"0 1px 4px rgba(0,0,0,.06)"}}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}><label style={{gridColumn:"1/-1"}}><span style={{fontSize:11,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>Métier *</span><input value={cm} onChange={e=>setCm(e.target.value)} style={S}/></label><label><span style={{fontSize:11,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>Secteur</span><input value={cs} onChange={e=>setCs(e.target.value)} style={S}/></label><label style={{gridColumn:"1/-1"}}><span style={{fontSize:11,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>Missions</span><textarea value={cmi} onChange={e=>setCmi(e.target.value)} rows={3} style={{...S,resize:"vertical"}}/></label></div>
+      <div style={{marginTop:14,display:"flex",gap:10,alignItems:"center"}}><button onClick={goAI} disabled={ld} style={{padding:"10px 20px",borderRadius:10,border:"none",background:"#0f766e",color:"white",cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"inherit",opacity:ld?.6:1}}>{ld?"⏳…":"🤖 Générer"}</button>{ld&&<div style={{width:18,height:18,border:"3px solid #e2e8f0",borderTopColor:"#0f766e",borderRadius:"50%",animation:"spin 1s linear infinite"}}/>}</div>
+      {err&&<div style={{marginTop:10,padding:10,background:"#fee2e2",borderRadius:10,fontSize:12,color:"#991b1b"}}>⚠️ {err}</div>}
+    </div>}
+  </div>);
+}
+
+/* ═══ FICHE VIEW ═══ */
+function FV({d,onBack}){
+  const ref=useRef(null);
+  const epiI=d.epiI||[];const epiN=d.epiN||[];
+  const allEPI=[...epiI.map(n=>({name:n,green:true,...classify(n)})),...epiN.map(n=>({name:n,green:false,...classify(n)}))];
+  const leftEPI=allEPI.filter(e=>e.s==="L").sort((a,b)=>(ZONE_Y[a.zone]||50)-(ZONE_Y[b.zone]||50));
+  const rightEPI=allEPI.filter(e=>e.s==="R").sort((a,b)=>(ZONE_Y[a.zone]||50)-(ZONE_Y[b.zone]||50));
+
+  async function toPDF(){
+    const el=ref.current;if(!el)return;
+    const c=await html2canvas(el,{scale:2,useCORS:true,backgroundColor:"#fff"});
+    const{jsPDF}=window.jspdf;const pdf=new jsPDF("portrait","mm","a4");
+    const w=210,h=c.height*w/c.width;
+    pdf.addImage(c.toDataURL("image/jpeg",.95),"JPEG",0,0,w,Math.min(h,297));
+    if(h>297){pdf.addPage();pdf.addImage(c.toDataURL("image/jpeg",.95),"JPEG",0,-297,w,h);}
+    pdf.save(`Fiche_EPI_${d.metier.replace(/[\s/]/g,'_')}.pdf`);
+  }
+
+  return(<div>
+    <div className="noP" style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
+      <button onClick={onBack} style={bS}>← Nouveau métier</button>
+      <button onClick={()=>window.print()} style={bP}>🖨️ Imprimer</button>
+      <button onClick={toPDF} style={{...bP,background:"#dc2626"}}>📄 Export PDF</button>
+    </div>
+
+    <div ref={ref} className="fiche" style={{background:"white",borderRadius:14,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,.08)"}}>
+      {/* HEADER */}
+      <div style={{background:"linear-gradient(135deg,#0c1e3c,#0f766e)",color:"white",padding:"14px 20px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:22}}>🛡️</span>
+            <div><p style={{margin:0,fontSize:9,opacity:.7,fontWeight:600,letterSpacing:1}}>PréventIA Protect</p><h2 className="sf" style={{fontSize:17,margin:0}}>FICHE EPI PERSONNALISÉE</h2><p style={{margin:0,fontSize:10,opacity:.8}}>Les équipements nécessaires à votre sécurité</p></div>
+          </div>
+          <div style={{textAlign:"right",fontSize:10,opacity:.8}}><div>{d.date}</div><div>v{d.version}</div>{d.source==="ia"&&<span style={{fontSize:9,background:"rgba(255,255,255,.15)",padding:"2px 8px",borderRadius:8}}>🤖 IA</span>}</div>
+        </div>
+      </div>
+
+      {/* INFO BAR */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:1,background:"#e2e8f0"}}>
+        {[["👤","MÉTIER",d.metier],["🏭","SECTEUR",d.secteur],["🌍","ENVIRONNEMENT",(d.environnement||[]).join(" • ")]].map(([i,l,v],k)=>
+          <div key={k} style={{background:"white",padding:"7px 12px"}}><div style={{fontSize:9,fontWeight:600,color:"#64748b"}}>{i} {l}</div><div style={{fontSize:12,fontWeight:600,color:"#0c1e3c"}}>{v||"—"}</div></div>)}
+      </div>
+
+      {/* ═══ CORPS PRINCIPAL — 4 colonnes ═══ */}
+      <div style={{display:"grid",gridTemplateColumns:"170px 1fr 1fr 200px",gap:0,minHeight:600}}>
+
+        {/* COL 1 — Missions + Légende */}
+        <div style={{padding:"10px",background:"#f8fafc",borderRight:"1px solid #e2e8f0",fontSize:10}}>
+          <Box title="MISSIONS PRINCIPALES" color="#3d7b40" bg="#f0fdf4">
+            <ul style={{margin:0,padding:"0 0 0 12px",lineHeight:1.6,color:"#334155"}}>
+              {(d.missions||[]).map((m,i)=><li key={i} style={{marginBottom:2}}>{m}</li>)}
+            </ul>
+          </Box>
+          <Box title="LÉGENDE" color="#3d7b40" bg="#ecfdf5" mt={8}>
+            <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:5}}><Dot g/><span><b>INDISPENSABLE</b><br/>EPI obligatoires selon les risques du poste</span></div>
+            <div style={{display:"flex",alignItems:"center",gap:5}}><Dot/><span><b>NÉCESSAIRE</b><br/>EPI à utiliser selon la situation ou l'activité</span></div>
+          </Box>
+          <Box title="COMMENT LIRE ?" color="#475569" bg="#f1f5f9" mt={8}>
+            <span>Les EPI indispensables sont affichés en <b style={{color:"#22c55e"}}>vert</b>.</span><br/>
+            <span>Les EPI nécessaires sont affichés en <b style={{color:"#f59e0b"}}>orange</b>.</span><br/>
+            <span style={{display:"flex",alignItems:"center",gap:3,marginTop:4}}>👆 Chaque EPI est relié à la zone du corps protégée.</span>
+          </Box>
+          {d.ref&&<Box title="RÉFÉRENCES" color="#1e40af" bg="#eff6ff" mt={8}><span>📖 {d.ref}</span></Box>}
+        </div>
+
+        {/* COL 2 — EPI GAUCHE (labels + connecteurs vers le corps) */}
+        <div style={{padding:"10px 4px",display:"flex",flexDirection:"column",justifyContent:"space-around"}}>
+          <h4 style={{fontSize:10,fontWeight:700,color:"#0c1e3c",textAlign:"center",letterSpacing:.4,textTransform:"uppercase",marginBottom:4}}>VOS EPI SELON LES RISQUES</h4>
+          {leftEPI.map((it,i)=>
+            <div key={i} className="epi-label left" style={{"--epi-color":it.green?"#22c55e":"#f59e0b"}}>
+              <div className="epi-box">
+                <div style={{display:"flex",alignItems:"center",gap:3,marginBottom:2}}>
+                  <img src={`pictos/${it.pic}.png`} alt="" style={{width:22,height:22,borderRadius:4}} onError={e=>{e.target.style.display="none"}}/>
+                  <Dot g={it.green} s/>
+                  <b style={{fontSize:8,color:"#0c1e3c",textTransform:"uppercase",lineHeight:1.2}}>{it.name}</b>
+                </div>
+                <p style={{margin:0,fontSize:7,color:"#64748b",fontStyle:"italic",lineHeight:1.3}}>{it.desc}</p>
+              </div>
+              <div className="connector" style={{background:it.green?"#22c55e":"#f59e0b"}}/>
+            </div>
+          )}
+        </div>
+
+        {/* COL 3 — SILHOUETTE + EPI DROITE */}
+        <div style={{padding:"10px 4px",position:"relative",display:"flex",flexDirection:"column"}}>
+          <div style={{flex:1,position:"relative",minHeight:500}}>
+            {/* Silhouette centrée */}
+            <div style={{position:"absolute",left:"2%",top:0,bottom:0,width:"45%",display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <img src="silhouette-body.png" alt="" style={{maxHeight:"100%",maxWidth:"100%",objectFit:"contain"}} onError={e=>{e.target.style.display="none"}}/>
+            </div>
+            {/* Labels droite */}
+            <div style={{position:"absolute",right:0,top:0,bottom:0,width:"50%",display:"flex",flexDirection:"column",justifyContent:"space-around",padding:"10px 0"}}>
+              {rightEPI.map((it,i)=>
+                <div key={i} className="epi-label right" style={{"--epi-color":it.green?"#22c55e":"#f59e0b"}}>
+                  <div className="connector" style={{background:it.green?"#22c55e":"#f59e0b"}}/>
+                  <div className="epi-box">
+                    <div style={{display:"flex",alignItems:"center",gap:3,marginBottom:2}}>
+                      <img src={`pictos/${it.pic}.png`} alt="" style={{width:22,height:22,borderRadius:4}} onError={e=>{e.target.style.display="none"}}/>
+                      <Dot g={it.green} s/>
+                      <b style={{fontSize:8,color:"#0c1e3c",textTransform:"uppercase",lineHeight:1.2}}>{it.name}</b>
+                    </div>
+                    <p style={{margin:0,fontSize:7,color:"#64748b",fontStyle:"italic",lineHeight:1.3}}>{it.desc}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          <div style={{background:"#f0fdf4",borderRadius:8,padding:"6px 10px",textAlign:"center",fontSize:9,color:"#065f46",marginTop:4}}>
+            🛡️ Fiche personnalisée selon votre métier et les risques identifiés.
+          </div>
+        </div>
+
+        {/* COL 4 — Récap EPI + EPC + Suivi */}
+        <div style={{padding:"10px",background:"#f8fafc",borderLeft:"1px solid #e2e8f0",fontSize:10}}>
+          <Box title={`EPI INDISPENSABLES (${epiI.length})`} color="#166534" bg="#ecfdf5">
+            {epiI.map((e,i)=>{const c=classify(e);return<div key={i} style={{display:"flex",alignItems:"center",gap:3,marginBottom:4}}>
+              <img src={`pictos/${c.pic}.png`} alt="" style={{width:18,height:18,borderRadius:3}} onError={ev=>{ev.target.style.display="none"}}/>
+              <Dot g s/><span>{e}</span></div>})}
+          </Box>
+          {epiN.length>0&&<Box title={`EPI NÉCESSAIRES (${epiN.length})`} color="#b45309" bg="#fffbeb" mt={8}>
+            <p style={{margin:"0 0 4px",fontSize:9,color:"#92400e",fontStyle:"italic"}}>Selon les situations de travail</p>
+            {epiN.map((e,i)=>{const c=classify(e);return<div key={i} style={{display:"flex",alignItems:"center",gap:3,marginBottom:4}}>
+              <img src={`pictos/${c.pic}.png`} alt="" style={{width:18,height:18,borderRadius:3}} onError={ev=>{ev.target.style.display="none"}}/>
+              <Dot s/><span>{e}</span></div>})}
+          </Box>}
+          {(d.epc||[]).length>0&&<Box title="EPC CONSEILLÉS" color="#1e40af" bg="#eff6ff" mt={8}>
+            {d.epc.map((e,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:3,marginBottom:3}}><span style={{color:"#1e40af",fontSize:8}}>◆</span><span>{e}</span></div>)}
+          </Box>}
+          {d.suivi&&<Box title="SUIVI MÉDICAL" color="#1e40af" bg="#dbeafe" mt={8}><b style={{fontSize:11}}>{d.suivi}</b></Box>}
+          <Box title="⚠️ SIGNALEZ UN PROBLÈME" color="#854d0e" bg="#fef9c3" mt={8}>
+            <span>EPI manquant, endommagé ou inadapté ? Signalez-le immédiatement à votre responsable.</span>
+          </Box>
+        </div>
+      </div>
+
+      {/* BAS */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:1,background:"#e2e8f0"}}>
+        <BC i="✅" t="BONNES PRATIQUES" l={["Vérifiez vos EPI avant chaque utilisation","Utilisez-les conformément aux consignes","Nettoyez et rangez vos EPI après usage","Remplacez les EPI usés ou endommagés","En cas de doute, demandez conseil"]}/>
+        <BC i="🔧" t="ENTRETIEN DES EPI" l={["Nettoyage régulier selon recommandations fabricant","Stockage dans un endroit propre et sec","Contrôle périodique de l'état des EPI","Remplacement selon durée de vie ou en cas d'usure"]}/>
+        <BC i="📅" t="VÉRIFICATION ANNUELLE" l={["Cette fiche et les EPI associés sont réévalués chaque année ou en cas de changement de poste ou de risque","Prochaine révision : "+nextY()]}/>
+      </div>
+      <div style={{background:"#0c1e3c",color:"white",padding:"10px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:10,flexWrap:"wrap",gap:6}}>
+        <div style={{display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:14}}>🛡️</span><div><b>LA SÉCURITÉ, NOTRE PRIORITÉ</b><br/><span style={{opacity:.7}}>Ensemble, adoptons les bons réflexes.</span></div></div>
+        <div style={{display:"flex",gap:12,opacity:.7,fontSize:9}}><span>🧥 Je m'équipe</span><span>👀 Je reste vigilant</span><span>📢 Je signale, je préviens</span><span>🏠 Je rentre sain et sauf</span></div>
+        <span className="sf" style={{fontSize:12}}>PréventIA</span>
+      </div>
+    </div>
+  </div>);
+}
+
+/* ═══ Composants ═══ */
+function Box({title,color,bg,mt,children}){
+  return<div style={{marginTop:mt||0,borderRadius:8,overflow:"hidden",border:`1px solid ${bg}`}}>
+    <div style={{background:color,color:"white",padding:"4px 8px",fontSize:9,fontWeight:700,letterSpacing:.3,textTransform:"uppercase"}}>{title}</div>
+    <div style={{background:bg,padding:"6px 8px",fontSize:10,color:"#334155"}}>{children}</div>
+  </div>;
+}
+function Dot({g,s}){const z=s?11:14;return<div style={{width:z,height:z,borderRadius:"50%",flexShrink:0,background:g?"#22c55e":"#f59e0b",display:"flex",alignItems:"center",justifyContent:"center",fontSize:s?6:8,color:"white",fontWeight:700}}>{g?"✓":"!"}</div>}
+function BC({i,t,l}){return<div style={{background:"white",padding:"10px 12px"}}><div style={{display:"flex",alignItems:"center",gap:4,marginBottom:5}}><span style={{fontSize:14}}>{i}</span><b style={{fontSize:10,color:"#0c1e3c"}}>{t}</b></div>{l.map((x,k)=><div key={k} style={{fontSize:9,color:"#334155",marginBottom:2,display:"flex",gap:3}}><span style={{color:"#0f766e",fontSize:8,marginTop:1}}>✓</span><span>{x}</span></div>)}</div>}
+const bP={padding:"8px 18px",borderRadius:10,border:"none",background:"#0f766e",color:"white",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"inherit"};
+const bS={padding:"8px 18px",borderRadius:10,border:"1px solid #cbd5e1",background:"white",cursor:"pointer",fontSize:12,fontFamily:"inherit"};
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

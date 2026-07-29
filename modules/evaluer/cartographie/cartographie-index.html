@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Cartographie des risques — PréventIA Protect</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',system-ui,sans-serif;background:#f1f5f9;color:#1e293b;line-height:1.5}
+.sf{font-family:'DM Serif Display',serif}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@media print{header,.noP{display:none!important}main{padding:0!important}}
+.zone-cell{transition:all .15s;cursor:pointer}
+.zone-cell:hover{transform:scale(1.03);z-index:5}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useRef,useEffect}=React;
+const WH="https://hook.eu2.make.com/qhvt4lylqgbykqljwd1sdybpdaoapedu";
+const today=()=>new Date().toLocaleDateString("fr-FR");
+
+/* ═══ Familles de risques (INRS) ═══ */
+const RISQUES=[
+  {id:"chute_pp",nom:"Chutes de plain-pied",icon:"🚶",cat:"Physique"},
+  {id:"chute_h",nom:"Chutes de hauteur",icon:"🪜",cat:"Physique"},
+  {id:"manut",nom:"Manutention manuelle",icon:"📦",cat:"Physique"},
+  {id:"tms",nom:"TMS / gestes répétitifs",icon:"💪",cat:"Physique"},
+  {id:"machine",nom:"Machines / équipements",icon:"⚙️",cat:"Physique"},
+  {id:"circulation",nom:"Circulation / engins",icon:"🚚",cat:"Physique"},
+  {id:"bruit",nom:"Bruit",icon:"🔊",cat:"Physique"},
+  {id:"vibration",nom:"Vibrations",icon:"📳",cat:"Physique"},
+  {id:"thermique",nom:"Ambiance thermique",icon:"🌡️",cat:"Physique"},
+  {id:"electrique",nom:"Risque électrique",icon:"⚡",cat:"Physique"},
+  {id:"incendie",nom:"Incendie / explosion",icon:"🔥",cat:"Physique"},
+  {id:"chimique",nom:"Agents chimiques / CMR",icon:"🧪",cat:"Chimique"},
+  {id:"poussiere",nom:"Poussières / fumées",icon:"💨",cat:"Chimique"},
+  {id:"biologique",nom:"Agents biologiques",icon:"🦠",cat:"Biologique"},
+  {id:"rps",nom:"Risques psychosociaux",icon:"🧠",cat:"RPS"},
+  {id:"routier",nom:"Risque routier",icon:"🚗",cat:"Physique"},
+  {id:"rayonnement",nom:"Rayonnements",icon:"☢️",cat:"Physique"},
+];
+
+/* Niveau de criticité → couleur */
+const NIVEAUX={
+  0:{label:"Non concerné",color:"#e2e8f0",text:"#94a3b8"},
+  1:{label:"Faible",color:"#bbf7d0",text:"#166534"},
+  2:{label:"Modéré",color:"#fef08a",text:"#854d0e"},
+  3:{label:"Élevé",color:"#fdba74",text:"#9a3412"},
+  4:{label:"Critique",color:"#fca5a5",text:"#991b1b"},
+};
+
+const uid=()=>Math.random().toString(36).slice(2,9);
+const STORAGE_KEY="preventia-carto";
+
+/* ═══ APP ═══ */
+function App(){
+  const[entreprise,setEntreprise]=useState("");
+  const[unites,setUnites]=useState([]);
+  const[view,setView]=useState("matrix"); // matrix | list | synthese
+
+  // Load from localStorage
+  useEffect(()=>{
+    try{const s=localStorage.getItem(STORAGE_KEY);if(s){const d=JSON.parse(s);setEntreprise(d.entreprise||"");setUnites(d.unites||[])}}catch{}
+  },[]);
+  // Save
+  useEffect(()=>{
+    try{localStorage.setItem(STORAGE_KEY,JSON.stringify({entreprise,unites}))}catch{}
+  },[entreprise,unites]);
+
+  function addUnite(nom){
+    setUnites([...unites,{id:uid(),nom,risques:{},effectif:0}]);
+  }
+  function setNiveau(uniteId,risqueId,niveau){
+    setUnites(unites.map(u=>u.id===uniteId?{...u,risques:{...u.risques,[risqueId]:niveau}}:u));
+  }
+  function removeUnite(id){setUnites(unites.filter(u=>u.id!==id))}
+  function updateUnite(id,field,val){setUnites(unites.map(u=>u.id===id?{...u,[field]:val}:u))}
+
+  return(<div style={{minHeight:"100vh",background:"#f1f5f9"}}>
+    <header className="noP" style={{background:"linear-gradient(135deg,#0c1e3c,#0f766e)",color:"white",padding:"0 16px"}}>
+      <div style={{maxWidth:1200,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0"}}>
+        <a href="../../../index.html" style={{display:"flex",alignItems:"center",gap:8,color:"white",textDecoration:"none"}}>
+          <div style={{width:34,height:34,borderRadius:9,background:"rgba(255,255,255,.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>🗺️</div>
+          <div><div className="sf" style={{fontSize:17}}>PréventIA Protect</div><div style={{fontSize:8,opacity:.6,letterSpacing:1.5,textTransform:"uppercase"}}>Cartographie des risques</div></div>
+        </a>
+        {unites.length>0&&<nav style={{display:"flex",gap:4}}>
+          {[["matrix","🗺️ Matrice"],["list","📋 Détail"],["synthese","📊 Synthèse"]].map(([k,l])=>
+            <button key={k} onClick={()=>setView(k)} style={{padding:"6px 12px",border:"none",borderRadius:8,cursor:"pointer",fontSize:11,fontWeight:600,fontFamily:"inherit",background:view===k?"rgba(255,255,255,.9)":"rgba(255,255,255,.12)",color:view===k?"#0c1e3c":"white"}}>{l}</button>)}
+        </nav>}
+      </div>
+    </header>
+
+    <main style={{maxWidth:1200,margin:"0 auto",padding:"16px"}}>
+      <Setup entreprise={entreprise} setEntreprise={setEntreprise} unites={unites} addUnite={addUnite}/>
+      {unites.length===0?<Empty/>:
+        view==="matrix"?<Matrix unites={unites} setNiveau={setNiveau} entreprise={entreprise}/>:
+        view==="list"?<ListView unites={unites} updateUnite={updateUnite} removeUnite={removeUnite} setNiveau={setNiveau}/>:
+        <Synthese unites={unites} entreprise={entreprise}/>}
+    </main>
+  </div>);
+}
+
+/* ═══ SETUP ═══ */
+function Setup({entreprise,setEntreprise,unites,addUnite}){
+  const[nom,setNom]=useState("");
+  const[showAI,setShowAI]=useState(false);
+  const[aiSecteur,setAiSecteur]=useState("");
+  const[ld,setLd]=useState(false);
+
+  async function suggestUnites(){
+    if(!aiSecteur.trim())return;setLd(true);
+    try{
+      const body={model:"claude-sonnet-4-5-20250514",max_tokens:800,messages:[{role:"user",content:`Expert IPRP. Pour une entreprise du secteur "${aiSecteur}", liste les unités de travail typiques (postes/zones). JSON: {"unites":["unité 1","unité 2",...]} (6-10 unités max)`}]};
+      const r=await fetch(WH,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({token:"preventia-protect",payload:JSON.stringify(body)})});
+      const t=await r.text();let p;
+      try{const j=JSON.parse(t);p=JSON.parse((j?.content?.[0]?.text||t).replace(/```json\n?|```/g,"").trim())}catch{p=null}
+      if(p?.unites)p.unites.forEach(u=>addUnite(u));
+    }catch{}
+    setLd(false);setShowAI(false);setAiSecteur("");
+  }
+
+  return(<div className="noP" style={{background:"white",borderRadius:14,padding:18,boxShadow:"0 1px 4px rgba(0,0,0,.06)",marginBottom:16}}>
+    <div style={{display:"flex",gap:12,flexWrap:"wrap",alignItems:"flex-end"}}>
+      <div style={{flex:"1 1 240px"}}>
+        <label style={{fontSize:11,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>🏢 Entreprise / Établissement</label>
+        <input value={entreprise} onChange={e=>setEntreprise(e.target.value)} placeholder="Nom de l'entreprise" style={inp}/>
+      </div>
+      <div style={{flex:"1 1 240px"}}>
+        <label style={{fontSize:11,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>➕ Ajouter une unité de travail</label>
+        <div style={{display:"flex",gap:6}}>
+          <input value={nom} onChange={e=>setNom(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&nom.trim()){addUnite(nom.trim());setNom("")}}} placeholder="Ex: Atelier, Bureau, Entrepôt…" style={inp}/>
+          <button onClick={()=>{if(nom.trim()){addUnite(nom.trim());setNom("")}}} style={bP}>+</button>
+        </div>
+      </div>
+      <button onClick={()=>setShowAI(!showAI)} style={{...bS,whiteSpace:"nowrap"}}>🤖 Suggérer via IA</button>
+    </div>
+    {showAI&&<div style={{marginTop:12,padding:12,background:"#f0fdf4",borderRadius:10,display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+      <input value={aiSecteur} onChange={e=>setAiSecteur(e.target.value)} placeholder="Secteur d'activité (ex: métallurgie, EHPAD, BTP…)" style={{...inp,flex:"1 1 240px"}}/>
+      <button onClick={suggestUnites} disabled={ld} style={{...bP,opacity:ld?.6:1}}>{ld?"⏳…":"Générer les unités"}</button>
+    </div>}
+  </div>);
+}
+
+/* ═══ EMPTY STATE ═══ */
+function Empty(){
+  return(<div style={{textAlign:"center",padding:"60px 20px",color:"#64748b"}}>
+    <div style={{fontSize:56,marginBottom:16}}>🗺️</div>
+    <h2 className="sf" style={{fontSize:22,color:"#1e293b",marginBottom:8}}>Cartographie des risques professionnels</h2>
+    <p style={{fontSize:14,maxWidth:520,margin:"0 auto 20px"}}>Ajoutez vos unités de travail ci-dessus, puis cotez chaque risque par unité. La matrice visuelle vous donne une vue d'ensemble instantanée pour alimenter votre DUERP.</p>
+    <div style={{display:"flex",gap:16,justifyContent:"center",flexWrap:"wrap",maxWidth:600,margin:"0 auto"}}>
+      {[["🗺️","Matrice visuelle","Croisez unités × risques en un coup d'œil"],["🎨","Cotation 4 niveaux","Faible → Critique, code couleur"],["📊","Synthèse DUERP","Priorisation automatique des actions"]].map(([i,t,d],k)=>
+        <div key={k} style={{background:"white",borderRadius:12,padding:16,width:170,boxShadow:"0 1px 3px rgba(0,0,0,.06)"}}>
+          <div style={{fontSize:28,marginBottom:6}}>{i}</div><b style={{fontSize:13,color:"#1e293b"}}>{t}</b><p style={{fontSize:11,marginTop:4}}>{d}</p>
+        </div>)}
+    </div>
+  </div>);
+}
+
+/* ═══ MATRICE ═══ */
+function Matrix({unites,setNiveau,entreprise}){
+  const ref=useRef(null);
+  // Only show risks that have at least one non-zero value, or all if empty
+  const activeRisques=RISQUES.filter(r=>unites.some(u=>(u.risques[r.id]||0)>0))||RISQUES;
+  const risquesToShow=activeRisques.length>0?activeRisques:RISQUES;
+
+  async function toPDF(){
+    const c=await html2canvas(ref.current,{scale:2,backgroundColor:"#fff"});
+    const{jsPDF}=window.jspdf;const pdf=new jsPDF("landscape","mm","a4");
+    const w=297,h=c.height*w/c.width;
+    pdf.addImage(c.toDataURL("image/jpeg",.95),"JPEG",0,0,w,Math.min(h,210));
+    pdf.save(`Cartographie_${(entreprise||"risques").replace(/\s/g,'_')}.pdf`);
+  }
+
+  return(<div>
+    <div className="noP" style={{display:"flex",gap:8,marginBottom:12,justifyContent:"space-between",flexWrap:"wrap",alignItems:"center"}}>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+        {Object.entries(NIVEAUX).map(([n,v])=><div key={n} style={{display:"flex",alignItems:"center",gap:4,fontSize:11}}><div style={{width:16,height:16,borderRadius:4,background:v.color}}/><span style={{color:"#475569"}}>{v.label}</span></div>)}
+      </div>
+      <button onClick={toPDF} style={{...bP,background:"#dc2626"}}>📄 Export PDF</button>
+    </div>
+    <p style={{fontSize:12,color:"#64748b",marginBottom:8}}>💡 Cliquez sur une case pour faire évoluer le niveau de risque (0 → 4).</p>
+
+    <div ref={ref} style={{background:"white",borderRadius:12,padding:16,boxShadow:"0 1px 4px rgba(0,0,0,.06)",overflowX:"auto"}}>
+      <h3 className="sf" style={{fontSize:16,marginBottom:2}}>Cartographie des risques {entreprise&&`— ${entreprise}`}</h3>
+      <p style={{fontSize:11,color:"#64748b",marginBottom:12}}>Généré le {today()} • {unites.length} unités • PréventIA Protect</p>
+      <table style={{borderCollapse:"separate",borderSpacing:2,width:"100%",minWidth:600}}>
+        <thead><tr>
+          <th style={{textAlign:"left",padding:"6px 8px",fontSize:11,color:"#475569",position:"sticky",left:0,background:"white",minWidth:130}}>Risque \ Unité</th>
+          {unites.map(u=><th key={u.id} style={{padding:"6px 4px",fontSize:10,color:"#0c1e3c",fontWeight:700,writingMode:"vertical-rl",transform:"rotate(180deg)",whiteSpace:"nowrap",maxHeight:120,height:100}}>{u.nom}</th>)}
+        </tr></thead>
+        <tbody>
+          {risquesToShow.map(r=><tr key={r.id}>
+            <td style={{padding:"4px 8px",fontSize:11,color:"#334155",position:"sticky",left:0,background:"white",whiteSpace:"nowrap"}}>{r.icon} {r.nom}</td>
+            {unites.map(u=>{const n=u.risques[r.id]||0;const nv=NIVEAUX[n];return(
+              <td key={u.id} className="zone-cell" onClick={()=>setNiveau(u.id,r.id,(n+1)%5)} style={{background:nv.color,borderRadius:6,textAlign:"center",padding:"8px 4px",minWidth:44,color:nv.text,fontWeight:700,fontSize:13}} title={`${r.nom} — ${u.nom}: ${nv.label}`}>{n>0?n:""}</td>
+            )})}
+          </tr>)}
+        </tbody>
+      </table>
+    </div>
+  </div>);
+}
+
+/* ═══ LIST VIEW (détail par unité) ═══ */
+function ListView({unites,updateUnite,removeUnite,setNiveau}){
+  return(<div style={{display:"grid",gap:12}}>
+    {unites.map(u=>{
+      const risquesU=RISQUES.filter(r=>(u.risques[r.id]||0)>0).sort((a,b)=>(u.risques[b.id]||0)-(u.risques[a.id]||0));
+      return<div key={u.id} style={{background:"white",borderRadius:12,padding:16,boxShadow:"0 1px 4px rgba(0,0,0,.06)"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:8}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <input value={u.nom} onChange={e=>updateUnite(u.id,"nom",e.target.value)} style={{...inp,fontWeight:700,fontSize:15,width:220}}/>
+            <div style={{display:"flex",alignItems:"center",gap:4}}>
+              <label style={{fontSize:11,color:"#64748b"}}>Effectif</label>
+              <input type="number" value={u.effectif} onChange={e=>updateUnite(u.id,"effectif",parseInt(e.target.value)||0)} style={{...inp,width:60}}/>
+            </div>
+          </div>
+          <button onClick={()=>removeUnite(u.id)} style={{...bS,color:"#dc2626",borderColor:"#fecaca"}}>🗑️ Supprimer</button>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:6}}>
+          {RISQUES.map(r=>{const n=u.risques[r.id]||0;const nv=NIVEAUX[n];return(
+            <div key={r.id} style={{display:"flex",alignItems:"center",gap:6,padding:"6px 8px",borderRadius:8,background:n>0?nv.color:"#f8fafc",border:`1px solid ${n>0?nv.color:"#e2e8f0"}`}}>
+              <span style={{fontSize:14}}>{r.icon}</span>
+              <span style={{fontSize:11,flex:1,color:n>0?nv.text:"#94a3b8"}}>{r.nom}</span>
+              <select value={n} onChange={e=>setNiveau(u.id,r.id,parseInt(e.target.value))} style={{fontSize:11,border:"1px solid #cbd5e1",borderRadius:6,padding:"2px 4px",fontFamily:"inherit",background:"white"}}>
+                {Object.entries(NIVEAUX).map(([k,v])=><option key={k} value={k}>{k} — {v.label}</option>)}
+              </select>
+            </div>
+          )})}
+        </div>
+      </div>;
+    })}
+  </div>);
+}
+
+/* ═══ SYNTHÈSE ═══ */
+function Synthese({unites,entreprise}){
+  const ref=useRef(null);
+  // Compute all risk points, sorted by criticité
+  const points=[];
+  unites.forEach(u=>RISQUES.forEach(r=>{const n=u.risques[r.id]||0;if(n>0)points.push({unite:u.nom,risque:r,niveau:n})}));
+  points.sort((a,b)=>b.niveau-a.niveau);
+  const critiques=points.filter(p=>p.niveau>=3);
+  const totalEffectif=unites.reduce((s,u)=>s+(u.effectif||0),0);
+
+  async function toPDF(){
+    const c=await html2canvas(ref.current,{scale:2,backgroundColor:"#fff"});
+    const{jsPDF}=window.jspdf;const pdf=new jsPDF("portrait","mm","a4");
+    const w=210,h=c.height*w/c.width;
+    pdf.addImage(c.toDataURL("image/jpeg",.95),"JPEG",0,0,w,Math.min(h,297));
+    if(h>297){pdf.addPage();pdf.addImage(c.toDataURL("image/jpeg",.95),"JPEG",0,-297,w,h);}
+    pdf.save(`Synthese_risques_${(entreprise||"").replace(/\s/g,'_')}.pdf`);
+  }
+
+  return(<div>
+    <div className="noP" style={{display:"flex",justifyContent:"flex-end",marginBottom:12}}>
+      <button onClick={toPDF} style={{...bP,background:"#dc2626"}}>📄 Export PDF</button>
+    </div>
+    <div ref={ref} style={{background:"white",borderRadius:12,padding:20,boxShadow:"0 1px 4px rgba(0,0,0,.06)"}}>
+      <h3 className="sf" style={{fontSize:18,marginBottom:2}}>Synthèse de la cartographie {entreprise&&`— ${entreprise}`}</h3>
+      <p style={{fontSize:11,color:"#64748b",marginBottom:16}}>Généré le {today()} • Aide à la priorisation DUERP / PAPRIPACT</p>
+
+      {/* Indicateurs */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:10,marginBottom:20}}>
+        {[["Unités de travail",unites.length,"#0f766e"],["Effectif total",totalEffectif,"#2563eb"],["Risques identifiés",points.length,"#eab308"],["Risques critiques",critiques.length,"#dc2626"]].map(([l,v,c],k)=>
+          <div key={k} style={{background:"#f8fafc",borderRadius:10,padding:14,textAlign:"center",borderTop:`3px solid ${c}`}}>
+            <div style={{fontSize:26,fontWeight:700,color:c}}>{v}</div><div style={{fontSize:10,color:"#64748b"}}>{l}</div>
+          </div>)}
+      </div>
+
+      {/* Risques prioritaires */}
+      <h4 style={{fontSize:13,fontWeight:700,color:"#991b1b",marginBottom:8}}>🔴 Risques prioritaires (niveau ≥ 3)</h4>
+      {critiques.length===0?<p style={{fontSize:12,color:"#64748b",marginBottom:16}}>Aucun risque critique identifié. ✅</p>:
+        <div style={{marginBottom:20}}>
+          {critiques.map((p,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",background:NIVEAUX[p.niveau].color,borderRadius:8,marginBottom:4}}>
+            <span style={{fontSize:16}}>{p.risque.icon}</span>
+            <div style={{flex:1}}><b style={{fontSize:12,color:NIVEAUX[p.niveau].text}}>{p.risque.nom}</b> <span style={{fontSize:11,color:NIVEAUX[p.niveau].text,opacity:.8}}>— {p.unite}</span></div>
+            <span style={{fontSize:11,fontWeight:700,color:NIVEAUX[p.niveau].text,padding:"2px 8px",background:"rgba(255,255,255,.5)",borderRadius:6}}>{NIVEAUX[p.niveau].label}</span>
+          </div>)}
+        </div>}
+
+      {/* Répartition par unité */}
+      <h4 style={{fontSize:13,fontWeight:700,color:"#0c1e3c",marginBottom:8}}>📊 Niveau de risque global par unité</h4>
+      {unites.map(u=>{
+        const rs=RISQUES.map(r=>u.risques[r.id]||0).filter(n=>n>0);
+        const moy=rs.length?rs.reduce((a,b)=>a+b,0)/rs.length:0;
+        const max=rs.length?Math.max(...rs):0;
+        return<div key={u.id} style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+          <span style={{fontSize:12,width:160,color:"#334155"}}>{u.nom}</span>
+          <div style={{flex:1,height:20,background:"#f1f5f9",borderRadius:6,overflow:"hidden",position:"relative"}}>
+            <div style={{width:`${moy/4*100}%`,height:"100%",background:NIVEAUX[Math.round(moy)]?.color||"#e2e8f0",transition:"width .3s"}}/>
+          </div>
+          <span style={{fontSize:11,color:"#64748b",width:90}}>Moy. {moy.toFixed(1)} / Max {max}</span>
+        </div>;
+      })}
+
+      <div style={{marginTop:20,padding:12,background:"#eff6ff",borderRadius:10,fontSize:11,color:"#1e40af"}}>
+        ℹ️ Cette cartographie constitue une aide à l'évaluation des risques. Elle alimente le <b>Document Unique (DUERP)</b> et la priorisation du <b>PAPRIPACT</b> (art. R.4121-1 et R.4121-2 du Code du travail).
+      </div>
+    </div>
+  </div>);
+}
+
+const inp={width:"100%",padding:"8px 12px",borderRadius:8,border:"1px solid #cbd5e1",fontSize:13,fontFamily:"inherit",boxSizing:"border-box"};
+const bP={padding:"8px 16px",borderRadius:8,border:"none",background:"#0f766e",color:"white",cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"inherit"};
+const bS={padding:"8px 16px",borderRadius:8,border:"1px solid #cbd5e1",background:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit"};
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

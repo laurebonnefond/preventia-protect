@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Inventaire équipements — PréventIA Protect</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',system-ui,sans-serif;background:#f1f5f9;color:#1e293b;line-height:1.5}
+.sf{font-family:'DM Serif Display',serif}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@media print{header,.noP{display:none!important}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useRef,useEffect,useMemo}=React;
+const WH_TXT="https://hook.eu2.make.com/qhvt4lylqgbykqljwd1sdybpdaoapedu";
+const WH_VISION="https://hook.eu2.make.com/y91ilwbt4jpfgt4m42gzurbbmolkxj2x";
+const today=()=>new Date().toLocaleDateString("fr-FR");
+const uid=()=>Math.random().toString(36).slice(2,9);
+const KEY="preventia-inventaire";
+
+/* ═══ Catégories d'équipements ═══ */
+const CATS={
+  epi:{label:"EPI",icon:"🦺",color:"#0f766e",desc:"Équipement de Protection Individuelle"},
+  epc:{label:"EPC",icon:"🛡️",color:"#2563eb",desc:"Équipement de Protection Collective"},
+  machine:{label:"Machine",icon:"⚙️",color:"#7c3aed",desc:"Machine / équipement de travail"},
+  levage:{label:"Levage",icon:"🏗️",color:"#ea580c",desc:"Appareil de levage"},
+  chimique:{label:"Produit",icon:"🧪",color:"#be185d",desc:"Produit chimique"},
+  extincteur:{label:"Incendie",icon:"🧯",color:"#dc2626",desc:"Moyen de secours incendie"},
+};
+
+/* ═══ Périodicités réglementaires de contrôle (mois) ═══ */
+const PERIODICITE={
+  epi:{harnais:12,default:null},
+  levage:12, machine:12, extincteur:12, epc:12, chimique:null, epi_default:null,
+};
+
+const uidgen=()=>Math.random().toString(36).slice(2,9);
+
+/* ═══ APP ═══ */
+function App(){
+  const[items,setItems]=useState([]);
+  const[view,setView]=useState("list");
+  const[filter,setFilter]=useState("all");
+  const[search,setSearch]=useState("");
+  const[editing,setEditing]=useState(null);
+  const[showForm,setShowForm]=useState(false);
+
+  useEffect(()=>{try{const s=localStorage.getItem(KEY);if(s)setItems(JSON.parse(s))}catch{}},[]);
+  useEffect(()=>{try{localStorage.setItem(KEY,JSON.stringify(items))}catch{}},[items]);
+
+  function save(item){
+    if(item.id)setItems(items.map(i=>i.id===item.id?item:i));
+    else setItems([...items,{...item,id:uid()}]);
+    setShowForm(false);setEditing(null);
+  }
+  function remove(id){setItems(items.filter(i=>i.id!==id))}
+
+  // Compute alert status
+  function statusOf(item){
+    if(!item.prochainControle)return null;
+    const d=new Date(item.prochainControle.split("/").reverse().join("-"));
+    const now=new Date();const days=Math.ceil((d-now)/(1000*60*60*24));
+    if(days<0)return{level:"danger",label:"Dépassé",days};
+    if(days<=30)return{level:"warning",label:`J-${days}`,days};
+    if(days<=90)return{level:"info",label:`J-${days}`,days};
+    return{level:"ok",label:"Conforme",days};
+  }
+
+  const filtered=useMemo(()=>items.filter(i=>{
+    if(filter!=="all"&&i.categorie!==filter)return false;
+    if(search&&!(`${i.designation} ${i.marque} ${i.reference} ${i.localisation}`.toLowerCase().includes(search.toLowerCase())))return false;
+    return true;
+  }),[items,filter,search]);
+
+  const alertes=items.map(i=>({item:i,st:statusOf(i)})).filter(x=>x.st&&(x.st.level==="danger"||x.st.level==="warning")).sort((a,b)=>a.st.days-b.st.days);
+
+  return(<div style={{minHeight:"100vh",background:"#f1f5f9"}}>
+    <header className="noP" style={{background:"linear-gradient(135deg,#0c1e3c,#0f766e)",color:"white",padding:"0 16px"}}>
+      <div style={{maxWidth:1200,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0"}}>
+        <a href="../../../index.html" style={{display:"flex",alignItems:"center",gap:8,color:"white",textDecoration:"none"}}>
+          <div style={{width:34,height:34,borderRadius:9,background:"rgba(255,255,255,.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>📦</div>
+          <div><div className="sf" style={{fontSize:17}}>PréventIA Protect</div><div style={{fontSize:8,opacity:.6,letterSpacing:1.5,textTransform:"uppercase"}}>Inventaire équipements</div></div>
+        </a>
+        <nav style={{display:"flex",gap:4}}>
+          {[["list","📋 Inventaire"],["alertes",`🔔 Alertes${alertes.length?` (${alertes.length})`:""}`],["stats","📊 Tableau de bord"]].map(([k,l])=>
+            <button key={k} onClick={()=>setView(k)} style={{padding:"6px 12px",border:"none",borderRadius:8,cursor:"pointer",fontSize:11,fontWeight:600,fontFamily:"inherit",background:view===k?"rgba(255,255,255,.9)":"rgba(255,255,255,.12)",color:view===k?"#0c1e3c":"white"}}>{l}</button>)}
+        </nav>
+      </div>
+    </header>
+
+    <main style={{maxWidth:1200,margin:"0 auto",padding:"16px"}}>
+      {view==="list"&&<>
+        <Toolbar filter={filter} setFilter={setFilter} search={search} setSearch={setSearch} onAdd={()=>{setEditing(null);setShowForm(true)}} count={filtered.length}/>
+        {items.length===0?<Empty onAdd={()=>{setEditing(null);setShowForm(true)}}/>:
+          <ItemGrid items={filtered} statusOf={statusOf} onEdit={i=>{setEditing(i);setShowForm(true)}} onRemove={remove}/>}
+      </>}
+      {view==="alertes"&&<Alertes alertes={alertes} onEdit={i=>{setEditing(i);setShowForm(true);setView("list")}}/>}
+      {view==="stats"&&<Stats items={items} statusOf={statusOf}/>}
+    </main>
+
+    {showForm&&<Form item={editing} onSave={save} onClose={()=>{setShowForm(false);setEditing(null)}}/>}
+  </div>);
+}
+
+/* ═══ TOOLBAR ═══ */
+function Toolbar({filter,setFilter,search,setSearch,onAdd,count}){
+  return(<div className="noP" style={{background:"white",borderRadius:12,padding:14,boxShadow:"0 1px 4px rgba(0,0,0,.06)",marginBottom:16,display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
+    <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Rechercher (désignation, marque, réf, localisation…)" style={{...inp,flex:"1 1 240px"}}/>
+    <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+      <button onClick={()=>setFilter("all")} style={chip(filter==="all")}>Tous</button>
+      {Object.entries(CATS).map(([k,c])=><button key={k} onClick={()=>setFilter(k)} style={chip(filter===k)}>{c.icon} {c.label}</button>)}
+    </div>
+    <button onClick={onAdd} style={{...bP,whiteSpace:"nowrap"}}>➕ Ajouter</button>
+  </div>);
+}
+
+/* ═══ EMPTY ═══ */
+function Empty({onAdd}){
+  return(<div style={{textAlign:"center",padding:"60px 20px",color:"#64748b"}}>
+    <div style={{fontSize:56,marginBottom:16}}>📦</div>
+    <h2 className="sf" style={{fontSize:22,color:"#1e293b",marginBottom:8}}>Inventaire des équipements</h2>
+    <p style={{fontSize:14,maxWidth:520,margin:"0 auto 20px"}}>Recensez vos EPI, EPC, machines et appareils de levage. Suivez les contrôles réglementaires (VGP) et recevez des alertes avant chaque échéance.</p>
+    <button onClick={onAdd} style={{...bP,fontSize:14,padding:"10px 24px"}}>➕ Ajouter un équipement</button>
+  </div>);
+}
+
+/* ═══ ITEM GRID ═══ */
+function ItemGrid({items,statusOf,onEdit,onRemove}){
+  if(items.length===0)return<p style={{textAlign:"center",color:"#64748b",padding:40}}>Aucun équipement ne correspond à ce filtre.</p>;
+  return(<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:12}}>
+    {items.map(i=>{const c=CATS[i.categorie];const st=statusOf(i);return(
+      <div key={i.id} style={{background:"white",borderRadius:12,padding:14,boxShadow:"0 1px 4px rgba(0,0,0,.06)",borderTop:`3px solid ${c.color}`,animation:"fadeIn .3s"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+          <div style={{display:"flex",alignItems:"center",gap:6}}>
+            <span style={{fontSize:20}}>{c.icon}</span>
+            <div><b style={{fontSize:13}}>{i.designation||"Sans nom"}</b><br/><span style={{fontSize:10,color:"#64748b"}}>{c.label}{i.marque?` • ${i.marque}`:""}</span></div>
+          </div>
+          {st&&<Badge st={st}/>}
+        </div>
+        <div style={{fontSize:11,color:"#475569",lineHeight:1.6}}>
+          {i.reference&&<div>📎 Réf : {i.reference}</div>}
+          {i.localisation&&<div>📍 {i.localisation}</div>}
+          {i.quantite>1&&<div>🔢 Quantité : {i.quantite}</div>}
+          {i.dernierControle&&<div>✓ Dernier contrôle : {i.dernierControle}</div>}
+          {i.prochainControle&&<div>📅 Prochain : <b>{i.prochainControle}</b></div>}
+          {i.norme&&<div>📖 {i.norme}</div>}
+        </div>
+        <div style={{display:"flex",gap:6,marginTop:10}}>
+          <button onClick={()=>onEdit(i)} style={{...bS,flex:1,fontSize:11,padding:"6px"}}>✏️ Modifier</button>
+          <button onClick={()=>{if(confirm("Supprimer cet équipement ?"))onRemove(i.id)}} style={{...bS,fontSize:11,padding:"6px 10px",color:"#dc2626",borderColor:"#fecaca"}}>🗑️</button>
+        </div>
+      </div>
+    )})}
+  </div>);
+}
+
+function Badge({st}){
+  const C={danger:{bg:"#fee2e2",fg:"#991b1b"},warning:{bg:"#fef3c7",fg:"#92400e"},info:{bg:"#dbeafe",fg:"#1e40af"},ok:{bg:"#dcfce7",fg:"#166534"}};
+  const c=C[st.level];
+  return<span style={{fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:12,background:c.bg,color:c.fg,whiteSpace:"nowrap"}}>{st.level==="danger"?"⚠️ ":""}{st.label}</span>;
+}
+
+/* ═══ ALERTES ═══ */
+function Alertes({alertes,onEdit}){
+  if(alertes.length===0)return(<div style={{textAlign:"center",padding:"60px 20px",color:"#64748b"}}>
+    <div style={{fontSize:56,marginBottom:16}}>✅</div>
+    <h2 className="sf" style={{fontSize:20,color:"#1e293b"}}>Aucune alerte</h2>
+    <p style={{fontSize:14}}>Tous vos équipements sont à jour de leurs contrôles.</p>
+  </div>);
+  return(<div>
+    <h2 className="sf" style={{fontSize:20,marginBottom:4}}>🔔 Échéances de contrôle</h2>
+    <p style={{fontSize:13,color:"#64748b",marginBottom:16}}>{alertes.length} équipement(s) nécessitent votre attention.</p>
+    <div style={{display:"grid",gap:8}}>
+      {alertes.map(({item,st})=>{const c=CATS[item.categorie];return(
+        <div key={item.id} onClick={()=>onEdit(item)} style={{background:"white",borderRadius:10,padding:"12px 16px",boxShadow:"0 1px 3px rgba(0,0,0,.06)",display:"flex",alignItems:"center",gap:12,cursor:"pointer",borderLeft:`4px solid ${st.level==="danger"?"#dc2626":"#eab308"}`}}>
+          <span style={{fontSize:22}}>{c.icon}</span>
+          <div style={{flex:1}}>
+            <b style={{fontSize:13}}>{item.designation}</b> <span style={{fontSize:11,color:"#64748b"}}>{item.marque} {item.localisation&&`• ${item.localisation}`}</span><br/>
+            <span style={{fontSize:11,color:"#475569"}}>Contrôle prévu : <b>{item.prochainControle}</b></span>
+          </div>
+          <Badge st={st}/>
+        </div>
+      )})}
+    </div>
+  </div>);
+}
+
+/* ═══ STATS ═══ */
+function Stats({items,statusOf}){
+  const parCat=Object.keys(CATS).map(k=>({cat:k,...CATS[k],count:items.filter(i=>i.categorie===k).length}));
+  const totalQte=items.reduce((s,i)=>s+(parseInt(i.quantite)||1),0);
+  const conformes=items.filter(i=>{const st=statusOf(i);return st&&st.level==="ok"}).length;
+  const aControler=items.filter(i=>{const st=statusOf(i);return st&&(st.level==="danger"||st.level==="warning")}).length;
+
+  function exportPDF(){
+    const{jsPDF}=window.jspdf;const pdf=new jsPDF();
+    pdf.setFontSize(16);pdf.text("Inventaire des équipements — PréventIA Protect",14,18);
+    pdf.setFontSize(10);pdf.text(`Généré le ${today()} • ${items.length} équipements`,14,25);
+    const rows=items.map(i=>[CATS[i.categorie].label,i.designation||"",i.marque||"",i.reference||"",i.localisation||"",i.quantite||1,i.prochainControle||"—"]);
+    pdf.autoTable({startY:30,head:[["Type","Désignation","Marque","Réf.","Localisation","Qté","Prochain contrôle"]],body:rows,styles:{fontSize:8},headStyles:{fillColor:[12,30,60]}});
+    pdf.save("Inventaire_equipements.pdf");
+  }
+
+  return(<div>
+    <div className="noP" style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:8}}>
+      <h2 className="sf" style={{fontSize:20}}>📊 Tableau de bord</h2>
+      <button onClick={exportPDF} style={{...bP,background:"#dc2626"}}>📄 Export inventaire PDF</button>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12,marginBottom:20}}>
+      {[["Équipements",items.length,"#0f766e"],["Quantité totale",totalQte,"#2563eb"],["Conformes",conformes,"#22c55e"],["À contrôler",aControler,"#dc2626"]].map(([l,v,c],k)=>
+        <div key={k} style={{background:"white",borderRadius:12,padding:16,textAlign:"center",boxShadow:"0 1px 3px rgba(0,0,0,.06)",borderTop:`3px solid ${c}`}}>
+          <div style={{fontSize:30,fontWeight:700,color:c}}>{v}</div><div style={{fontSize:11,color:"#64748b"}}>{l}</div>
+        </div>)}
+    </div>
+    <div style={{background:"white",borderRadius:12,padding:18,boxShadow:"0 1px 4px rgba(0,0,0,.06)"}}>
+      <h3 style={{fontSize:14,fontWeight:700,marginBottom:12}}>Répartition par catégorie</h3>
+      {parCat.map(c=>{const pct=items.length?c.count/items.length*100:0;return(
+        <div key={c.cat} style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+          <span style={{fontSize:12,width:100}}>{c.icon} {c.label}</span>
+          <div style={{flex:1,height:22,background:"#f1f5f9",borderRadius:6,overflow:"hidden"}}><div style={{width:`${pct}%`,height:"100%",background:c.color,transition:"width .3s"}}/></div>
+          <span style={{fontSize:12,fontWeight:700,color:c.color,width:30,textAlign:"right"}}>{c.count}</span>
+        </div>
+      )})}
+    </div>
+  </div>);
+}
+
+/* ═══ FORM ═══ */
+function Form({item,onSave,onClose}){
+  const[f,setF]=useState(item||{categorie:"epi",designation:"",marque:"",reference:"",localisation:"",quantite:1,norme:"",dernierControle:"",prochainControle:"",notes:""});
+  const[ocrLoading,setOcr]=useState(false);
+  const fileRef=useRef();
+
+  function set(k,v){setF({...f,[k]:v})}
+
+  // Auto-calc prochain controle from dernier + periodicite
+  function autoControle(){
+    if(!f.dernierControle)return;
+    const per=f.categorie==="levage"||f.categorie==="machine"||f.categorie==="extincteur"?12:12;
+    const d=new Date(f.dernierControle.split("/").reverse().join("-"));
+    d.setMonth(d.getMonth()+per);
+    set("prochainControle",d.toLocaleDateString("fr-FR"));
+  }
+
+  async function handleOCR(e){
+    const file=e.target.files[0];if(!file)return;setOcr(true);
+    try{
+      const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(",")[1]);r.onerror=rej;r.readAsDataURL(file)});
+      const body={model:"claude-sonnet-4-5-20250514",max_tokens:800,messages:[{role:"user",content:[
+        {type:"image",source:{type:"base64",media_type:file.type,data:b64}},
+        {type:"text",text:`Extrais les infos de cette étiquette/plaque d'équipement. JSON: {"designation":"...","marque":"...","reference":"...","norme":"...","dernierControle":"JJ/MM/AAAA ou vide"}`}
+      ]}]};
+      const r=await fetch(WH_VISION,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({token:"preventia-protect",payload:JSON.stringify(body)})});
+      const t=await r.text();let p;
+      try{const j=JSON.parse(t);p=JSON.parse((j?.content?.[0]?.text||t).replace(/```json\n?|```/g,"").trim())}catch{p=null}
+      if(p)setF({...f,...Object.fromEntries(Object.entries(p).filter(([k,v])=>v))});
+    }catch{}
+    setOcr(false);
+  }
+
+  const c=CATS[f.categorie];
+  return(<div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(12,30,60,.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:16,zIndex:50}}>
+    <div onClick={e=>e.stopPropagation()} style={{background:"white",borderRadius:16,padding:22,maxWidth:520,width:"100%",maxHeight:"90vh",overflowY:"auto",animation:"fadeIn .2s"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+        <h3 className="sf" style={{fontSize:18}}>{item?"✏️ Modifier":"➕ Nouvel équipement"}</h3>
+        <button onClick={onClose} style={{border:"none",background:"none",fontSize:20,cursor:"pointer",color:"#94a3b8"}}>✕</button>
+      </div>
+
+      {/* OCR */}
+      <div style={{marginBottom:14,padding:12,background:"#f0fdf4",borderRadius:10,textAlign:"center"}}>
+        <input ref={fileRef} type="file" accept="image/*" onChange={handleOCR} style={{display:"none"}}/>
+        <button onClick={()=>fileRef.current.click()} disabled={ocrLoading} style={{...bS,fontSize:12}}>{ocrLoading?"⏳ Lecture…":"📷 Scanner une étiquette / plaque (IA)"}</button>
+        <p style={{fontSize:10,color:"#64748b",marginTop:4}}>Prenez en photo la plaque signalétique, l'IA remplit les champs</p>
+      </div>
+
+      {/* Catégorie */}
+      <label style={lbl}>Catégorie</label>
+      <div style={{display:"flex",gap:4,flexWrap:"wrap",marginBottom:12}}>
+        {Object.entries(CATS).map(([k,cc])=><button key={k} onClick={()=>set("categorie",k)} style={{padding:"6px 10px",borderRadius:8,border:f.categorie===k?`2px solid ${cc.color}`:"1px solid #cbd5e1",background:f.categorie===k?"#f0fdf4":"white",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>{cc.icon} {cc.label}</button>)}
+      </div>
+
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+        <div style={{gridColumn:"1/-1"}}><label style={lbl}>Désignation *</label><input value={f.designation} onChange={e=>set("designation",e.target.value)} placeholder={c.desc} style={inp}/></div>
+        <div><label style={lbl}>Marque</label><input value={f.marque} onChange={e=>set("marque",e.target.value)} style={inp}/></div>
+        <div><label style={lbl}>Référence / N° série</label><input value={f.reference} onChange={e=>set("reference",e.target.value)} style={inp}/></div>
+        <div><label style={lbl}>Localisation</label><input value={f.localisation} onChange={e=>set("localisation",e.target.value)} placeholder="Atelier, zone…" style={inp}/></div>
+        <div><label style={lbl}>Quantité</label><input type="number" value={f.quantite} onChange={e=>set("quantite",e.target.value)} style={inp}/></div>
+        <div><label style={lbl}>Norme / marquage</label><input value={f.norme} onChange={e=>set("norme",e.target.value)} placeholder="EN 388, CE…" style={inp}/></div>
+        <div></div>
+        <div><label style={lbl}>Dernier contrôle</label><input value={f.dernierControle} onChange={e=>set("dernierControle",e.target.value)} onBlur={autoControle} placeholder="JJ/MM/AAAA" style={inp}/></div>
+        <div><label style={lbl}>Prochain contrôle</label><input value={f.prochainControle} onChange={e=>set("prochainControle",e.target.value)} placeholder="JJ/MM/AAAA" style={inp}/></div>
+        <div style={{gridColumn:"1/-1"}}><label style={lbl}>Notes</label><textarea value={f.notes} onChange={e=>set("notes",e.target.value)} rows={2} style={{...inp,resize:"vertical"}}/></div>
+      </div>
+
+      <div style={{display:"flex",gap:8,marginTop:16}}>
+        <button onClick={onClose} style={{...bS,flex:1}}>Annuler</button>
+        <button onClick={()=>{if(f.designation.trim())onSave(f);else alert("La désignation est obligatoire")}} style={{...bP,flex:1}}>💾 Enregistrer</button>
+      </div>
+    </div>
+  </div>);
+}
+
+const inp={width:"100%",padding:"8px 12px",borderRadius:8,border:"1px solid #cbd5e1",fontSize:13,fontFamily:"inherit",boxSizing:"border-box"};
+const lbl={fontSize:11,fontWeight:600,color:"#475569",display:"block",marginBottom:3};
+const bP={padding:"8px 16px",borderRadius:8,border:"none",background:"#0f766e",color:"white",cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"inherit"};
+const bS={padding:"8px 16px",borderRadius:8,border:"1px solid #cbd5e1",background:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit"};
+const chip=a=>({padding:"6px 12px",borderRadius:16,border:a?"2px solid #0f766e":"1px solid #cbd5e1",background:a?"#ecfdf5":"white",fontSize:11,cursor:"pointer",fontFamily:"inherit",fontWeight:a?700:400,color:a?"#065f46":"#334155"});
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

@@ -67,25 +67,7 @@ function classify(name){
 }
 
 /* ═══ Positions verticales des zones (% hauteur silhouette) ═══ */
-const ZONE_Y={
-
-tete:{x:50,y:6},
-
-yeux:{x:50,y:12},
-
-oreilles:{x:50,y:16},
-
-respir:{x:50,y:22},
-
-torse:{x:50,y:34},
-
-mains:{x:50,y:52},
-
-jambes:{x:50,y:72},
-
-pieds:{x:50,y:92}
-};
-
+const ZONE_Y={tete:3,yeux:8,oreilles:12,respir:17,harnais:26,torse:30,torse2:36,gilet:30,tablier:42,mains:50,jambes:62,genoux:72,mollets:78,pieds:90};
 /* ═══ Description EPI par défaut (fallback si IA ne fournit pas de desc contextuelle) ═══ */
 const DEFAULT_DESC={
   tete:"Protection crânienne contre les chocs et chutes d'objets.",

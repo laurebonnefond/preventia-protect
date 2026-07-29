@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>DUERP — PréventIA Protect</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',system-ui,sans-serif;background:#f1f5f9;color:#1e293b;line-height:1.5;font-size:13px}
+.sf{font-family:'DM Serif Display',serif}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media print{header,.noP,.tabs{display:none!important}main{padding:0!important}}
+:root{--navy:#0c1e3c;--teal:#0f766e;--red:#dc2626;--orange:#f59e0b;--green:#22c55e;--blue:#2563eb}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:13px;padding:7px 10px;border:1px solid #cbd5e1;border-radius:8px;width:100%;box-sizing:border-box}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 2px rgba(15,118,110,.15)}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const{useState,useEffect,useRef,useMemo}=React;
+const WH="https://hook.eu2.make.com/qhvt4lylqgbykqljwd1sdybpdaoapedu";
+const LS_KEY="preventia-duerp";
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const today=()=>new Date().toISOString().split("T")[0];
+
+/* ═══ CONSTANTES MÉTIER ═══ */
+const CATEGORIES=[
+  "Chute de hauteur","Chute de plain-pied","Manutention manuelle / TMS","Postures contraignantes",
+  "Risque chimique","Risque biologique","Risque électrique","Bruit / Vibrations",
+  "Risque routier","Risque machine","Incendie / Explosion","Risque psychosocial (RPS)",
+  "Travail isolé","Ambiance thermique / Rayonnements","Agents CMR","Risque lié au travail de nuit"
+];
+const GRAV=[{v:1,l:"Mineur",d:"Premiers soins, gêne légère"},{v:2,l:"Modéré",d:"Arrêt < 8 jours, soin médical"},{v:3,l:"Grave",d:"Arrêt > 8 jours, séquelles possibles"},{v:4,l:"Très grave",d:"IPP, décès, maladie irréversible"}];
+const FREQ=[{v:1,l:"Rare",d:"< 1 fois/an"},{v:2,l:"Occasionnel",d:"Quelques fois/an"},{v:3,l:"Fréquent",d:"Hebdomadaire"},{v:4,l:"Permanent",d:"Quotidien / continu"}];
+const MAIT=[{v:1,l:"Bonne",d:"Mesures existantes et efficaces",f:.5},{v:2,l:"Partielle",d:"Mesures insuffisantes ou non suivies",f:.8},{v:3,l:"Insuffisante",d:"Pas de mesure ou inadaptée",f:1}];
+
+function calcScore(g,f,m){return Math.round(g*f*(MAIT.find(x=>x.v===m)?.f||1))}
+function prio(s){if(s>=10)return{n:1,l:"P1 — Immédiat",c:"#dc2626",bg:"#fee2e2"};if(s>=6)return{n:2,l:"P2 — Court terme",c:"#f59e0b",bg:"#fef3c7"};if(s>=3)return{n:3,l:"P3 — Moyen terme",c:"#2563eb",bg:"#dbeafe"};return{n:4,l:"P4 — Surveillance",c:"#22c55e",bg:"#dcfce7"}}
+function matCell(g,f){const s=g*f;if(s>=12)return"#dc2626";if(s>=8)return"#f59e0b";if(s>=4)return"#eab308";return"#22c55e"}
+
+/* ═══ PERSISTENCE ═══ */
+function load(){try{return JSON.parse(localStorage.getItem(LS_KEY))||{uts:[],risques:[],entreprise:{nom:"",siret:"",effectif:"",secteur:"",redacteur:"",date:today()}}}catch{return{uts:[],risques:[],entreprise:{nom:"",siret:"",effectif:"",secteur:"",redacteur:"",date:today()}}}}
+function save(d){localStorage.setItem(LS_KEY,JSON.stringify(d))}
+
+/* ═══ APP ═══ */
+function App(){
+  const[data,setData]=useState(load);
+  const[tab,setTab]=useState("dashboard");
+  const[selUT,setSelUT]=useState(null);
+  const update=(fn)=>{setData(prev=>{const next={...prev};fn(next);save(next);return next})};
+  const tabs=[
+    {k:"dashboard",l:"📊 Tableau de bord"},
+    {k:"entreprise",l:"🏢 Entreprise"},
+    {k:"uts",l:"🏭 Unités de travail"},
+    {k:"risques",l:"⚠️ Évaluation"},
+    {k:"matrice",l:"📈 Matrice"},
+    {k:"papripact",l:"📋 PAPRIPACT"},
+    {k:"ia",l:"🤖 Assistant IA"},
+  ];
+
+  return(<div style={{minHeight:"100vh",background:"#f1f5f9"}}>
+    <header className="noP" style={{background:"linear-gradient(135deg,#0c1e3c,#0f766e)",color:"white",padding:"0 16px"}}>
+      <div style={{maxWidth:1200,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0"}}>
+        <a href="../../../index.html" style={{display:"flex",alignItems:"center",gap:8,color:"white",textDecoration:"none"}}>
+          <div style={{width:34,height:34,borderRadius:9,background:"rgba(255,255,255,.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>📝</div>
+          <div><div className="sf" style={{fontSize:17}}>PréventIA DUERP</div><div style={{fontSize:8,opacity:.6,letterSpacing:1.5,textTransform:"uppercase"}}>Aide au Document Unique</div></div>
+        </a>
+        <button onClick={()=>exportWord(data)} className="noP" style={{padding:"7px 14px",border:"none",borderRadius:8,background:"rgba(255,255,255,.15)",color:"white",fontSize:11,fontWeight:600}}>📝 Export Word</button>
+      </div>
+    </header>
+    <div className="tabs noP" style={{background:"white",borderBottom:"1px solid #e2e8f0",overflowX:"auto",whiteSpace:"nowrap"}}>
+      <div style={{maxWidth:1200,margin:"0 auto",display:"flex",gap:0}}>
+        {tabs.map(t=><button key={t.k} onClick={()=>setTab(t.k)} style={{padding:"10px 16px",border:"none",background:"transparent",fontSize:12,fontWeight:tab===t.k?700:400,color:tab===t.k?"var(--teal)":"#64748b",borderBottom:tab===t.k?"2px solid var(--teal)":"2px solid transparent"}}>{t.l}</button>)}
+      </div>
+    </div>
+    <main style={{maxWidth:1200,margin:"0 auto",padding:"16px"}}>
+      {tab==="dashboard"&&<Dashboard data={data}/>}
+      {tab==="entreprise"&&<Entreprise data={data} update={update}/>}
+      {tab==="uts"&&<UTs data={data} update={update} onSelect={(id)=>{setSelUT(id);setTab("risques")}}/>}
+      {tab==="risques"&&<Risques data={data} update={update} selUT={selUT} setSelUT={setSelUT}/>}
+      {tab==="matrice"&&<Matrice data={data}/>}
+      {tab==="papripact"&&<Papripact data={data} update={update}/>}
+      {tab==="ia"&&<IAAssistant data={data} update={update}/>}
+    </main>
+  </div>);
+}
+
+/* ═══ DASHBOARD ═══ */
+function Dashboard({data}){
+  const{uts,risques,entreprise}=data;
+  const scores=risques.map(r=>({...r,score:calcScore(r.gravite,r.frequence,r.maitrise)}));
+  const p1=scores.filter(r=>prio(r.score).n===1).length;
+  const p2=scores.filter(r=>prio(r.score).n===2).length;
+  const actTodo=risques.reduce((n,r)=>n+(r.actions||[]).filter(a=>a.statut!=="fait").length,0);
+  const actDone=risques.reduce((n,r)=>n+(r.actions||[]).filter(a=>a.statut==="fait").length,0);
+  const cards=[
+    {l:"Unités de travail",v:uts.length,i:"🏭",c:"#0f766e"},
+    {l:"Risques identifiés",v:risques.length,i:"⚠️",c:"#f59e0b"},
+    {l:"Risques P1 (critiques)",v:p1,i:"🔴",c:"#dc2626"},
+    {l:"Risques P2 (élevés)",v:p2,i:"🟠",c:"#ea580c"},
+    {l:"Actions en cours",v:actTodo,i:"📋",c:"#2563eb"},
+    {l:"Actions réalisées",v:actDone,i:"✅",c:"#22c55e"},
+  ];
+  return(<div>
+    <h2 className="sf" style={{fontSize:20,marginBottom:12}}>Tableau de bord — {entreprise.nom||"Entreprise"}</h2>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:10,marginBottom:20}}>
+      {cards.map((c,i)=><div key={i} style={{background:"white",borderRadius:12,padding:"14px 16px",boxShadow:"0 1px 3px rgba(0,0,0,.06)",borderLeft:`4px solid ${c.c}`}}>
+        <div style={{fontSize:10,color:"#64748b",fontWeight:600,marginBottom:4}}>{c.i} {c.l}</div>
+        <div style={{fontSize:26,fontWeight:700,color:c.c}}>{c.v}</div>
+      </div>)}
+    </div>
+    {/* Mini matrice */}
+    <Card title="📈 Matrice de criticité (aperçu)">
+      <MiniMatrice risques={risques}/>
+    </Card>
+    {/* Top risques */}
+    {scores.filter(r=>prio(r.score).n<=2).length>0&&<Card title="🔴 Risques prioritaires" mt={12}>
+      {scores.filter(r=>prio(r.score).n<=2).sort((a,b)=>b.score-a.score).slice(0,8).map((r,i)=>{
+        const p=prio(r.score);const ut=data.uts.find(u=>u.id===r.utId);
+        return<div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 0",borderBottom:"1px solid #f1f5f9"}}>
+          <span style={{background:p.bg,color:p.c,padding:"2px 8px",borderRadius:6,fontSize:10,fontWeight:700,whiteSpace:"nowrap"}}>{p.l}</span>
+          <span style={{fontSize:11,color:"#64748b",minWidth:80}}>{ut?.nom||"?"}</span>
+          <span style={{fontSize:12,fontWeight:600,flex:1}}>{r.danger}</span>
+          <span style={{fontSize:11,color:"#64748b"}}>Score {r.score}</span>
+        </div>
+      })}
+    </Card>}
+  </div>);
+}
+
+/* ═══ ENTREPRISE ═══ */
+function Entreprise({data,update}){
+  const e=data.entreprise;
+  const set=(k,v)=>update(d=>{d.entreprise[k]=v});
+  const fields=[["nom","Raison sociale *"],["siret","SIRET"],["effectif","Effectif"],["secteur","Secteur / NAF"],["redacteur","Rédacteur du DUERP"],["date","Date de rédaction","date"]];
+  return(<div>
+    <h2 className="sf" style={{fontSize:20,marginBottom:12}}>🏢 Informations entreprise</h2>
+    <Card>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+        {fields.map(([k,l,t])=><label key={k} style={{display:"block"}}><span style={{fontSize:11,fontWeight:600,color:"#475569"}}>{l}</span><input type={t||"text"} value={e[k]||""} onChange={ev=>set(k,ev.target.value)} style={{marginTop:3}}/></label>)}
+      </div>
+      <div style={{marginTop:12,padding:10,background:"#eff6ff",borderRadius:8,fontSize:11,color:"#1e40af"}}>
+        📖 <b>Réglementation :</b> Art. L4121-3 (évaluation), R4121-1 (contenu DU), R4121-2 (mise à jour), L4121-3-1 (PAPRIPACT ≥ 50 sal.), R4121-4 (conservation 40 ans + dépôt dématérialisé).
+      </div>
+    </Card>
+  </div>);
+}
+
+/* ═══ UNITÉS DE TRAVAIL ═══ */
+function UTs({data,update,onSelect}){
+  const[show,setShow]=useState(false);
+  const[form,setForm]=useState({nom:"",effectif:"",responsable:"",localisation:""});
+  const[editId,setEditId]=useState(null);
+  function handleSave(){
+    if(!form.nom.trim())return;
+    update(d=>{
+      if(editId){const idx=d.uts.findIndex(u=>u.id===editId);if(idx>=0)d.uts[idx]={...d.uts[idx],...form}}
+      else d.uts.push({id:uid(),...form});
+    });
+    setForm({nom:"",effectif:"",responsable:"",localisation:""});setEditId(null);setShow(false);
+  }
+  function handleEdit(ut){setForm({nom:ut.nom,effectif:ut.effectif,responsable:ut.responsable,localisation:ut.localisation});setEditId(ut.id);setShow(true)}
+  function handleDel(id){if(confirm("Supprimer cette UT et tous ses risques ?")){update(d=>{d.uts=d.uts.filter(u=>u.id!==id);d.risques=d.risques.filter(r=>r.utId!==id)})}}
+  return(<div>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+      <h2 className="sf" style={{fontSize:20}}>🏭 Unités de travail ({data.uts.length})</h2>
+      <Btn onClick={()=>{setForm({nom:"",effectif:"",responsable:"",localisation:""});setEditId(null);setShow(true)}} c="var(--teal)">+ Ajouter une UT</Btn>
+    </div>
+    {show&&<Card mb={12}>
+      <h3 style={{fontSize:14,marginBottom:8}}>{editId?"Modifier":"Nouvelle"} unité de travail</h3>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+        <label><span style={{fontSize:11,fontWeight:600,color:"#475569"}}>Nom de l'UT *</span><input value={form.nom} onChange={e=>setForm({...form,nom:e.target.value})} placeholder="Ex: Atelier mécanique" style={{marginTop:3}}/></label>
+        <label><span style={{fontSize:11,fontWeight:600,color:"#475569"}}>Effectif</span><input value={form.effectif} onChange={e=>setForm({...form,effectif:e.target.value})} placeholder="Ex: 12" style={{marginTop:3}}/></label>
+        <label><span style={{fontSize:11,fontWeight:600,color:"#475569"}}>Responsable</span><input value={form.responsable} onChange={e=>setForm({...form,responsable:e.target.value})} style={{marginTop:3}}/></label>
+        <label><span style={{fontSize:11,fontWeight:600,color:"#475569"}}>Localisation</span><input value={form.localisation} onChange={e=>setForm({...form,localisation:e.target.value})} style={{marginTop:3}}/></label>
+      </div>
+      <div style={{marginTop:10,display:"flex",gap:8}}><Btn onClick={handleSave} c="var(--teal)">✅ {editId?"Modifier":"Créer"}</Btn><Btn onClick={()=>setShow(false)} c="#64748b" outline>Annuler</Btn></div>
+    </Card>}
+    {data.uts.length===0?<Card><p style={{color:"#64748b",textAlign:"center",padding:20}}>Aucune unité de travail. Commencez par en créer une.</p></Card>
+    :<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:10}}>
+      {data.uts.map(ut=>{
+        const nbR=data.risques.filter(r=>r.utId===ut.id).length;
+        const scores=data.risques.filter(r=>r.utId===ut.id).map(r=>calcScore(r.gravite,r.frequence,r.maitrise));
+        const maxP=scores.length?Math.min(...scores.map(s=>prio(s).n)):null;
+        return<div key={ut.id} style={{background:"white",borderRadius:12,padding:14,boxShadow:"0 1px 3px rgba(0,0,0,.06)",borderLeft:maxP?`4px solid ${prio(Math.max(...scores)).c}`:"4px solid #e2e8f0"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+            <div><b style={{fontSize:14}}>{ut.nom}</b><br/><span style={{fontSize:11,color:"#64748b"}}>{ut.localisation}{ut.effectif?` — ${ut.effectif} pers.`:""}</span></div>
+            <div style={{display:"flex",gap:4}}>
+              <button onClick={()=>handleEdit(ut)} style={{border:"none",background:"#f1f5f9",borderRadius:6,padding:"4px 8px",fontSize:11}}>✏️</button>
+              <button onClick={()=>handleDel(ut.id)} style={{border:"none",background:"#fee2e2",borderRadius:6,padding:"4px 8px",fontSize:11}}>🗑️</button>
+            </div>
+          </div>
+          <div style={{marginTop:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <span style={{fontSize:11,color:"#64748b"}}>{nbR} risque(s) identifié(s)</span>
+            <Btn onClick={()=>onSelect(ut.id)} c="var(--teal)" small>Évaluer →</Btn>
+          </div>
+        </div>
+      })}
+    </div>}
+  </div>);
+}
+
+/* ═══ ÉVALUATION DES RISQUES ═══ */
+function Risques({data,update,selUT,setSelUT}){
+  const[show,setShow]=useState(false);
+  const empty={categorie:CATEGORIES[0],danger:"",situation:"",dommage:"",gravite:2,frequence:2,maitrise:2,actions:[]};
+  const[form,setForm]=useState(empty);
+  const[editId,setEditId]=useState(null);
+  const ut=data.uts.find(u=>u.id===selUT);
+  const risques=data.risques.filter(r=>r.utId===selUT).map(r=>({...r,score:calcScore(r.gravite,r.frequence,r.maitrise)})).sort((a,b)=>b.score-a.score);
+
+  function handleSave(){
+    if(!form.danger.trim())return;
+    update(d=>{
+      if(editId){const idx=d.risques.findIndex(r=>r.id===editId);if(idx>=0)d.risques[idx]={...d.risques[idx],...form}}
+      else d.risques.push({id:uid(),utId:selUT,...form});
+    });
+    setForm(empty);setEditId(null);setShow(false);
+  }
+  function handleEdit(r){setForm({categorie:r.categorie,danger:r.danger,situation:r.situation,dommage:r.dommage,gravite:r.gravite,frequence:r.frequence,maitrise:r.maitrise,actions:r.actions||[]});setEditId(r.id);setShow(true)}
+  function handleDel(id){update(d=>{d.risques=d.risques.filter(r=>r.id!==id)})}
+
+  if(!selUT)return(<div>
+    <h2 className="sf" style={{fontSize:20,marginBottom:12}}>⚠️ Évaluation des risques</h2>
+    <Card><p style={{color:"#64748b"}}>Sélectionnez une unité de travail :</p>
+      <div style={{display:"flex",flexWrap:"wrap",gap:8,marginTop:8}}>
+        {data.uts.map(u=><Btn key={u.id} onClick={()=>setSelUT(u.id)} c="var(--teal)" outline>{u.nom} ({data.risques.filter(r=>r.utId===u.id).length})</Btn>)}
+        {data.uts.length===0&&<p style={{color:"#94a3b8",fontSize:12}}>Aucune UT. Créez-en d'abord dans l'onglet « Unités de travail ».</p>}
+      </div>
+    </Card>
+  </div>);
+
+  const score=calcScore(form.gravite,form.frequence,form.maitrise);
+  const p=prio(score);
+
+  return(<div>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:8}}>
+      <div style={{display:"flex",alignItems:"center",gap:10}}>
+        <select value={selUT} onChange={e=>setSelUT(e.target.value)} style={{padding:"6px 10px",borderRadius:8,border:"1px solid #cbd5e1",fontSize:12,fontWeight:600,width:"auto"}}>
+          {data.uts.map(u=><option key={u.id} value={u.id}>{u.nom}</option>)}
+        </select>
+        <h2 className="sf" style={{fontSize:18}}>⚠️ Risques ({risques.length})</h2>
+      </div>
+      <Btn onClick={()=>{setForm(empty);setEditId(null);setShow(true)}} c="var(--teal)">+ Ajouter un risque</Btn>
+    </div>
+
+    {show&&<Card mb={12}>
+      <h3 style={{fontSize:14,marginBottom:10}}>{editId?"Modifier":"Nouveau"} risque</h3>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+        <label><span style={{fontSize:11,fontWeight:600,color:"#475569"}}>Catégorie</span><select value={form.categorie} onChange={e=>setForm({...form,categorie:e.target.value})} style={{marginTop:3}}>{CATEGORIES.map(c=><option key={c}>{c}</option>)}</select></label>
+        <label><span style={{fontSize:11,fontWeight:600,color:"#475569"}}>Danger / Source *</span><input value={form.danger} onChange={e=>setForm({...form,danger:e.target.value})} placeholder="Ex: Sol mouillé" style={{marginTop:3}}/></label>
+        <label><span style={{fontSize:11,fontWeight:600,color:"#475569"}}>Situation dangereuse</span><input value={form.situation} onChange={e=>setForm({...form,situation:e.target.value})} placeholder="Ex: Passage en zone de lavage" style={{marginTop:3}}/></label>
+        <label><span style={{fontSize:11,fontWeight:600,color:"#475569"}}>Dommage potentiel</span><input value={form.dommage} onChange={e=>setForm({...form,dommage:e.target.value})} placeholder="Ex: Entorse, fracture" style={{marginTop:3}}/></label>
+      </div>
+      {/* Cotation */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 160px",gap:10,marginTop:12,padding:12,background:"#f8fafc",borderRadius:10}}>
+        <label><span style={{fontSize:11,fontWeight:600,color:"#475569"}}>Gravité</span><select value={form.gravite} onChange={e=>setForm({...form,gravite:+e.target.value})} style={{marginTop:3}}>{GRAV.map(g=><option key={g.v} value={g.v}>{g.v} — {g.l}</option>)}</select></label>
+        <label><span style={{fontSize:11,fontWeight:600,color:"#475569"}}>Fréquence</span><select value={form.frequence} onChange={e=>setForm({...form,frequence:+e.target.value})} style={{marginTop:3}}>{FREQ.map(f=><option key={f.v} value={f.v}>{f.v} — {f.l}</option>)}</select></label>
+        <label><span style={{fontSize:11,fontWeight:600,color:"#475569"}}>Maîtrise</span><select value={form.maitrise} onChange={e=>setForm({...form,maitrise:+e.target.value})} style={{marginTop:3}}>{MAIT.map(m=><option key={m.v} value={m.v}>{m.v} — {m.l}</option>)}</select></label>
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+          <span style={{fontSize:10,fontWeight:600,color:"#64748b"}}>SCORE</span>
+          <span style={{fontSize:28,fontWeight:700,color:p.c}}>{score}</span>
+          <span style={{fontSize:9,fontWeight:600,color:p.c,background:p.bg,padding:"2px 8px",borderRadius:6}}>{p.l}</span>
+        </div>
+      </div>
+      <div style={{marginTop:10,display:"flex",gap:8}}><Btn onClick={handleSave} c="var(--teal)">✅ {editId?"Modifier":"Enregistrer"}</Btn><Btn onClick={()=>{setShow(false);setEditId(null)}} c="#64748b" outline>Annuler</Btn></div>
+    </Card>}
+
+    {risques.length===0?<Card><p style={{color:"#64748b",textAlign:"center",padding:16}}>Aucun risque identifié pour cette UT. Ajoutez-en ou utilisez l'assistant IA.</p></Card>
+    :<div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",background:"white",borderRadius:12,overflow:"hidden",boxShadow:"0 1px 3px rgba(0,0,0,.06)"}}>
+      <thead><tr style={{background:"var(--navy)",color:"white",fontSize:10,textTransform:"uppercase",letterSpacing:.5}}>
+        <th style={th}>Priorité</th><th style={th}>Catégorie</th><th style={th}>Danger</th><th style={th}>Situation</th><th style={th}>Dommage</th>
+        <th style={th}>G</th><th style={th}>F</th><th style={th}>M</th><th style={th}>Score</th><th style={th}>Actions</th><th style={th}></th>
+      </tr></thead>
+      <tbody>{risques.map(r=>{const p2=prio(r.score);return<tr key={r.id} style={{borderBottom:"1px solid #f1f5f9",fontSize:11}}>
+        <td style={{...td,textAlign:"center"}}><span style={{background:p2.bg,color:p2.c,padding:"2px 8px",borderRadius:6,fontSize:10,fontWeight:700,whiteSpace:"nowrap"}}>{p2.l.split("—")[0]}</span></td>
+        <td style={td}>{r.categorie}</td><td style={{...td,fontWeight:600}}>{r.danger}</td><td style={td}>{r.situation}</td><td style={td}>{r.dommage}</td>
+        <td style={{...td,textAlign:"center"}}>{r.gravite}</td><td style={{...td,textAlign:"center"}}>{r.frequence}</td><td style={{...td,textAlign:"center"}}>{r.maitrise}</td>
+        <td style={{...td,textAlign:"center",fontWeight:700,color:p2.c,fontSize:14}}>{r.score}</td>
+        <td style={{...td,textAlign:"center"}}>{(r.actions||[]).length}</td>
+        <td style={{...td,textAlign:"center"}}><div style={{display:"flex",gap:3}}><button onClick={()=>handleEdit(r)} style={ibtn}>✏️</button><button onClick={()=>handleDel(r.id)} style={{...ibtn,background:"#fee2e2"}}>🗑️</button></div></td>
+      </tr>})}</tbody>
+    </table></div>}
+  </div>);
+}
+const th={padding:"8px 10px",textAlign:"left"};
+const td={padding:"7px 10px"};
+const ibtn={border:"none",background:"#f1f5f9",borderRadius:5,padding:"3px 6px",fontSize:10,cursor:"pointer"};
+
+/* ═══ MATRICE DE CRITICITÉ ═══ */
+function Matrice({data}){
+  const risques=data.risques;
+  return(<div>
+    <h2 className="sf" style={{fontSize:20,marginBottom:12}}>📈 Matrice de criticité</h2>
+    <Card><MiniMatrice risques={risques} full/></Card>
+    <Card mt={12} title="📊 Répartition par catégorie">
+      {CATEGORIES.map(cat=>{
+        const rs=risques.filter(r=>r.categorie===cat);
+        if(!rs.length)return null;
+        const maxS=Math.max(...rs.map(r=>calcScore(r.gravite,r.frequence,r.maitrise)));
+        const p2=prio(maxS);
+        return<div key={cat} style={{display:"flex",alignItems:"center",gap:8,padding:"5px 0",borderBottom:"1px solid #f1f5f9"}}>
+          <span style={{background:p2.bg,color:p2.c,padding:"2px 6px",borderRadius:4,fontSize:9,fontWeight:700,minWidth:20,textAlign:"center"}}>{rs.length}</span>
+          <span style={{flex:1,fontSize:12}}>{cat}</span>
+          <span style={{fontSize:10,color:p2.c,fontWeight:600}}>max: {maxS}</span>
+        </div>
+      }).filter(Boolean)}
+    </Card>
+  </div>);
+}
+
+function MiniMatrice({risques,full}){
+  // Comptage risques bruts par cellule G×F
+  const counts={};
+  risques.forEach(r=>{const k=`${r.gravite}-${r.frequence}`;counts[k]=(counts[k]||0)+1});
+  const sz=full?56:38;
+  return(<div style={{overflowX:"auto"}}>
+    <div style={{display:"inline-block"}}>
+      <div style={{display:"flex",alignItems:"flex-end"}}>
+        <div style={{width:full?90:50}}></div>
+        {[1,2,3,4].map(f=><div key={f} style={{width:sz,textAlign:"center",fontSize:full?10:8,fontWeight:600,color:"#64748b",padding:"0 0 4px"}}>{FREQ[f-1].l}</div>)}
+      </div>
+      {[4,3,2,1].map(g=><div key={g} style={{display:"flex",alignItems:"center"}}>
+        <div style={{width:full?90:50,fontSize:full?10:8,fontWeight:600,color:"#64748b",textAlign:"right",paddingRight:6}}>{GRAV[g-1].l}</div>
+        {[1,2,3,4].map(f=>{const k=`${g}-${f}`;const n=counts[k]||0;
+          return<div key={f} style={{width:sz,height:sz,background:matCell(g,f),borderRadius:4,margin:1,display:"flex",alignItems:"center",justifyContent:"center",fontSize:full?14:10,fontWeight:700,color:"white",opacity:n?1:.3}}>
+            {n||""}
+          </div>
+        })}
+      </div>)}
+      <div style={{display:"flex",justifyContent:"center",marginTop:6}}>
+        <span style={{fontSize:9,color:"#64748b"}}>← Fréquence →</span>
+      </div>
+    </div>
+  </div>);
+}
+
+/* ═══ PAPRIPACT ═══ */
+function Papripact({data,update}){
+  const[actForm,setActForm]=useState(null); // {risqueId, idx?, description, responsable, echeance, statut, type}
+  const allR=data.risques.map(r=>({...r,score:calcScore(r.gravite,r.frequence,r.maitrise)})).sort((a,b)=>b.score-a.score);
+
+  function addAction(risqueId){
+    setActForm({risqueId,description:"",responsable:"",echeance:"",statut:"à faire",type:"Prévention"});
+  }
+  function saveAction(){
+    if(!actForm||!actForm.description.trim())return;
+    update(d=>{
+      const r=d.risques.find(x=>x.id===actForm.risqueId);
+      if(!r)return;
+      if(!r.actions)r.actions=[];
+      if(actForm.idx!==undefined){r.actions[actForm.idx]={description:actForm.description,responsable:actForm.responsable,echeance:actForm.echeance,statut:actForm.statut,type:actForm.type}}
+      else r.actions.push({description:actForm.description,responsable:actForm.responsable,echeance:actForm.echeance,statut:actForm.statut,type:actForm.type});
+    });
+    setActForm(null);
+  }
+  function toggleStatut(rId,aIdx){
+    update(d=>{
+      const r=d.risques.find(x=>x.id===rId);
+      if(r&&r.actions&&r.actions[aIdx]) r.actions[aIdx].statut=r.actions[aIdx].statut==="fait"?"à faire":"fait";
+    });
+  }
+  function delAction(rId,aIdx){update(d=>{const r=d.risques.find(x=>x.id===rId);if(r?.actions)r.actions.splice(aIdx,1)})}
+
+  return(<div>
+    <h2 className="sf" style={{fontSize:20,marginBottom:12}}>📋 PAPRIPACT — Plan d'actions</h2>
+    <p style={{fontSize:11,color:"#64748b",marginBottom:12}}>Programme Annuel de Prévention des Risques Professionnels et d'Amélioration des Conditions de Travail (obligatoire ≥ 50 salariés — Art. L4121-3-1).</p>
+
+    {actForm&&<Card mb={12}>
+      <h3 style={{fontSize:13,marginBottom:8}}>Nouvelle action</h3>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+        <label style={{gridColumn:"1/-1"}}><span style={{fontSize:11,fontWeight:600,color:"#475569"}}>Action *</span><input value={actForm.description} onChange={e=>setActForm({...actForm,description:e.target.value})} style={{marginTop:3}}/></label>
+        <label><span style={{fontSize:11,fontWeight:600,color:"#475569"}}>Responsable</span><input value={actForm.responsable} onChange={e=>setActForm({...actForm,responsable:e.target.value})} style={{marginTop:3}}/></label>
+        <label><span style={{fontSize:11,fontWeight:600,color:"#475569"}}>Échéance</span><input type="date" value={actForm.echeance} onChange={e=>setActForm({...actForm,echeance:e.target.value})} style={{marginTop:3}}/></label>
+        <label><span style={{fontSize:11,fontWeight:600,color:"#475569"}}>Type</span><select value={actForm.type} onChange={e=>setActForm({...actForm,type:e.target.value})} style={{marginTop:3}}><option>Prévention</option><option>Protection</option><option>Formation</option><option>Organisation</option><option>Information</option></select></label>
+        <label><span style={{fontSize:11,fontWeight:600,color:"#475569"}}>Statut</span><select value={actForm.statut} onChange={e=>setActForm({...actForm,statut:e.target.value})} style={{marginTop:3}}><option value="à faire">À faire</option><option value="en cours">En cours</option><option value="fait">Fait</option></select></label>
+      </div>
+      <div style={{marginTop:10,display:"flex",gap:8}}><Btn onClick={saveAction} c="var(--teal)">✅ Enregistrer</Btn><Btn onClick={()=>setActForm(null)} c="#64748b" outline>Annuler</Btn></div>
+    </Card>}
+
+    {allR.length===0?<Card><p style={{color:"#64748b",textAlign:"center",padding:16}}>Aucun risque évalué. L'onglet « Évaluation » permet d'identifier les risques.</p></Card>
+    :<div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",background:"white",borderRadius:12,overflow:"hidden",boxShadow:"0 1px 3px rgba(0,0,0,.06)"}}>
+      <thead><tr style={{background:"var(--navy)",color:"white",fontSize:10,textTransform:"uppercase",letterSpacing:.5}}>
+        <th style={th}>P</th><th style={th}>UT</th><th style={th}>Danger</th><th style={th}>Score</th><th style={th}>Actions de prévention</th><th style={th}></th>
+      </tr></thead>
+      <tbody>{allR.map(r=>{const p2=prio(r.score);const ut=data.uts.find(u=>u.id===r.utId);const acts=r.actions||[];
+        return<tr key={r.id} style={{borderBottom:"1px solid #f1f5f9",fontSize:11,verticalAlign:"top"}}>
+          <td style={{...td,textAlign:"center"}}><span style={{background:p2.bg,color:p2.c,padding:"2px 6px",borderRadius:4,fontSize:10,fontWeight:700}}>{p2.l.split("—")[0]}</span></td>
+          <td style={td}>{ut?.nom}</td>
+          <td style={{...td,fontWeight:600}}>{r.danger}<br/><span style={{fontWeight:400,color:"#64748b",fontSize:10}}>{r.categorie}</span></td>
+          <td style={{...td,textAlign:"center",fontWeight:700,color:p2.c}}>{r.score}</td>
+          <td style={td}>{acts.length===0?<span style={{color:"#94a3b8",fontSize:10}}>Aucune action</span>
+            :acts.map((a,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:4,padding:"2px 0",borderBottom:i<acts.length-1?"1px solid #f8fafc":"none"}}>
+              <button onClick={()=>toggleStatut(r.id,i)} style={{border:"none",background:"transparent",cursor:"pointer",fontSize:12}}>{a.statut==="fait"?"✅":"⬜"}</button>
+              <span style={{flex:1,textDecoration:a.statut==="fait"?"line-through":"none",color:a.statut==="fait"?"#94a3b8":"#1e293b"}}>{a.description}</span>
+              {a.echeance&&<span style={{fontSize:9,color:"#64748b"}}>{a.echeance}</span>}
+              <span style={{fontSize:9,background:"#f1f5f9",padding:"1px 5px",borderRadius:4}}>{a.type}</span>
+              <button onClick={()=>delAction(r.id,i)} style={{...ibtn,fontSize:9}}>✕</button>
+            </div>)
+          }</td>
+          <td style={{...td,textAlign:"center"}}><button onClick={()=>addAction(r.id)} style={{...ibtn,fontSize:10}}>+ Action</button></td>
+        </tr>
+      })}</tbody>
+    </table></div>}
+  </div>);
+}
+
+/* ═══ ASSISTANT IA ═══ */
+function IAAssistant({data,update}){
+  const[msg,setMsg]=useState("");
+  const[chat,setChat]=useState([]);
+  const[ld,setLd]=useState(false);
+  const[targetUT,setTargetUT]=useState(data.uts[0]?.id||"");
+  const ref=useRef(null);
+
+  async function send(){
+    if(!msg.trim()||ld)return;
+    const userMsg=msg;setMsg("");setChat(p=>[...p,{role:"user",content:userMsg}]);setLd(true);
+    const ut=data.uts.find(u=>u.id===targetUT);
+    const utRisques=data.risques.filter(r=>r.utId===targetUT);
+    try{
+      const body={model:"claude-sonnet-4-5-20250514",max_tokens:2500,system:`Tu es un IPRP expert spécialisé dans l'aide au DUERP.
+Tu aides à identifier les risques professionnels, proposer des cotations et des actions de prévention.
+Cite les articles du Code du travail quand pertinent.
+Applique les 9 principes de prévention (Art. L4121-2).
+Contexte entreprise : ${data.entreprise.nom||"Non renseignée"}, secteur ${data.entreprise.secteur||"non précisé"}, ${data.entreprise.effectif||"?"} salariés.
+${ut?`UT sélectionnée : "${ut.nom}" (${ut.effectif||"?"} pers., ${ut.localisation||""}).`:"Aucune UT sélectionnée."}
+${utRisques.length?`Risques déjà identifiés dans cette UT : ${utRisques.map(r=>`${r.danger} (${r.categorie}, G${r.gravite}×F${r.frequence}×M${r.maitrise})`).join("; ")}`:"Aucun risque identifié dans cette UT."}
+Catégories disponibles : ${CATEGORIES.join(", ")}.
+
+Si on te demande d'identifier des risques, réponds en JSON (UNIQUEMENT le JSON, pas de texte avant/après) :
+{"risques":[{"categorie":"...","danger":"...","situation":"...","dommage":"...","gravite":1-4,"frequence":1-4,"maitrise":1-3,"action":"action de prévention proposée"}]}
+
+Sinon, réponds normalement en texte.`,
+      messages:[...chat.slice(-6).map(m=>({role:m.role,content:m.content})),{role:"user",content:userMsg}]};
+      const r=await fetch(WH,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({token:"preventia-duerp",payload:JSON.stringify(body)})});
+      const t=await r.text();
+      let resp;try{const j=JSON.parse(t);resp=(j?.content?.[0]?.text||t)}catch{resp=t}
+      // Try to parse as risques JSON
+      let parsed=null;
+      try{const clean=resp.replace(/```json\n?|```/g,"").trim();parsed=JSON.parse(clean);if(!parsed.risques)parsed=null}catch{}
+
+      if(parsed&&parsed.risques){
+        // Import risques
+        update(d=>{
+          parsed.risques.forEach(nr=>{
+            d.risques.push({id:uid(),utId:targetUT,categorie:nr.categorie||CATEGORIES[0],danger:nr.danger,situation:nr.situation||"",dommage:nr.dommage||"",gravite:nr.gravite||2,frequence:nr.frequence||2,maitrise:nr.maitrise||3,actions:nr.action?[{description:nr.action,responsable:"",echeance:"",statut:"à faire",type:"Prévention"}]:[]});
+          });
+        });
+        setChat(p=>[...p,{role:"assistant",content:`✅ **${parsed.risques.length} risque(s) importé(s)** dans "${ut?.nom||"UT"}" :\n${parsed.risques.map(r=>`• ${r.danger} (${r.categorie}) — G${r.gravite}×F${r.frequence}×M${r.maitrise} = ${calcScore(r.gravite,r.frequence,r.maitrise)}`).join("\n")}`}]);
+      }else{
+        setChat(p=>[...p,{role:"assistant",content:resp}]);
+      }
+    }catch(e){setChat(p=>[...p,{role:"assistant",content:`❌ Erreur : ${e.message}`}])}
+    setLd(false);
+  }
+
+  useEffect(()=>{ref.current?.scrollTo(0,ref.current.scrollHeight)},[chat]);
+
+  const suggestions=[
+    "Identifie les risques pour cette unité de travail",
+    "Propose un plan d'actions pour les risques P1",
+    "Quelles sont les obligations réglementaires du DUERP ?",
+    "Aide-moi à coter le risque chimique",
+    "Quels sont les 9 principes de prévention ?",
+  ];
+
+  return(<div>
+    <h2 className="sf" style={{fontSize:20,marginBottom:12}}>🤖 Assistant IA — DUERP</h2>
+    <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
+      <div style={{flex:1,minWidth:300}}>
+        <Card>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+            <span style={{fontSize:11,fontWeight:600,color:"#475569"}}>UT cible :</span>
+            <select value={targetUT} onChange={e=>setTargetUT(e.target.value)} style={{width:"auto",fontSize:12,padding:"4px 8px"}}>
+              {data.uts.map(u=><option key={u.id} value={u.id}>{u.nom}</option>)}
+              {data.uts.length===0&&<option value="">Aucune UT</option>}
+            </select>
+          </div>
+          <div ref={ref} style={{height:380,overflowY:"auto",padding:8,background:"#f8fafc",borderRadius:10,marginBottom:10}}>
+            {chat.length===0&&<div style={{textAlign:"center",padding:30,color:"#94a3b8"}}>
+              <div style={{fontSize:32,marginBottom:8}}>🤖</div>
+              <p style={{fontSize:12}}>Posez une question ou demandez-moi d'identifier les risques.</p>
+            </div>}
+            {chat.map((m,i)=><div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start",marginBottom:6}}>
+              <div style={{maxWidth:"85%",padding:"8px 12px",borderRadius:12,background:m.role==="user"?"var(--teal)":"white",color:m.role==="user"?"white":"#1e293b",fontSize:12,whiteSpace:"pre-wrap",boxShadow:"0 1px 2px rgba(0,0,0,.06)"}}>{m.content}</div>
+            </div>)}
+            {ld&&<div style={{display:"flex",gap:6,padding:8}}><div style={{width:14,height:14,border:"2px solid #e2e8f0",borderTopColor:"var(--teal)",borderRadius:"50%",animation:"spin 1s linear infinite"}}/><span style={{fontSize:11,color:"#64748b"}}>Analyse en cours…</span></div>}
+          </div>
+          <div style={{display:"flex",gap:6}}>
+            <input value={msg} onChange={e=>setMsg(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")send()}} placeholder="Votre question…" style={{flex:1}}/>
+            <Btn onClick={send} c="var(--teal)" disabled={ld}>Envoyer</Btn>
+          </div>
+        </Card>
+      </div>
+      <div style={{width:260}}>
+        <Card title="💡 Suggestions">
+          {suggestions.map((s,i)=><button key={i} onClick={()=>{setMsg(s);}} style={{display:"block",width:"100%",textAlign:"left",padding:"6px 8px",border:"none",background:"#f1f5f9",borderRadius:6,marginBottom:4,fontSize:11,cursor:"pointer",color:"#334155"}}>{s}</button>)}
+        </Card>
+        <Card title="📖 Réglementation" mt={10}>
+          {[["L4121-3","Évaluation des risques"],["R4121-1","Contenu du DU"],["R4121-2","Mise à jour annuelle"],["L4121-3-1","PAPRIPACT ≥ 50 sal."],["R4121-4","Conservation 40 ans"]].map(([c,t],i)=>
+            <div key={i} style={{padding:"4px 0",borderBottom:"1px solid #f1f5f9",fontSize:11}}><b style={{color:"var(--teal)"}}>Art. {c}</b> — {t}</div>
+          )}
+        </Card>
+      </div>
+    </div>
+  </div>);
+}
+
+/* ═══ EXPORT WORD ═══ */
+function exportWord(data){
+  const{entreprise:e,uts,risques}=data;
+  const allR=risques.map(r=>({...r,score:calcScore(r.gravite,r.frequence,r.maitrise)})).sort((a,b)=>b.score-a.score);
+
+  const utRows=uts.map(ut=>{
+    const rs=allR.filter(r=>r.utId===ut.id);
+    if(!rs.length) return`<tr><td style="${wtd}" colspan="9"><b>${ut.nom}</b> — Aucun risque identifié</td></tr>`;
+    return rs.map((r,i)=>{
+      const p2=prio(r.score);
+      const acts=(r.actions||[]).map(a=>`• ${a.description}${a.responsable?` (${a.responsable})`:""}`).join("<br/>");
+      return`<tr>
+        ${i===0?`<td style="${wtd};font-weight:bold" rowspan="${rs.length}">${ut.nom}<br/><span style="font-size:9px;color:#666">${ut.effectif||""} pers.</span></td>`:""}
+        <td style="${wtd}">${r.categorie}</td><td style="${wtd};font-weight:bold">${r.danger}</td><td style="${wtd}">${r.situation||""}</td><td style="${wtd}">${r.dommage||""}</td>
+        <td style="${wtd};text-align:center">${r.gravite}</td><td style="${wtd};text-align:center">${r.frequence}</td><td style="${wtd};text-align:center">${r.maitrise}</td>
+        <td style="${wtd};text-align:center;font-weight:bold;color:${p2.c}">${r.score}</td>
+        <td style="${wtd};font-size:9px">${acts||"—"}</td>
+      </tr>`;
+    }).join("");
+  }).join("");
+
+  const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="UTF-8">
+<xml><w:WordDocument><w:View>Print</w:View></w:WordDocument></xml>
+<style>
+@page{size:29.7cm 21cm;margin:1.2cm}
+body{font-family:Calibri,Arial,sans-serif;font-size:10px;color:#1e293b}
+table{border-collapse:collapse;width:100%}
+h1{font-size:18px;color:#0c1e3c}
+h2{font-size:13px;color:#0f766e;border-bottom:2px solid #0f766e;padding-bottom:2px;margin:14px 0 6px}
+</style></head><body>
+<div style="background:#0c1e3c;color:white;padding:14px 20px;margin:-1.2cm -1.2cm 12px">
+<div style="font-size:9px;opacity:.7;letter-spacing:1px">PréventIA DUERP</div>
+<h1 style="color:white;margin:0">📝 DOCUMENT UNIQUE D'ÉVALUATION DES RISQUES PROFESSIONNELS</h1>
+</div>
+<table style="margin-bottom:10px"><tr>
+<td style="${wtd};width:25%"><b style="font-size:9px;color:#64748b">ENTREPRISE</b><br/>${e.nom||"—"}</td>
+<td style="${wtd};width:20%"><b style="font-size:9px;color:#64748b">SIRET</b><br/>${e.siret||"—"}</td>
+<td style="${wtd};width:15%"><b style="font-size:9px;color:#64748b">EFFECTIF</b><br/>${e.effectif||"—"}</td>
+<td style="${wtd};width:20%"><b style="font-size:9px;color:#64748b">RÉDACTEUR</b><br/>${e.redacteur||"—"}</td>
+<td style="${wtd};width:20%"><b style="font-size:9px;color:#64748b">DATE</b><br/>${e.date||"—"}</td>
+</tr></table>
+
+<h2>📊 Synthèse</h2>
+<table><tr>
+<td style="${wtd};text-align:center;background:#fee2e2;width:25%"><b style="color:#dc2626;font-size:16px">${allR.filter(r=>prio(r.score).n===1).length}</b><br/>P1 Critique</td>
+<td style="${wtd};text-align:center;background:#fef3c7;width:25%"><b style="color:#f59e0b;font-size:16px">${allR.filter(r=>prio(r.score).n===2).length}</b><br/>P2 Élevé</td>
+<td style="${wtd};text-align:center;background:#dbeafe;width:25%"><b style="color:#2563eb;font-size:16px">${allR.filter(r=>prio(r.score).n===3).length}</b><br/>P3 Moyen</td>
+<td style="${wtd};text-align:center;background:#dcfce7;width:25%"><b style="color:#22c55e;font-size:16px">${allR.filter(r=>prio(r.score).n===4).length}</b><br/>P4 Faible</td>
+</tr></table>
+
+<h2>⚠️ Évaluation des risques par unité de travail</h2>
+<table>
+<tr style="background:#0c1e3c;color:white"><th style="${wth}">UT</th><th style="${wth}">Catégorie</th><th style="${wth}">Danger</th><th style="${wth}">Situation</th><th style="${wth}">Dommage</th><th style="${wth}">G</th><th style="${wth}">F</th><th style="${wth}">M</th><th style="${wth}">Score</th><th style="${wth}">Actions</th></tr>
+${utRows}
+</table>
+
+<h2>📋 Cotation — Grille de lecture</h2>
+<table>
+<tr><td style="${wtd};background:#fee2e2;text-align:center;font-weight:bold;color:#dc2626">P1 (≥ 10)</td><td style="${wtd}">Action immédiate obligatoire</td>
+<td style="${wtd};background:#fef3c7;text-align:center;font-weight:bold;color:#f59e0b">P2 (6-9)</td><td style="${wtd}">Action à court terme (< 3 mois)</td></tr>
+<tr><td style="${wtd};background:#dbeafe;text-align:center;font-weight:bold;color:#2563eb">P3 (3-5)</td><td style="${wtd}">Action à moyen terme (< 1 an)</td>
+<td style="${wtd};background:#dcfce7;text-align:center;font-weight:bold;color:#22c55e">P4 (1-2)</td><td style="${wtd}">Surveillance, maintien des mesures</td></tr>
+</table>
+
+<div style="margin-top:14px;padding:8px;background:#eff6ff;border-radius:4px;font-size:9px;color:#1e40af">
+📖 <b>Base réglementaire :</b> Art. L4121-3, R4121-1 à R4121-4, L4121-3-1 (PAPRIPACT). Score = Gravité × Fréquence × Coeff. maîtrise. Conservation 40 ans minimum + dépôt dématérialisé.
+</div>
+
+<div style="background:#0c1e3c;color:white;padding:8px 16px;margin:14px -1.2cm -1.2cm;text-align:center;font-size:9px">
+📝 PréventIA DUERP — Document généré le ${new Date().toLocaleDateString("fr-FR")}
+</div>
+</body></html>`;
+
+  const blob=new Blob(['\ufeff'+html],{type:'application/msword'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;
+  a.download=`DUERP_${(e.nom||"entreprise").replace(/[\s/]/g,'_')}_${today()}.doc`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+const wtd="padding:4px 6px;border:1px solid #ddd;font-size:10px";
+const wth="padding:5px 6px;font-size:9px;text-align:left";
+
+/* ═══ COMPOSANTS COMMUNS ═══ */
+function Card({title,children,mt,mb}){
+  return<div style={{background:"white",borderRadius:12,overflow:"hidden",boxShadow:"0 1px 3px rgba(0,0,0,.06)",marginTop:mt||0,marginBottom:mb||0}}>
+    {title&&<div style={{padding:"8px 14px",borderBottom:"1px solid #f1f5f9",fontSize:12,fontWeight:700,color:"var(--navy)"}}>{title}</div>}
+    <div style={{padding:14}}>{children}</div>
+  </div>;
+}
+function Btn({onClick,c,outline,small,disabled,children}){
+  return<button onClick={onClick} disabled={disabled} style={{padding:small?"4px 10px":"7px 16px",borderRadius:8,border:outline?`1px solid ${c}`:"none",background:outline?"white":c,color:outline?c:"white",fontSize:small?10:12,fontWeight:600,opacity:disabled?.5:1}}>
+    {children}
+  </button>;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

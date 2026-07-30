@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PréventIA HSE — Évaluation globale des risques professionnels</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --teal: oklch(0.65 0.13 192);
+  --teal-dark: oklch(0.35 0.10 220);
+  --teal-pale: oklch(0.95 0.03 192);
+  --navy-deep: oklch(0.12 0.05 240);
+  --emerald: #059669;
+  --emerald-light: #10B981;
+  --emerald-pale: #ecfdf5;
+  --white: #fff;
+  --off-white: oklch(0.96 0.008 210);
+  --text: oklch(0.18 0.04 240);
+  --text-muted: oklch(0.50 0.03 220);
+  --border: oklch(0.90 0.01 220);
+  --shadow: 0 2px 16px oklch(0.22 0.07 240 / 0.08);
+  --shadow-lg: 0 8px 40px oklch(0.22 0.07 240 / 0.14);
+  --radius: 14px;
+  --radius-sm: 8px;
+  --green: #1D9E75;
+  --yellow: #D97706;
+  --orange: #DC2626;
+  --red: #991B1B;
+  --purple: #6B21A8;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'DM Sans', sans-serif; background: var(--off-white); color: var(--text); font-size: 14px; line-height: 1.6; min-height: 100vh; }
+
+/* ── NAVBAR ── */
+.navbar { position: sticky; top: 0; z-index: 100; background: oklch(0.12 0.05 240 / 0.95); backdrop-filter: blur(16px); border-bottom: 1px solid oklch(0.65 0.13 192 / 0.2); padding: 0 1.5rem; height: 60px; display: flex; align-items: center; justify-content: space-between; }
+.nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+.nav-brand-name { font-size: 15px; font-weight: 700; color: var(--white); letter-spacing: -0.02em; }
+.nav-brand-name span { color: var(--teal); }
+.nav-back { font-size: 13px; color: oklch(0.85 0.03 220); text-decoration: none; padding: 6px 14px; border-radius: 20px; border: 1px solid oklch(0.65 0.13 192 / 0.25); transition: all 0.2s; }
+.nav-back:hover { color: var(--white); background: oklch(0.65 0.13 192 / 0.15); }
+
+/* ── HEADER ── */
+.page-header { background: linear-gradient(135deg, #064e3b 0%, var(--emerald) 50%, #10B981 100%); padding: 50px 1.5rem 60px; color: white; text-align: center; position: relative; overflow: hidden; }
+.page-header::before { content: '🛡️'; position: absolute; font-size: 320px; opacity: 0.06; top: -40px; right: -20px; }
+.page-header-label { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); padding: 5px 14px; border-radius: 20px; margin-bottom: 18px; }
+.page-header h1 { font-family: 'DM Serif Display', serif; font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 400; margin-bottom: 12px; line-height: 1.2; position: relative; }
+.page-header p { max-width: 640px; margin: 0 auto; font-size: 15px; opacity: 0.92; line-height: 1.6; position: relative; }
+
+/* ── MAIN ── */
+.main { max-width: 1100px; margin: -30px auto 0; padding: 0 1.5rem 4rem; position: relative; z-index: 2; }
+
+.intro-card { background: var(--white); border-radius: var(--radius); padding: 24px 28px; box-shadow: var(--shadow); margin-bottom: 28px; border-left: 4px solid var(--emerald); }
+.intro-card h2 { font-family: 'DM Serif Display', serif; font-size: 1.3rem; color: var(--text); margin-bottom: 8px; }
+.intro-card p { color: var(--text-muted); font-size: 13.5px; }
+.intro-card ul { margin-top: 10px; padding-left: 18px; font-size: 13px; color: var(--text-muted); }
+.intro-card li { margin-bottom: 3px; }
+.intro-card strong { color: var(--text); font-weight: 600; }
+
+/* ── TOGGLE IA ── */
+.ai-toggle-bar { display: flex; align-items: center; gap: 12px; background: white; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 16px; margin-bottom: 16px; box-shadow: var(--shadow); font-size: 13px; }
+.ai-toggle-bar.ai-on { border-left: 4px solid var(--emerald); }
+.ai-toggle-bar.ai-off { border-left: 4px solid #94a3b8; }
+.ai-toggle-info { flex: 1; }
+.ai-toggle-info strong { color: var(--text); font-size: 13.5px; }
+.ai-toggle-info-sub { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+.ai-toggle-switch { position: relative; display: inline-block; width: 46px; height: 24px; flex-shrink: 0; }
+.ai-toggle-switch input { display: none; }
+.ai-toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #cbd5e1; border-radius: 24px; transition: 0.25s; }
+.ai-toggle-slider::before { content: ""; position: absolute; width: 18px; height: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.25s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+.ai-toggle-switch input:checked + .ai-toggle-slider { background: var(--emerald); }
+.ai-toggle-switch input:checked + .ai-toggle-slider::before { transform: translateX(22px); }
+.ai-toggle-label-text { font-weight: 600; font-size: 12px; min-width: 80px; text-align: right; }
+
+/* ── SECTION COMMUNE ── */
+.section-card { background: var(--white); border-radius: var(--radius); padding: 28px; box-shadow: var(--shadow); margin-bottom: 24px; }
+.section-h { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+.section-h h2 { font-family: 'DM Serif Display', serif; font-size: 1.4rem; color: var(--text); }
+.badge-num { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 12px; background: var(--emerald-pale); color: var(--emerald); margin-left: 8px; }
+
+/* ── CONTEXTE ENTREPRISE ── */
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.form-row.tri { grid-template-columns: 1fr 1fr 1fr; }
+.form-row.full { grid-template-columns: 1fr; }
+.form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.04em; }
+.form-group input, .form-group select, .form-group textarea { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: inherit; font-size: 13.5px; background: white; color: var(--text); transition: border-color 0.2s; }
+.form-group textarea { resize: vertical; min-height: 60px; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--emerald); box-shadow: 0 0 0 3px oklch(0.65 0.13 160 / 0.12); }
+.form-help { font-size: 11px; color: var(--text-muted); margin-top: 4px; font-style: italic; }
+
+/* ── RISQUE CARD ── */
+.risk-card { background: linear-gradient(135deg, #fafbfc, #f4f5f8); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; margin-bottom: 16px; position: relative; transition: border-color 0.2s; }
+.risk-card:hover { border-color: oklch(0.65 0.13 192 / 0.3); }
+.risk-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 10px; }
+.risk-card-num { font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; padding: 4px 10px; border-radius: 12px; }
+.risk-card-remove { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 18px; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.risk-card-remove:hover { background: #fee2e2; color: var(--orange); }
+
+/* Couleurs par famille */
+.fam-chimique { color: #6B21A8; background: #F3E8FF; }
+.fam-physique { color: #B45309; background: #FEF3C7; }
+.fam-biologique { color: #065F46; background: #D1FAE5; }
+.fam-ergonomique { color: #1E40AF; background: #DBEAFE; }
+.fam-rps { color: #BE185D; background: #FCE7F3; }
+.fam-mecanique { color: #6B7280; background: #F3F4F6; }
+.fam-electrique { color: #D97706; background: #FEF3C7; }
+.fam-incendie { color: #DC2626; background: #FEE2E2; }
+.fam-routier { color: #0369A1; background: #E0F2FE; }
+
+/* ── IA SEARCH ── */
+.ai-search-row { background: linear-gradient(135deg, oklch(0.96 0.04 160 / 0.6), oklch(0.96 0.04 180 / 0.6)); border: 1px dashed var(--emerald); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 14px; }
+.ai-search-label { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--emerald); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px; }
+.ai-search-badge { font-size: 9.5px; font-weight: 500; background: var(--emerald); color: white; padding: 2px 7px; border-radius: 10px; text-transform: none; letter-spacing: 0; margin-left: 4px; }
+.ai-search-input-row { display: flex; gap: 8px; align-items: stretch; }
+.ai-search-input { flex: 1; padding: 9px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-family: inherit; font-size: 13px; background: white; transition: border-color 0.15s; }
+.ai-search-input:focus { outline: none; border-color: var(--emerald); }
+.btn-ai-search { display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; background: var(--emerald); color: white; border: none; border-radius: var(--radius-sm); font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
+.btn-ai-search:hover:not(:disabled) { background: var(--emerald-light); transform: translateY(-1px); }
+.btn-ai-search:disabled { opacity: 0.6; cursor: wait; }
+.ai-status { font-size: 12px; margin-top: 8px; min-height: 0; }
+.ai-status-loading { color: var(--emerald); display: flex; align-items: center; gap: 6px; }
+.ai-status-success { color: var(--green); }
+.ai-status-error { color: var(--orange); }
+.ai-spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--emerald-pale); border-top-color: var(--emerald); border-radius: 50%; animation: ai-spin 0.7s linear infinite; }
+@keyframes ai-spin { to { transform: rotate(360deg); } }
+.ai-disabled { background: #f8fafc; border-style: solid; border-color: var(--border); opacity: 0.85; }
+.ai-disabled .ai-search-input, .ai-disabled .btn-ai-search { cursor: not-allowed; background: #f1f5f9; color: #94a3b8; }
+
+/* ── BOUTONS ── */
+.actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 12px 22px; border: none; border-radius: var(--radius-sm); font-family: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.btn-primary { background: var(--emerald); color: white; }
+.btn-primary:hover { background: #047857; transform: translateY(-1px); box-shadow: 0 4px 12px oklch(0.4 0.1 160 / 0.3); }
+.btn-outline { background: white; color: var(--text); border: 1.5px solid var(--border); }
+.btn-outline:hover { border-color: var(--emerald); color: var(--emerald); }
+.btn-danger { background: white; color: #DC2626; border: 1.5px solid #fecaca; }
+.btn-danger:hover { background: #fef2f2; }
+.btn-add { width: 100%; padding: 14px; background: white; border: 2px dashed var(--border); border-radius: var(--radius); font-family: inherit; font-size: 14px; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: all 0.2s; margin-bottom: 20px; }
+.btn-add:hover { border-color: var(--emerald); color: var(--emerald); background: var(--emerald-pale); }
+
+/* ── RESULTATS ── */
+#results { display: none; margin-top: 32px; }
+#results.show { display: block; animation: fadeIn 0.5s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.results-section { background: var(--white); border-radius: var(--radius); padding: 28px; box-shadow: var(--shadow); margin-bottom: 24px; }
+.results-section h3 { font-family: 'DM Serif Display', serif; font-size: 1.3rem; color: var(--text); margin-bottom: 16px; }
+
+/* ── KPIs ── */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.kpi { background: #f8fafc; border-radius: var(--radius-sm); padding: 16px; text-align: center; border: 1px solid var(--border); }
+.kpi-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 6px; }
+.kpi-val { font-family: 'DM Serif Display', serif; font-size: 2rem; line-height: 1; margin-bottom: 4px; }
+.kpi-sub { font-size: 11px; color: var(--text-muted); }
+.v-faible { color: var(--green); }
+.v-modere { color: var(--yellow); }
+.v-signif { color: #ea580c; }
+.v-eleve { color: var(--orange); }
+
+.verdict { padding: 16px 20px; border-radius: var(--radius-sm); font-size: 13.5px; line-height: 1.6; margin-bottom: 16px; background: #f8fafc; border-left: 4px solid var(--emerald); }
+
+/* ── TABLEAU SCORES ── */
+.score-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.score-table th { background: var(--navy-deep); color: white; padding: 10px 8px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+.score-table th:first-child { border-radius: 8px 0 0 0; }
+.score-table th:last-child { border-radius: 0 8px 0 0; }
+.score-table td { padding: 10px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.score-table tr:hover td { background: #fafbfc; }
+.score-pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+.score-faible { background: #dcfce7; color: #166534; }
+.score-modere { background: #fef9c3; color: #854d0e; }
+.score-signif { background: #fed7aa; color: #9a3412; }
+.score-eleve { background: #fecaca; color: #991b1b; }
+
+/* ── RADAR ── */
+.radar-wrap { display: flex; justify-content: center; padding: 20px 0; }
+
+/* ── PLAN D'ACTIONS ── */
+.action-item { background: #fafbfc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 10px; }
+.action-item.prio-1 { border-left: 4px solid var(--orange); }
+.action-item.prio-2 { border-left: 4px solid var(--yellow); }
+.action-item.prio-3 { border-left: 4px solid var(--green); }
+.action-prio { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+.action-prio.p1 { color: var(--orange); }
+.action-prio.p2 { color: var(--yellow); }
+.action-prio.p3 { color: var(--green); }
+.action-title { font-weight: 600; font-size: 13.5px; margin-bottom: 4px; }
+.action-detail { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; }
+.action-ref { font-size: 11px; color: var(--emerald); font-style: italic; margin-top: 4px; }
+
+/* ── EPI/EPC ── */
+.protection-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+.protection-card { background: #fafbfc; border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+.protection-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-weight: 700; font-size: 14px; }
+.protection-icon { font-size: 24px; }
+.protection-list { list-style: none; padding: 0; }
+.protection-list li { padding: 8px 0; border-bottom: 1px solid oklch(0.92 0.01 220); font-size: 12.5px; line-height: 1.5; }
+.protection-list li:last-child { border-bottom: none; }
+.protection-list li.critical { background: #fef2f2; margin: 4px -8px; padding: 8px; border-radius: 6px; border-bottom: none; }
+.protection-list li em { display: block; font-size: 11px; color: var(--emerald); margin-top: 2px; }
+
+/* ── DISCLAIMER ── */
+.disclaimer { background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; font-size: 12px; color: var(--text-muted); line-height: 1.6; margin-top: 24px; }
+
+@media (max-width: 640px) {
+  .form-row, .form-row.tri { grid-template-columns: 1fr; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .page-header { padding: 30px 1rem 40px; }
+  .main { padding: 0 1rem 3rem; }
+  .section-card, .results-section { padding: 18px; }
+}
+@media print { .navbar, .actions, .ai-toggle-bar, .ai-search-row, .btn-add { display: none !important; } body { font-size: 11px; } }
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a href="#" class="nav-brand">
+    <span class="nav-brand-name">Prévent<span>IA</span> HSE</span>
+  </a>
+  <a href="https://laurebonnefond.github.io/PreventIA-LaB/" class="nav-back">← PréventIA-LaB</a>
+</nav>
+
+<!-- HEADER -->
+<header class="page-header">
+  <div class="page-header-label">PréventIA Protect · Module HSE</div>
+  <h1>Évaluation globale des risques professionnels</h1>
+  <p>Identifiez, coter et priorisez les risques de chaque unité de travail. Méthode matricielle Gravité × Fréquence × Maîtrise conforme au Code du travail (art. R.4121-1 et suivants) et aux principes de prévention (L.4121-2).</p>
+</header>
+
+<main class="main">
+
+  <!-- INTRO -->
+  <div class="intro-card">
+    <h2>🛡️ Outil d'évaluation HSE multi-risques</h2>
+    <p>Cet outil couvre les <strong>9 familles de risques professionnels</strong> et génère un plan d'actions PAPRIPACT priorisé avec références réglementaires françaises.</p>
+    <ul>
+      <li><strong>9 familles :</strong> Chimique · Physique · Biologique · Ergonomique · RPS · Mécanique · Électrique · Incendie/ATEX · Routier</li>
+      <li><strong>Mode IA :</strong> identification automatique des risques par métier/secteur NAF via l'agent PréventIA-LaB</li>
+      <li><strong>Cotation :</strong> Gravité (1–4) × Fréquence (1–4) × Maîtrise (1–3) → score de criticité</li>
+      <li><strong>Sorties :</strong> KPI, radar, tableau de cotation, plan d'actions, EPI/EPC/Formation</li>
+    </ul>
+  </div>
+
+  <!-- TOGGLE IA -->
+  <div class="ai-toggle-bar ai-off" id="ai-toggle-bar">
+    <div style="font-size:22px;">🤖</div>
+    <div class="ai-toggle-info">
+      <strong>Mode IA · Agent PréventIA-LaB</strong>
+      <div class="ai-toggle-info-sub" id="ai-toggle-sub">Désactivé · saisie manuelle des risques. <strong>Aucun appel API.</strong></div>
+    </div>
+    <label class="ai-toggle-switch">
+      <input type="checkbox" id="ai-mode-toggle" onchange="toggleAIMode(this.checked)" />
+      <span class="ai-toggle-slider"></span>
+    </label>
+    <span class="ai-toggle-label-text" id="ai-toggle-label">OFF</span>
+  </div>
+
+  <!-- CONTEXTE ENTREPRISE -->
+  <div class="section-card">
+    <div class="section-h">
+      <h2>📋 Contexte de l'évaluation</h2>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Entreprise / Établissement</label>
+        <input type="text" id="ctx-entreprise" placeholder="Raison sociale" />
+      </div>
+      <div class="form-group">
+        <label>Code NAF / APE</label>
+        <input type="text" id="ctx-naf" placeholder="ex : 86.10Z" />
+      </div>
+    </div>
+    <div class="form-row tri">
+      <div class="form-group">
+        <label>Unité de travail</label>
+        <input type="text" id="ctx-ut" placeholder="ex : Atelier peinture, Bureau RH" />
+      </div>
+      <div class="form-group">
+        <label>Effectif concerné</label>
+        <input type="number" id="ctx-effectif" placeholder="Nb salariés" min="1" />
+      </div>
+      <div class="form-group">
+        <label>Date d'évaluation</label>
+        <input type="date" id="ctx-date" />
+      </div>
+    </div>
+
+    <!-- IA : identification auto des risques -->
+    <div class="ai-search-row ai-disabled" id="ai-ut-search">
+      <label class="ai-search-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        Identifier les risques par IA <span class="ai-search-badge">agent PréventIA-LaB</span>
+      </label>
+      <div class="ai-search-input-row">
+        <input type="text" class="ai-search-input" id="ai-metier-input" placeholder="Métier ou poste (ex : aide-soignant EHPAD, soudeur, cariste, secrétaire...)" />
+        <button class="btn-ai-search" id="btn-ai-identify" disabled>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 12a9 9 0 1 1-9-9c2.5 0 4.8 1 6.5 2.6"/><path d="M21 3v6h-6"/></svg>
+          Identifier
+        </button>
+      </div>
+      <div class="ai-status" id="ai-ut-status"></div>
+    </div>
+  </div>
+
+  <!-- LISTE DES RISQUES -->
+  <div class="section-card">
+    <div class="section-h">
+      <h2>⚠️ Risques identifiés</h2>
+      <span class="badge-num" id="counter">0 risques</span>
+    </div>
+    <div id="risks-list"></div>
+    <button class="btn-add" onclick="addRisk()">+ Ajouter un risque</button>
+    <div class="actions">
+      <button class="btn btn-primary" id="btn-evaluate">📊 Évaluer et générer le plan</button>
+      <button class="btn btn-outline" id="btn-print">🖨️ Imprimer</button>
+      <button class="btn btn-danger" id="btn-reset">🗑️ Réinitialiser</button>
+    </div>
+  </div>
+
+  <!-- RÉSULTATS -->
+  <div id="results">
+    <div class="results-section">
+      <h3>📊 Synthèse de l'évaluation <span class="badge-num" id="badge-risks"></span></h3>
+      <div class="kpi-grid" id="kpi-grid"></div>
+      <div class="verdict" id="verdict"></div>
+    </div>
+
+    <div class="results-section">
+      <h3>📋 Tableau de cotation des risques</h3>
+      <div style="overflow-x:auto;">
+        <table class="score-table" id="score-tbl"></table>
+      </div>
+    </div>
+
+    <div class="results-section" id="radar-section">
+      <h3>🎯 Radar des familles de risques</h3>
+      <div class="radar-wrap"><canvas id="radar-canvas" width="400" height="400"></canvas></div>
+    </div>
+
+    <div class="results-section" id="actions-section">
+      <h3>📝 Plan d'actions PAPRIPACT priorisé</h3>
+      <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:14px;">Actions classées par priorité selon la criticité du risque. Priorité 1 = actions immédiates (risque élevé), Priorité 2 = court terme (significatif), Priorité 3 = moyen terme (modéré).</p>
+      <div id="actions-content"></div>
+    </div>
+
+    <div class="results-section" id="protection-section">
+      <h3>🧤 Synthèse EPI / EPC / Formation <span class="badge-num" style="background:#d1fae5; color:#065f46;">3 volets</span></h3>
+      <div class="protection-grid" id="protection-content"></div>
+    </div>
+
+    <div class="disclaimer">
+      <strong>Méthodologie :</strong> Cotation matricielle selon les principes de la méthode INRS ND 2233 et les bonnes pratiques d'évaluation des risques professionnels. Le score de criticité = Gravité × Fréquence × coefficient de maîtrise. Les seuils sont : Faible (1–4), Modéré (5–8), Significatif (9–16), Élevé (17–48).<br />
+      <strong>Cadre réglementaire :</strong> Code du travail art. R.4121-1 à R.4121-4 (DUERP), L.4121-1 à L.4121-5 (obligations employeur), L.4121-2 (principes généraux de prévention).
+    </div>
+  </div>
+
+</main>
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+   PréventIA HSE — Évaluation globale des risques professionnels
+   Architecture : réplication du pattern Évaluateur Risque Chimique
+   ════════════════════════════════════════════════════════════════ */
+
+// ── Configuration API (proxy Make.com → Anthropic Claude) ──
+const PREVENTIA_API = "https://hook.eu1.make.com/qhvt4lylqgbykqljwd1sdybpdaoapedu";
+const PREVENTIA_TOKEN = "previa_text_2026_xxx";
+const PREVENTIA_MODEL = "claude-sonnet-4-5";
+
+// ── 9 familles de risques ──
+const FAMILIES = {
+  chimique:     { label: "Chimique",         icon: "⚗️", color: "#6B21A8" },
+  physique:     { label: "Physique",         icon: "🔊", color: "#B45309" },
+  biologique:   { label: "Biologique",       icon: "🦠", color: "#065F46" },
+  ergonomique:  { label: "Ergonomique",      icon: "🦴", color: "#1E40AF" },
+  rps:          { label: "RPS",              icon: "🧠", color: "#BE185D" },
+  mecanique:    { label: "Mécanique",        icon: "⚙️", color: "#6B7280" },
+  electrique:   { label: "Électrique",       icon: "⚡", color: "#D97706" },
+  incendie:     { label: "Incendie / ATEX",  icon: "🔥", color: "#DC2626" },
+  routier:      { label: "Routier",          icon: "🚗", color: "#0369A1" }
+};
+
+// ── Échelles de cotation ──
+const GRAVITE = {
+  1: "Faible — gêne mineure, sans arrêt",
+  2: "Moyenne — AT avec arrêt < 30 j",
+  3: "Grave — AT avec IPP ou MP",
+  4: "Très grave — décès ou IPP ≥ 66%"
+};
+const FREQUENCE = {
+  1: "Rare — < 1×/an ou occasionnelle",
+  2: "Peu fréquent — quelques ×/an",
+  3: "Fréquent — hebdomadaire à quotidien",
+  4: "Très fréquent — permanent / continu"
+};
+const MAITRISE = {
+  1: "Bonne — EPC + EPI + formation + procédures",
+  2: "Partielle — mesures partielles ou dégradées",
+  3: "Insuffisante — peu ou pas de mesures"
+};
+
+// ── Sous-risques par famille (pour le select) ──
+const SOUS_RISQUES = {
+  chimique: ["Exposition CMR (1A/1B)", "Inhalation vapeurs/solvants", "Contact cutané caustique/corrosif", "Projection oculaire", "Stockage incompatible", "Absence de FDS", "Absence de captage à la source", "Mélange de produits incompatibles"],
+  physique: ["Bruit > 80 dB(A)", "Bruit > 85 dB(A) (VLEP)", "Vibrations main-bras", "Vibrations corps entier", "Températures extrêmes (chaud)", "Températures extrêmes (froid)", "Rayonnements ionisants", "Rayonnements non ionisants (UV, laser)", "Champs électromagnétiques", "Éclairage insuffisant", "Hyperbarie / travail en milieu confiné"],
+  biologique: ["AES (accident d'exposition au sang)", "Agents biologiques groupe 3/4", "Zoonoses", "Risque infectieux (soins, déchets)", "Légionellose (TAR, ECS)", "Radon (zone 3)", "COVID / pandémie", "DASRI — gestion des déchets"],
+  ergonomique: ["TMS membre supérieur", "TMS rachis (lombalgies)", "Manutention manuelle > 15 kg", "Postures contraignantes", "Gestes répétitifs", "Travail sur écran > 4h/j", "Port de charges lourdes", "Vibrations + postures (combiné)"],
+  rps: ["Charge de travail excessive", "Manque d'autonomie", "Conflits / harcèlement", "Isolement professionnel", "Horaires atypiques / nuit", "Violence externe (public)", "Insécurité de l'emploi", "Charge émotionnelle (soins, social)"],
+  mecanique: ["Chute de hauteur (> 2 m)", "Chute de plain-pied", "Chute d'objets", "Écrasement / coincement", "Coupure / perforation", "Projection de particules", "Machines dangereuses (sans protecteur)", "Engins mobiles / collision"],
+  electrique: ["Contact direct (parties actives)", "Contact indirect (défaut isolement)", "Arc électrique", "Habilitation non à jour", "Installation non conforme NF C 15-100"],
+  incendie: ["Stockage inflammables (ATEX)", "Sources d'ignition non maîtrisées", "Absence de détection / alarme", "Moyens d'extinction insuffisants", "Évacuation non organisée", "Permis de feu non appliqué", "Atmosphère explosive (ATEX)"],
+  routier: ["Trajet domicile-travail", "Mission routière", "Chargement / arrimage", "Fatigue / somnolence", "Véhicule non entretenu", "Livraison sous contrainte temps"]
+};
+
+// ── État global ──
+let risks = [];
+let nextId = 1;
+let AI_MODE_ENABLED = false;
+try { AI_MODE_ENABLED = localStorage.getItem('preventia_hse_ai_mode') === 'true'; } catch (_) {}
+
+// ── Mode IA ──
+function toggleAIMode(enabled) {
+  AI_MODE_ENABLED = !!enabled;
+  try { localStorage.setItem('preventia_hse_ai_mode', AI_MODE_ENABLED ? 'true' : 'false'); } catch (_) {}
+  updateAIModeUI();
+}
+function updateAIModeUI() {
+  const bar = document.getElementById('ai-toggle-bar');
+  const label = document.getElementById('ai-toggle-label');
+  const sub = document.getElementById('ai-toggle-sub');
+  const cb = document.getElementById('ai-mode-toggle');
+  const searchRow = document.getElementById('ai-ut-search');
+  const btnAI = document.getElementById('btn-ai-identify');
+  if (AI_MODE_ENABLED) {
+    bar.classList.remove('ai-off'); bar.classList.add('ai-on');
+    label.textContent = 'ON';
+    sub.innerHTML = "Activé · l'identification IA interroge l'agent PréventIA-LaB (consommation d'API).";
+    searchRow.classList.remove('ai-disabled');
+    btnAI.disabled = false;
+  } else {
+    bar.classList.remove('ai-on'); bar.classList.add('ai-off');
+    label.textContent = 'OFF';
+    sub.innerHTML = 'Désactivé · saisie manuelle des risques. <strong>Aucun appel API.</strong>';
+    searchRow.classList.add('ai-disabled');
+    btnAI.disabled = true;
+  }
+  if (cb) cb.checked = AI_MODE_ENABLED;
+}
+
+// ── Appel IA ──
+async function askPreventIA(systemPrompt, userMessage) {
+  const payload = {
+    model: PREVENTIA_MODEL,
+    max_tokens: 2000,
+    system: systemPrompt,
+    messages: [{ role: "user", content: userMessage }]
+  };
+  const r = await fetch(PREVENTIA_API, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain" },
+    body: JSON.stringify({ token: PREVENTIA_TOKEN, payload })
+  });
+  if (!r.ok) throw new Error(`Erreur API (${r.status})`);
+  const raw = await r.text();
+  try {
+    const j = JSON.parse(raw);
+    if (j?.content && Array.isArray(j.content)) return j.content.map(b => b.text || "").join("\n").trim();
+    if (typeof j === "string") return j;
+    if (j?.response) return j.response;
+    if (j?.text) return j.text;
+  } catch (_) {}
+  return raw.trim();
+}
+
+function extractJSON(text) {
+  if (!text) return null;
+  let s = text.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
+  try { return JSON.parse(s); } catch (_) {}
+  const m = s.match(/\{[\s\S]*\}/);
+  if (m) { try { return JSON.parse(m[0]); } catch (_) {} }
+  const a = s.match(/\[[\s\S]*\]/);
+  if (a) { try { return JSON.parse(a[0]); } catch (_) {} }
+  return null;
+}
+
+// ── IA : identification automatique des risques par métier ──
+async function identifyRisksAI() {
+  if (!AI_MODE_ENABLED) return;
+  const input = document.getElementById('ai-metier-input').value.trim();
+  const statusEl = document.getElementById('ai-ut-status');
+  const btn = document.getElementById('btn-ai-identify');
+  if (!input || input.length < 3) {
+    statusEl.className = 'ai-status ai-status-error';
+    statusEl.innerHTML = '⚠ Saisissez au moins 3 caractères (métier, poste ou activité).';
+    return;
+  }
+  btn.disabled = true;
+  statusEl.className = 'ai-status ai-status-loading';
+  statusEl.innerHTML = '<span class="ai-spinner"></span> Analyse du métier par l\'agent IA PréventIA-LaB…';
+
+  const naf = document.getElementById('ctx-naf').value.trim();
+  const ut = document.getElementById('ctx-ut').value.trim();
+
+  const systemPrompt = `Tu es un expert en santé au travail, ergonome et préventeur IPRP. Tu dois identifier les principaux risques professionnels pour un métier/poste donné, en te basant sur les données AT/MP (tableaux de maladies professionnelles, statistiques CNAM/CARSAT), les référentiels INRS et le Code du travail français.
+
+Réponds UNIQUEMENT par un tableau JSON valide (pas de texte avant/après, pas de markdown), avec cette structure :
+[
+  {
+    "famille": "chimique",
+    "intitule": "Exposition aux solvants organiques (peintures, colles)",
+    "gravite": 3,
+    "frequence": 3,
+    "maitrise": 2,
+    "mesures_existantes": "Ventilation locale, gants nitrile",
+    "actions_proposees": "Substitution par produits en phase aqueuse, captage à la source, suivi biologique",
+    "ref_reglementaire": "R.4412-1, INRS ED 6179, tableau MP 84"
+  }
+]
+
+CONTRAINTES :
+- "famille" : une valeur parmi : chimique, physique, biologique, ergonomique, rps, mecanique, electrique, incendie, routier
+- "gravite" : 1 à 4 (1=faible, 4=très grave/décès)
+- "frequence" : 1 à 4 (1=rare, 4=permanent)
+- "maitrise" : 1 à 3 (1=bonne, 3=insuffisante)
+- Identifie entre 5 et 12 risques pertinents, classés par criticité décroissante
+- Inclus les risques transversaux (RPS, routier) si pertinents
+- Cite les tableaux de MP applicables si pertinent
+- "ref_reglementaire" : référence Code du travail et/ou INRS`;
+
+  const userMsg = `Identifie les risques professionnels pour : "${input}"${naf ? ` (NAF ${naf})` : ''}${ut ? ` — unité de travail : ${ut}` : ''}. Réponds UNIQUEMENT par le JSON demandé.`;
+
+  try {
+    const raw = await askPreventIA(systemPrompt, userMsg);
+    const data = extractJSON(raw);
+    if (!data || !Array.isArray(data)) throw new Error("Réponse non parsable en JSON");
+
+    // Vider les risques existants et remplir
+    risks = [];
+    nextId = 1;
+    data.forEach(r => {
+      const fam = Object.keys(FAMILIES).includes(r.famille) ? r.famille : 'mecanique';
+      const g = Math.max(1, Math.min(4, parseInt(r.gravite) || 2));
+      const f = Math.max(1, Math.min(4, parseInt(r.frequence) || 2));
+      const m = Math.max(1, Math.min(3, parseInt(r.maitrise) || 2));
+      risks.push({
+        id: nextId++,
+        famille: fam,
+        intitule: r.intitule || '',
+        gravite: String(g),
+        frequence: String(f),
+        maitrise: String(m),
+        mesures: r.mesures_existantes || '',
+        actions: r.actions_proposees || '',
+        ref: r.ref_reglementaire || ''
+      });
+    });
+
+    render();
+    statusEl.className = 'ai-status ai-status-success';
+    statusEl.innerHTML = `✓ ${risks.length} risques identifiés par l'IA. Vérifiez et ajustez les cotations, puis cliquez sur <strong>Évaluer</strong>.`;
+  } catch (err) {
+    console.error('[identifyRisksAI]', err);
+    statusEl.className = 'ai-status ai-status-error';
+    statusEl.innerHTML = `⚠ Erreur : ${escapeHtml(err.message)}. Vérifiez la connexion ou saisissez manuellement.`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ── GESTION DES RISQUES ──
+function addRisk() {
+  risks.push({
+    id: nextId++,
+    famille: 'mecanique',
+    intitule: '',
+    gravite: '2',
+    frequence: '2',
+    maitrise: '2',
+    mesures: '',
+    actions: '',
+    ref: ''
+  });
+  render();
+}
+function removeRisk(id) { risks = risks.filter(r => r.id !== id); render(); }
+function updateRisk(id, key, val) { const r = risks.find(r => r.id === id); if (r) r[key] = val; }
+
+function render() {
+  const list = document.getElementById('risks-list');
+  document.getElementById('counter').textContent = risks.length + ' risque' + (risks.length > 1 ? 's' : '');
+
+  if (risks.length === 0) {
+    list.innerHTML = '<p style="text-align:center; color:var(--text-muted); padding:30px; font-style:italic;">Aucun risque ajouté. Utilisez l\'IA ou cliquez sur « Ajouter un risque ».</p>';
+    return;
+  }
+
+  list.innerHTML = risks.map((r, idx) => {
+    const fam = FAMILIES[r.famille];
+    const sousRisques = SOUS_RISQUES[r.famille] || [];
+    return `
+    <div class="risk-card" id="card-${r.id}">
+      <div class="risk-card-header">
+        <span class="risk-card-num fam-${r.famille}">${fam.icon} ${fam.label} · R${idx + 1}</span>
+        <button class="risk-card-remove" onclick="removeRisk(${r.id})" title="Supprimer">✕</button>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Famille de risque</label>
+          <select onchange="updateRisk(${r.id}, 'famille', this.value); render();">
+            ${Object.entries(FAMILIES).map(([k, f]) =>
+              `<option value="${k}" ${r.famille === k ? 'selected' : ''}>${f.icon} ${f.label}</option>`
+            ).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Risque type (aide à la saisie)</label>
+          <select onchange="if(this.value) { updateRisk(${r.id}, 'intitule', this.value); render(); }">
+            <option value="">— Sélectionner ou saisir ci-dessous —</option>
+            ${sousRisques.map(sr => `<option value="${escapeHtml(sr)}" ${r.intitule === sr ? 'selected' : ''}>${sr}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row full">
+        <div class="form-group">
+          <label>Intitulé du risque / danger identifié</label>
+          <input type="text" value="${escapeHtml(r.intitule)}" placeholder="Décrivez le risque identifié..."
+            oninput="updateRisk(${r.id}, 'intitule', this.value)" />
+        </div>
+      </div>
+
+      <div class="form-row tri">
+        <div class="form-group">
+          <label>Gravité</label>
+          <select onchange="updateRisk(${r.id}, 'gravite', this.value)">
+            ${Object.entries(GRAVITE).map(([k,v]) => `<option value="${k}" ${r.gravite === k ? 'selected' : ''}>${k} — ${v.split(' — ')[1]}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Fréquence</label>
+          <select onchange="updateRisk(${r.id}, 'frequence', this.value)">
+            ${Object.entries(FREQUENCE).map(([k,v]) => `<option value="${k}" ${r.frequence === k ? 'selected' : ''}>${k} — ${v.split(' — ')[1]}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Maîtrise actuelle</label>
+          <select onchange="updateRisk(${r.id}, 'maitrise', this.value)">
+            ${Object.entries(MAITRISE).map(([k,v]) => `<option value="${k}" ${r.maitrise === k ? 'selected' : ''}>${k} — ${v.split(' — ')[1]}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Mesures existantes</label>
+          <textarea oninput="updateRisk(${r.id}, 'mesures', this.value)" placeholder="EPC, EPI, formation, procédures en place...">${escapeHtml(r.mesures)}</textarea>
+        </div>
+        <div class="form-group">
+          <label>Actions proposées</label>
+          <textarea oninput="updateRisk(${r.id}, 'actions', this.value)" placeholder="Substitution, captage, formation, organisation...">${escapeHtml(r.actions)}</textarea>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function escapeHtml(s) { return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// ════════════════════════════════════════════════════════════════
+// ── ÉVALUATION ────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════
+function evaluate() { try { _evaluate(); } catch (err) { console.error('[evaluate]', err); alert("Erreur : " + err.message); } }
+
+function scoreCategory(score) {
+  if (score >= 17) return { cat: 'Élevé', cls: 'score-eleve' };
+  if (score >= 9) return { cat: 'Significatif', cls: 'score-signif' };
+  if (score >= 5) return { cat: 'Modéré', cls: 'score-modere' };
+  return { cat: 'Faible', cls: 'score-faible' };
+}
+
+function _evaluate() {
+  if (risks.length === 0) { alert("Ajoutez au moins un risque."); return; }
+
+  const scores = risks.map((r, idx) => {
+    const g = parseInt(r.gravite) || 2;
+    const f = parseInt(r.frequence) || 2;
+    const m = parseInt(r.maitrise) || 2;
+    const score = g * f * m;
+    const cat = scoreCategory(score);
+    return { idx, r, g, f, m, score, cat };
+  });
+
+  const safeRender = (fn, name) => { try { fn(); } catch (e) { console.error(`[render ${name}]`, e); } };
+  safeRender(() => renderSynthesis(scores), 'synthesis');
+  safeRender(() => renderScoreTable(scores), 'scoreTable');
+  safeRender(() => renderRadar(scores), 'radar');
+  safeRender(() => renderActions(scores), 'actions');
+  safeRender(() => renderProtection(scores), 'protection');
+
+  const resultsEl = document.getElementById('results');
+  resultsEl.classList.add('show');
+  resultsEl.style.display = 'block';
+  document.getElementById('badge-risks').textContent = risks.length + ' risques';
+  setTimeout(() => resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+}
+
+function renderSynthesis(scores) {
+  const n = scores.length;
+  const maxScore = Math.max(...scores.map(s => s.score));
+  const maxCat = scoreCategory(maxScore);
+  const avgScore = Math.round(scores.reduce((sum, s) => sum + s.score, 0) / n);
+  const nbEleve = scores.filter(s => s.cat.cat === 'Élevé').length;
+  const nbSignif = scores.filter(s => s.cat.cat === 'Significatif').length;
+  const nbFamilies = new Set(scores.map(s => s.r.famille)).size;
+
+  document.getElementById('kpi-grid').innerHTML = `
+    <div class="kpi"><div class="kpi-label">Risques évalués</div><div class="kpi-val">${n}</div><div class="kpi-sub">${nbFamilies} famille${nbFamilies > 1 ? 's' : ''}</div></div>
+    <div class="kpi"><div class="kpi-label">Score max</div><div class="kpi-val v-${maxCat.cls.replace('score-','')}">${maxScore}</div><div class="kpi-sub">Niveau ${maxCat.cat}</div></div>
+    <div class="kpi"><div class="kpi-label">Score moyen</div><div class="kpi-val">${avgScore}</div><div class="kpi-sub">${scoreCategory(avgScore).cat}</div></div>
+    <div class="kpi"><div class="kpi-label">Risques critiques</div><div class="kpi-val ${nbEleve > 0 ? 'v-eleve' : 'v-faible'}">${nbEleve}</div><div class="kpi-sub">${nbSignif} significatifs</div></div>
+  `;
+
+  let verdict = '';
+  if (nbEleve > 0) {
+    verdict = `<strong>⚠ Niveau global : ÉLEVÉ.</strong> ${nbEleve} risque(s) nécessitent des actions correctives <strong>immédiates</strong>. L'employeur doit engager sans délai les mesures de prévention prioritaires (substitution, protection collective, formation renforcée). Mise à jour du DUERP et du PAPRIPACT obligatoire (art. R.4121-2).`;
+  } else if (nbSignif > 0) {
+    verdict = `<strong>⚠ Niveau global : SIGNIFICATIF.</strong> ${nbSignif} risque(s) nécessitent un plan d'actions à court terme. Prioriser les mesures de protection collective, former les opérateurs et suivre les indicateurs AT/MP.`;
+  } else if (avgScore >= 5) {
+    verdict = `<strong>Niveau global : MODÉRÉ.</strong> Maintenir les mesures existantes et planifier les améliorations. Renouveler l'évaluation au moins annuellement ou à chaque changement significatif.`;
+  } else {
+    verdict = `<strong>Niveau global : FAIBLE.</strong> Situation maîtrisée. Maintenir la vigilance, actualiser le DUERP lors de tout changement (art. R.4121-2).`;
+  }
+  document.getElementById('verdict').innerHTML = verdict;
+}
+
+function renderScoreTable(scores) {
+  const sorted = [...scores].sort((a, b) => b.score - a.score);
+  document.getElementById('score-tbl').innerHTML = `
+    <thead><tr><th>#</th><th>Famille</th><th>Risque identifié</th><th style="text-align:center;">G</th><th style="text-align:center;">F</th><th style="text-align:center;">M</th><th style="text-align:center;">Score</th><th>Niveau</th></tr></thead>
+    <tbody>${sorted.map(s => {
+      const fam = FAMILIES[s.r.famille];
+      return `<tr>
+        <td><strong style="color:${fam.color};">R${s.idx + 1}</strong></td>
+        <td>${fam.icon} ${fam.label}</td>
+        <td><strong>${escapeHtml(s.r.intitule) || '(non précisé)'}</strong>${s.r.mesures ? '<br><span style="color:var(--text-muted); font-size:11px;">✓ ' + escapeHtml(s.r.mesures).substring(0, 80) + '</span>' : ''}</td>
+        <td style="text-align:center; font-weight:600;">${s.g}</td>
+        <td style="text-align:center; font-weight:600;">${s.f}</td>
+        <td style="text-align:center; font-weight:600;">${s.m}</td>
+        <td style="text-align:center; font-size:16px; font-weight:700;">${s.score}</td>
+        <td><span class="score-pill ${s.cat.cls}">${s.cat.cat}</span></td>
+      </tr>`}).join('')}</tbody>`;
+}
+
+// ── Radar par famille ──
+function renderRadar(scores) {
+  const canvas = document.getElementById('radar-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const cx = W / 2, cy = H / 2, R = 150;
+  ctx.clearRect(0, 0, W, H);
+
+  const famKeys = Object.keys(FAMILIES);
+  const n = famKeys.length;
+  const maxPossible = 48; // 4×4×3
+
+  // Score max par famille
+  const famScores = {};
+  famKeys.forEach(k => { famScores[k] = 0; });
+  scores.forEach(s => { famScores[s.r.famille] = Math.max(famScores[s.r.famille], s.score); });
+
+  const angleStep = (2 * Math.PI) / n;
+  const startAngle = -Math.PI / 2;
+
+  // Grilles
+  [0.25, 0.5, 0.75, 1].forEach(frac => {
+    ctx.beginPath();
+    for (let i = 0; i <= n; i++) {
+      const a = startAngle + i * angleStep;
+      const x = cx + R * frac * Math.cos(a);
+      const y = cy + R * frac * Math.sin(a);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+
+  // Axes + labels
+  famKeys.forEach((k, i) => {
+    const a = startAngle + i * angleStep;
+    const x = cx + R * Math.cos(a);
+    const y = cy + R * Math.sin(a);
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x, y);
+    ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1; ctx.stroke();
+
+    const lx = cx + (R + 28) * Math.cos(a);
+    const ly = cy + (R + 28) * Math.sin(a);
+    ctx.font = '11px DM Sans';
+    ctx.fillStyle = '#334155';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(FAMILIES[k].icon + ' ' + FAMILIES[k].label, lx, ly);
+  });
+
+  // Polygone des scores
+  ctx.beginPath();
+  famKeys.forEach((k, i) => {
+    const a = startAngle + i * angleStep;
+    const val = famScores[k] / maxPossible;
+    const x = cx + R * val * Math.cos(a);
+    const y = cy + R * val * Math.sin(a);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(5, 150, 105, 0.15)';
+  ctx.fill();
+  ctx.strokeStyle = '#059669';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  // Points
+  famKeys.forEach((k, i) => {
+    const a = startAngle + i * angleStep;
+    const val = famScores[k] / maxPossible;
+    const x = cx + R * val * Math.cos(a);
+    const y = cy + R * val * Math.sin(a);
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, 2 * Math.PI);
+    ctx.fillStyle = famScores[k] >= 17 ? '#DC2626' : famScores[k] >= 9 ? '#D97706' : '#059669';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+}
+
+// ── Plan d'actions ──
+function renderActions(scores) {
+  const sorted = [...scores].sort((a, b) => b.score - a.score);
+  const cont = document.getElementById('actions-content');
+  let html = '';
+
+  sorted.forEach(s => {
+    if (s.score < 5 && !s.r.actions) return; // skip faible sans action
+    const prio = s.score >= 17 ? 1 : s.score >= 9 ? 2 : 3;
+    const prioLabel = prio === 1 ? 'PRIORITÉ 1 · IMMÉDIAT' : prio === 2 ? 'PRIORITÉ 2 · COURT TERME' : 'PRIORITÉ 3 · MOYEN TERME';
+    const fam = FAMILIES[s.r.famille];
+    html += `
+      <div class="action-item prio-${prio}">
+        <div class="action-prio p${prio}">${prioLabel}</div>
+        <div class="action-title">${fam.icon} ${escapeHtml(s.r.intitule) || '(Risque ' + (s.idx + 1) + ')'} <span style="font-weight:400; font-size:12px; color:var(--text-muted);">— score ${s.score} (${s.cat.cat})</span></div>
+        <div class="action-detail">${escapeHtml(s.r.actions) || '<em style="color:var(--text-muted);">Aucune action proposée — à compléter</em>'}</div>
+        ${s.r.ref ? `<div class="action-ref">📎 ${escapeHtml(s.r.ref)}</div>` : ''}
+      </div>`;
+  });
+
+  if (!html) html = '<p style="color:var(--text-muted); text-align:center; padding:20px;">Aucun risque nécessitant une action prioritaire.</p>';
+  cont.innerHTML = html;
+}
+
+// ── Protection (EPI / EPC / Formation) ──
+function renderProtection(scores) {
+  const cont = document.getElementById('protection-content');
+  const allFamilies = new Set(scores.map(s => s.r.famille));
+  const highRisks = scores.filter(s => s.score >= 9);
+
+  // EPI
+  const epi = [];
+  if (allFamilies.has('chimique')) epi.push({ critical: true, text: '<strong>Gants de protection chimique</strong> EN ISO 374 (nitrile, néoprène ou butyle selon solvant). Lunettes-masque EN 166.', ref: 'R.4321-4 · EN 374' });
+  if (allFamilies.has('physique')) epi.push({ critical: false, text: '<strong>PICB adaptés</strong> (bouchons moulés ou casque) si bruit > 80 dB(A). Vêtements isolants si températures extrêmes.', ref: 'R.4431-2 · INRS ED 868' });
+  if (allFamilies.has('biologique')) epi.push({ critical: true, text: '<strong>Gants à usage unique</strong> (nitrile, NF EN 455), masque FFP2/FFP3 si aérosols biologiques, lunettes anti-projection.', ref: 'R.4424-3 · INRS ED 6360' });
+  if (allFamilies.has('mecanique')) epi.push({ critical: false, text: '<strong>Casque de chantier</strong> EN 397, chaussures de sécurité EN ISO 20345, gants anti-coupure EN 388.', ref: 'R.4323-91' });
+  if (allFamilies.has('electrique')) epi.push({ critical: true, text: '<strong>Gants isolants</strong> classe adaptée à la tension, écran facial anti-arc, tapis isolant, VAT.', ref: 'R.4544-1 · NF C 18-510' });
+  if (allFamilies.has('incendie')) epi.push({ critical: false, text: '<strong>Vêtements non-feu M1/M2</strong>, chaussures de sécurité antistatiques si zone ATEX.', ref: 'R.4227-42' });
+  if (epi.length === 0) epi.push({ critical: false, text: 'EPI standard selon évaluation spécifique au poste.', ref: 'R.4321-1' });
+
+  // EPC
+  const epc = [];
+  if (allFamilies.has('chimique')) epc.push({ critical: true, text: '<strong>Captage à la source</strong> (sorbonne, bras aspirant). Rétentions, étiquetage CLP, douche de sécurité.', ref: 'R.4222-12 · R.4412-70' });
+  if (allFamilies.has('mecanique')) epc.push({ critical: false, text: '<strong>Protecteurs de machines</strong> (EN 953), garde-corps, filets anti-chute, balisage de zones.', ref: 'R.4323-15 · R.4534-3' });
+  if (allFamilies.has('electrique')) epc.push({ critical: true, text: '<strong>Consignation</strong> obligatoire avant intervention (NF C 18-510). Différentiels 30 mA, mise à la terre.', ref: 'R.4544-3 · NF C 15-100' });
+  if (allFamilies.has('incendie')) epc.push({ critical: true, text: '<strong>Détection incendie + extinction</strong> (extincteurs adaptés, RIA, désenfumage). Plan d\'évacuation affiché.', ref: 'R.4227-28 · R.4227-34' });
+  epc.push({ critical: false, text: '<strong>Signalétique de sécurité</strong> (NF EN ISO 7010), plans d\'évacuation, issues de secours dégagées.', ref: 'R.4224-24' });
+
+  // Formation
+  const formation = [];
+  formation.push({ critical: highRisks.length > 0, text: '<strong>Accueil sécurité</strong> — livret d\'accueil, visite des locaux, règles de sécurité. Pour chaque nouvel arrivant, intérimaire, stagiaire.', ref: 'R.4141-2 · R.4141-3' });
+  if (allFamilies.has('chimique')) formation.push({ critical: true, text: '<strong>Formation risque chimique</strong> — étiquetage CLP, FDS, conduite d\'urgence, EPI chimiques. Recyclage annuel.', ref: 'R.4412-38' });
+  if (allFamilies.has('electrique')) formation.push({ critical: true, text: '<strong>Habilitation électrique</strong> — BS/BE/B1/B2/BR/BC selon opérations. Recyclage tous les 3 ans.', ref: 'R.4544-9 · NF C 18-510' });
+  if (allFamilies.has('mecanique')) formation.push({ critical: false, text: '<strong>CACES / autorisation de conduite</strong> pour engins, chariots, PEMP, nacelles. Renouvellement tous les 5 ans.', ref: 'R.4323-55' });
+  if (allFamilies.has('incendie')) formation.push({ critical: false, text: '<strong>Formation incendie</strong> — manipulation extincteurs, exercice d\'évacuation semestriel, équipiers de première intervention.', ref: 'R.4227-39' });
+  formation.push({ critical: false, text: '<strong>SST (Sauveteur Secouriste du Travail)</strong> — 1 SST/10 salariés minimum en atelier. Formation 14h + MAC 24 mois.', ref: 'R.4224-15' });
+  if (allFamilies.has('rps')) formation.push({ critical: false, text: '<strong>Sensibilisation RPS</strong> — management bienveillant, détection signaux faibles, référent harcèlement, droit de retrait.', ref: 'L.4121-1 · L.1152-1' });
+
+  const renderList = items => items.map(i => `<li class="${i.critical ? 'critical' : ''}">${i.text}<em>${i.ref}</em></li>`).join('');
+
+  cont.innerHTML = `
+    <div class="protection-card epi"><div class="protection-card-header"><div class="protection-icon">🧤</div><span>EPI · Protection individuelle</span></div><ul class="protection-list">${renderList(epi)}</ul></div>
+    <div class="protection-card epc"><div class="protection-card-header"><div class="protection-icon">🏭</div><span>EPC · Protection collective</span></div><ul class="protection-list">${renderList(epc)}</ul></div>
+    <div class="protection-card formation"><div class="protection-card-header"><div class="protection-icon">🎓</div><span>Formation · Habilitations</span></div><ul class="protection-list">${renderList(formation)}</ul></div>
+  `;
+}
+
+function resetAll() {
+  if (!confirm("Réinitialiser tous les risques et résultats ?")) return;
+  risks = [];
+  nextId = 1;
+  const r = document.getElementById('results');
+  if (r) { r.classList.remove('show'); r.style.display = 'none'; }
+  render();
+}
+
+// ── Initialisation ──
+document.addEventListener('DOMContentLoaded', () => {
+  const bindClick = (id, fn) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('click', ev => { ev.preventDefault(); try { fn(); } catch (e) { console.error(e); alert('Erreur : ' + e.message); } });
+  };
+  bindClick('btn-evaluate', evaluate);
+  bindClick('btn-print', () => window.print());
+  bindClick('btn-reset', resetAll);
+  bindClick('btn-ai-identify', identifyRisksAI);
+
+  // Date par défaut
+  const dateInput = document.getElementById('ctx-date');
+  if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+});
+
+updateAIModeUI();
+</script>
+
+</body>
+</html>

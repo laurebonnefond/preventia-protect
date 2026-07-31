@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>[DEV] Fiche EPI — PréventIA Protect</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',system-ui,sans-serif;background:#f1f5f9;color:#1e293b;line-height:1.5}
+.sf{font-family:'DM Serif Display',serif}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media print{header,.noP{display:none!important}main{padding:0!important}.fiche{box-shadow:none!important;border-radius:0!important}}
+
+/* Styles utilitaires pour le générateur uniquement — la fiche est un SVG autonome */
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useRef,useEffect}=React;
+const WH="https://hook.eu2.make.com/qhvt4lylqgbykqljwd1sdybpdaoapedu";
+const today=()=>new Date().toLocaleDateString("fr-FR");
+const nextY=()=>{const d=new Date();d.setFullYear(d.getFullYear()+1);return d.toLocaleDateString("fr-FR")};
+
+/* ═══ MAPPING EPI → Zone + Côté + Picto (descriptions statiques retirées → désormais contextuelles) ═══ */
+const EPI_DB=[
+  {rx:/casque(?! de soud)/i,        zone:"tete",   s:"L",pic:"M013"},
+  {rx:/casque de soud|soudeur/i,    zone:"tete",   s:"L",pic:"M019"},
+  {rx:/calot|charlotte/i,           zone:"tete",   s:"L",pic:"M013"},
+  {rx:/chapeau|casquette/i,         zone:"tete",   s:"L",pic:"M013"},
+  {rx:/cagoule/i,                   zone:"tete",   s:"L",pic:"M016"},
+  {rx:/lunette|visière|écran.?fac/i,zone:"yeux",   s:"R",pic:"M004"},
+  {rx:/antibruit|bouchon|coquille|auditiv|picb/i,zone:"oreilles",s:"R",pic:"M003"},
+  {rx:/masque|ffp|respirat|ari |abek|aération/i,zone:"respir",s:"R",pic:"M016"},
+  {rx:/gant(?! therm)/i,            zone:"mains",  s:"L",pic:"M009"},
+  {rx:/gant.?therm/i,               zone:"mains",  s:"L",pic:"M009"},
+  {rx:/harnais|antichute|longe/i,   zone:"harnais",s:"L",pic:"M018"},
+  {rx:/tablier/i,                   zone:"tablier",s:"L",pic:"M026"},
+  {rx:/gilet|chasuble|hv/i,         zone:"gilet",  s:"R",pic:"M015"},
+  {rx:/blouse/i,                    zone:"torse",  s:"R",pic:"M010"},
+  {rx:/surblouse/i,                 zone:"torse2", s:"R",pic:"M010"},
+  {rx:/combinaison|tenue(?! de cuis)|vêtement/i,zone:"torse",s:"R",pic:"M010"},
+  {rx:/tenue de cuis/i,             zone:"torse",  s:"R",pic:"M010"},
+  {rx:/pantalon/i,                  zone:"jambes", s:"L",pic:"M010"},
+  {rx:/genouillère/i,               zone:"genoux", s:"R",pic:"M008"},
+  {rx:/guêtre|jambière/i,           zone:"mollets",s:"R",pic:"M008"},
+  {rx:/chaussure|botte|surchaussure/i,zone:"pieds",s:"L",pic:"M008"},
+];
+function classify(name){
+  const n=name.toLowerCase();
+  for(const m of EPI_DB) if(m.rx.test(n)) return m;
+  return {zone:"torse",s:"R",pic:"M001"};
+}
+
+/* Les coordonnées de positionnement sont désormais figées dans fiche-epi-template.svg */
+/* ═══ Description EPI par défaut (fallback si IA ne fournit pas de desc contextuelle) ═══ */
+const DEFAULT_DESC={
+  tete:"Protection crânienne contre les chocs et chutes d'objets.",
+  yeux:"Protection oculaire contre les projections et éclaboussures.",
+  oreilles:"Protection auditive — Obligatoire si Lex,8h ≥ 85 dB(A).",
+  respir:"Protection respiratoire adaptée au type de polluant.",
+  mains:"Protection des mains contre les risques identifiés.",
+  harnais:"Protection antichute — Travail en hauteur > 3m.",
+  tablier:"Protection du torse contre projections et contaminations.",
+  gilet:"Haute visibilité — Zones de circulation véhicules.",
+  torse:"Protection corporelle adaptée à l'environnement de travail.",
+  torse2:"Protection contre les projections biologiques ou chimiques.",
+  jambes:"Protection des membres inférieurs.",
+  genoux:"Protection articulaire lors de travaux au sol.",
+  mollets:"Protection complémentaire des jambes.",
+  pieds:"Protection plantaire contre chutes d'objets, perforations et glissades.",
+};
+
+/* ═══ APP ═══ */
+function App(){
+  const[page,setPage]=useState("gen");
+  const[data,setData]=useState(null);
+  const[db,setDb]=useState([]);
+  useEffect(()=>{fetch("metiers.json").then(r=>r.json()).then(d=>{if(d.metiers)setDb(d.metiers)}).catch(()=>{});},[]);
+  return(<div style={{minHeight:"100vh",background:"#f1f5f9"}}>
+    <header className="noP" style={{background:"linear-gradient(135deg,#0c1e3c,#0f766e)",color:"white",padding:"0 16px"}}>
+      <div style={{maxWidth:1100,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0"}}>
+        <a href="../../../index.html" style={{display:"flex",alignItems:"center",gap:8,color:"white",textDecoration:"none"}}>
+          <div style={{width:34,height:34,borderRadius:9,background:"rgba(255,255,255,.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>🛡️</div>
+          <div><div className="sf" style={{fontSize:17}}>PréventIA Protect</div><div style={{fontSize:8,opacity:.6,letterSpacing:1.5,textTransform:"uppercase"}}>Fiche EPI personnalisée</div></div>
+        </a>
+        {data&&<nav style={{display:"flex",gap:4}}>
+          {[["gen","📋 Générer"],["view","👁️ Fiche"]].map(([k,l])=>
+            <button key={k} onClick={()=>setPage(k)} style={{padding:"6px 12px",border:"none",borderRadius:8,cursor:"pointer",fontSize:11,fontWeight:600,fontFamily:"inherit",background:page===k?"rgba(255,255,255,.9)":"rgba(255,255,255,.12)",color:page===k?"#0c1e3c":"white"}}>{l}</button>)}
+        </nav>}
+      </div>
+    </header>
+    <main style={{maxWidth:1100,margin:"0 auto",padding:"16px"}}>
+      {page==="gen"&&<Gen db={db} onDone={d=>{setData(d);setPage("view")}}/>}
+      {page==="view"&&data&&<FV d={data} onBack={()=>setPage("gen")}/>}
+    </main>
+  </div>);
+}
+
+/* ═══ GENERATOR ═══ */
+function Gen({db,onDone}){
+  const[mode,setMode]=useState("select");const[q,setQ]=useState("");const[sel,setSel]=useState(null);
+  const[cm,setCm]=useState("");const[cs,setCs]=useState("");const[cmi,setCmi]=useState("");
+  const[ld,setLd]=useState(false);const[err,setErr]=useState(null);
+  const filt=q.length>=2?db.filter(m=>m.metier.toLowerCase().includes(q.toLowerCase())||m.secteur?.toLowerCase().includes(q.toLowerCase())).slice(0,20):[];
+
+  /* ─── Mode BASE : on transforme les risques en phases exposantes ─── */
+  function go(m){
+    const epi=m.epi.split(",").map(e=>e.trim()).filter(e=>e&&e!=="—");
+    const epc=m.epc.split(",").map(e=>e.trim()).filter(e=>e&&e!=="—");
+    const cut=Math.ceil(epi.length*.65);
+    const risques=m.risques?m.risques.split(",").map(r=>r.trim()):[];
+    /* CHANGEMENT : générer des phases exposantes à partir des risques */
+    const phases=risques.map(r=>({phase:r,risque:r})); // fallback identique, sera enrichi par IA
+    onDone({metier:m.metier,secteur:m.secteur,environnement:risques.slice(0,4),phases:phases,epiI:epi.slice(0,cut),epiN:epi.slice(cut),epc,epiDesc:{},ref:m.ref||"",suivi:m.suivi||"",date:today(),version:"1.0",source:"base"});
+  }
+
+  /* ─── Mode IA : prompt enrichi pour phases + descriptions contextuelles ─── */
+  async function goAI(){
+    if(!cm.trim())return setErr("Précisez le métier");setLd(true);setErr(null);
+    try{
+      const body={model:"claude-sonnet-4-5-20250514",max_tokens:2500,messages:[{role:"user",content:
+`Expert IPRP santé au travail. Métier : "${cm}"${cs?`, secteur : "${cs}"`:""}${cmi?`, missions : ${cmi}`:""}.
+
+Réponds UNIQUEMENT en JSON strict (pas de markdown, pas de commentaires) :
+{
+  "metier": "intitulé exact du poste",
+  "secteur": "code NAF ou secteur",
+  "environnement": ["3-4 risques principaux synthétiques"],
+  "phases": [
+    {"phase": "phase de travail exposante (ex: Soins aux patients)", "risque": "type de risque associé (ex: Biologique 3-4 (AES, BMR, tuberculose))"},
+    {"phase": "...", "risque": "..."}
+  ],
+  "epiI": ["EPI indispensables avec norme si possible"],
+  "epiN": ["EPI nécessaires selon situations"],
+  "epiDesc": {
+    "nom exact de l'EPI": "description contextuelle adaptée au métier et à la phase de travail (1 phrase)",
+    "...": "..."
+  },
+  "epc": ["EPC conseillés"],
+  "ref": "articles Code du travail applicables",
+  "suivi": "type de suivi médical (SIR/SIA/SI)"
+}
+
+IMPORTANT :
+- "phases" : 4-8 phases de travail concrètes du métier qui exposent à un risque. PAS les risques eux-mêmes.
+- "epiDesc" : chaque EPI doit avoir une description contextuelle adaptée au métier. Ex pour IDE : lunettes → "Protection oculaire lors des soins exposant aux projections biologiques (AES, pansements, prélèvements)". JAMAIS de description industrielle pour un métier de soin.
+- Chaque clé de epiDesc doit correspondre exactement à un élément de epiI ou epiN.
+- RISQUE BIOLOGIQUE (Art. R4421-3, classement 4 groupes) : pour les métiers du soin et de la santé (IDE, aide-soignant, IADE, IBODE, laborantin, agent mortuaire, etc.), l'exposition relève des GROUPES 3-4 (agents pouvant provoquer une maladie grave : tuberculose/M. tuberculosis groupe 3, agents hémorragiques groupe 4, VIH/VHB/VHC groupe 3, BMR). Ne JAMAIS classer un soignant en biologique 2-3 : c'est une sous-cotation. Formuler "Biologique 3-4" avec les agents concernés (AES, BMR, tuberculose, hépatites, VIH).`
+      }]};
+      const r=await fetch(WH,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({token:"preventia-protect",payload:JSON.stringify(body)})});
+      const t=await r.text();let p;
+      try{const j=JSON.parse(t);p=JSON.parse((j?.content?.[0]?.text||t).replace(/```json\n?|```/g,"").trim())}catch{throw new Error("Réponse IA invalide")}
+      onDone({...p,date:today(),version:"1.0",source:"ia"});
+    }catch(e){setErr(e.message)}setLd(false);
+  }
+
+  const S={width:"100%",padding:"8px 12px",borderRadius:8,border:"1px solid #cbd5e1",fontSize:13,fontFamily:"inherit",boxSizing:"border-box"};
+  return(<div style={{maxWidth:750,margin:"0 auto"}}>
+    <h2 className="sf" style={{fontSize:22,marginBottom:4}}>📋 Générer une Fiche EPI</h2>
+    <p style={{color:"#64748b",fontSize:13,marginBottom:16}}>{db.length} métiers + IA personnalisée</p>
+    <div style={{display:"flex",gap:4,marginBottom:16,background:"#e2e8f0",borderRadius:10,padding:3,maxWidth:400}}>
+      {[["select",`📂 Base (${db.length})`],["custom","🤖 IA"]].map(([k,l])=><button key={k} onClick={()=>setMode(k)} style={{flex:1,padding:"8px 12px",borderRadius:8,border:"none",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"inherit",background:mode===k?"white":"transparent",color:mode===k?"#0c1e3c":"#64748b"}}>{l}</button>)}
+    </div>
+    {mode==="select"?<div style={{background:"white",borderRadius:16,padding:20,boxShadow:"0 1px 4px rgba(0,0,0,.06)"}}>
+      <input value={q} onChange={e=>{setQ(e.target.value);setSel(null)}} placeholder="🔍 Rechercher un métier…" style={{...S,fontSize:14,padding:"10px 14px",marginBottom:12}}/>
+      {q.length>=2&&filt.length>0&&<div style={{maxHeight:280,overflowY:"auto",border:"1px solid #e2e8f0",borderRadius:10,marginBottom:12}}>{filt.map(m=><button key={m.id} onClick={()=>{setSel(m);setQ(m.metier)}} style={{display:"block",width:"100%",padding:"8px 12px",border:"none",borderBottom:"1px solid #f1f5f9",background:sel?.id===m.id?"#ecfdf5":"white",textAlign:"left",cursor:"pointer",fontFamily:"inherit",fontSize:12}}><b>{m.metier}</b><br/><span style={{color:"#64748b",fontSize:10}}>{m.secteur} — {m.suivi}</span></button>)}</div>}
+      {sel&&<div style={{padding:14,background:"#f0fdf4",borderRadius:12}}><h4 style={{fontSize:14,margin:"0 0 4px"}}>{sel.metier}</h4><p style={{fontSize:11,color:"#64748b",margin:"0 0 4px"}}>{sel.secteur} — <b>{sel.suivi}</b></p><p style={{fontSize:11,margin:"0 0 8px"}}><b>EPI :</b> {sel.epi}</p><button onClick={()=>go(sel)} style={{padding:"10px 20px",borderRadius:10,border:"none",background:"#0f766e",color:"white",cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"inherit"}}>✅ Générer</button></div>}
+    </div>
+    :<div style={{background:"white",borderRadius:16,padding:20,boxShadow:"0 1px 4px rgba(0,0,0,.06)"}}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}><label style={{gridColumn:"1/-1"}}><span style={{fontSize:11,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>Métier *</span><input value={cm} onChange={e=>setCm(e.target.value)} style={S}/></label><label><span style={{fontSize:11,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>Secteur</span><input value={cs} onChange={e=>setCs(e.target.value)} style={S}/></label><label style={{gridColumn:"1/-1"}}><span style={{fontSize:11,fontWeight:600,color:"#475569",display:"block",marginBottom:3}}>Missions</span><textarea value={cmi} onChange={e=>setCmi(e.target.value)} rows={3} style={{...S,resize:"vertical"}}/></label></div>
+      <div style={{marginTop:14,display:"flex",gap:10,alignItems:"center"}}><button onClick={goAI} disabled={ld} style={{padding:"10px 20px",borderRadius:10,border:"none",background:"#0f766e",color:"white",cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"inherit",opacity:ld?.6:1}}>{ld?"⏳…":"🤖 Générer"}</button>{ld&&<div style={{width:18,height:18,border:"3px solid #e2e8f0",borderTopColor:"#0f766e",borderRadius:"50%",animation:"spin 1s linear infinite"}}/>}</div>
+      {err&&<div style={{marginTop:10,padding:10,background:"#fee2e2",borderRadius:10,fontSize:12,color:"#991b1b"}}>⚠️ {err}</div>}
+    </div>}
+  </div>);
+}
+
+/* ═══ VERSION DEV — Le SVG est chargé depuis le fichier externe ═══
+   Le fichier fiche-epi-template.svg doit être dans le même dossier.
+   Pour itérer : édite le SVG dans Inkscape/VS Code, sauvegarde, recharge la page. */
+let SVG_TEMPLATE = '';
+
+/* ═══════════════════════════════════════════════════════════════
+   FICHE VIEW V4 — Template SVG à positions figées
+   Charge fiche-epi-template.svg, remplit les slots par leur id.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Correspondance zone (EPI_DB) → slot du template SVG */
+const ZONE_TO_SLOT = {
+  tete: "tete",
+  yeux: "yeux",
+  oreilles: "audition",
+  respir: "respiratoire",
+  torse: "torse",
+  torse2: "torse",
+  gilet: "torse",
+  tablier: "torse",
+  harnais: "harnais",
+  mains: "mains",
+  jambes: "jambes",
+  genoux: "jambes",
+  mollets: "jambes",
+  pieds: "pieds",
+};
+
+/* Petite fonction utilitaire : écrit du texte dans un élément par id */
+function setText(root, id, txt) {
+  const el = root.querySelector("#" + id);
+  if (el) el.textContent = txt || "";
+}
+function setVisible(root, id, visible) {
+  const el = root.querySelector("#" + id);
+  if (el) el.style.display = visible ? "" : "none";
+}
+
+function FV({ d, onBack }) {
+  const containerRef = useRef(null);
+  const [svgHtml, setSvgHtml] = useState('');
+  const [loadError, setLoadError] = useState(null);
+
+  const epiI = d.epiI || [];
+  const epiN = d.epiN || [];
+  const epiDesc = d.epiDesc || {};
+
+  function getDesc(name, zone) {
+    if (epiDesc[name]) return epiDesc[name];
+    const lc = name.toLowerCase();
+    for (const [k, v] of Object.entries(epiDesc)) {
+      if (k.toLowerCase().includes(lc) || lc.includes(k.toLowerCase())) return v;
+    }
+    return DEFAULT_DESC[zone] || "Équipement de protection adapté au risque identifié.";
+  }
+
+
+  /* Charge le SVG depuis le fichier externe (mode dev) */
+  useEffect(() => {
+    fetch('fiche-epi-template.svg?t=' + Date.now())
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+      .then(txt => {
+        const cleaned = txt.replace(/<\?xml[^>]*\?>\s*/, '');
+        setSvgHtml(cleaned);
+      })
+      .catch(err => setLoadError(err.message));
+  }, []);
+
+  /* Remplit les slots du SVG après montage (déclenché aussi quand svgHtml change) */
+  useEffect(() => {
+    if (!svgHtml) return;
+    if (!containerRef.current) return;
+    const root = containerRef.current;
+
+    try {
+      /* ═══ HEADER ═══ */
+      setText(root, "header-metier", d.metier || "—");
+      setText(root, "header-secteur", d.secteur || "—");
+      setText(root, "header-environnement", (d.environnement || []).join(" • ") || "—");
+      setText(root, "date", d.date || today());
+      setText(root, "version", d.version || "1.0");
+
+      /* ═══ MISSIONS ═══ */
+      const missions = (d.phases || []).map(p => `• ${p.phase} → ${p.risque}`);
+      for (let i = 1; i <= 8; i++) setText(root, `mission-${i}`, missions[i - 1] || "");
+
+      /* ═══ RISQUES ASSOCIÉS ═══ */
+      const risques = d.environnement || [];
+      for (let i = 1; i <= 7; i++) setText(root, `risque-${i}`, risques[i - 1] ? `⚠ ${risques[i - 1]}` : "");
+
+      /* ═══ EPI INDISPENSABLES / CONDITIONNELS ═══ */
+      for (let i = 1; i <= 7; i++) setText(root, `epi-i-${i}`, epiI[i - 1] ? `✓ ${epiI[i - 1]}` : "");
+      for (let i = 1; i <= 6; i++) setText(root, `epi-c-${i}`, epiN[i - 1] ? `! ${epiN[i - 1]}` : "");
+
+      /* ═══ DOCUMENTATION ═══ */
+      const docs = d.ref ? d.ref.split(/[;,]/).map(s => s.trim()).filter(Boolean) : [];
+      for (let i = 1; i <= 4; i++) setText(root, `doc-${i}`, docs[i - 1] ? `📄 ${docs[i - 1]}` : "");
+
+      /* ═══ SLOTS EPI SUR LA SILHOUETTE ═══ */
+      const allEPI = [
+        ...epiI.map(n => ({ name: n, green: true, ...classify(n), desc: getDesc(n, classify(n).zone) })),
+        ...epiN.map(n => ({ name: n, green: false, ...classify(n), desc: getDesc(n, classify(n).zone) })),
+      ];
+      const slotFilled = {};
+      for (const it of allEPI) {
+        const slot = ZONE_TO_SLOT[it.zone] || "torse";
+        if (!slotFilled[slot]) slotFilled[slot] = it;
+      }
+      const ALL_SLOTS = ["tete", "yeux", "audition", "respiratoire", "torse", "mains", "jambes", "pieds", "harnais"];
+      for (const slot of ALL_SLOTS) {
+        const it = slotFilled[slot];
+        if (it) {
+          setText(root, `slot-${slot}-titre`, it.name.toUpperCase());
+          setText(root, `slot-${slot}-desc`, it.desc);
+          setVisible(root, `slot-${slot}`, true);
+          setVisible(root, `link-${slot}`, true);
+        } else {
+          setVisible(root, `slot-${slot}`, false);
+          setVisible(root, `link-${slot}`, false);
+        }
+      }
+
+      /* ═══ BONNES PRATIQUES / ENTRETIEN ═══ */
+      const bp = [
+        "Vérifiez vos EPI avant chaque utilisation",
+        "Utilisez-les conformément aux consignes",
+        "Nettoyez et rangez vos EPI après usage",
+        "Remplacez les EPI usés ou endommagés",
+        "En cas de doute, demandez conseil"
+      ];
+      bp.forEach((t, i) => setText(root, `bp-${i + 1}`, `✓ ${t}`));
+      const ent = [
+        "Nettoyage régulier selon fabricant",
+        "Stockage dans un endroit propre et sec",
+        "Contrôle périodique de l'état",
+        "Remplacement selon durée de vie"
+      ];
+      ent.forEach((t, i) => setText(root, `ent-${i + 1}`, `• ${t}`));
+      setText(root, "verif-prochaine-date", nextY());
+    } catch (err) {
+      console.error("Erreur remplissage SVG :", err);
+    }
+  }, [d, svgHtml]);
+
+  async function toPDF() {
+    if (!containerRef.current) return;
+    const c = await html2canvas(containerRef.current, { scale: 2, useCORS: true, backgroundColor: "#fff" });
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF("portrait", "mm", "a4");
+    const w = 210, h = (c.height * w) / c.width;
+    pdf.addImage(c.toDataURL("image/jpeg", 0.95), "JPEG", 0, 0, w, Math.min(h, 297));
+    if (h > 297) { pdf.addPage(); pdf.addImage(c.toDataURL("image/jpeg", 0.95), "JPEG", 0, -297, w, h); }
+    pdf.save(`Fiche_EPI_${(d.metier || "fiche").replace(/[\s/]/g, "_")}.pdf`);
+  }
+
+  function toSVG() {
+    const svgEl = containerRef.current?.querySelector("svg");
+    if (!svgEl) return;
+    const s = new XMLSerializer().serializeToString(svgEl);
+    const blob = new Blob([s], { type: "image/svg+xml" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Fiche_EPI_${(d.metier || "fiche").replace(/[\s/]/g, "_")}.svg`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  return (
+    <div>
+      <div className="noP" style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+        <button onClick={onBack} style={bS}>← Nouveau métier</button>
+        <button onClick={() => window.print()} style={bP}>🖨️ Imprimer</button>
+        <button onClick={toPDF} style={{ ...bP, background: "#dc2626" }}>📄 Export PDF</button>
+        <button onClick={toSVG} style={{ ...bP, background: "#2563eb" }}>📐 Export SVG</button>
+      </div>
+      {loadError && <div style={{padding:20,background:"#fee2e2",color:"#991b1b",borderRadius:8,marginBottom:10,fontSize:13}}>⚠ Impossible de charger fiche-epi-template.svg : {loadError}<br/><small>Assure-toi que le fichier est dans le même dossier que index-dev.html. Si tu ouvres le fichier en file:// (double-clic), utilise plutôt un serveur local : <code>python3 -m http.server</code> puis <code>http://localhost:8000/index-dev.html</code></small></div>}
+      {!svgHtml && !loadError && <div style={{padding:40,textAlign:"center",color:"#64748b"}}>Chargement du template SVG…</div>}
+      <div
+        ref={containerRef}
+        className="fiche"
+        style={{ background: "white", borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,.08)" }}
+        dangerouslySetInnerHTML={{ __html: svgHtml }}
+      />
+    </div>
+  );
+}
+
+
+/* ═══ Boutons ═══ */
+const bP={padding:"8px 18px",borderRadius:10,border:"none",background:"#0f766e",color:"white",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"inherit"};
+const bS={padding:"8px 18px",borderRadius:10,border:"1px solid #cbd5e1",background:"white",cursor:"pointer",fontSize:12,fontFamily:"inherit"};
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

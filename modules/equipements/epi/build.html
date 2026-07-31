@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Build — Fiche EPI</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f1f5f9;color:#1e293b;padding:30px;line-height:1.5}
+.container{max-width:720px;margin:0 auto;background:white;border-radius:14px;padding:30px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+h1{font-size:22px;color:#0c1e3c;margin-bottom:6px}
+.subtitle{color:#64748b;font-size:13px;margin-bottom:24px}
+.step{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:14px}
+.step-num{display:inline-block;width:24px;height:24px;background:#0f766e;color:white;border-radius:50%;text-align:center;line-height:24px;font-weight:700;font-size:13px;margin-right:8px}
+.step h3{font-size:14px;margin-bottom:10px;display:flex;align-items:center;color:#0c1e3c}
+.drop-zone{border:2px dashed #cbd5e1;border-radius:10px;padding:30px;text-align:center;cursor:pointer;transition:all .15s}
+.drop-zone:hover,.drop-zone.dragover{border-color:#0f766e;background:#ecfdf5}
+.drop-zone input{display:none}
+.file-info{background:#dcfce7;color:#166534;padding:10px 14px;border-radius:8px;font-size:13px;margin-top:10px;display:none}
+.file-info.show{display:block}
+.error{background:#fee2e2;color:#991b1b;padding:10px 14px;border-radius:8px;font-size:13px;margin-top:10px;display:none}
+.error.show{display:block}
+button{padding:12px 24px;border-radius:10px;border:none;background:#0f766e;color:white;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+button:disabled{background:#cbd5e1;cursor:not-allowed}
+button.secondary{background:#e2e8f0;color:#0c1e3c}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.stat{background:white;border:1px solid #e2e8f0;border-radius:8px;padding:10px;text-align:center}
+.stat-value{font-size:20px;font-weight:700;color:#0f766e}
+.stat-label{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+code{background:#e2e8f0;padding:1px 6px;border-radius:4px;font-size:12px}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🔨 Build Fiche EPI</h1>
+  <p class="subtitle">Inline le SVG dans <code>index.html</code> pour un déploiement single-file.</p>
+
+  <div class="step">
+    <h3><span class="step-num">1</span> Charge ton template SVG</h3>
+    <label class="drop-zone" id="dropSVG">
+      <input type="file" id="fileSVG" accept=".svg,image/svg+xml">
+      <div id="dropSVGText">📐 Clique ou dépose <code>fiche-epi-template.svg</code></div>
+    </label>
+    <div class="file-info" id="svgInfo"></div>
+    <div class="error" id="svgError"></div>
+  </div>
+
+  <div class="step">
+    <h3><span class="step-num">2</span> Charge <code>index-dev.html</code> (ou l'ancien index.html)</h3>
+    <label class="drop-zone" id="dropHTML">
+      <input type="file" id="fileHTML" accept=".html,text/html">
+      <div id="dropHTMLText">📄 Clique ou dépose <code>index-dev.html</code></div>
+    </label>
+    <div class="file-info" id="htmlInfo"></div>
+    <div class="error" id="htmlError"></div>
+  </div>
+
+  <div class="step">
+    <h3><span class="step-num">3</span> Génère <code>index.html</code> de production</h3>
+    <button id="btnBuild" disabled>🏗️ Build index.html</button>
+    <div id="buildResult" style="margin-top:14px"></div>
+  </div>
+</div>
+
+<script>
+let svgContent = null;
+let htmlContent = null;
+
+function setupDrop(zoneId, inputId, textId, infoId, errorId, isSVG) {
+  const zone = document.getElementById(zoneId);
+  const input = document.getElementById(inputId);
+  const text = document.getElementById(textId);
+  const info = document.getElementById(infoId);
+  const error = document.getElementById(errorId);
+
+  function handleFile(file) {
+    error.classList.remove('show');
+    const reader = new FileReader();
+    reader.onload = e => {
+      const content = e.target.result;
+      if (isSVG) {
+        if (!content.includes('<svg')) { error.textContent = '❌ Ce fichier ne contient pas de <svg>'; error.classList.add('show'); return; }
+        if (!content.includes('id="slot-tete"') && !content.includes("id='slot-tete'")) { error.textContent = '⚠ Ce SVG ne semble pas être le template (id="slot-tete" introuvable). Vérifie que c\'est bien fiche-epi-template.svg.'; error.classList.add('show'); return; }
+        svgContent = content;
+      } else {
+        if (!content.includes('SVG_TEMPLATE') && !content.includes('svgHtml')) { error.textContent = '❌ Ce HTML ne contient pas la structure attendue (SVG_TEMPLATE ou svgHtml). Charge index-dev.html ou une version précédente d\'index.html.'; error.classList.add('show'); return; }
+        htmlContent = content;
+      }
+      info.innerHTML = `✓ <b>${file.name}</b> chargé (${(content.length/1024).toFixed(1)} KB)`;
+      info.classList.add('show');
+      text.innerHTML = `✓ ${file.name}`;
+      checkReady();
+    };
+    reader.readAsText(file);
+  }
+
+  input.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+  ['dragenter','dragover'].forEach(ev => zone.addEventListener(ev, e => { e.preventDefault(); zone.classList.add('dragover'); }));
+  ['dragleave','drop'].forEach(ev => zone.addEventListener(ev, e => { e.preventDefault(); zone.classList.remove('dragover'); }));
+  zone.addEventListener('drop', e => { if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+}
+
+setupDrop('dropSVG','fileSVG','dropSVGText','svgInfo','svgError',true);
+setupDrop('dropHTML','fileHTML','dropHTMLText','htmlInfo','htmlError',false);
+
+function checkReady() {
+  document.getElementById('btnBuild').disabled = !(svgContent && htmlContent);
+}
+
+document.getElementById('btnBuild').addEventListener('click', () => {
+  const result = document.getElementById('buildResult');
+
+  // Nettoyer le SVG : retirer la déclaration XML et les commentaires en tête
+  let cleanSVG = svgContent.replace(/<\?xml[^>]*\?>\s*/, '').trim();
+
+  // Échapper pour template string JS
+  const safeSVG = cleanSVG.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
+
+  // Construire le nouveau bloc à injecter
+  const newBlock = 'const SVG_TEMPLATE = `\n' + safeSVG + '`;';
+
+  let output = htmlContent;
+
+  // Cas 1 : le fichier a déjà un SVG_TEMPLATE inliné → on le remplace
+  const inlineRegex = /const SVG_TEMPLATE = `[\s\S]*?`;/;
+  // Cas 2 : version dev avec let SVG_TEMPLATE = '' → on le remplace
+  const devRegex = /\/\* ═══ VERSION DEV[\s\S]*?let SVG_TEMPLATE = '';/;
+
+  if (inlineRegex.test(output)) {
+    output = output.replace(inlineRegex, newBlock);
+  } else if (devRegex.test(output)) {
+    output = output.replace(devRegex, newBlock);
+  } else {
+    result.innerHTML = '<div class="error show">❌ Point d\'injection introuvable dans le HTML.</div>';
+    return;
+  }
+
+  // Retirer le useEffect de fetch (spécifique à la version dev)
+  output = output.replace(/\s*\/\* Charge le SVG depuis le fichier externe \(mode dev\) \*\/\s*useEffect\(\(\) => \{[\s\S]*?\}, \[\]\);/, '');
+
+  // Retirer les états svgHtml/loadError et le message d'erreur
+  output = output.replace(/\s*const \[svgHtml, setSvgHtml\] = useState\(''\);/, '');
+  output = output.replace(/\s*const \[loadError, setLoadError\] = useState\(null\);/, '');
+  output = output.replace(/\{loadError && <div[\s\S]*?\}\s*/, '');
+  output = output.replace(/\{!svgHtml && !loadError && <div[\s\S]*?<\/div>\}\s*/, '');
+
+  // Remplacer svgHtml par SVG_TEMPLATE dans le dangerouslySetInnerHTML
+  output = output.replace(/dangerouslySetInnerHTML=\{\{ __html: svgHtml \}\}/, 'dangerouslySetInnerHTML={{ __html: SVG_TEMPLATE }}');
+
+  // Retirer svgHtml des dépendances du useEffect de remplissage
+  output = output.replace(/\}, \[d, svgHtml\]\);/, '}, [d]);');
+  // Retirer le if (!svgHtml) return dans le useEffect
+  output = output.replace(/if \(!svgHtml\) return;\s*/, '');
+
+  // Retirer [DEV] du titre si présent
+  output = output.replace(/<title>\[DEV\] /, '<title>');
+
+  // Générer le téléchargement
+  const blob = new Blob([output], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'index.html';
+  a.click();
+  URL.revokeObjectURL(url);
+
+  result.innerHTML = `
+    <div class="file-info show">✅ <b>index.html</b> généré et téléchargé (${(output.length/1024).toFixed(1)} KB)</div>
+    <div class="stats">
+      <div class="stat"><div class="stat-value">${(cleanSVG.length/1024).toFixed(0)}KB</div><div class="stat-label">SVG inliné</div></div>
+      <div class="stat"><div class="stat-value">${(output.length/1024).toFixed(0)}KB</div><div class="stat-label">Fichier total</div></div>
+      <div class="stat"><div class="stat-value">1</div><div class="stat-label">Fichier à déployer</div></div>
+    </div>
+  `;
+});
+</script>
+</body>
+</html>

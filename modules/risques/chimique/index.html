@@ -879,6 +879,14 @@ body {
   <!-- RÉSULTATS -->
   <div class="results" id="results">
 
+    <div class="results-section" id="inventory-section">
+      <h3>📦 Inventaire des produits chimiques</h3>
+      <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:14px;">
+        Vue synthétique — cliquez sur un produit pour voir le détail.
+      </p>
+      <div id="inventory-dashboard"></div>
+    </div>
+    
     <!-- SYNTHÈSE GLOBALE -->
     <div class="synthesis">
       <h3>Synthèse globale</h3>
@@ -1329,6 +1337,67 @@ function render() {
         </div>
       </div>
     </div>
+    <!-- ── Bloc Inventaire ── -->
+      <details class="inventory-details" style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+        <summary style="cursor:pointer;font-weight:600;font-size:13px;color:var(--purple);list-style:none;display:flex;align-items:center;gap:6px;">
+          📦 Données inventaire (localisation, EPI, stockage…)
+          <span style="font-size:18px;transition:transform .2s;">▸</span>
+        </summary>
+        <div class="form-row" style="margin-top:10px;">
+          <div class="form-group">
+            <label>État physique</label>
+            <select onchange="updateProduct(${p.id}, 'etat', this.value)">
+              <option value="" ${!p.etat?'selected':''}>— Choisir —</option>
+              <option value="liquide" ${p.etat==='liquide'?'selected':''}>Liquide</option>
+              <option value="solide" ${p.etat==='solide'?'selected':''}>Solide / Poudre</option>
+              <option value="gaz" ${p.etat==='gaz'?'selected':''}>Gaz</option>
+              <option value="aerosol" ${p.etat==='aerosol'?'selected':''}>Aérosol</option>
+              <option value="pate" ${p.etat==='pâte'?'selected':''}>Pâte / Gel</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Consommation estimée</label>
+            <input type="text" value="${escapeHtml(p.consommation)}" placeholder="ex : 5 L/mois"
+              oninput="updateProduct(${p.id}, 'consommation', this.value)" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Localisation (poste / zone)</label>
+            <input type="text" value="${escapeHtml(p.localisation)}" placeholder="ex : Atelier peinture"
+              oninput="updateProduct(${p.id}, 'localisation', this.value)" />
+          </div>
+          <div class="form-group">
+            <label>Conditions de stockage</label>
+            <input type="text" value="${escapeHtml(p.stockage)}" placeholder="ex : Armoire ventilée, bac rétention"
+              oninput="updateProduct(${p.id}, 'stockage', this.value)" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>EPC associés</label>
+            <input type="text" value="${escapeHtml(p.epc)}" placeholder="ex : Sorbonne, hotte aspirante, ventilation locale"
+              oninput="updateProduct(${p.id}, 'epc', this.value)" />
+          </div>
+          <div class="form-group">
+            <label>EPI à disposition</label>
+            <input type="text" value="${escapeHtml(p.epi_dispo)}" placeholder="ex : Gants nitrile, lunettes, masque A2"
+              oninput="updateProduct(${p.id}, 'epi_dispo', this.value)" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Référence FDS</label>
+            <input type="text" value="${escapeHtml(p.fds_ref)}" placeholder="ex : FDS-Acétone-Rev3"
+              oninput="updateProduct(${p.id}, 'fds_ref', this.value)" />
+          </div>
+          <div class="form-group">
+            <label>Date FDS</label>
+            <input type="date" value="${escapeHtml(p.fds_date)}"
+              oninput="updateProduct(${p.id}, 'fds_date', this.value)" />
+          </div>
+        </div>
+      </details>
   `).join('');
 }
 

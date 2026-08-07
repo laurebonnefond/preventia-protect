@@ -1173,8 +1173,18 @@ function addProduct() {
     duree: '1',
     frequence: '1',
     quantite: '',
-    procede: 'manuel_ferme'
-  });
+    procede: 'manuel_ferme',
+  
+   // ── Inventaire ──
+    etat: '',           // solide, liquide, gaz, aérosol, pâte
+    localisation: '',   // ex: Atelier peinture, Local chimie
+    epc: '',            // hotte, sorbonne, captage, ventilation...
+    epi_dispo: '',      // gants nitrile, lunettes, masque...
+    stockage: '',       // armoire ventilée, bac rétention...
+    consommation: '',   // ex: 5 L/mois
+    fds_ref: '',        // réf FDS fournisseur
+    fds_date: ''        // date de la FDS
+});
   render();
 }
 

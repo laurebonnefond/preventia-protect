@@ -1653,6 +1653,50 @@ function _evaluate() {
     resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, 100);
   console.log('[evaluate] ✓ Évaluation terminée —', products.length, 'produits,', incompats.length, 'incompatibilités');
+function renderInventory() {
+  const el = document.getElementById('inventory-dashboard');
+  if (!el || products.length === 0) return;
+
+  const ETAT_ICONS = {liquide:'💧', solide:'ite�ite', gaz:'💨', aerosol:'🌫️', 'pâte':'🫙'};
+
+  el.innerHTML = `
+    <table class="score-table" style="width:100%;">
+      <thead><tr>
+        <th>Produit</th><th>Pictos</th><th>État</th>
+        <th>Famille</th><th>Localisation</th><th>Score</th>
+      </tr></thead>
+      <tbody>
+        ${products.map(p => {
+          const cd = classeDanger(p.pictos);
+          const ce = classeExposition(p.duree, p.frequence);
+          const score = cd * ce;
+          const sc = scoreCategory(score);
+          return `
+          <tr style="cursor:pointer;" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display==='none'?'table-row':'none'">
+            <td><strong>${escapeHtml(p.nom || '—')}</strong></td>
+            <td>${p.pictos.map(c => pictoSVG(c, 22)).join(' ') || '—'}</td>
+            <td>${ETAT_ICONS[p.etat] || ''} ${escapeHtml(p.etat || '—')}</td>
+            <td>${FAMILIES[p.famille]?.label || '—'}</td>
+            <td>${escapeHtml(p.localisation || '—')}</td>
+            <td><span class="score-pill ${sc.cls}">${score} — ${sc.cat}</span></td>
+          </tr>
+          <tr style="display:none;background:#f8fafc;">
+            <td colspan="6" style="padding:12px;">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;">
+                <div>🏭 <strong>Stockage :</strong> ${escapeHtml(p.stockage || 'Non renseigné')}</div>
+                <div>📊 <strong>Conso :</strong> ${escapeHtml(p.consommation || 'Non renseignée')}</div>
+                <div>🛡️ <strong>EPC :</strong> ${escapeHtml(p.epc || 'Non renseigné')}</div>
+                <div>🦺 <strong>EPI :</strong> ${escapeHtml(p.epi_dispo || 'Non renseigné')}</div>
+                <div>📄 <strong>FDS :</strong> ${escapeHtml(p.fds_ref || '—')} ${p.fds_date ? '('+p.fds_date+')' : ''}</div>
+                <div>⚗️ <strong>Famille :</strong> ${FAMILIES[p.famille]?.label || '—'}</div>
+                ${p.fds_meta?.mentions_h ? '<div style="grid-column:1/-1;">⚠️ <strong>Mentions H :</strong> '+p.fds_meta.mentions_h.map(escapeHtml).join(', ')+'</div>' : ''}
+                ${p.fds_meta?.cmr ? '<div style="grid-column:1/-1;color:var(--orange);font-weight:600;">🔶 CMR catégorie '+(p.fds_meta.cmr_cat||'?')+'</div>' : ''}
+              </div>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
 }
 
 function renderSynthesis(scores, incompats) {

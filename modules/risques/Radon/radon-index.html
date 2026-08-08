@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PréventIA Radon — Évaluation risque radon professionnel</title>
+<meta name="description" content="Outil d'évaluation du risque radon en milieu professionnel — Arrêté 15/05/2024, NR 300 Bq/m³, dose efficace FC=3/6.">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Serif+Display&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#0c1e3c;--navy-light:#162d54;--teal:#0f766e;--teal-light:#14b8a6;--orange:#f97316;--bg:#f1f5f9;--card:#fff;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--radius:12px}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
+
+/* HEADER */
+.header{background:linear-gradient(135deg,var(--navy) 0%,#1a3a5c 100%);padding:20px 20px 28px;text-align:center;position:relative;overflow:hidden}
+.header::after{content:'';position:absolute;bottom:-30px;left:50%;transform:translateX(-50%);width:140%;height:60px;background:var(--bg);border-radius:50% 50% 0 0}
+.header .back{position:absolute;top:16px;left:16px;color:rgba(255,255,255,.7);text-decoration:none;font-size:13px;font-weight:500;display:flex;align-items:center;gap:4px}
+.header .back:hover{color:#fff}
+.header h1{font-family:'DM Serif Display',serif;font-size:clamp(22px,5vw,30px);color:#fff;margin-bottom:4px;display:flex;align-items:center;justify-content:center;gap:10px}
+.header h1 span.icon{font-size:28px}
+.header p{font-size:13px;color:#94a3b8;max-width:440px;margin:0 auto}
+
+/* STEPPER */
+.stepper{display:flex;justify-content:center;gap:6px;padding:16px 16px 0;flex-wrap:wrap;position:relative;z-index:2;margin-top:-16px}
+.step-dot{display:flex;align-items:center;gap:5px;padding:7px 14px;border-radius:24px;font-size:12px;font-weight:500;cursor:default;background:#e2e8f0;color:var(--muted);transition:all .2s;border:none}
+.step-dot.active{background:var(--teal);color:#fff;font-weight:700;cursor:pointer}
+.step-dot.done{background:rgba(15,118,110,.12);color:var(--teal);cursor:pointer;font-weight:600}
+.step-dot .emoji{font-size:14px}
+
+/* CARDS */
+.main{max-width:640px;margin:0 auto;padding:12px 16px 40px}
+.card{background:var(--card);border-radius:var(--radius);padding:22px 20px;box-shadow:0 1px 3px rgba(0,0,0,.05);border:1px solid var(--border);margin-bottom:14px}
+.card-title{font-family:'DM Serif Display',serif;font-size:18px;color:var(--navy);margin-bottom:2px}
+.card-step{font-size:11px;color:var(--muted);margin-bottom:16px}
+
+/* FORM ELEMENTS */
+label.field{display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px}
+.field-hint{font-size:11px;color:var(--muted);margin-top:4px}
+.field-hint a{color:var(--teal)}
+select,input[type=text],input[type=number]{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);font-size:14px;font-family:inherit;background:var(--bg);color:var(--text);outline:none;transition:border .2s}
+select:focus,input:focus{border-color:var(--teal)}
+.form-group{margin-bottom:16px}
+
+/* RADIO GRID */
+.radio-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
+.radio-opt{padding:10px 14px;border-radius:8px;border:2px solid var(--border);cursor:pointer;font-size:13px;color:#334155;transition:all .15s;background:#fff;user-select:none}
+.radio-opt:hover{border-color:#94a3b8}
+.radio-opt.active{border-color:var(--teal);background:rgba(15,118,110,.04);color:var(--teal);font-weight:600}
+
+/* ZONE BADGE */
+.zone-badge{padding:12px 16px;border-radius:10px;margin-top:10px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px}
+.zone-badge .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.zone-badge small{display:block;font-weight:400;font-size:11px;color:var(--muted);margin-top:2px}
+
+/* AUTOCOMPLETE */
+.ac-wrapper{position:relative}
+.ac-list{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border);border-top:0;border-radius:0 0 8px 8px;max-height:200px;overflow-y:auto;z-index:20;box-shadow:0 6px 16px rgba(0,0,0,.1)}
+.ac-item{padding:9px 12px;font-size:13px;cursor:pointer;display:flex;justify-content:space-between}
+.ac-item:hover{background:rgba(15,118,110,.06)}
+.ac-item .dept{font-size:11px;color:var(--muted)}
+
+/* BUTTONS */
+.btn-row{display:flex;justify-content:space-between;gap:12px;margin-top:4px}
+.btn{padding:11px 24px;border-radius:10px;border:none;cursor:pointer;font-size:14px;font-weight:600;font-family:inherit;transition:all .15s}
+.btn-primary{background:var(--teal);color:#fff}
+.btn-primary:hover{background:var(--teal-light)}
+.btn-primary:disabled{opacity:.4;cursor:default}
+.btn-secondary{background:var(--border);color:#475569}
+.btn-secondary:hover{background:#cbd5e1}
+
+/* GAUGE */
+.gauge-wrap{text-align:center;padding:10px 0}
+
+/* KPI ROW */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.kpi{background:var(--bg);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)}
+.kpi .val{font-size:22px;font-weight:800;font-family:'DM Mono','DM Sans',monospace}
+.kpi .lab{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+.kpi .unit{font-size:11px;color:var(--muted)}
+
+/* SEUILS */
+.seuil{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;border:2px solid;font-size:12px;font-weight:700}
+.seuil.ok{border-color:#22c55e;color:#166534;background:#f0fdf4}
+.seuil.ko{border-color:#ef4444;color:#991b1b;background:#fef2f2}
+
+/* BARS */
+.bar-item{margin-bottom:10px}
+.bar-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px}
+.bar-label span:first-child{color:#475569;font-weight:500}
+.bar-label span:last-child{color:var(--muted)}
+.bar-track{height:8px;border-radius:4px;background:#f1f5f9}
+.bar-fill{height:8px;border-radius:4px;transition:width .4s}
+
+/* RECO */
+.reco{padding:10px 14px;border-radius:8px;border-left:4px solid;background:var(--bg);margin-bottom:8px}
+.reco .prio{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.reco .txt{font-size:12.5px;color:#334155;margin-top:3px;line-height:1.5}
+
+/* INFOBOX */
+.infobox{padding:14px 16px;border-radius:10px;border:1px solid;font-size:12px;line-height:1.6}
+
+/* FOOTER */
+.footer{text-align:center;padding:20px 16px 30px;font-size:11px;color:var(--muted)}
+.footer a{color:var(--teal)}
+
+/* RESPONSIVE */
+@media(max-width:500px){
+  .radio-grid{grid-template-columns:1fr}
+  .kpi-row{grid-template-columns:repeat(2,1fr)}
+  .stepper{gap:4px}
+  .step-dot{padding:6px 8px;font-size:11px}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <a href="../../index.html" class="back">← PréventIA Protect</a>
+  <h1><span class="icon">☢️</span> PréventIA Radon</h1>
+  <p>Évaluation du risque radon professionnel — Arrêté 15/05/2024</p>
+</div>
+
+<div class="stepper" id="stepper"></div>
+
+<div class="main" id="main"></div>
+
+<div class="footer">
+  PréventIA Protect — Suite HSE Entreprise • © 2025–2026 Laure Bonnefond — IDE-ST / Préventrice
+  <br><a href="https://laurebonnefond.github.io/PreventIA-LaB/" target="_blank">PréventIA-LaB</a>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+//  DONNÉES DÉPARTEMENTS → ZONE RADON
+//  (prédominante, arrêté 27/06/2018)
+// ═══════════════════════════════════════════
+const DEPT_ZONE={
+"01":1,"02":1,"03":3,"04":2,"05":3,"06":2,"07":3,"08":1,"09":3,"10":1,
+"11":2,"12":3,"13":1,"14":2,"15":3,"16":2,"17":1,"18":2,"19":3,"21":2,
+"22":3,"23":3,"24":2,"25":2,"26":2,"27":1,"28":1,"29":3,"30":2,"31":2,
+"32":1,"33":1,"34":2,"35":3,"36":2,"37":2,"38":2,"39":2,"40":1,"41":1,
+"42":3,"43":3,"44":2,"45":1,"46":2,"47":1,"48":3,"49":2,"50":2,"51":1,
+"52":1,"53":2,"54":2,"55":1,"56":3,"57":2,"58":3,"59":1,"60":1,"61":2,
+"62":1,"63":3,"64":2,"65":3,"66":3,"67":2,"68":3,"69":2,"70":2,"71":3,
+"72":1,"73":3,"74":2,"75":1,"76":1,"77":1,"78":1,"79":2,"80":1,"81":2,
+"82":1,"83":2,"84":1,"85":2,"86":2,"87":3,"88":3,"89":2,"90":2,
+"91":1,"92":1,"93":1,"94":1,"95":1,
+"2A":3,"2B":3,
+"971":1,"972":1,"973":1,"974":1,"976":1
+};
+// Si tu ajoutes radon-communes.json, on l'utilisera à la place
+let COMMUNE_ZONE = null; // sera chargé si dispo
+
+const ZONE_INFO={
+  1:{label:"Zone 1 — Potentiel faible",color:"#22c55e",bg:"#f0fdf4"},
+  2:{label:"Zone 2 — Potentiel faible + facteurs géologiques",color:"#f59e0b",bg:"#fffbeb"},
+  3:{label:"Zone 3 — Potentiel significatif",color:"#ef4444",bg:"#fef2f2"}
+};
+
+const NR=300, SEUIL_DOSE=6;
+
+const STEPS=[
+  {icon:"📍",title:"Localisation"},
+  {icon:"🏗️",title:"Bâtiment"},
+  {icon:"💨",title:"Ventilation"},
+  {icon:"⏱️",title:"Exposition"},
+  {icon:"📊",title:"Résultats"}
+];
+
+let step=0;
+let D={
+  commune:"",codeInsee:"",codeDept:"",zoneAuto:null,zoneOverride:null,mesureBq:"",
+  niveau:"rdc",typeSol:"dalle_etanche",vetuste:"recent",etancheite:"bonne",
+  ventilation:"vmc_sf",debitExtract:"",ventNatOk:true,
+  heuresJour:"7",joursAn:"220",activite:"sedentaire"
+};
+
+// ═══════════════════════════════════════════
+//  AUTOCOMPLETE COMMUNES (geo.api.gouv.fr)
+// ═══════════════════════════════════════════
+let acTimer=null;
+function searchCommune(q){
+  clearTimeout(acTimer);
+  if(q.length<2){hideAc();return}
+  acTimer=setTimeout(()=>{
+    fetch(`https://geo.api.gouv.fr/communes?nom=${encodeURIComponent(q)}&fields=nom,code,codeDepartement,codesPostaux&boost=population&limit=8`)
+    .then(r=>r.json()).then(list=>{
+      const el=document.getElementById('ac-results');
+      if(!el)return;
+      if(!list.length){el.innerHTML='<div class="ac-item" style="color:var(--muted)">Aucune commune trouvée</div>';el.style.display='block';return}
+      el.innerHTML=list.map(c=>{
+        const cp=c.codesPostaux?.[0]||'';
+        return `<div class="ac-item" data-code="${c.code}" data-dept="${c.codeDepartement}" data-nom="${c.nom}">`
+          +`<span>${c.nom} <span class="dept">${cp}</span></span>`
+          +`<span class="dept">${c.codeDepartement}</span></div>`;
+      }).join('');
+      el.style.display='block';
+      el.querySelectorAll('.ac-item[data-code]').forEach(it=>{
+        it.addEventListener('click',()=>{
+          D.commune=it.dataset.nom;
+          D.codeInsee=it.dataset.code;
+          D.codeDept=it.dataset.dept;
+          D.zoneAuto=COMMUNE_ZONE?.[D.codeInsee]??DEPT_ZONE[D.codeDept]??null;
+          D.zoneOverride=null;
+          hideAc();
+          render();
+        });
+      });
+    }).catch(()=>{});
+  },250);
+}
+function hideAc(){const el=document.getElementById('ac-results');if(el)el.style.display='none'}
+
+// ═══════════════════════════════════════════
+//  SCORING
+// ═══════════════════════════════════════════
+function calcScore(){
+  const zone=D.zoneOverride??D.zoneAuto;
+  if(!zone)return null;
+  const sZ={1:1,2:2,3:4}[zone];
+  const sN={sousSol:4,rdc:2.5,etage1:1,etage2plus:.5}[D.niveau]??2;
+  const sS={terre_battue:4,dalle_fissuree:3,dalle_joints:2,dalle_etanche:.5}[D.typeSol]??2;
+  const sE={mauvaise:3,moyenne:2,bonne:.5}[D.etancheite]??1;
+  const sV_vet={ancien_plus50:3,ancien_30_50:2.5,moyen_10_30:1.5,recent:.5}[D.vetuste]??1;
+
+  let sVent=2,F=.4;
+  switch(D.ventilation){
+    case'aucune':sVent=4;F=.8;break;
+    case'naturelle':sVent=D.ventNatOk?2:3;F=D.ventNatOk?.5:.65;break;
+    case'vmc_sf':sVent=1.5;F=.35;break;
+    case'vmc_df':sVent=.5;F=.25;break;
+    case'extraction_meca':{
+      const d=parseFloat(D.debitExtract)||0;
+      if(d>=500){sVent=.5;F=.2}else if(d>=200){sVent=1;F=.3}else{sVent=2;F=.4}
+    }break;
+  }
+
+  const raw=(sZ*25+sN*20+sS*15+sE*12+sV_vet*10+sVent*18)/4;
+  const score=Math.min(100,Math.round(raw));
+
+  const concEst=Math.round(
+    (zone===3?200:zone===2?80:30)*(sN/2)*(sS/2)*(sVent/2)*(sE/2)
+  );
+  const conc=D.mesureBq?parseFloat(D.mesureBq):concEst;
+  const FC=D.activite==='physique'?6:3;
+  const hAn=(parseFloat(D.heuresJour)||7)*(parseFloat(D.joursAn)||220);
+  const dose=Math.round(conc*hAn*FC*F*5.56e-6*100)/100;
+
+  let niv,coul;
+  if(score<=20){niv='FAIBLE';coul='#22c55e'}
+  else if(score<=45){niv='MODÉRÉ';coul='#f59e0b'}
+  else if(score<=70){niv='ÉLEVÉ';coul='#f97316'}
+  else{niv='TRÈS ÉLEVÉ';coul='#ef4444'}
+
+  return{score,niv,coul,concEst,conc,dose,F,FC,hAn,
+    dpNR:conc>=NR,dpDose:dose>=SEUIL_DOSE,
+    d:{sZ,sN,sS,sE,sV:sV_vet,sVent},zone};
+}
+
+// ═══════════════════════════════════════════
+//  RENDER HELPERS
+// ═══════════════════════════════════════════
+function radioGrid(name,opts,current,cb){
+  return `<div class="radio-grid">${opts.map(([k,l])=>
+    `<div class="radio-opt${current===k?' active':''}" data-rg="${name}" data-val="${k}">${l}</div>`
+  ).join('')}</div>`;
+}
+function bindRadios(name,cb){
+  document.querySelectorAll(`[data-rg="${name}"]`).forEach(el=>{
+    el.addEventListener('click',()=>{cb(el.dataset.val);render()});
+  });
+}
+
+// ═══════════════════════════════════════════
+//  RENDER STEPS
+// ═══════════════════════════════════════════
+function renderStepper(){
+  document.getElementById('stepper').innerHTML=STEPS.map((s,i)=>{
+    let cls=i===step?'active':i<step?'done':'';
+    return `<button class="step-dot ${cls}" data-si="${i}"><span class="emoji">${s.icon}</span>${i===step?` ${s.title}`:i<step?' ✓':''}</button>`;
+  }).join('');
+  document.querySelectorAll('.step-dot.done,.step-dot.active').forEach(b=>{
+    b.addEventListener('click',()=>{step=parseInt(b.dataset.si);render()});
+  });
+}
+
+function render(){
+  renderStepper();
+  const m=document.getElementById('main');
+  const zone=D.zoneOverride??D.zoneAuto;
+  const zi=zone?ZONE_INFO[zone]:null;
+
+  let html=`<div class="card"><div class="card-title">${STEPS[step].icon} ${STEPS[step].title}</div><div class="card-step">Étape ${step+1} / ${STEPS.length}</div>`;
+
+  if(step===0){
+    html+=`
+    <div class="form-group">
+      <label class="field">Commune du lieu de travail</label>
+      <div class="ac-wrapper">
+        <input type="text" id="ac-input" placeholder="Tapez le nom de la commune…" value="${D.commune}" autocomplete="off">
+        <div class="ac-list" id="ac-results" style="display:none"></div>
+      </div>
+      <div class="field-hint">Autocomplétion via <a href="https://geo.api.gouv.fr" target="_blank">geo.api.gouv.fr</a> — données INSEE</div>
+    </div>`;
+    if(zone){
+      html+=`<div class="zone-badge" style="background:${zi.bg};color:${zi.color}">
+        <span class="dot" style="background:${zi.color}"></span>
+        <div>${zi.label}<small>Arrêté 27/06/2018 — ${D.codeDept?'dept. '+D.codeDept:'département'}</small></div>
+      </div>`;
+    }
+    if(D.codeDept){
+      html+=`<div class="form-group" style="margin-top:14px">
+        <label class="field">Ajuster la zone (si commune différente du département)</label>
+        ${radioGrid('zoneOvr',[['auto','Auto'+(D.zoneAuto?' (Zone '+D.zoneAuto+')':'')],['1','Zone 1'],['2','Zone 2'],['3','Zone 3']],
+          D.zoneOverride===null?'auto':String(D.zoneOverride))}
+      </div>`;
+    }
+    html+=`<div class="form-group" style="margin-top:14px">
+      <label class="field">Mesure radon existante (Bq/m³)</label>
+      <input type="number" id="mesure-bq" min="0" placeholder="Ex : 450 (moyenne annuelle)" value="${D.mesureBq}">
+      <div class="field-hint">Résultat de dosimètre passif DSTN si disponible — sinon l'outil estime la concentration</div>
+    </div>
+    <div class="field-hint" style="margin-top:8px">
+      Vérifiez la zone exacte : <a href="https://www.irsn.fr/carte-radon" target="_blank">irsn.fr/carte-radon</a>
+      ${D.codeInsee?` • <a href="https://expop.asnr.fr/" target="_blank">expop.asnr.fr</a>`:''}</div>`;
+  }
+
+  else if(step===1){
+    html+=`
+    <div class="form-group"><label class="field">Niveau du local</label>
+    ${radioGrid('niveau',[['sousSol','🔽 Sous-sol / cave'],['rdc','🏠 Rez-de-chaussée'],['etage1','⬆️ 1er étage'],['etage2plus','⬆️⬆️ 2e+ étages']],D.niveau)}
+    <div class="field-hint">Le radon s'accumule dans les niveaux bas — le sous-sol est le risque maximal</div></div>
+    <div class="form-group"><label class="field">Type de sol / dalle</label>
+    ${radioGrid('sol',[['terre_battue','Terre battue'],['dalle_fissuree','Béton fissuré'],['dalle_joints','Béton avec joints'],['dalle_etanche','Béton étanche']],D.typeSol)}</div>
+    <div class="form-group"><label class="field">Vétusté du bâtiment</label>
+    ${radioGrid('vet',[['recent','< 10 ans'],['moyen_10_30','10–30 ans'],['ancien_30_50','30–50 ans'],['ancien_plus50','> 50 ans']],D.vetuste)}</div>
+    <div class="form-group"><label class="field">Étanchéité (passages canalisation, joints, fissures)</label>
+    ${radioGrid('etanch',[['bonne','✅ Bonne'],['moyenne','⚠️ Moyenne'],['mauvaise','❌ Mauvaise']],D.etancheite)}</div>`;
+  }
+
+  else if(step===2){
+    html+=`
+    <div class="form-group"><label class="field">Type de ventilation</label>
+    ${radioGrid('vent',[['aucune','❌ Aucune'],['naturelle','🪟 Naturelle'],['vmc_sf','🌀 VMC simple flux'],['vmc_df','🌀🌀 VMC double flux'],['extraction_meca','⚙️ Extraction méca.']],D.ventilation)}</div>`;
+    if(D.ventilation==='naturelle'){
+      html+=`<div class="form-group"><label class="field">Ventilation naturelle suffisante ?</label>
+      ${radioGrid('ventnat',[['oui','Oui — dimensionnée'],['non','Non — insuffisante']],D.ventNatOk?'oui':'non')}</div>`;
+    }
+    if(D.ventilation==='extraction_meca'){
+      html+=`<div class="form-group"><label class="field">Débit d'extraction (m³/h)</label>
+      <input type="number" id="debit-input" min="0" placeholder="Ex : 300" value="${D.debitExtract}">
+      <div class="field-hint">Voir plaque signalétique ou rapport Q18</div></div>`;
+    }
+    html+=`<div class="infobox" style="background:#f0fdfa;border-color:rgba(15,118,110,.15);margin-top:10px;color:#0f766e">
+      <strong>💡 Facteur d'équilibre (F)</strong><br>
+      Proportion descendants radioactifs du radon dans l'air.<br>
+      <strong>0.2</strong> = très bien ventilé → <strong>0.8</strong> = confiné sans ventilation.<br>
+      <span style="font-size:11px;color:var(--muted)">Arrêté 16/11/2023 — calcul dose efficace</span>
+    </div>`;
+  }
+
+  else if(step===3){
+    html+=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group"><label class="field">Heures / jour</label>
+      <input type="number" id="h-jour" min="0" max="24" value="${D.heuresJour}"></div>
+      <div class="form-group"><label class="field">Jours / an</label>
+      <input type="number" id="j-an" min="0" max="365" value="${D.joursAn}"></div>
+    </div>
+    <div class="form-group"><label class="field">Type d'activité physique</label>
+    ${radioGrid('acti',[['sedentaire','🪑 Sédentaire (FC = 3)'],['physique','🏋️ Physique (FC = 6)']],D.activite)}
+    <div class="field-hint">Coefficients fixés par arrêté 16/11/2023</div></div>
+    <div class="infobox" style="background:#fffbeb;border-color:rgba(234,179,8,.15)">
+      <strong style="color:#b45309">📐 Formule dose efficace</strong><br>
+      <code style="font-family:'DM Mono',monospace;font-size:13px">E (mSv) = C × T × FC × F × 5.56×10⁻⁶</code><br>
+      <span style="font-size:11px;color:var(--muted)">C = Bq/m³ · T = h/an · FC = coeff. conversion · F = facteur équilibre</span>
+    </div>`;
+  }
+
+  else if(step===4){
+    const s=calcScore();
+    if(!s){html+=`<p style="color:var(--muted)">Renseignez la commune (étape 1) pour calculer.</p>`;html+=`</div>`;m.innerHTML=html;return}
+
+    // Gauge SVG
+    const pct=Math.min(100,s.score);
+    const ang=-90+(pct/100)*180;
+    const rad=ang*Math.PI/180;
+    const r=70,cx=90,cy=85;
+    const gx=cx+r*Math.cos(rad),gy=cy+r*Math.sin(rad);
+
+    html+=`
+    <div style="background:linear-gradient(135deg,var(--navy),#1e293b);border-radius:12px;padding:24px;text-align:center;color:#fff;margin-bottom:16px">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.12em;opacity:.6;margin-bottom:6px">Score de risque radon professionnel</div>
+      <div class="gauge-wrap">
+        <svg viewBox="0 0 180 110" style="width:100%;max-width:200px">
+          <defs><linearGradient id="gg" x1="0%" x2="100%"><stop offset="0%" stop-color="#22c55e"/><stop offset="33%" stop-color="#f59e0b"/><stop offset="66%" stop-color="#f97316"/><stop offset="100%" stop-color="#ef4444"/></linearGradient></defs>
+          <path d="M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="14" stroke-linecap="round"/>
+          <path d="M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}" fill="none" stroke="url(#gg)" stroke-width="14" stroke-linecap="round" stroke-dasharray="${(pct/100)*Math.PI*r} ${Math.PI*r}"/>
+          <circle cx="${gx}" cy="${gy}" r="6" fill="${s.coul}" stroke="#fff" stroke-width="2"/>
+          <text x="${cx}" y="${cy-8}" text-anchor="middle" font-size="24" font-weight="800" fill="${s.coul}">${s.score}</text>
+          <text x="${cx}" y="${cy+10}" text-anchor="middle" font-size="9" fill="rgba(255,255,255,.6)" font-weight="600">/100</text>
+        </svg>
+      </div>
+      <span style="display:inline-block;padding:4px 18px;border-radius:20px;font-size:13px;font-weight:700;background:${s.coul};color:#fff">${s.niv}</span>
+      <div style="font-size:11px;opacity:.5;margin-top:6px">${D.commune||'—'} • Zone ${s.zone}</div>
+    </div>`;
+
+    // KPIs
+    html+=`<div class="kpi-row">
+      <div class="kpi"><div class="lab">Concentration est.</div><div class="val" style="color:${s.concEst>=300?'#ef4444':'var(--teal)'}">${s.concEst}</div><div class="unit">Bq/m³</div></div>
+      ${D.mesureBq?`<div class="kpi" style="border-color:var(--teal)"><div class="lab">Mesure réelle</div><div class="val" style="color:${parseFloat(D.mesureBq)>=300?'#ef4444':'var(--teal)'}">${D.mesureBq}</div><div class="unit">Bq/m³</div></div>`:''}
+      <div class="kpi"><div class="lab">Dose efficace</div><div class="val" style="color:${s.dose>=6?'#ef4444':'var(--teal)'}">${s.dose}</div><div class="unit">mSv/an</div></div>
+      <div class="kpi"><div class="lab">Facteur F</div><div class="val">${s.F}</div><div class="unit">ventilation</div></div>
+      <div class="kpi"><div class="lab">Coeff. FC</div><div class="val">${s.FC}</div><div class="unit">${D.activite==='physique'?'physique':'sédentaire'}</div></div>
+      <div class="kpi"><div class="lab">Exposition</div><div class="val">${s.hAn}</div><div class="unit">h/an</div></div>
+    </div>`;
+
+    // Seuils
+    html+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+      <div class="seuil ${s.dpNR?'ko':'ok'}">${s.dpNR?'🚨':'✅'} NR 300 Bq/m³ ${s.dpNR?'DÉPASSÉ':'OK'}</div>
+      <div class="seuil ${s.dpDose?'ko':'ok'}">${s.dpDose?'🚨':'✅'} 6 mSv/an ${s.dpDose?'DÉPASSÉ':'OK'}</div>
+    </div>`;
+
+    // Bars
+    const bars=[
+      {l:"Zone géo.",v:s.d.sZ,mx:4},{l:"Niveau local",v:s.d.sN,mx:4},{l:"Type sol",v:s.d.sS,mx:4},
+      {l:"Étanchéité",v:s.d.sE,mx:3},{l:"Vétusté",v:s.d.sV,mx:3},{l:"Ventilation",v:s.d.sVent,mx:4}
+    ];
+    html+=`</div><div class="card"><div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:12px">Décomposition par facteur</div>`;
+    bars.forEach(b=>{
+      const p=b.v/b.mx;
+      const c=p<=.33?'#22c55e':p<=.66?'#f59e0b':'#ef4444';
+      html+=`<div class="bar-item"><div class="bar-label"><span>${b.l}</span><span>${b.v}/${b.mx}</span></div><div class="bar-track"><div class="bar-fill" style="width:${p*100}%;background:${c}"></div></div></div>`;
+    });
+
+    // Recommendations
+    const recs=[];
+    if(s.dpNR)recs.push({p:'URGENT',c:'#f97316',t:`Concentration ≥ 300 Bq/m³ : actions de réduction obligatoires (ventilation, étanchéification). Délai 3 ans max. (Art. R4451-34 C. trav.)`});
+    if(s.dpDose)recs.push({p:'CRITIQUE',c:'#ef4444',t:`Dose ${s.dose} mSv > 6 mSv/an : zone radon, DSI, suivi médical renforcé, SISERI (Arrêté 15/05/2024).`});
+    if(s.zone===3)recs.push({p:'RÉGLEMENTAIRE',c:'#8b5cf6',t:`Zone 3 : mesurage radon obligatoire en sous-sol et RDC par organisme accrédité COFRAC (Art. R4451-34).`});
+    if(D.niveau==='sousSol')recs.push({p:'HAUTE',c:'#f59e0b',t:`Sous-sol : risque maximal. Envisager le déplacement des postes en étage (suppression du risque).`});
+    if(D.ventilation==='aucune')recs.push({p:'HAUTE',c:'#f59e0b',t:`Absence de ventilation : installer a minima une VMC simple flux.`});
+    if(D.typeSol==='terre_battue'||D.typeSol==='dalle_fissuree')recs.push({p:'HAUTE',c:'#f59e0b',t:`Sol perméable : étanchéifier la dalle, colmater fissures et passages. Envisager SDS (mise en dépression du sol).`});
+    if(D.etancheite==='mauvaise')recs.push({p:'MOYENNE',c:'#0ea5e9',t:`Étanchéité défaillante : traiter joints, fissures, passages de réseaux (mastic PU, membrane).`});
+    if(s.score<=20)recs.push({p:'INFO',c:'#22c55e',t:`Risque estimé faible. Maintenir ventilation et entretien. Mesurage recommandé si zone 2 ou 3.`});
+
+    html+=`</div><div class="card"><div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:12px">🎯 Recommandations & Actions</div>`;
+    recs.forEach(r=>{
+      html+=`<div class="reco" style="border-left-color:${r.c}"><div class="prio" style="color:${r.c}">${r.p}</div><div class="txt">${r.t}</div></div>`;
+    });
+
+    // Références réglementaires
+    html+=`</div><div class="card" style="background:var(--bg)">
+      <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:10px">📚 Références réglementaires</div>
+      <div style="font-size:12px;color:#475569;line-height:1.8">
+        <div>• <strong>Code du travail</strong> — Art. R4451-1 à R4451-57</div>
+        <div>• <strong>Arrêté 27/06/2018</strong> — Délimitation 3 zones à potentiel radon</div>
+        <div>• <strong>Arrêté 16/11/2023</strong> — Coefficients de dose FC = 3 / 6</div>
+        <div>• <strong>Arrêté 15/05/2024</strong> — Démarche prévention, zone radon</div>
+        <div>• <strong>INRS ED 6340</strong> — Radon en milieu de travail</div>
+        <div>• <strong>INRS ED 6373 / ED 4322</strong> — Dépliant + fiche pratique</div>
+        <div>• <strong>NR</strong> = 300 Bq/m³ • <strong>Seuil dose</strong> = 6 mSv/12 mois → DSI + SISERI</div>
+      </div>
+    </div>
+    <div style="text-align:center;font-size:10px;color:var(--muted);padding:8px 10px">
+      Outil d'aide à l'évaluation — ne remplace pas un mesurage par organisme COFRAC.<br>
+      Concentration estimée = heuristique. Seul le mesurage passif fait foi.
+    </div>`;
+  }
+
+  html+=`</div>`;
+
+  // Navigation
+  html+=`<div class="btn-row">`;
+  if(step>0)html+=`<button class="btn btn-secondary" id="btn-prev">← Précédent</button>`;
+  else html+=`<div></div>`;
+  if(step<4)html+=`<button class="btn btn-primary" id="btn-next"${step===0&&!zone?' disabled':''}>${step===3?'Calculer →':'Suivant →'}</button>`;
+  else html+=`<button class="btn btn-secondary" id="btn-reset">↻ Nouvelle évaluation</button>`;
+  html+=`</div>`;
+
+  m.innerHTML=html;
+
+  // Bind events
+  if(step===0){
+    const inp=document.getElementById('ac-input');
+    inp?.addEventListener('input',e=>{D.commune=e.target.value;searchCommune(e.target.value)});
+    inp?.addEventListener('focus',()=>{if(D.commune.length>=2)searchCommune(D.commune)});
+    document.addEventListener('click',e=>{if(!e.target.closest('.ac-wrapper'))hideAc()},{once:true});
+    document.getElementById('mesure-bq')?.addEventListener('input',e=>{D.mesureBq=e.target.value});
+    bindRadios('zoneOvr',v=>{D.zoneOverride=v==='auto'?null:parseInt(v)});
+  }
+  if(step===1){
+    bindRadios('niveau',v=>{D.niveau=v});
+    bindRadios('sol',v=>{D.typeSol=v});
+    bindRadios('vet',v=>{D.vetuste=v});
+    bindRadios('etanch',v=>{D.etancheite=v});
+  }
+  if(step===2){
+    bindRadios('vent',v=>{D.ventilation=v});
+    bindRadios('ventnat',v=>{D.ventNatOk=v==='oui'});
+    document.getElementById('debit-input')?.addEventListener('input',e=>{D.debitExtract=e.target.value});
+  }
+  if(step===3){
+    document.getElementById('h-jour')?.addEventListener('input',e=>{D.heuresJour=e.target.value});
+    document.getElementById('j-an')?.addEventListener('input',e=>{D.joursAn=e.target.value});
+    bindRadios('acti',v=>{D.activite=v});
+  }
+  document.getElementById('btn-prev')?.addEventListener('click',()=>{step--;render()});
+  document.getElementById('btn-next')?.addEventListener('click',()=>{step++;render()});
+  document.getElementById('btn-reset')?.addEventListener('click',()=>{
+    step=0;D.mesureBq='';D.commune='';D.codeInsee='';D.codeDept='';D.zoneAuto=null;D.zoneOverride=null;
+    render();
+  });
+}
+
+// Init — tente de charger radon-communes.json si présent
+fetch('data/radon-communes.json').then(r=>r.ok?r.json():null).then(d=>{
+  if(d)COMMUNE_ZONE=d;
+}).catch(()=>{}).finally(()=>render());
+</script>
+</body>
+</html>

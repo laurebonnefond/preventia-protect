@@ -1,0 +1,83 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     REMPLACEMENT PILLARS — coller dans index.html
+     
+     1) Remplacer le CSS .pillars/.pillar (lignes ~52-58) par le CSS ci-dessous
+     2) Remplacer le HTML des pillars (lignes ~134-143) par le HTML ci-dessous
+     3) Mettre à jour "6 outils" → "7 outils" (ligne ~150)
+     4) Ajouter la card Radon dans tools-grid (avant </div> ligne ~245)
+     ═══════════════════════════════════════════════════════════════ -->
+
+<!-- ═══ 1. CSS À REMPLACER (ancien .pillars + .pillar) ═══ -->
+<!--
+    .pillars{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+    .pillar{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:28px 18px;text-align:center;transition:all .35s;cursor:pointer;position:relative;overflow:hidden}
+    .pillar::before{content:'';position:absolute;inset:0;background:var(--pillar-grad,linear-gradient(135deg,transparent,transparent));opacity:0;transition:opacity .35s}
+    .pillar:hover::before{opacity:1}
+    .pillar:hover{transform:translateY(-4px);border-color:rgba(255,255,255,.12);box-shadow:0 8px 32px rgba(0,0,0,.15)}
+    .pillar-icon{font-size:30px;margin-bottom:12px;display:block;position:relative;z-index:1;transition:transform .3s}
+    .pillar:hover .pillar-icon{transform:scale(1.15)}
+    .pillar h3{font-size:13px;font-weight:700;color:white;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;position:relative;z-index:1}
+    .pillar p{font-size:12px;color:#94a3b8;position:relative;z-index:1;line-height:1.5}
+    .pillar .pillar-count{display:inline-block;margin-top:10px;padding:3px 12px;border-radius:20px;font-size:10px;font-weight:600;letter-spacing:.04em;position:relative;z-index:1}
+    @media(max-width:700px){.pillars{grid-template-columns:repeat(2,1fr)}}
+-->
+
+<!-- ═══ 2. HTML À REMPLACER (ancien bloc pillars) ═══ -->
+<!--
+<section style="padding-top:0">
+  <div class="container">
+    <div class="pillars">
+
+      <a href="#outils" class="pillar fade-in" style="--pillar-grad:linear-gradient(135deg,rgba(15,118,110,.08),rgba(20,184,166,.12));text-decoration:none;color:inherit">
+        <span class="pillar-icon">🛡️</span>
+        <h3>Protéger</h3>
+        <p>EPI, DUERP, cartographie — anticiper les risques, agir en prévention</p>
+        <span class="pillar-count" style="background:rgba(20,184,166,.15);color:#14b8a6">3 outils</span>
+      </a>
+
+      <a href="#outils" class="pillar fade-in" style="--pillar-grad:linear-gradient(135deg,rgba(37,99,235,.08),rgba(96,165,250,.12));text-decoration:none;color:inherit">
+        <span class="pillar-icon">📊</span>
+        <h3>Décider</h3>
+        <p>Données, analyses, scoring — des métriques pour piloter la prévention</p>
+        <span class="pillar-count" style="background:rgba(37,99,235,.15);color:#60a5fa">2 outils</span>
+      </a>
+
+      <a href="#outils" class="pillar fade-in" style="--pillar-grad:linear-gradient(135deg,rgba(124,58,237,.08),rgba(167,139,250,.12));text-decoration:none;color:inherit">
+        <span class="pillar-icon">👥</span>
+        <h3>Accompagner</h3>
+        <p>Registres, conformité — les métiers de la prévention et de la santé</p>
+        <span class="pillar-count" style="background:rgba(124,58,237,.15);color:#a78bfa">1 outil</span>
+      </a>
+
+      <a href="#outils" class="pillar fade-in" style="--pillar-grad:linear-gradient(135deg,rgba(234,179,8,.08),rgba(250,204,21,.12));text-decoration:none;color:inherit">
+        <span class="pillar-icon">🧠</span>
+        <h3>Innover</h3>
+        <p>IA éthique, sécurisée — chaque outil propulsé par l'intelligence artificielle</p>
+        <span class="pillar-count" style="background:rgba(234,179,8,.15);color:#eab308">IA inside</span>
+      </a>
+
+    </div>
+  </div>
+</section>
+-->
+
+<!-- ═══ 3. CARD RADON À AJOUTER dans .tools-grid ═══ -->
+<!--
+      <a href="modules/risques/radon/index.html" class="tool-card fade-in" style="--accent:#eab308">
+        <span class="tool-status" style="background:#dcfce7;color:#166534">Prototype</span>
+        <span class="tool-icon">☢️</span>
+        <h3>Risque Radon</h3>
+        <div class="tool-sub">Risques spécifiques · Rayonnements ionisants</div>
+        <p>Évaluation du risque radon professionnel par commune. Scoring bâtiment, ventilation, dose efficace.</p>
+        <ul class="tool-features">
+          <li>Zone radon commune (arrêté 27/06/2018)</li>
+          <li>Calcul dose efficace FC=3/6 (arrêté 16/11/2023)</li>
+          <li>Seuils NR 300 Bq/m³ et 6 mSv/an</li>
+          <li>Recommandations priorisées + références</li>
+        </ul>
+        <div class="tool-tag" style="background:rgba(234,179,8,.15);color:#eab308">Radon · Dose · Zone radon · ASNR</div>
+      </a>
+-->
+
+<!-- ═══ 4. Mettre à jour le compteur ═══ -->
+<!-- Ligne ~150 : "6 outils intelligents" → "7 outils intelligents" -->

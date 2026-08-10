@@ -800,6 +800,25 @@ body {
   .product-card { padding: 16px; }
   .synthesis { padding: 20px; }
 }
+  /* ── MODAL RÈGLES STOCKAGE ─────────────────────────────── */
+.storage-rules-modal {
+  display: none; position: fixed; inset: 0; z-index: 999;
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+  align-items: center; justify-content: center; padding: 20px;
+}
+.storage-rules-modal.open { display: flex; }
+.storage-rules-modal img {
+  max-width: 95vw; max-height: 90vh;
+  border-radius: 12px; box-shadow: 0 12px 48px rgba(0,0,0,0.4);
+  object-fit: contain;
+}
+.storage-rules-close {
+  position: fixed; top: 16px; right: 20px;
+  background: white; border: none; border-radius: 50%;
+  width: 40px; height: 40px; font-size: 22px;
+  cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  z-index: 1000;
+}
 </style>
 </head>
 <body>
@@ -917,8 +936,17 @@ body {
     <div class="results-section" id="storage-section">
       <h3>Plan de stockage recommandé</h3>
       <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:14px;">Répartition des produits par zone selon les bonnes pratiques INRS ED 6015. Les zones incompatibles doivent être séparées physiquement (paroi REI 60 ou ≥ 3 m).</p>
+      <button class="btn btn-secondary" onclick="document.getElementById('storage-rules-modal').classList.add('open')" style="margin-bottom:14px; font-size:12.5px;">
+        📋 Consulter les règles de stockage (infographie)
+      </button>
       <div id="storage-content"></div>
     </div>
+
+<!-- Modal règles de stockage -->
+<div class="storage-rules-modal" id="storage-rules-modal" onclick="this.classList.remove('open')">
+  <button class="storage-rules-close" onclick="event.stopPropagation(); this.parentElement.classList.remove('open')">✕</button>
+  <img src="Règles_de_stockage_des_produits_chimiques.png" alt="Règles de stockage des produits chimiques" />
+</div>
 
     <!-- SYNTHÈSE EPI / EPC / SECOURS -->
     <div class="results-section" id="protection-section">

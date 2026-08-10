@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -229,7 +230,7 @@ function calcScore(){
     case'aucune':sVent=4;F=.8;break;
     case'naturelle':sVent=D.ventNatOk?2:3;F=D.ventNatOk?.5:.65;break;
     case'vmc_sf':sVent=1.5;F=.35;break;
-    case'vmc_df':sVent=.5;F=.25;break;
+    case'vmc_df':sVent=.5;F=.25;break;case'vmi':sVent=.8;F=.25;break;
     case'extraction_meca':{
       const d=parseFloat(D.debitExtract)||0;
       if(d>=500){sVent=.5;F=.2}else if(d>=200){sVent=1;F=.3}else{sVent=2;F=.4}
@@ -342,7 +343,7 @@ function render(){
   else if(step===2){
     html+=`
     <div class="form-group"><label class="field">Type de ventilation</label>
-    ${radioGrid('vent',[['aucune','❌ Aucune'],['naturelle','🪟 Naturelle'],['vmc_sf','🌀 VMC simple flux'],['vmc_df','🌀🌀 VMC double flux'],['extraction_meca','⚙️ Extraction méca.']],D.ventilation)}</div>`;
+    ${radioGrid('vent',[['aucune','❌ Aucune'],['naturelle','🪟 Naturelle'],['vmc_sf','🌀 VMC simple flux'],['vmc_df','🌀🌀 VMC double flux'],['vmi','🔵 VMI (insufflation)'],['extraction_meca','⚙️ Extraction méca.']],D.ventilation)}</div>`;
     if(D.ventilation==='naturelle'){
       html+=`<div class="form-group"><label class="field">Ventilation naturelle suffisante ?</label>
       ${radioGrid('ventnat',[['oui','Oui — dimensionnée'],['non','Non — insuffisante']],D.ventNatOk?'oui':'non')}</div>`;

@@ -1,0 +1,136 @@
+/* =========================================================
+   PréventIA Protect — UI partagée des modules "registre"
+   Utilisée par : infirmière, suivi global, environnement, coactivité
+   ========================================================= */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:oklch(24% .06 258);      /* #0c1e3c */
+  --navy-2:oklch(32% .07 255);
+  --teal:oklch(52% .1 182);       /* #0f766e */
+  --teal-l:oklch(72% .13 182);
+  --orange:oklch(70% .17 50);
+  --bg:oklch(98.2% .004 250);
+  --card:#fff;
+  --line:oklch(91% .01 250);
+  --ink:oklch(25% .03 258);
+  --muted:oklch(52% .02 258);
+  --ok:oklch(62% .15 150);  --ok-bg:oklch(95% .05 150);
+  --warn:oklch(72% .15 80); --warn-bg:oklch(96% .06 90);
+  --urg:oklch(66% .17 50);  --urg-bg:oklch(95% .05 55);
+  --bad:oklch(58% .2 27);   --bad-bg:oklch(95% .04 27);
+  --na:oklch(70% .01 258);  --na-bg:oklch(95% .005 258);
+  --r:14px;
+  --shadow:0 1px 2px rgb(15 30 60/.05),0 8px 24px -12px rgb(15 30 60/.15);
+}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;font-size:14px}
+a{color:var(--teal)}
+button,input,select,textarea{font:inherit;color:inherit}
+
+/* --- barre supérieure --- */
+.pp-top{position:sticky;top:0;z-index:50;background:var(--navy);color:#fff}
+.pp-top .in{max-width:1280px;margin:0 auto;padding:0 20px;height:58px;display:flex;align-items:center;gap:14px}
+.pp-top .back{color:rgb(255 255 255/.7);text-decoration:none;font-size:13px;padding:6px 10px;border-radius:8px}
+.pp-top .back:hover{background:rgb(255 255 255/.08);color:#fff}
+.pp-top .ico{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-size:18px;background:linear-gradient(135deg,var(--teal),var(--teal-l))}
+.pp-top h1{font-family:'DM Serif Display',serif;font-weight:400;font-size:19px;line-height:1.1}
+.pp-top small{display:block;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;opacity:.6}
+.pp-top .sp{flex:1}
+.pp-top .pill{font-size:11px;padding:4px 10px;border-radius:20px;background:rgb(255 255 255/.1)}
+
+/* --- onglets --- */
+.pp-tabs{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:58px;z-index:40}
+.pp-tabs .in{max-width:1280px;margin:0 auto;padding:0 20px;display:flex;gap:4px;overflow-x:auto}
+.pp-tab{border:0;background:none;padding:14px 14px 12px;font-weight:600;font-size:13px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.pp-tab:hover{color:var(--ink)}
+.pp-tab.on{color:var(--teal);border-color:var(--teal)}
+.pp-tab .n{display:inline-block;min-width:18px;padding:0 5px;margin-left:6px;border-radius:9px;font-size:10px;background:var(--bad);color:#fff}
+
+main.pp{max-width:1280px;margin:0 auto;padding:22px 20px 60px}
+.pp-panel{display:none}.pp-panel.on{display:block;animation:pp-in .25s ease-out}
+@keyframes pp-in{from{opacity:0;transform:translateY(6px)}}
+
+/* --- intro / encarts --- */
+.pp-intro{display:flex;gap:16px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;margin-bottom:16px}
+.pp-intro h2{font-family:'DM Serif Display',serif;font-weight:400;font-size:24px}
+.pp-intro p{color:var(--muted);max-width:720px}
+.pp-ref{font-size:11px;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 12px;max-width:380px}
+.pp-ref b{color:var(--teal)}
+.pp-note{border-left:3px solid var(--orange);background:oklch(97% .03 60);padding:10px 14px;border-radius:0 10px 10px 0;font-size:12.5px;margin-bottom:16px}
+
+/* --- KPI --- */
+.pp-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.pp-kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow);cursor:pointer;transition:transform .15s,border-color .15s;text-align:left}
+.pp-kpi:hover{transform:translateY(-2px)}
+.pp-kpi.on{border-color:var(--teal);box-shadow:0 0 0 3px oklch(52% .1 182/.15)}
+.pp-kpi .l{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:6px}
+.pp-kpi .l i{width:8px;height:8px;border-radius:50%;background:var(--c,var(--teal))}
+.pp-kpi .v{font-size:28px;font-weight:700;line-height:1.2;margin-top:4px}
+
+/* --- répartition par catégorie --- */
+.pp-groups{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.pp-chip{border:1px solid var(--line);background:#fff;border-radius:20px;padding:5px 12px;font-size:12px;cursor:pointer;display:flex;gap:6px;align-items:center}
+.pp-chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.pp-chip .r{background:var(--bad);color:#fff;border-radius:9px;padding:0 6px;font-size:10px;font-weight:700}
+
+/* --- barre d'outils --- */
+.pp-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.pp-bar .s{flex:1;min-width:200px;position:relative}
+.pp-bar .s input{width:100%;padding:9px 12px 9px 34px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.pp-bar .s::before{content:'🔍';position:absolute;left:11px;top:8px;font-size:13px;opacity:.6}
+.pp-bar select{padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border-radius:10px;border:1px solid var(--line);background:#fff;font-weight:600;font-size:13px;cursor:pointer;transition:all .15s}
+.btn:hover{border-color:var(--teal);color:var(--teal)}
+.btn.p{background:var(--teal);border-color:var(--teal);color:#fff}
+.btn.p:hover{filter:brightness(1.08);color:#fff}
+.btn.sm{padding:5px 8px;font-size:12px}
+.btn.ghost{border-color:transparent;background:transparent}
+
+/* --- tableau --- */
+.pp-tw{background:#fff;border:1px solid var(--line);border-radius:var(--r);overflow:auto;box-shadow:var(--shadow)}
+table.pp-t{width:100%;border-collapse:collapse;min-width:760px}
+.pp-t th{position:sticky;top:0;background:oklch(97% .006 250);text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:10px 12px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;user-select:none}
+.pp-t th:hover{color:var(--ink)}
+.pp-t td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.pp-t tr:last-child td{border-bottom:0}
+.pp-t tbody tr:hover{background:oklch(98.5% .01 182)}
+.pp-t td.act{white-space:nowrap;text-align:right}
+.pp-empty{padding:40px;text-align:center;color:var(--muted)}
+
+/* --- badges --- */
+.b{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:11.5px;font-weight:600;white-space:nowrap;background:var(--bb,var(--na-bg));color:var(--bc,var(--muted))}
+.b::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
+.b.ok{--bb:var(--ok-bg);--bc:oklch(42% .12 150)}
+.b.warn{--bb:var(--warn-bg);--bc:oklch(48% .12 75)}
+.b.urg{--bb:var(--urg-bg);--bc:oklch(50% .15 45)}
+.b.bad{--bb:var(--bad-bg);--bc:oklch(48% .19 27)}
+.b.info{--bb:oklch(95% .03 250);--bc:oklch(45% .13 255)}
+.b.vio{--bb:oklch(95% .03 300);--bc:oklch(45% .15 300)}
+.b.na{--bb:var(--na-bg);--bc:var(--muted)}
+.due small{display:block;color:var(--muted);font-size:11px}
+
+/* --- modale formulaire --- */
+.pp-dlg{border:0;border-radius:18px;padding:0;width:min(640px,94vw);box-shadow:0 30px 80px -20px rgb(0 0 0/.4)}
+.pp-dlg::backdrop{background:rgb(12 30 60/.45);backdrop-filter:blur(3px)}
+.pp-dlg header{padding:18px 22px;border-bottom:1px solid var(--line);font-family:'DM Serif Display',serif;font-size:20px}
+.pp-dlg .body{padding:18px 22px;display:grid;grid-template-columns:1fr 1fr;gap:12px;max-height:65vh;overflow:auto}
+.pp-dlg .f{display:flex;flex-direction:column;gap:4px}
+.pp-dlg .f.w{grid-column:1/-1}
+.pp-dlg label{font-size:12px;font-weight:600;color:var(--muted)}
+.pp-dlg input,.pp-dlg select,.pp-dlg textarea{padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:#fff}
+.pp-dlg input:focus,.pp-dlg select:focus,.pp-dlg textarea:focus{outline:2px solid oklch(52% .1 182/.35);border-color:var(--teal)}
+.pp-dlg .hint{font-size:11px;color:var(--muted)}
+.pp-dlg footer{padding:14px 22px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px;background:oklch(98.5% .004 250)}
+
+/* --- cartes libres (onglets info / aide à la décision) --- */
+.pp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.pp-card{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--shadow)}
+.pp-card h3{font-size:15px;margin-bottom:8px}
+.pp-card ul{padding-left:18px;color:var(--muted);font-size:13px}
+.pp-card li{margin:3px 0}
+.pp-check label{display:flex;gap:9px;align-items:flex-start;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13px;cursor:pointer}
+.pp-check input{margin-top:3px;accent-color:var(--teal)}
+.pp-verdict{margin-top:14px;padding:14px 16px;border-radius:12px;font-weight:600}
+
+.pp-foot{max-width:1280px;margin:0 auto;padding:0 20px 30px;font-size:11px;color:var(--muted)}
+@media(max-width:640px){.pp-dlg .body{grid-template-columns:1fr}.pp-top .pill{display:none}}
+@media print{.pp-top,.pp-tabs,.pp-bar,.pp-t td.act,.pp-t th:last-child{display:none}.pp-panel{display:block!important}}

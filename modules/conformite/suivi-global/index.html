@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suivi global — PréventIA Protect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/css/protect-ui.css">
+</head>
+<body>
+<script src="../../../assets/js/protect-registre.js"></script>
+<script>
+/* Catégories du tableau global et couleur de badge associée */
+const CAT = {
+  'Habilitation électrique':'vio', 'CACES / Autorisation de conduite':'info', 'Formation SST':'ok',
+  'Travail en hauteur':'warn', 'VGP / Vérification périodique':'urg', 'Maintenance machine':'na',
+  'EPI':'info', 'EPC':'vio'
+};
+const d = PP.d;
+
+PP.app({
+  title:'Suivi global', sub:'Habilitations · VGP · Maintenances · EPI · EPC', icon:'📊',
+  tabs:[
+  { id:'tableau', label:'Tableau global', icon:'📋', registre:{
+      key:'pp_suivi_global', itemLabel:'élément suivi', addLabel:'Nouvel élément',
+      intro:{ title:'Toutes les échéances, un seul tableau',
+        text:'Habilitations des salariés, vérifications réglementaires, maintenances, EPI et EPC : chaque ligne porte sa dernière date et sa périodicité, l’échéance se calcule seule. Cliquez sur une tuile ou une catégorie pour filtrer.',
+        ref:'<b>Code du travail</b> — R4544-9 (habilitation électrique) · R4323-55/56 (conduite) · R4224-15 (secourisme) · R4323-99 (VGP EPI) · Arrêté 01/03/2004 (levage)' },
+      due:'echeance', groupBy:'categorie',
+      autoDue: r => PP.addMonths(r.derniere, r.periodicite),
+      fields:[
+        { k:'categorie', label:'Catégorie', type:'select', options:Object.keys(CAT), badge:CAT, required:true },
+        { k:'intitule', label:'Intitulé', required:true, list:['Habilitation B1V','Habilitation BR','Habilitation H0V','CACES R489 cat. 3','CACES R486 cat. B','Recyclage MAC SST','Harnais antichute','Ligne de vie','Chariot élévateur','Nacelle PEMP','Extincteurs','Installations électriques','Portes automatiques','Garde-corps','Captage à la source'] },
+        { k:'cible', label:'Salarié / équipement', required:true },
+        { k:'service', label:'Service / zone' },
+        { k:'reference', label:'Référentiel', hint:'Ex. NF C18-510, R489, arrêté 01/03/2004' },
+        { k:'derniere', label:'Dernière date', type:'date' },
+        { k:'periodicite', label:'Périodicité (mois)', type:'number', hint:'Laisser l’échéance vide : elle sera calculée', inTable:false },
+        { k:'echeance', label:'Prochaine échéance', type:'date' },
+        { k:'responsable', label:'Responsable' },
+        { k:'obs', label:'Observations', type:'textarea', inTable:false }
+      ],
+      seed:[
+        { categorie:'Habilitation électrique', intitule:'Habilitation B1V', cible:'M. Durand', service:'Maintenance', reference:'NF C18-510', derniere:d(-1080), periodicite:36, echeance:d(15), responsable:'RH' },
+        { categorie:'Habilitation électrique', intitule:'Habilitation H0V', cible:'Mme Petit', service:'Production', reference:'NF C18-510', derniere:d(-1110), periodicite:36, echeance:d(-15), responsable:'RH' },
+        { categorie:'CACES / Autorisation de conduite', intitule:'CACES R489 cat. 3', cible:'M. Bernard', service:'Logistique', reference:'R489 — validité 5 ans', derniere:d(-1700), periodicite:60, echeance:d(125), responsable:'Chef d’équipe' },
+        { categorie:'CACES / Autorisation de conduite', intitule:'CACES R486 cat. B', cible:'M. Robert', service:'Maintenance', reference:'R486', derniere:d(-1780), periodicite:60, echeance:d(45), responsable:'Chef d’équipe' },
+        { categorie:'Formation SST', intitule:'Recyclage MAC SST', cible:'Mme Moreau', service:'Administration', reference:'INRS — MAC 24 mois', derniere:d(-700), periodicite:24, echeance:d(30), responsable:'IDE entreprise' },
+        { categorie:'Travail en hauteur', intitule:'Formation travail en hauteur', cible:'M. Laurent', service:'Maintenance', reference:'R4141-13 — formation sécurité', derniere:d(-300), periodicite:36, echeance:d(795), responsable:'RH' },
+        { categorie:'VGP / Vérification périodique', intitule:'Chariot élévateur', cible:'Chariot n°2 — Fenwick', service:'Logistique', reference:'Arrêté 01/03/2004 — 6 mois', derniere:d(-190), periodicite:6, echeance:d(-8), responsable:'Resp. maintenance' },
+        { categorie:'VGP / Vérification périodique', intitule:'Installations électriques', cible:'Site principal', service:'Tous', reference:'Arrêté 26/12/2011 — annuelle', derniere:d(-280), periodicite:12, echeance:d(85), responsable:'Direction' },
+        { categorie:'VGP / Vérification périodique', intitule:'Extincteurs', cible:'32 extincteurs', service:'Tous', reference:'R4227-39 — annuelle', derniere:d(-340), periodicite:12, echeance:d(25), responsable:'Resp. sécurité' },
+        { categorie:'Maintenance machine', intitule:'Presse plieuse — maintenance préventive', cible:'Presse P12', service:'Atelier', reference:'R4322-1 — notice fabricant', derniere:d(-150), periodicite:6, echeance:d(32), responsable:'Resp. maintenance' },
+        { categorie:'EPI', intitule:'Harnais antichute', cible:'Lot de 4 harnais', service:'Maintenance', reference:'Arrêté 19/03/1993 — 12 mois', derniere:d(-200), periodicite:12, echeance:d(165), responsable:'Magasin EPI' },
+        { categorie:'EPI', intitule:'ARI — appareils respiratoires', cible:'2 ARI', service:'Station chimie', reference:'Arrêté 19/03/1993 — 12 mois', derniere:d(-380), periodicite:12, echeance:d(-15), responsable:'Resp. sécurité' },
+        { categorie:'EPC', intitule:'Ligne de vie toiture', cible:'Toiture bâtiment B', service:'Bâtiment B', reference:'Notice fabricant (EN 795) — annuelle', derniere:d(-330), periodicite:12, echeance:d(35), responsable:'Resp. maintenance' },
+        { categorie:'EPC', intitule:'Captage à la source — cabine peinture', cible:'Cabine CP1', service:'Peinture', reference:'Arrêté 08/10/1987 — annuel', derniere:d(-100), periodicite:12, echeance:d(265), responsable:'Resp. HSE' }
+      ]
+  }},
+  { id:'periodicites', label:'Périodicités de référence', icon:'📅', render: el => {
+      const P = [
+        ['⚡ Habilitation électrique','Recyclage recommandé tous les 3 ans','NF C18-510 · INRS ED 6127 · R4544-9'],
+        ['🚜 CACES R489 / R486 / R490','Validité 5 ans (R482 engins de chantier : 10 ans) — l’autorisation de conduite reste délivrée par l’employeur','R4323-55 et R4323-56'],
+        ['⛑️ Sauveteur secouriste (SST)','Maintien et actualisation des compétences (MAC) tous les 24 mois','R4224-15 · référentiel INRS'],
+        ['🏗️ Appareils de levage','6 mois (chariots, PEMP, ponts roulants…) ou 12 mois selon l’appareil','Arrêté 01/03/2004'],
+        ['🔌 Installations électriques','Vérification périodique annuelle','R4226-16 · arrêté 26/12/2011'],
+        ['🧯 Extincteurs','Vérification annuelle','R4227-39'],
+        ['🚪 Portes et portails automatiques','Entretien et vérification tous les 6 mois','Arrêté 21/12/1993'],
+        ['🪢 EPI contre les chutes de hauteur, ARI','Vérification générale périodique tous les 12 mois','R4323-99 · arrêté 19/03/1993'],
+        ['🌬️ Aération / assainissement (pollution spécifique)','Contrôle annuel des installations','Arrêté 08/10/1987'],
+        ['🪜 Échafaudages','Avant mise en service, journalière, trimestrielle','Arrêté 21/12/2004']
+      ];
+      el.innerHTML = `<div class="pp-intro"><div><h2>Aide-mémoire des périodicités</h2>
+        <p>Valeurs usuelles pour renseigner la colonne « Périodicité ». Vérifiez toujours la notice fabricant et le texte en vigueur pour votre équipement.</p></div></div>
+        <div class="pp-grid">${P.map(p=>`<div class="pp-card"><h3>${p[0]}</h3><p style="font-size:13px">${p[1]}</p><p style="font-size:11px;color:var(--teal);margin-top:8px;font-weight:600">${p[2]}</p></div>`).join('')}</div>`;
+  }}
+  ]
+});
+</script>
+<p class="pp-foot">PréventIA Protect · Outil d’aide au suivi — ne remplace pas les registres réglementaires signés par les organismes vérificateurs.</p>
+</body>
+</html>

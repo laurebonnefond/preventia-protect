@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coactivité — PréventIA Protect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/css/protect-ui.css">
+</head>
+<body>
+<script src="../../../assets/js/protect-registre.js"></script>
+<script>
+const d = PP.d;
+/* PdP écrit obligatoire : ≥ 400 h sur 12 mois OU travaux dangereux (R4512-7) */
+const pdpEcrit = r => (+r.heures >= 400) || r.dangereux;
+
+PP.app({
+  title:'Coactivité', sub:'Entreprises extérieures · Plans de prévention · Consignes', icon:'🤝',
+  tabs:[
+  /* 1. Plans de prévention */
+  { id:'pdp', label:'Plans de prévention', icon:'📑', registre:{
+      key:'pp_coact_pdp', itemLabel:'plan de prévention', addLabel:'Nouveau PdP',
+      intro:{ title:'Suivi des plans de prévention',
+        text:'Inspection commune préalable, analyse des risques d’interférence, mesures arrêtées en commun. La colonne « Forme » indique si le PdP doit être écrit. Alerte quand la fin d’intervention approche sans clôture.',
+        ref:'<b>Code du travail</b> — R4512-2 (inspection commune préalable) · R4512-6 (PdP) · R4512-7 (écrit si ≥ 400 h/12 mois ou travaux dangereux) · arrêté du 19/03/1993' },
+      due:'fin', groupBy:'statut',
+      closed: r => r.statut === 'Clôturé',
+      fields:[
+        { k:'numero', label:'N°', required:true, default:()=>'PdP-'+new Date().getFullYear()+'-' },
+        { k:'ee', label:'Entreprise extérieure', required:true },
+        { k:'travaux', label:'Nature des travaux', required:true, w:1 },
+        { k:'lieu', label:'Lieu / zone' },
+        { k:'debut', label:'Début', type:'date', inTable:false },
+        { k:'fin', label:'Fin d’intervention', type:'date' },
+        { k:'heures', label:'Heures prévues (12 mois)', type:'number', inTable:false },
+        { k:'dangereux', label:'Travaux dangereux', type:'checkbox', check:'Liste de l’arrêté du 19/03/1993', inTable:false },
+        { k:'forme', label:'Forme', computed:true, render:(v,r)=> pdpEcrit(r) ? '<span class="b bad">Écrit obligatoire</span>' : '<span class="b na">Écrit conseillé</span>' },
+        { k:'icp', label:'Inspection commune', type:'date' },
+        { k:'statut', label:'Statut', type:'select', required:true, options:['En préparation','Signé — en cours','Clôturé'], badge:{'En préparation':'warn','Signé — en cours':'info','Clôturé':'ok'} }
+      ],
+      seed:[
+        { numero:'PdP-2026-014', ee:'ElecPro 87', travaux:'Remplacement TGBT atelier', lieu:'Local électrique', debut:d(-10), fin:d(12), heures:120, dangereux:true, icp:d(-14), statut:'Signé — en cours' },
+        { numero:'PdP-2026-015', ee:'NetClean', travaux:'Nettoyage industriel annuel', lieu:'Tout le site', debut:d(-200), fin:d(165), heures:620, dangereux:false, icp:d(-205), statut:'Signé — en cours' },
+        { numero:'PdP-2026-016', ee:'Toitures du Limousin', travaux:'Réfection étanchéité toiture', lieu:'Bâtiment B', debut:d(20), fin:d(45), heures:90, dangereux:true, icp:'', statut:'En préparation' },
+        { numero:'PdP-2026-009', ee:'Clim’Air', travaux:'Maintenance CTA', lieu:'Toiture A', debut:d(-60), fin:d(-5), heures:30, dangereux:false, icp:d(-62), statut:'Signé — en cours' },
+        { numero:'PdP-2026-003', ee:'ElecPro 87', travaux:'Vérification éclairage de sécurité', lieu:'Bureaux', debut:d(-120), fin:d(-110), heures:16, dangereux:false, icp:d(-125), statut:'Clôturé' }
+      ]
+  }},
+  /* 2. Entreprises extérieures */
+  { id:'ee', label:'Entreprises extérieures', icon:'🏢', registre:{
+      key:'pp_coact_ee', itemLabel:'entreprise extérieure', addLabel:'Nouvelle EE',
+      intro:{ title:'Référentiel des entreprises extérieures',
+        text:'Coordonnées, habilitations attendues et validité de l’attestation de vigilance URSSAF (à obtenir tous les 6 mois pour tout contrat ≥ 5 000 € HT).',
+        ref:'<b>Code du travail</b> — L8222-1 et D8222-5 (obligation de vigilance) · R4511-5 (coordination EU / EE)' },
+      due:'vigilance', autoDue: r => PP.addMonths(r.delivrance, 6),
+      fields:[
+        { k:'raison', label:'Raison sociale', required:true },
+        { k:'activite', label:'Activité' },
+        { k:'contact', label:'Contact / téléphone' },
+        { k:'habilitations', label:'Habilitations attendues', hint:'Ex. B2V, CACES R486, travail en hauteur' },
+        { k:'delivrance', label:'Attestation de vigilance délivrée le', type:'date', inTable:false },
+        { k:'vigilance', label:'Vigilance URSSAF valable jusqu’au', type:'date', hint:'Vide = délivrance + 6 mois' },
+        { k:'rc', label:'Assurance RC jusqu’au', type:'date' }
+      ],
+      seed:[
+        { raison:'ElecPro 87', activite:'Électricité industrielle', contact:'05 55 00 00 01', habilitations:'B2V, BR, BC', delivrance:d(-170), vigilance:d(12), rc:d(200) },
+        { raison:'NetClean', activite:'Nettoyage industriel', contact:'05 55 00 00 02', habilitations:'CACES R486', delivrance:d(-40), vigilance:d(140), rc:d(300) },
+        { raison:'Toitures du Limousin', activite:'Couverture, étanchéité', contact:'05 55 00 00 03', habilitations:'Travail en hauteur, port du harnais', delivrance:d(-200), vigilance:d(-18), rc:d(90) },
+        { raison:'Clim’Air', activite:'Génie climatique', contact:'05 55 00 00 04', habilitations:'Attestation fluides frigorigènes', delivrance:d(-120), vigilance:d(62), rc:d(400) }
+      ]
+  }},
+  /* 3. Permis et consignes */
+  { id:'permis', label:'Permis & consignes', icon:'🔥', registre:{
+      key:'pp_coact_permis', itemLabel:'permis / consigne', addLabel:'Nouveau permis',
+      intro:{ title:'Permis de travail et consignes de sécurité',
+        text:'Permis de feu, consignations, pénétration en espace confiné, accueil sécurité : qui, quand, jusqu’à quand, et la preuve que les consignes ont été remises et signées.',
+        ref:'<b>Code du travail</b> — R4512-6 (mesures arrêtées en commun) · <b>INRS</b> ED 6030 (permis de feu), ED 6109 (consignations)' },
+      due:'validite', groupBy:'type',
+      fields:[
+        { k:'type', label:'Type', type:'select', required:true, options:['Permis de feu','Consignation électrique','Consignation mécanique / fluides','Espace confiné','Travail en hauteur','Accueil sécurité / consignes remises'] },
+        { k:'intervenant', label:'Intervenant(s)', required:true },
+        { k:'ee', label:'Entreprise' },
+        { k:'pdp', label:'PdP associé' },
+        { k:'date', label:'Délivré le', type:'date' },
+        { k:'validite', label:'Valable jusqu’au', type:'date' },
+        { k:'emetteur', label:'Émetteur (EU)' },
+        { k:'signe', label:'Signé', type:'checkbox', check:'Consignes signées par l’intervenant' }
+      ],
+      seed:[
+        { type:'Permis de feu', intervenant:'J. Martin', ee:'Toitures du Limousin', pdp:'PdP-2026-016', date:d(0), validite:d(0), emetteur:'Resp. maintenance', signe:true },
+        { type:'Consignation électrique', intervenant:'S. Blanc, L. Faure', ee:'ElecPro 87', pdp:'PdP-2026-014', date:d(-2), validite:d(12), emetteur:'Chargé de consignation', signe:true },
+        { type:'Accueil sécurité / consignes remises', intervenant:'Équipe NetClean (6 pers.)', ee:'NetClean', pdp:'PdP-2026-015', date:d(-200), validite:d(165), emetteur:'Resp. HSE', signe:false },
+        { type:'Espace confiné', intervenant:'P. Girard', ee:'NetClean', pdp:'PdP-2026-015', date:d(-1), validite:d(-1), emetteur:'Resp. HSE', signe:true }
+      ]
+  }},
+  /* 4. Protocoles de sécurité */
+  { id:'protocoles', label:'Protocoles chargement', icon:'🚚', registre:{
+      key:'pp_coact_protocoles', itemLabel:'protocole de sécurité', addLabel:'Nouveau protocole',
+      intro:{ title:'Protocoles de sécurité — chargement / déchargement',
+        text:'Pour toute opération de chargement ou déchargement par une entreprise de transport : document écrit échangé entre l’accueil et le transporteur. Revue conseillée chaque année ou à chaque changement.',
+        ref:'<b>Code du travail</b> — R4515-4 à R4515-11' },
+      due:'revue', autoDue: r => PP.addMonths(r.signature, 12),
+      fields:[
+        { k:'transporteur', label:'Transporteur', required:true },
+        { k:'operation', label:'Opération', type:'select', options:['Chargement','Déchargement','Chargement et déchargement'] },
+        { k:'marchandise', label:'Marchandise', hint:'Préciser si matières dangereuses (ADR)' },
+        { k:'lieu', label:'Quai / zone' },
+        { k:'recurrent', label:'Opérations répétitives', type:'checkbox', check:'Protocole unique pour opérations répétitives' },
+        { k:'signature', label:'Signé le', type:'date' },
+        { k:'revue', label:'Revue prévue', type:'date', hint:'Vide = +12 mois' }
+      ],
+      seed:[
+        { transporteur:'Transports Dupuy', operation:'Déchargement', marchandise:'Tôles acier', lieu:'Quai 1', recurrent:true, signature:d(-340), revue:d(25) },
+        { transporteur:'ChimLog', operation:'Déchargement', marchandise:'Solvants — ADR classe 3', lieu:'Aire produits chimiques', recurrent:true, signature:d(-100), revue:d(265) }
+      ]
+  }},
+  /* 5. Aide à la décision */
+  { id:'decision', label:'PdP écrit ?', icon:'❓', render: el => {
+      const DANG = [
+        'Travaux exposant à des rayonnements ionisants',
+        'Travaux exposant à des agents chimiques dangereux, dont CMR',
+        'Travaux exposant à des agents biologiques pathogènes',
+        'Travaux sur une installation classée soumise à POI',
+        'Travaux au voisinage de pièces nues sous tension > TBT',
+        'Travaux exposant à un risque de chute de hauteur > 3 m',
+        'Travaux dans ou sur des cuves, en espace confiné',
+        'Travaux de soudage oxyacétylénique avec permis de feu',
+        'Travaux exposant à plus de 90 dB(A) ou 140 dB(C) crête',
+        'Travaux en milieu hyperbare'
+      ];
+      el.innerHTML = `
+      <div class="pp-intro"><div><h2>Le plan de prévention doit-il être écrit ?</h2>
+      <p>Deux critères suffisent (art. R4512-7). L’inspection commune préalable reste obligatoire dans tous les cas (R4512-2).</p></div>
+      <div class="pp-ref">Liste ci-dessous = <b>extrait</b> des travaux dangereux. Liste complète : arrêté du 19 mars 1993.</div></div>
+      <div class="pp-grid">
+        <div class="pp-card">
+          <h3>⏱️ Durée</h3>
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:13px">Heures de travail prévues sur 12 mois (toutes EE)
+            <input id="hrs" type="number" min="0" value="120" style="padding:9px;border:1px solid var(--line);border-radius:9px"></label>
+          <div style="height:10px;border-radius:6px;background:var(--line);margin-top:14px;overflow:hidden"><div id="gauge" style="height:100%;width:0;background:var(--teal);transition:width .3s"></div></div>
+          <p style="font-size:11px;color:var(--muted);margin-top:4px">Seuil : 400 h</p>
+        </div>
+        <div class="pp-card pp-check"><h3>⚠️ Travaux dangereux</h3>
+          ${DANG.map((t,i)=>`<label><input type="checkbox" data-i="${i}"> ${t}</label>`).join('')}
+        </div>
+      </div>
+      <div id="verdict" class="pp-verdict"></div>`;
+      const run = () => {
+        const h = +el.querySelector('#hrs').value || 0;
+        const dg = [...el.querySelectorAll('[data-i]:checked')].length;
+        const g = el.querySelector('#gauge'); g.style.width = Math.min(100, h/4) + '%'; g.style.background = h>=400 ? 'var(--bad)' : 'var(--teal)';
+        const v = el.querySelector('#verdict');
+        if (h >= 400 || dg) {
+          v.style.background = 'var(--bad-bg)'; v.style.color = 'oklch(45% .19 27)';
+          v.innerHTML = `📝 PdP <u>écrit obligatoire</u> — ${[h>=400?'durée ≥ 400 h':'', dg?dg+' travail(aux) dangereux':''].filter(Boolean).join(' + ')}. Le transmettre au CSE et le tenir à disposition de l’inspection du travail.`;
+        } else {
+          v.style.background = 'var(--ok-bg)'; v.style.color = 'oklch(40% .12 150)';
+          v.innerHTML = '✅ PdP écrit non obligatoire — mais inspection commune et mesures de prévention arrêtées en commun restent requises. Un écrit reste la meilleure preuve.';
+        }
+      };
+      el.querySelectorAll('input').forEach(i => i.oninput = run); run();
+  }}
+  ]
+});
+</script>
+<p class="pp-foot">PréventIA Protect · Outil d’aide à la coordination — le plan de prévention reste établi conjointement par l’entreprise utilisatrice et les entreprises extérieures.</p>
+</body>
+</html>

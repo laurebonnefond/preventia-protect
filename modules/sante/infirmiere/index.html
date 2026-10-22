@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Infirmière d'entreprise — PréventIA Protect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/css/protect-ui.css">
+</head>
+<body>
+<script src="../../../assets/js/protect-registre.js"></script>
+<script>
+const d = PP.d;
+const thisMonth = r => (r.date || '').slice(0,7) === PP.iso(new Date()).slice(0,7);
+
+PP.app({
+  title:'Infirmière d’entreprise', sub:'Soins · Premiers secours · Prévention santé', icon:'🩺',
+  tabs:[
+  /* 1. Registre des soins */
+  { id:'soins', label:'Registre des soins', icon:'🩹', registre:{
+      key:'pp_inf_soins', itemLabel:'passage infirmerie', addLabel:'Nouveau passage',
+      intro:{ title:'Registre des passages et soins',
+        text:'Chaque passage à l’infirmerie : circonstance, lésion, soins, orientation. Les accidents sans arrêt ni soins médicaux peuvent être inscrits au registre des accidents bénins ; les autres font l’objet d’une déclaration d’AT.',
+        ref:'<b>Code de la sécurité sociale</b> — L441-4 et D441-1 à D441-4 (registre des accidents bénins) · <b>CSP</b> R4311-14 (protocoles de soins d’urgence)' },
+      note:'🔒 <b>Secret professionnel</b> : identifiez le salarié par un matricule ou des initiales. Les données restent dans ce navigateur ; aucune donnée de santé n’est transmise.',
+      kpis:[
+        { id:'', label:'Passages', color:'var(--navy-2)', test:()=>true },
+        { id:'mois', label:'Ce mois-ci', color:'var(--teal)', test:thisMonth },
+        { id:'at', label:'Accidents du travail', color:'var(--urg)', test:r=>r.circonstance==='Accident du travail' },
+        { id:'evac', label:'Orientés urgences / 15', color:'var(--bad)', test:r=>r.orientation==='Urgences / 15' }
+      ],
+      groupBy:'circonstance',
+      fields:[
+        { k:'date', label:'Date', type:'date', required:true, default:()=>PP.iso(new Date()) },
+        { k:'heure', label:'Heure', type:'time' },
+        { k:'matricule', label:'Salarié (matricule)', required:true },
+        { k:'service', label:'Service' },
+        { k:'circonstance', label:'Circonstance', type:'select', required:true, options:['Accident du travail','Accident de trajet','Malaise / maladie','Demande de conseil'],
+          badge:{'Accident du travail':'urg','Accident de trajet':'warn','Malaise / maladie':'info','Demande de conseil':'na'} },
+        { k:'lesion', label:'Nature et siège de la lésion', w:1 },
+        { k:'soins', label:'Soins réalisés', type:'textarea', inTable:false },
+        { k:'orientation', label:'Orientation', type:'select', options:['Retour au poste','Repos infirmerie','Médecin traitant','Médecin du travail','Urgences / 15'],
+          badge:{'Retour au poste':'ok','Repos infirmerie':'info','Médecin traitant':'warn','Médecin du travail':'vio','Urgences / 15':'bad'} },
+        { k:'suite', label:'Suite administrative', type:'select', options:['Registre accidents bénins','Déclaration AT','Sans objet'],
+          badge:{'Registre accidents bénins':'info','Déclaration AT':'urg','Sans objet':'na'} }
+      ],
+      seed:[
+        { date:d(-1), heure:'09:40', matricule:'M-1042', service:'Atelier', circonstance:'Accident du travail', lesion:'Coupure superficielle index gauche', soins:'Lavage, désinfection, pansement', orientation:'Retour au poste', suite:'Registre accidents bénins' },
+        { date:d(-3), heure:'14:15', matricule:'M-0877', service:'Logistique', circonstance:'Accident du travail', lesion:'Entorse cheville droite (chute quai)', soins:'Glace, immobilisation, antalgique selon protocole', orientation:'Urgences / 15', suite:'Déclaration AT' },
+        { date:d(-6), heure:'11:00', matricule:'M-1210', service:'Administration', circonstance:'Malaise / maladie', lesion:'Malaise vagal', soins:'PLS, surveillance constantes 30 min', orientation:'Repos infirmerie', suite:'Sans objet' },
+        { date:d(-12), heure:'08:20', matricule:'M-0533', service:'Production', circonstance:'Demande de conseil', lesion:'Douleurs lombaires récurrentes', soins:'Conseils posturaux', orientation:'Médecin du travail', suite:'Sans objet' },
+        { date:d(-20), heure:'16:50', matricule:'M-0991', service:'Atelier', circonstance:'Accident du travail', lesion:'Projection oculaire (copeau)', soins:'Lavage oculaire 15 min', orientation:'Médecin traitant', suite:'Déclaration AT' }
+      ]
+  }},
+  /* 2. Matériel de premiers secours */
+  { id:'materiel', label:'Trousses & DAE', icon:'🧰', registre:{
+      key:'pp_inf_materiel', itemLabel:'matériel de secours', addLabel:'Nouveau matériel',
+      intro:{ title:'Matériel de premiers secours',
+        text:'Trousses, armoire à pharmacie, défibrillateurs, lave-œil : localisation, dernier contrôle et prochaine échéance (péremption, électrodes, batterie).',
+        ref:'<b>Code du travail</b> — R4224-14 (matériel de premiers secours adapté, accessible et signalé)' },
+      due:'echeance', groupBy:'type',
+      autoDue: r => PP.addMonths(r.controle, 6),
+      fields:[
+        { k:'type', label:'Type', type:'select', required:true, options:['Trousse de secours','Armoire à pharmacie','DAE','Lave-œil / douche de sécurité','Brancard / couverture'] },
+        { k:'localisation', label:'Localisation', required:true },
+        { k:'controle', label:'Dernier contrôle', type:'date', hint:'Sans échéance saisie : contrôle à +6 mois' },
+        { k:'echeance', label:'Prochaine échéance', type:'date', hint:'Péremption, électrodes, batterie…' },
+        { k:'responsable', label:'Responsable' },
+        { k:'obs', label:'À réapprovisionner', inTable:true }
+      ],
+      seed:[
+        { type:'DAE', localisation:'Hall d’accueil', controle:d(-160), echeance:d(20), responsable:'IDE', obs:'Électrodes adultes à remplacer' },
+        { type:'Trousse de secours', localisation:'Atelier — poteau C3', controle:d(-40), echeance:d(140), responsable:'SST atelier', obs:'' },
+        { type:'Trousse de secours', localisation:'Véhicule utilitaire VU-04', controle:d(-200), echeance:d(-20), responsable:'Chef d’équipe', obs:'Compresses, sérum phy' },
+        { type:'Lave-œil / douche de sécurité', localisation:'Station chimie', controle:d(-25), echeance:d(5), responsable:'Resp. HSE', obs:'Essai hebdomadaire' },
+        { type:'Armoire à pharmacie', localisation:'Infirmerie', controle:d(-10), echeance:d(170), responsable:'IDE', obs:'' }
+      ]
+  }},
+  /* 3. Sauveteurs secouristes */
+  { id:'sst', label:'Couverture SST', icon:'⛑️', registre:{
+      key:'pp_inf_sst', itemLabel:'sauveteur secouriste', addLabel:'Nouveau SST',
+      intro:{ title:'Sauveteurs secouristes du travail',
+        text:'Qui est formé, dans quel service, sur quelle équipe — et quand le MAC tombe. Vérifiez qu’aucune équipe ni aucun horaire ne reste sans SST présent.',
+        ref:'<b>Code du travail</b> — R4224-15 (secouristes dans chaque atelier à travaux dangereux) · R4224-16 (organisation des premiers secours)' },
+      due:'mac', groupBy:'service',
+      autoDue: r => PP.addMonths(r.formation, 24),
+      fields:[
+        { k:'nom', label:'Nom', required:true },
+        { k:'service', label:'Service', required:true },
+        { k:'equipe', label:'Équipe / horaire', type:'select', options:['Journée','Matin','Après-midi','Nuit','Week-end'] },
+        { k:'formation', label:'Formation / dernier MAC', type:'date' },
+        { k:'mac', label:'Prochain MAC', type:'date', hint:'Vide = +24 mois' }
+      ],
+      seed:[
+        { nom:'Mme Moreau', service:'Administration', equipe:'Journée', formation:d(-700), mac:d(30) },
+        { nom:'M. Garcia', service:'Atelier', equipe:'Matin', formation:d(-400), mac:d(330) },
+        { nom:'M. Lefèvre', service:'Atelier', equipe:'Après-midi', formation:d(-760), mac:d(-30) },
+        { nom:'Mme Roux', service:'Logistique', equipe:'Nuit', formation:d(-650), mac:d(80) }
+      ]
+  }},
+  /* 4. Actions de prévention */
+  { id:'actions', label:'Actions de prévention', icon:'📣', registre:{
+      key:'pp_inf_actions', itemLabel:'action de prévention', addLabel:'Nouvelle action',
+      intro:{ title:'Actions de prévention santé',
+        text:'Campagnes, sensibilisations et dépistages menés par l’infirmière : thème, public, participation, bilan. La base du rapport d’activité annuel.' },
+      kpis:[
+        { id:'', label:'Actions', color:'var(--navy-2)', test:()=>true },
+        { id:'faites', label:'Réalisées', color:'var(--ok)', test:r=>r.statut==='Réalisée' },
+        { id:'prevues', label:'Planifiées', color:'var(--warn)', test:r=>r.statut==='Planifiée' }
+      ],
+      groupBy:'theme',
+      fields:[
+        { k:'theme', label:'Thème', type:'select', required:true, options:['Gestes et postures','Addictions','Vaccination','Sommeil / nutrition','Dépistage','RPS / écoute','Premiers secours','Bruit / audition','Autre'] },
+        { k:'intitule', label:'Intitulé', required:true, w:1 },
+        { k:'date', label:'Date', type:'date' },
+        { k:'public', label:'Public cible' },
+        { k:'participants', label:'Participants', type:'number' },
+        { k:'statut', label:'Statut', type:'select', options:['Planifiée','Réalisée','Annulée'], badge:{'Planifiée':'warn','Réalisée':'ok','Annulée':'na'} },
+        { k:'bilan', label:'Bilan / suites', type:'textarea', inTable:false }
+      ],
+      seed:[
+        { theme:'Vaccination', intitule:'Campagne vaccination grippe', date:d(12), public:'Tous salariés volontaires', participants:'', statut:'Planifiée' },
+        { theme:'Addictions', intitule:'Atelier « Moi(s) sans tabac »', date:d(-15), public:'Production', participants:42, statut:'Réalisée' },
+        { theme:'Gestes et postures', intitule:'Échauffement en début de poste', date:d(-40), public:'Logistique', participants:18, statut:'Réalisée' },
+        { theme:'Bruit / audition', intitule:'Sensibilisation port des PICB', date:d(25), public:'Atelier', participants:'', statut:'Planifiée' }
+      ]
+  }},
+  /* 5. Repères */
+  { id:'reperes', label:'Repères & urgence', icon:'🚑', render: el => {
+      el.innerHTML = `
+      <div class="pp-intro"><div><h2>Repères pour l’infirmière d’entreprise</h2>
+      <p>Cadre d’exercice, chaîne des secours et conduites à tenir à afficher et faire valider par le médecin du travail.</p></div></div>
+      <div class="pp-grid">
+        <div class="pp-card"><h3>📞 Chaîne des secours</h3><ul>
+          <li><b>Protéger</b> — supprimer le danger, baliser</li>
+          <li><b>Alerter</b> — 15 (SAMU), 18 (pompiers), 112, 114 (SMS)</li>
+          <li><b>Secourir</b> — gestes adaptés, surveillance</li>
+          <li>Afficher les consignes et numéros à chaque poste de secours</li></ul></div>
+        <div class="pp-card"><h3>🩸 AES — accident d’exposition au sang</h3><ul>
+          <li>Ne pas faire saigner ; nettoyer eau + savon</li>
+          <li>Antisepsie ≥ 5 min (Dakin ou chlorhexidine alcoolique)</li>
+          <li>Projection muqueuse : rinçage abondant ≥ 5 min</li>
+          <li>Avis urgent référent AES — idéalement avant 4 h, au plus tard 48 h</li>
+          <li>Déclaration d’AT</li></ul></div>
+        <div class="pp-card"><h3>📝 Protocoles écrits</h3><ul>
+          <li>Protocoles de soins d’urgence datés et signés par le médecin (CSP R4311-14)</li>
+          <li>Révision annuelle ou à chaque changement de risque</li>
+          <li>Liste des produits de la trousse validée par le médecin du travail</li></ul></div>
+        <div class="pp-card"><h3>🤝 Lien avec le SPSTI</h3><ul>
+          <li>Signaler au médecin du travail les AT répétés sur un même poste</li>
+          <li>Alimenter le DUERP avec les données anonymisées de l’infirmerie</li>
+          <li>Préparer les visites de reprise et de pré-reprise</li></ul></div>
+      </div>`;
+  }}
+  ]
+});
+</script>
+<p class="pp-foot">PréventIA Protect · Les conduites à tenir sont des repères génériques ; elles ne se substituent pas aux protocoles validés par le médecin du travail.</p>
+</body>
+</html>

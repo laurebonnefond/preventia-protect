@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Environnement RSE & ICPE — PréventIA Protect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/css/protect-ui.css">
+</head>
+<body>
+<script src="../../../assets/js/protect-registre.js"></script>
+<script>
+const d = PP.d;
+const REGIME = {'NC — non classé':'na','D — Déclaration':'info','DC — Déclaration avec contrôle':'warn','E — Enregistrement':'urg','A — Autorisation':'bad'};
+const VALORISE = ['Recyclage','Valorisation énergétique','Réemploi'];
+const dangereux = r => /\*/.test(r.code || '');
+
+PP.app({
+  title:'Environnement', sub:'ICPE · Déchets · Indicateurs RSE', icon:'🌿',
+  tabs:[
+  /* 1. Installations classées */
+  { id:'icpe', label:'Installations ICPE', icon:'🏭', registre:{
+      key:'pp_env_icpe', itemLabel:'rubrique ICPE', addLabel:'Nouvelle rubrique',
+      intro:{ title:'Situation administrative ICPE',
+        text:'Une ligne par rubrique de la nomenclature : activité, volume, régime. Les installations DC doivent passer un contrôle périodique par un organisme agréé (tous les 5 ans en général).',
+        ref:'<b>Code de l’environnement</b> — L511-1 · L512-1 (autorisation) · L512-7 (enregistrement) · L512-8 (déclaration) · nomenclature : aida.ineris.fr' },
+      note:'⚠️ Les seuils et régimes des exemples sont illustratifs : vérifiez chaque rubrique sur la nomenclature officielle en vigueur.',
+      due:'controle', groupBy:'regime',
+      closed: r => !r.regime || r.regime.startsWith('NC') || r.regime.startsWith('D —'), closedLabel:'Pas de contrôle',
+      autoDue: r => r.regime && r.regime.startsWith('DC') ? PP.addMonths(r.dernier, 60) : '',
+      fields:[
+        { k:'rubrique', label:'Rubrique', required:true, list:['1510','1530','2560','2910','2940','4331','4734','2925','1185'] },
+        { k:'libelle', label:'Activité', required:true, w:1 },
+        { k:'volume', label:'Volume / puissance' },
+        { k:'regime', label:'Régime', type:'select', options:Object.keys(REGIME), badge:REGIME, required:true },
+        { k:'acte', label:'Acte administratif', hint:'Récépissé, arrêté préfectoral, preuve de dépôt…' },
+        { k:'dernier', label:'Dernier contrôle', type:'date', inTable:false },
+        { k:'controle', label:'Prochain contrôle', type:'date', hint:'DC : vide = +5 ans' }
+      ],
+      seed:[
+        { rubrique:'2940', libelle:'Application de peinture sur support métallique', volume:'45 kg/j', regime:'DC — Déclaration avec contrôle', acte:'Preuve de dépôt 2021', dernier:d(-1780), controle:d(45) },
+        { rubrique:'2560', libelle:'Travail mécanique des métaux', volume:'420 kW', regime:'DC — Déclaration avec contrôle', acte:'Récépissé 2019', dernier:d(-1900), controle:d(-75) },
+        { rubrique:'2910', libelle:'Chaufferie gaz', volume:'1,8 MW', regime:'NC — non classé', acte:'—', controle:'' },
+        { rubrique:'2925', libelle:'Atelier de charge d’accumulateurs', volume:'38 kW', regime:'D — Déclaration', acte:'Preuve de dépôt 2022', controle:'' }
+      ]
+  }},
+  /* 2. Contrôles et rejets */
+  { id:'controles', label:'Contrôles & rejets', icon:'🧪', registre:{
+      key:'pp_env_controles', itemLabel:'contrôle environnemental', addLabel:'Nouveau contrôle',
+      intro:{ title:'Surveillance des rejets et contrôles',
+        text:'Mesures prescrites par l’arrêté ou les prescriptions générales : rejets atmosphériques, eaux, bruit en limite de propriété, visites d’inspection.' },
+      due:'prochain', groupBy:'type',
+      fields:[
+        { k:'type', label:'Type', type:'select', required:true, options:['Rejets atmosphériques','Rejets aqueux','Bruit en limite de propriété','Contrôle périodique DC','Visite inspection (DREAL)','Autre'] },
+        { k:'objet', label:'Objet / point de mesure', required:true },
+        { k:'organisme', label:'Organisme' },
+        { k:'date', label:'Dernière mesure', type:'date' },
+        { k:'resultat', label:'Résultat', type:'select', options:['Conforme','Non-conformité mineure','Non-conformité majeure'], badge:{'Conforme':'ok','Non-conformité mineure':'warn','Non-conformité majeure':'bad'} },
+        { k:'prochain', label:'Prochaine échéance', type:'date' },
+        { k:'actions', label:'Actions correctives', type:'textarea', inTable:false }
+      ],
+      seed:[
+        { type:'Rejets atmosphériques', objet:'Cabine peinture — COV', organisme:'Bureau de contrôle', date:d(-330), resultat:'Conforme', prochain:d(35) },
+        { type:'Bruit en limite de propriété', objet:'4 points ZER', organisme:'Acousticien', date:d(-1000), resultat:'Non-conformité mineure', prochain:d(-95), actions:'Capotage compresseur prévu' },
+        { type:'Rejets aqueux', objet:'Séparateur hydrocarbures', organisme:'Prestataire curage', date:d(-170), resultat:'Conforme', prochain:d(195) }
+      ]
+  }},
+  /* 3. Registre déchets */
+  { id:'dechets', label:'Registre déchets', icon:'♻️', registre:{
+      key:'pp_env_dechets', itemLabel:'enlèvement de déchets', addLabel:'Nouvel enlèvement',
+      intro:{ title:'Registre chronologique des déchets',
+        text:'Chaque enlèvement : nature, code déchet, quantité, filière, prestataire. Un code se terminant par * signale un déchet dangereux, à tracer via Trackdéchets.',
+        ref:'<b>Code de l’environnement</b> — R541-43 (registre) · arrêté 31/05/2021 · traçabilité Trackdéchets (déchets dangereux)' },
+      kpis:[
+        { id:'', label:'Enlèvements', color:'var(--navy-2)', test:()=>true },
+        { id:'dd', label:'Déchets dangereux', color:'var(--urg)', test:dangereux },
+        { id:'val', label:'Valorisés', color:'var(--ok)', test:r=>VALORISE.includes(r.filiere) },
+        { id:'sansbsd', label:'Dangereux sans BSD', color:'var(--bad)', test:r=>dangereux(r) && !r.bsd }
+      ],
+      groupBy:'filiere',
+      fields:[
+        { k:'date', label:'Date', type:'date', required:true },
+        { k:'nature', label:'Nature du déchet', required:true },
+        { k:'code', label:'Code déchet', hint:'6 chiffres, * si dangereux (ex. 08 01 11*)' },
+        { k:'quantite', label:'Quantité', type:'number' },
+        { k:'unite', label:'Unité', type:'select', options:['kg','t','L','m³','unités'] },
+        { k:'filiere', label:'Filière', type:'select', options:['Recyclage','Valorisation énergétique','Réemploi','Élimination'], badge:{'Recyclage':'ok','Valorisation énergétique':'info','Réemploi':'ok','Élimination':'warn'} },
+        { k:'prestataire', label:'Prestataire' },
+        { k:'bsd', label:'BSD / Trackdéchets', type:'checkbox', check:'Bordereau émis' }
+      ],
+      seed:[
+        { date:d(-5), nature:'Déchets de peinture et vernis', code:'08 01 11*', quantite:320, unite:'kg', filiere:'Valorisation énergétique', prestataire:'Prestataire agréé', bsd:true },
+        { date:d(-9), nature:'Copeaux métalliques', code:'12 01 01', quantite:1.8, unite:'t', filiere:'Recyclage', prestataire:'Ferrailleur', bsd:false },
+        { date:d(-21), nature:'Chiffons souillés', code:'15 02 02*', quantite:90, unite:'kg', filiere:'Élimination', prestataire:'Prestataire agréé', bsd:false },
+        { date:d(-30), nature:'Cartons', code:'15 01 01', quantite:2.4, unite:'t', filiere:'Recyclage', prestataire:'Collecte locale', bsd:false }
+      ]
+  }},
+  /* 4. Indicateurs RSE */
+  { id:'rse', label:'Indicateurs RSE', icon:'🎯', registre:{
+      key:'pp_env_rse', itemLabel:'indicateur RSE', addLabel:'Nouvel indicateur',
+      intro:{ title:'Tableau de bord RSE',
+        text:'Indicateurs Environnement, Social (dont santé-sécurité) et Gouvernance, avec valeur, cible et tendance. Export CSV prêt pour Power BI.' },
+      kpis:[
+        { id:'', label:'Indicateurs', color:'var(--navy-2)', test:()=>true },
+        { id:'up', label:'En amélioration', color:'var(--ok)', test:r=>r.tendance==='↗ En amélioration' },
+        { id:'down', label:'En dégradation', color:'var(--bad)', test:r=>r.tendance==='↘ En dégradation' }
+      ],
+      groupBy:'pilier',
+      fields:[
+        { k:'pilier', label:'Pilier', type:'select', required:true, options:['E — Environnement','S — Social','G — Gouvernance'], badge:{'E — Environnement':'ok','S — Social':'info','G — Gouvernance':'vio'} },
+        { k:'indicateur', label:'Indicateur', required:true, w:1 },
+        { k:'valeur', label:'Valeur', type:'number' },
+        { k:'unite', label:'Unité' },
+        { k:'cible', label:'Cible' },
+        { k:'periode', label:'Période' },
+        { k:'tendance', label:'Tendance', type:'select', options:['↗ En amélioration','→ Stable','↘ En dégradation'], badge:{'↗ En amélioration':'ok','→ Stable':'na','↘ En dégradation':'bad'} }
+      ],
+      seed:[
+        { pilier:'E — Environnement', indicateur:'Consommation d’électricité', valeur:412000, unite:'kWh', cible:'-10 %', periode:'2025', tendance:'↗ En amélioration' },
+        { pilier:'E — Environnement', indicateur:'Taux de valorisation des déchets', valeur:68, unite:'%', cible:'75 %', periode:'2025', tendance:'↗ En amélioration' },
+        { pilier:'E — Environnement', indicateur:'Consommation d’eau', valeur:2350, unite:'m³', cible:'-5 %', periode:'2025', tendance:'→ Stable' },
+        { pilier:'S — Social', indicateur:'Taux de fréquence (TF)', valeur:24.6, unite:'', cible:'< 20', periode:'2025', tendance:'↘ En dégradation' },
+        { pilier:'S — Social', indicateur:'Salariés formés SST', valeur:14, unite:'%', cible:'15 %', periode:'2025', tendance:'↗ En amélioration' },
+        { pilier:'S — Social', indicateur:'Heures de formation sécurité / salarié', valeur:7.5, unite:'h', cible:'8 h', periode:'2025', tendance:'→ Stable' },
+        { pilier:'G — Gouvernance', indicateur:'DUERP mis à jour', valeur:1, unite:'oui', cible:'annuel', periode:'2025', tendance:'→ Stable' }
+      ]
+  }},
+  /* 5. Calculateur TF / TG */
+  { id:'calcul', label:'Calcul TF / TG', icon:'🧮', render: el => {
+      el.innerHTML = `
+      <div class="pp-intro"><div><h2>Taux de fréquence et taux de gravité</h2>
+      <p>Les deux indicateurs santé-sécurité les plus attendus dans un rapport RSE.</p></div></div>
+      <div class="pp-grid">
+        <div class="pp-card">
+          <h3>Vos données</h3>
+          <div class="pp-check" style="display:grid;gap:10px;margin-top:10px">
+            <label style="flex-direction:column;border:0">AT avec arrêt <input id="at" type="number" value="6" style="padding:8px;border:1px solid var(--line);border-radius:8px"></label>
+            <label style="flex-direction:column;border:0">Jours d’arrêt <input id="j" type="number" value="148" style="padding:8px;border:1px solid var(--line);border-radius:8px"></label>
+            <label style="flex-direction:column;border:0">Heures travaillées <input id="h" type="number" value="243900" style="padding:8px;border:1px solid var(--line);border-radius:8px"></label>
+          </div>
+        </div>
+        <div class="pp-card">
+          <h3>Résultats</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0">
+            <div class="pp-kpi" style="cursor:default"><div class="l"><i style="--c:var(--urg)"></i>TF</div><div class="v" id="tf">–</div></div>
+            <div class="pp-kpi" style="cursor:default"><div class="l"><i style="--c:var(--bad)"></i>TG</div><div class="v" id="tg">–</div></div>
+          </div>
+          <p style="font-size:12px;color:var(--muted)"><b>TF</b> = AT avec arrêt × 1 000 000 ÷ heures travaillées<br>
+          <b>TG</b> = jours d’arrêt × 1 000 ÷ heures travaillées</p>
+        </div>
+      </div>`;
+      const calc = () => {
+        const at=+el.querySelector('#at').value, j=+el.querySelector('#j').value, h=+el.querySelector('#h').value;
+        el.querySelector('#tf').textContent = h ? (at*1e6/h).toFixed(1) : '–';
+        el.querySelector('#tg').textContent = h ? (j*1e3/h).toFixed(2) : '–';
+      };
+      el.querySelectorAll('input').forEach(i => i.oninput = calc); calc();
+  }}
+  ]
+});
+</script>
+<p class="pp-foot">PréventIA Protect · Aide au suivi environnemental — la conformité ICPE relève de l’exploitant et de l’inspection des installations classées.</p>
+</body>
+</html>

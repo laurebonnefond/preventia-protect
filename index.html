@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PréventIA Protect — Plateforme HSE propulsée par l'IA</title>
+<meta name="description" content="Plateforme HSE modulaire : DUERP, EPI, habilitations, infirmerie, coactivité, environnement ICPE/RSE.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:oklch(24% .06 258); --navy-2:oklch(32% .07 255); --navy-3:oklch(40% .08 255);
+  --teal:oklch(52% .1 182); --teal-l:oklch(72% .13 182); --teal-bg:oklch(96% .03 182);
+  --orange:oklch(70% .17 50);
+  --bg:oklch(98.4% .004 250); --line:oklch(91% .01 250);
+  --ink:oklch(23% .03 258); --muted:oklch(50% .02 258);
+  --ok:oklch(64% .15 150); --warn:oklch(78% .15 85); --urg:oklch(68% .17 50); --bad:oklch(60% .2 27);
+  --shadow:0 1px 2px rgb(12 30 60/.05),0 18px 40px -20px rgb(12 30 60/.25);
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;overflow-x:hidden}
+a{color:inherit}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+.serif{font-family:'DM Serif Display',serif;font-weight:400}
+
+/* ---------- NAV ---------- */
+nav{position:sticky;top:0;z-index:100;background:rgb(255 255 255/.85);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;align-items:center;gap:24px;height:64px}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo-ico{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;font-size:18px;background:linear-gradient(135deg,var(--teal),var(--teal-l));box-shadow:0 6px 16px -6px var(--teal)}
+.logo b{font-family:'DM Serif Display',serif;font-weight:400;font-size:19px;display:block;line-height:1}
+.logo small{font-size:9.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted)}
+nav .links{display:flex;gap:4px;margin-left:auto}
+nav .links a{text-decoration:none;font-size:14px;font-weight:500;color:var(--muted);padding:8px 12px;border-radius:9px}
+nav .links a:hover{color:var(--ink);background:oklch(96% .01 250)}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border-radius:12px;font-weight:600;font-size:15px;text-decoration:none;border:1px solid transparent;transition:transform .2s,box-shadow .2s,background .2s;cursor:pointer;font-family:inherit}
+.btn-p{background:var(--teal);color:#fff;box-shadow:0 10px 24px -12px var(--teal)}
+.btn-p:hover{transform:translateY(-2px);box-shadow:0 14px 30px -12px var(--teal)}
+.btn-o{border-color:var(--line);background:#fff;color:var(--ink)}
+.btn-o:hover{border-color:var(--teal);color:var(--teal)}
+.btn.sm{padding:8px 14px;font-size:13px}
+
+/* ---------- HERO (inspiré Novade : texte + cockpit) ---------- */
+.hero{position:relative;padding:72px 0 56px;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:
+  radial-gradient(600px 380px at 85% 20%,oklch(90% .07 182/.7),transparent 70%),
+  radial-gradient(500px 300px at 10% 90%,oklch(93% .05 60/.6),transparent 70%);z-index:-1}
+.hero::after{content:'';position:absolute;inset:0;z-index:-1;opacity:.5;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:44px 44px;mask-image:radial-gradient(ellipse at 70% 30%,#000 10%,transparent 65%)}
+.hero .wrap{display:grid;grid-template-columns:1fr 1.15fr;gap:48px;align-items:center}
+.eyebrow{display:inline-flex;gap:8px;align-items:center;padding:6px 14px;border-radius:30px;background:#fff;border:1px solid var(--line);font-size:12.5px;font-weight:600;color:var(--teal);box-shadow:var(--shadow)}
+.eyebrow i{width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 0 4px oklch(52% .1 182/.15);animation:pulse 2s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 7px oklch(52% .1 182/0)}}
+.hero h1{font-family:'DM Serif Display',serif;font-weight:400;font-size:clamp(36px,5vw,58px);line-height:1.05;margin:20px 0 18px;letter-spacing:-.5px}
+.hero h1 em{font-style:normal;color:var(--teal)}
+.hero p.lead{font-size:17.5px;color:var(--muted);max-width:520px;margin-bottom:28px}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap}
+.trust{display:flex;gap:22px;flex-wrap:wrap;margin-top:32px;font-size:13px;color:var(--muted)}
+.trust b{display:block;font-size:24px;color:var(--ink);font-weight:700;line-height:1.1}
+
+/* cockpit */
+.cockpit{background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:0 40px 80px -40px rgb(12 30 60/.45);display:grid;grid-template-columns:150px 1fr;overflow:hidden;transform:perspective(1400px) rotateY(-6deg) rotateX(2deg);transition:transform .6s}
+.cockpit:hover{transform:none}
+.ck-side{background:var(--navy);color:#fff;padding:16px 10px;font-size:12px}
+.ck-side .t{font-family:'DM Serif Display',serif;font-size:15px;padding:0 8px 14px}
+.ck-side a{display:flex;gap:8px;align-items:center;padding:8px;border-radius:8px;text-decoration:none;color:rgb(255 255 255/.75)}
+.ck-side a:hover,.ck-side a.on{background:rgb(255 255 255/.1);color:#fff}
+.hero .wrap>*,.ck-main,.ck-kpi,.ck-card{min-width:0}
+.ck-main{padding:18px;display:grid;gap:12px}
+.ck-head{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:600}
+.ck-head span{font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:12px;background:var(--teal-bg);color:var(--teal)}
+.ck-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.ck-kpi{border:1px solid var(--line);border-radius:12px;padding:10px;text-decoration:none}
+.ck-kpi .l{font-size:10px;overflow:hidden;color:var(--muted);line-height:1.2;height:24px}
+.ck-kpi .v{font-size:24px;font-weight:700;line-height:1.1;color:var(--c)}
+.ck-row{display:grid;grid-template-columns:150px 1fr;gap:12px}
+.ck-card{border:1px solid var(--line);border-radius:12px;padding:12px}
+.ck-card h4{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:8px}
+.donut{width:104px;height:104px;border-radius:50%;margin:0 auto;position:relative;background:conic-gradient(var(--line) 0 100%)}
+.donut::after{content:attr(data-v);position:absolute;inset:18px;border-radius:50%;background:#fff;display:grid;place-items:center;font-weight:700;font-size:18px}
+.legend{display:grid;gap:2px;margin-top:8px;font-size:10px;color:var(--muted)}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
+.next{list-style:none;font-size:12px}
+.next li{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line)}
+.next li:last-child{border:0}
+.next li span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap;color:#fff;background:var(--c)}
+
+/* ---------- SECTIONS ---------- */
+section{padding:80px 0}
+.kicker{font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--teal)}
+.h2{font-family:'DM Serif Display',serif;font-weight:400;font-size:clamp(28px,3.8vw,42px);line-height:1.1;margin:8px 0 12px}
+.sub{color:var(--muted);font-size:16px;max-width:620px}
+.center{text-align:center}.center .sub{margin:0 auto}
+
+/* ---------- ÉCOSYSTÈME (inspiré Alfatea) ---------- */
+.eco{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.eco svg{width:100%;max-width:980px;display:block;margin:30px auto 0;overflow:visible}
+.eco .node{cursor:pointer}
+.eco .node circle.bgc{fill:#fff;stroke:var(--line);stroke-width:1.5;transition:all .25s}
+.eco .node:hover circle.bgc{stroke:var(--teal);stroke-width:3;filter:drop-shadow(0 8px 14px rgb(15 118 110/.25))}
+.eco .node text.lb{font-size:12px;font-weight:600;fill:var(--ink);text-anchor:middle}
+.eco .node text.em{font-size:24px;text-anchor:middle;dominant-baseline:central}
+.eco .spoke{stroke:oklch(80% .06 182);stroke-width:1.5;stroke-dasharray:4 5;animation:flow 1.6s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-18}}
+.eco .new circle.bgc{stroke:var(--orange);stroke-width:2.5}
+.eco .newtag{font-size:9px;font-weight:700;fill:#fff}
+
+/* ---------- MODULES ---------- */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin:28px 0 24px}
+.filters button{border:1px solid var(--line);background:#fff;padding:8px 16px;border-radius:30px;font:600 13px 'DM Sans',sans-serif;color:var(--muted);cursor:pointer;transition:all .2s}
+.filters button:hover{color:var(--ink);border-color:var(--ink)}
+.filters button.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.filters button span{opacity:.6;margin-left:4px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px}
+.card{position:relative;background:#fff;border:1px solid var(--line);border-radius:20px;padding:24px;text-decoration:none;display:flex;flex-direction:column;transition:transform .3s,box-shadow .3s,border-color .3s;overflow:hidden}
+.card::before{content:'';position:absolute;inset:0 0 auto;height:4px;background:var(--a)}
+.card:hover{transform:translateY(-5px);box-shadow:var(--shadow);border-color:color-mix(in oklch,var(--a) 40%,var(--line))}
+.card .top{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.card .ic{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;font-size:22px;background:color-mix(in oklch,var(--a) 12%,#fff)}
+.card h3{font-size:17px;line-height:1.25}
+.card .dom{font-size:11.5px;font-weight:600;color:var(--a)}
+.card p{font-size:13.5px;color:var(--muted);margin-bottom:12px}
+.card ul{list-style:none;font-size:12.5px;color:var(--muted);display:grid;gap:4px;margin-bottom:16px}
+.card li::before{content:'✓';color:var(--teal);font-weight:700;margin-right:7px}
+.card .go{margin-top:auto;font-size:13px;font-weight:600;color:var(--a)}
+.card .st{position:absolute;top:18px;right:18px;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px}
+.st.proto{background:oklch(95% .05 150);color:oklch(42% .12 150)}
+.st.new{background:var(--orange);color:#fff}
+.st.plan{background:oklch(96% .06 90);color:oklch(48% .12 75)}
+.card.hide{display:none}
+
+/* ---------- POUR QUI ---------- */
+.personas{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:30px}
+.persona{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px}
+.persona .e{font-size:28px}
+.persona h4{margin:8px 0 6px;font-size:15px}
+.persona p{font-size:13px;color:var(--muted)}
+
+/* ---------- DATA (inspiré Novade/Power BI) ---------- */
+.data{background:var(--navy);color:#fff;border-radius:28px;padding:56px;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;position:relative;overflow:hidden}
+.data::before{content:'';position:absolute;width:420px;height:420px;border-radius:50%;background:radial-gradient(closest-side,oklch(52% .1 182/.45),transparent);right:-120px;top:-140px}
+.data .h2{color:#fff}
+.data .sub{color:rgb(255 255 255/.7)}
+.checks{list-style:none;display:grid;gap:14px;margin-top:24px}
+.checks li{display:flex;gap:12px;font-size:14.5px;color:rgb(255 255 255/.85)}
+.checks li::before{content:'✓';flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;background:var(--teal);color:#fff}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;position:relative}
+.tile{background:#fff;color:var(--ink);border-radius:16px;padding:16px}
+.tile .l{font-size:11px;color:var(--muted);font-weight:600}
+.tile .v{font-size:30px;font-weight:700;color:var(--navy-2)}
+.bars{display:flex;align-items:flex-end;gap:6px;height:70px;margin-top:6px}
+.bars i{flex:1;border-radius:4px 4px 0 0;background:var(--teal-l)}
+.bars i:nth-child(odd){background:var(--teal)}
+
+/* ---------- RÉGLEMENTATION ---------- */
+.reg{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:28px}
+.reg div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:12.5px;color:var(--muted)}
+.reg strong{display:block;color:var(--ink);font-size:13px}
+.reg em{font-style:normal;font-size:10px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.6px}
+
+/* ---------- CTA / FOOTER ---------- */
+.cta{background:linear-gradient(120deg,var(--teal),oklch(45% .09 220));border-radius:28px;padding:52px 32px;text-align:center;color:#fff}
+.cta .h2{color:#fff}
+.cta p{color:rgb(255 255 255/.85);max-width:520px;margin:0 auto 24px}
+.cta .btn-o{background:transparent;color:#fff;border-color:rgb(255 255 255/.5)}
+footer{padding:36px 0;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center}
+footer a{color:var(--teal);text-decoration:none}
+
+.fade{opacity:0;transform:translateY(18px);transition:opacity .6s,transform .6s}
+.fade.in{opacity:1;transform:none}
+
+@media(max-width:960px){
+  .hero .wrap,.data{grid-template-columns:1fr}
+  .cockpit{transform:none}
+  .personas{grid-template-columns:1fr 1fr}
+  nav .links{display:none}
+  .data{padding:36px 24px}
+}
+@media(max-width:560px){
+  .cockpit{grid-template-columns:1fr}.ck-side{display:none}
+  .ck-kpis{grid-template-columns:1fr 1fr}.ck-row{grid-template-columns:1fr}
+  .personas{grid-template-columns:1fr}.grid{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.fade{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<nav><div class="wrap">
+  <a href="#" class="logo"><span class="logo-ico">🛡️</span><span><b>PréventIA Protect</b><small>Santé · Sécurité · Environnement</small></span></a>
+  <div class="links">
+    <a href="#ecosysteme">Écosystème</a><a href="#modules">Modules</a><a href="#donnees">Données & IA</a><a href="#reglementation">Réglementation</a>
+  </div>
+  <a href="https://laurebonnefond.github.io/PreventIA-LaB/" target="_blank" class="btn btn-o sm">🔬 PréventIA-LaB</a>
+</div></nav>
+
+<!-- ================= HERO ================= -->
+<header class="hero"><div class="wrap">
+  <div class="fade">
+    <span class="eyebrow"><i></i>Plateforme HSE propulsée par l’IA</span>
+    <h1>Toute la santé-sécurité de l’entreprise, <em>sur un seul cockpit.</em></h1>
+    <p class="lead">DUERP, habilitations, EPI, infirmerie, coactivité, ICPE et RSE : des modules reliés entre eux, conçus par une infirmière de santé au travail préventrice.</p>
+    <div class="hero-btns">
+      <a href="#modules" class="btn btn-p">Découvrir les modules →</a>
+      <a href="modules/conformite/suivi-global/index.html" class="btn btn-o">📊 Ouvrir le suivi global</a>
+    </div>
+    <div class="trust">
+      <div><b id="nbMod">11</b>modules</div>
+      <div><b>100 %</b>local, sans compte</div>
+      <div><b>CSV</b>prêt Power BI</div>
+    </div>
+  </div>
+
+  <div class="cockpit fade" aria-label="Aperçu du tableau de bord">
+    <aside class="ck-side">
+      <div class="t">🛡️ Protect</div>
+      <a class="on" href="#">🏠 Accueil</a>
+      <a href="modules/conformite/suivi-global/index.html">📊 Suivi global</a>
+      <a href="modules/evaluer/duerp/index.html">📝 DUERP</a>
+      <a href="modules/sante/infirmiere/index.html">🩺 Infirmerie</a>
+      <a href="modules/coactivite/plans-prevention/index.html">🤝 Coactivité</a>
+      <a href="modules/environnement/rse-icpe/index.html">🌿 Environnement</a>
+    </aside>
+    <div class="ck-main">
+      <div class="ck-head">Tableau de bord <span id="ckSrc">Démo</span></div>
+      <div class="ck-kpis">
+        <a class="ck-kpi" href="modules/conformite/suivi-global/index.html" style="--c:var(--bad)"><div class="l">Échéances en retard</div><div class="v" id="kBad">–</div></a>
+        <a class="ck-kpi" href="modules/conformite/suivi-global/index.html" style="--c:var(--urg)"><div class="l">Urgentes ≤ 30 j</div><div class="v" id="kUrg">–</div></a>
+        <a class="ck-kpi" href="modules/coactivite/plans-prevention/index.html" style="--c:var(--navy-3)"><div class="l">Plans de prévention actifs</div><div class="v" id="kPdp">–</div></a>
+        <a class="ck-kpi" href="modules/sante/infirmiere/index.html" style="--c:var(--teal)"><div class="l">Passages infirmerie (mois)</div><div class="v" id="kInf">–</div></a>
+      </div>
+      <div class="ck-row">
+        <div class="ck-card"><h4>État des échéances</h4>
+          <div class="donut" id="donut" data-v="–"></div>
+          <div class="legend">
+            <span><i style="background:var(--ok)"></i>À jour</span><span><i style="background:var(--warn)"></i>≤ 90 j</span>
+            <span><i style="background:var(--urg)"></i>≤ 30 j</span><span><i style="background:var(--bad)"></i>Retard</span>
+          </div>
+        </div>
+        <div class="ck-card"><h4>Prochaines actions</h4><ul class="next" id="next"></ul></div>
+      </div>
+    </div>
+  </div>
+</div></header>
+
+<!-- ================= ÉCOSYSTÈME ================= -->
+<section class="eco" id="ecosysteme"><div class="wrap center fade">
+  <div class="kicker">Écosystème</div>
+  <h2 class="h2">Une plateforme, tous les risques</h2>
+  <p class="sub">Chaque module alimente les autres : une habilitation expirée remonte au cockpit, un AT de l’infirmerie nourrit le DUERP, un plan de prévention s’appuie sur le référentiel des entreprises extérieures.</p>
+  <svg id="hub" viewBox="0 0 980 600" role="img" aria-label="Carte des modules PréventIA Protect"></svg>
+</div></section>
+
+<!-- ================= MODULES ================= -->
+<section id="modules"><div class="wrap">
+  <div class="kicker">Modules</div>
+  <h2 class="h2">Choisissez votre domaine</h2>
+  <p class="sub">Les modules marqués <b style="color:var(--orange)">Nouveau</b> partagent le même moteur : tableau filtrable, alertes d’échéance J-90 / J-30 / retard, export CSV et impression.</p>
+  <div class="filters" id="filters"></div>
+  <div class="grid" id="grid"></div>
+</div></section>
+
+<!-- ================= POUR QUI ================= -->
+<section style="padding-top:0"><div class="wrap center">
+  <div class="kicker">Pour qui ?</div>
+  <h2 class="h2">Pensé pour ceux qui font la prévention</h2>
+  <div class="personas">
+    <div class="persona fade"><div class="e">🦺</div><h4>Préventeur · HSE</h4><p>DUERP, PAPRIPACT, VGP, coactivité : le pilotage quotidien.</p></div>
+    <div class="persona fade"><div class="e">🩺</div><h4>Infirmière d’entreprise</h4><p>Registre des soins, trousses et DAE, couverture SST, actions santé.</p></div>
+    <div class="persona fade"><div class="e">👩‍⚕️</div><h4>Médecin du travail · SPSTI</h4><p>Une vision partagée des risques et des expositions de l’entreprise.</p></div>
+    <div class="persona fade"><div class="e">📈</div><h4>Direction · RH · RSE</h4><p>Indicateurs TF/TG, conformité ICPE, reporting RSE exportable.</p></div>
+  </div>
+</div></section>
+
+<!-- ================= DONNÉES & IA ================= -->
+<section id="donnees" style="padding-top:0"><div class="wrap">
+  <div class="data fade">
+    <div>
+      <div class="kicker" style="color:var(--teal-l)">Données & IA</div>
+      <h2 class="h2">Des données de prévention exploitables</h2>
+      <p class="sub">Chaque registre devient une source de données structurée, prête pour l’analyse.</p>
+      <ul class="checks">
+        <li>Alertes calculées automatiquement à partir de la date et de la périodicité.</li>
+        <li>Exports CSV compatibles Excel et Power BI, colonne « statut » incluse.</li>
+        <li>Scan IA des FDS, certificats et rapports VGP dans les modules existants.</li>
+        <li>Données stockées dans le navigateur : rien ne quitte le poste sans votre action.</li>
+      </ul>
+    </div>
+    <div class="tiles">
+      <div class="tile"><div class="l">Jours depuis le dernier AT avec arrêt</div><div class="v">43</div></div>
+      <div class="tile"><div class="l">Taux de valorisation déchets</div><div class="v">68 %</div></div>
+      <div class="tile" style="grid-column:1/-1"><div class="l">Actions PAPRIPACT réalisées / mois</div>
+        <div class="bars"><i style="height:30%"></i><i style="height:45%"></i><i style="height:38%"></i><i style="height:60%"></i><i style="height:52%"></i><i style="height:75%"></i><i style="height:68%"></i><i style="height:90%"></i></div></div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ================= RÉGLEMENTATION ================= -->
+<section id="reglementation" style="padding-top:0"><div class="wrap">
+  <div class="kicker">Conformité</div>
+  <h2 class="h2">Ancrage réglementaire</h2>
+  <p class="sub">Chaque module cite ses références : Code du travail, Code de la sécurité sociale, Code de l’environnement, INRS.</p>
+  <div class="reg" id="reg"></div>
+</div></section>
+
+<!-- ================= CTA ================= -->
+<section style="padding-top:0"><div class="wrap">
+  <div class="cta fade">
+    <div style="font-size:38px">🛡️</div>
+    <h2 class="h2">Prévenir aujourd’hui, protéger demain</h2>
+    <p>Conçu par une IDE-ST préventrice — 20 ans de terrain en urgence et en santé au travail — dans le cadre d’un Master IA & Big Data.</p>
+    <div class="hero-btns" style="justify-content:center">
+      <a href="https://laurebonnefond.github.io/PreventIA-LaB/" target="_blank" class="btn btn-p" style="background:#fff;color:var(--teal)">🔬 PréventIA-LaB</a>
+      <a href="https://github.com/laurebonnefond" target="_blank" class="btn btn-o">🐙 GitHub</a>
+    </div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <span><b class="serif" style="color:var(--ink);font-size:16px">🛡️ PréventIA Protect</b> — branche entreprise de <a href="https://laurebonnefond.github.io/PreventIA-LaB/">PréventIA-LaB</a></span>
+  <span>© 2025-2026 Laure Bonnefond — IDE-ST / Préventrice</span>
+</div></footer>
+
+<script>
+/* =========================================================
+   1. SOURCE UNIQUE DES MODULES
+   → alimente la carte écosystème ET les cartes : ajouter un module = 1 objet
+   ========================================================= */
+const DOMAINS = {
+  evaluer:{label:'Évaluer', color:'oklch(50% .2 295)'},
+  equip:{label:'Équipements & conformité', color:'oklch(52% .17 258)'},
+  sante:{label:'Santé', color:'oklch(58% .17 15)'},
+  coact:{label:'Coactivité', color:'oklch(62% .16 55)'},
+  env:{label:'Environnement', color:'oklch(55% .14 150)'},
+  risques:{label:'Risques spécifiques', color:'oklch(55% .18 350)'}
+};
+const MODULES = [
+  { id:'duerp', dom:'evaluer', ic:'📝', t:'Aide au DUERP', short:'DUERP', st:'proto', href:'modules/evaluer/duerp/index.html',
+    p:'Évaluation par unité de travail : l’IA identifie les risques, propose la cotation et génère le PAPRIPACT.',
+    f:['Identification IA (6-10 risques par UT)','Cotation G × F × Maîtrise','Matrice de criticité','PAPRIPACT priorisé + assistant IA'] },
+  { id:'carto', dom:'evaluer', ic:'🗺️', t:'Cartographie des risques', short:'Cartographie', st:'plan', href:'modules/evaluer/cartographie/index.html',
+    p:'Plan de bâtiment interactif avec zones et pictogrammes, chaque zone liée au DUERP.',
+    f:['Plan SVG interactif','18 pictogrammes normalisés','Zones liées aux UT','Vue imprimable'] },
+  { id:'suivi', dom:'equip', ic:'📊', t:'Suivi global', short:'Suivi global', st:'new', href:'modules/conformite/suivi-global/index.html',
+    p:'Un tableau unique : habilitations, CACES, SST, VGP, maintenances, EPI et EPC avec échéances calculées.',
+    f:['8 catégories filtrables','Échéance = dernière date + périodicité','Alertes J-90 / J-30 / retard','Aide-mémoire des périodicités'] },
+  { id:'epi', dom:'equip', ic:'🦺', t:'Fiche EPI personnalisée', short:'Fiche EPI', st:'proto', href:'modules/equipements/epi/index.html',
+    p:'Fiche EPI visuelle par métier avec silhouette interactive et EPC conseillés.',
+    f:['Silhouette SVG avec EPI positionnés','Base locale + génération IA','EPC conseillés intégrés','Impression format affiche'] },
+  { id:'inv', dom:'equip', ic:'📦', t:'Inventaire intelligent', short:'Inventaire', st:'proto', href:'modules/equipements/inventaire/index.html',
+    p:'Registre EPI, EPC et machines avec scan IA par photo et OCR des certificats et rapports VGP.',
+    f:['Scan photo → identification IA','OCR certificats CE, rapports VGP','Alertes automatiques','Photos dans l’inventaire'] },
+  { id:'reg', dom:'equip', ic:'📖', t:'14 registres obligatoires', short:'Registres', st:'proto', href:'modules/conformite/registres/index.html',
+    p:'Hub des registres : sécurité, incendie, accidents bénins, VGP, formations, déchets, EE…',
+    f:['Contenu attendu par registre','Statut de conformité','Base réglementaire intégrée','Durées de conservation'] },
+  { id:'inf', dom:'sante', ic:'🩺', t:'Infirmière d’entreprise', short:'Infirmerie', st:'new', href:'modules/sante/infirmiere/index.html',
+    p:'Registre des soins, matériel de premiers secours, couverture SST et actions de prévention santé.',
+    f:['Registre des passages pseudonymisé','Trousses & DAE avec péremptions','Couverture SST par équipe','Repères AES et chaîne des secours'] },
+  { id:'coact', dom:'coact', ic:'🤝', t:'Coactivité & entreprises extérieures', short:'Coactivité', st:'new', href:'modules/coactivite/plans-prevention/index.html',
+    p:'Plans de prévention, vigilance URSSAF, permis de feu, consignations, protocoles de chargement.',
+    f:['PdP : statut, ICP, forme écrite auto','Attestations de vigilance à 6 mois','Permis & consignes signées','Aide « PdP écrit obligatoire ? »'] },
+  { id:'env', dom:'env', ic:'🌿', t:'Environnement RSE & ICPE', short:'Environnement', st:'new', href:'modules/environnement/rse-icpe/index.html',
+    p:'Rubriques ICPE et régimes, contrôles et rejets, registre déchets, indicateurs RSE et TF/TG.',
+    f:['Régimes NC / D / DC / E / A','Registre déchets + Trackdéchets','Tableau RSE E / S / G','Calculateur TF / TG'] },
+  { id:'chim', dom:'risques', ic:'🧪', t:'Risque chimique', short:'Chimique', st:'proto', href:'modules/risques/chimique/index.html',
+    p:'Inventaire des produits avec FDS, pictogrammes CLP, compatibilités de stockage et signalement CMR.',
+    f:['9 pictogrammes, mentions H/P, VLEP','Matrice de compatibilité','Signalement CMR (R4412-59)','Scan IA des FDS'] },
+  { id:'radon', dom:'risques', ic:'☢️', t:'Risque radon', short:'Radon', st:'proto', href:'modules/risques/radon/index.html',
+    p:'Risque radon par commune : scoring bâtiment, ventilation, dose efficace.',
+    f:['Zone radon par commune','Dose efficace (arrêté 16/11/2023)','Seuils 300 Bq/m³ et 6 mSv/an','Recommandations priorisées'] }
+];
+const ST = { proto:['proto','Prototype'], new:['new','Nouveau'], plan:['plan','À venir'] };
+document.getElementById('nbMod').textContent = MODULES.length;
+
+/* ---------- 2. Cartes + filtres ---------- */
+const grid = document.getElementById('grid');
+grid.innerHTML = MODULES.map(m => {
+  const D = DOMAINS[m.dom];
+  return `<a class="card fade" data-dom="${m.dom}" href="${m.href}" style="--a:${D.color}">
+    <span class="st ${ST[m.st][0]}">${ST[m.st][1]}</span>
+    <div class="top"><div class="ic">${m.ic}</div><div><h3>${m.t}</h3><div class="dom">${D.label}</div></div></div>
+    <p>${m.p}</p><ul>${m.f.map(x=>`<li>${x}</li>`).join('')}</ul><span class="go">Ouvrir le module →</span></a>`;
+}).join('');
+const filters = document.getElementById('filters');
+filters.innerHTML = `<button class="on" data-f="">Tous <span>${MODULES.length}</span></button>` +
+  Object.entries(DOMAINS).map(([k,D]) => `<button data-f="${k}">${D.label} <span>${MODULES.filter(m=>m.dom===k).length}</span></button>`).join('');
+filters.onclick = e => {
+  const b = e.target.closest('button'); if (!b) return;
+  filters.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+  grid.querySelectorAll('.card').forEach(c => c.classList.toggle('hide', !!b.dataset.f && c.dataset.dom !== b.dataset.f));
+};
+
+/* ---------- 3. Carte écosystème (moniteur central + modules en couronne) ---------- */
+(function hub(){
+  const svg = document.getElementById('hub'), cx = 490, cy = 300, rx = 400, ry = 245, n = MODULES.length;
+  let s = `<rect x="${cx-150}" y="${cy-88}" width="300" height="176" rx="18" fill="oklch(24% .06 258)"/>
+    <rect x="${cx-136}" y="${cy-74}" width="272" height="148" rx="10" fill="oklch(32% .07 255)"/>
+    <text x="${cx}" y="${cy-8}" text-anchor="middle" fill="#fff" style="font:28px 'DM Serif Display',serif">PréventIA Protect</text>
+    <text x="${cx}" y="${cy+22}" text-anchor="middle" fill="oklch(72% .13 182)" style="font:600 11px 'DM Sans';letter-spacing:2px">COCKPIT HSE · IA</text>
+    <rect x="${cx-60}" y="${cy+88}" width="120" height="10" rx="5" fill="oklch(32% .07 255)"/>`;
+  const nodes = MODULES.map((m,i) => {
+    const a = -Math.PI/2 + i * 2*Math.PI/n, x = cx + rx*Math.cos(a), y = cy + ry*Math.sin(a);
+    const ex = cx + 150*Math.cos(a)*1.02, ey = cy + 95*Math.sin(a)*1.02;
+    s += `<line class="spoke" x1="${ex}" y1="${ey}" x2="${x}" y2="${y}"/>`;
+    return `<a href="${m.href}" class="node ${m.st==='new'?'new':''}"><title>${m.t}</title>
+      <circle class="bgc" cx="${x}" cy="${y}" r="34"/><text class="em" x="${x}" y="${y}">${m.ic}</text>
+      <text class="lb" x="${x}" y="${y+52}">${m.short}</text>
+      ${m.st==='new'?`<rect x="${x+14}" y="${y-40}" width="44" height="16" rx="8" fill="oklch(70% .17 50)"/><text class="newtag" x="${x+36}" y="${y-29}" text-anchor="middle">NOUVEAU</text>`:''}</a>`;
+  });
+  svg.innerHTML = s + nodes.join('');
+})();
+
+/* ---------- 4. Cockpit : lit les données des modules (localStorage), sinon démo ---------- */
+(function cockpit(){
+  const DAY = 864e5, t0 = new Date(); t0.setHours(0,0,0,0);
+  const status = iso => { if(!iso) return null; const d = Math.round((new Date(iso+'T00:00') - t0)/DAY);
+    return d < 0 ? 'bad' : d <= 30 ? 'urg' : d <= 90 ? 'warn' : 'ok'; };
+  /* [clé localStorage, champ échéance, libellé, ligne close ?, lien] */
+  const SRC = [
+    ['pp_suivi_global','echeance','Suivi',null,'modules/conformite/suivi-global/index.html'],
+    ['pp_inf_materiel','echeance','Secours',null,'modules/sante/infirmiere/index.html#materiel'],
+    ['pp_inf_sst','mac','SST',null,'modules/sante/infirmiere/index.html#sst'],
+    ['pp_env_icpe','controle','ICPE',r=>!r.regime||/^(NC|D —)/.test(r.regime),'modules/environnement/rse-icpe/index.html'],
+    ['pp_env_controles','prochain','Rejets',null,'modules/environnement/rse-icpe/index.html#controles'],
+    ['pp_coact_pdp','fin','PdP',r=>r.statut==='Clôturé','modules/coactivite/plans-prevention/index.html'],
+    ['pp_coact_ee','vigilance','Vigilance',null,'modules/coactivite/plans-prevention/index.html#ee'],
+    ['pp_coact_permis','validite','Permis',null,'modules/coactivite/plans-prevention/index.html#permis'],
+    ['pp_coact_protocoles','revue','Protocole',null,'modules/coactivite/plans-prevention/index.html#protocoles']
+  ];
+  const read = k => { try { return JSON.parse(localStorage.getItem(k)) || null; } catch(e){ return null; } };
+  const items = []; let live = false;
+  SRC.forEach(([k,f,lab,closed,href]) => { const rows = read(k); if(!rows) return; live = true;
+    rows.forEach(r => { if (closed && closed(r)) return; const st = status(r[f]); if (!st) return;
+      items.push({ st, date:r[f], lab, href, name:r.intitule||r.libelle||r.travaux||r.raison||r.nom||r.type||r.objet||r.transporteur||'—' }); }); });
+
+  let c, pdp, inf, next;
+  if (live) {
+    c = { ok:0, warn:0, urg:0, bad:0 }; items.forEach(i => c[i.st]++);
+    pdp = (read('pp_coact_pdp')||[]).filter(r => r.statut !== 'Clôturé').length;
+    const n0 = new Date(), m = n0.getFullYear()+'-'+String(n0.getMonth()+1).padStart(2,'0');
+    inf = (read('pp_inf_soins')||[]).filter(r => (r.date||'').slice(0,7) === m).length;
+    next = items.filter(i => i.st !== 'ok').sort((a,b) => a.date.localeCompare(b.date)).slice(0,4);
+    document.getElementById('ckSrc').textContent = 'Vos données';
+  } else {   /* première visite : valeurs de démonstration */
+    c = { ok:18, warn:7, urg:5, bad:4 }; pdp = 4; inf = 5;
+    next = [{st:'bad',lab:'VGP',name:'Chariot élévateur n°2',href:'modules/conformite/suivi-global/index.html'},
+            {st:'bad',lab:'Vigilance',name:'Toitures du Limousin',href:'modules/coactivite/plans-prevention/index.html#ee'},
+            {st:'urg',lab:'Habilitation',name:'B1V — M. Durand',href:'modules/conformite/suivi-global/index.html'},
+            {st:'urg',lab:'Secours',name:'DAE hall — électrodes',href:'modules/sante/infirmiere/index.html#materiel'}];
+  }
+  const tot = c.ok + c.warn + c.urg + c.bad || 1, pct = v => v/tot*100;
+  const a = pct(c.ok), b = a + pct(c.warn), d = b + pct(c.urg);
+  const dn = document.getElementById('donut');
+  dn.style.background = `conic-gradient(var(--ok) 0 ${a}%,var(--warn) ${a}% ${b}%,var(--urg) ${b}% ${d}%,var(--bad) ${d}% 100%)`;
+  dn.dataset.v = Math.round(pct(c.ok)) + ' %';
+  document.getElementById('kBad').textContent = c.bad;
+  document.getElementById('kUrg').textContent = c.urg;
+  document.getElementById('kPdp').textContent = pdp;
+  document.getElementById('kInf').textContent = inf;
+  const COL = { bad:'var(--bad)', urg:'var(--urg)', warn:'var(--warn)', ok:'var(--ok)' };
+  const LAB = { bad:'Retard', urg:'≤ 30 j', warn:'≤ 90 j', ok:'OK' };
+  document.getElementById('next').innerHTML = next.length ? next.map(i =>
+    `<li><span><a href="${i.href}" style="text-decoration:none"><b>${i.lab}</b> · ${i.name}</a></span><span class="tag" style="--c:${COL[i.st]}">${LAB[i.st]}</span></li>`).join('')
+    : '<li>✅ Aucune échéance proche</li>';
+})();
+
+/* ---------- 5. Références réglementaires ---------- */
+const REG = [
+  ['Code du travail','L4121-1 à L4121-5','Obligations de l’employeur — 9 principes de prévention'],
+  ['Code du travail','R4121-1 à R4121-4','DUERP — Document unique'],
+  ['Code du travail','R4323-99','Vérifications générales périodiques des EPI'],
+  ['Code du travail','R4544-9 · R4323-55/56','Habilitation électrique · autorisation de conduite'],
+  ['Code du travail','R4224-14 à R4224-16','Premiers secours et sauveteurs secouristes'],
+  ['Code du travail','R4512-2 à R4512-12','Inspection commune · plan de prévention'],
+  ['Code du travail','R4515-4 à R4515-11','Protocole de sécurité chargement / déchargement'],
+  ['Code du travail','R4412-59 et s.','Agents CMR — substitution, traçabilité'],
+  ['Code du travail','R4451-1 et s.','Rayonnements ionisants — radon'],
+  ['Arrêté','01/03/2004','Vérification des appareils de levage'],
+  ['Sécurité sociale','L441-4 · D441-1','Registre des accidents bénins'],
+  ['Environnement','L511-1 · L512-1 à L512-8','Installations classées (ICPE)'],
+  ['Environnement','R541-43','Registre chronologique des déchets'],
+  ['Règlement CE','1272/2008','Classification CLP / SGH']
+];
+document.getElementById('reg').innerHTML = REG.map(r => `<div class="fade"><em>${r[0]}</em><strong>${r[1]}</strong>${r[2]}</div>`).join('');
+
+/* ---------- 6. Apparition au défilement ---------- */
+const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold:.08 });
+document.querySelectorAll('.fade').forEach(el => io.observe(el));
+</script>
+</body>
+</html>

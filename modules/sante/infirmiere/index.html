@@ -14,6 +14,14 @@
 const d = PP.d;
 const thisMonth = r => (r.date || '').slice(0,7) === PP.iso(new Date()).slice(0,7);
 
+/* ---- Outils de pré-dépistage : une URL par outil (vide = pas encore publié) ---- */
+const OUTILS = {
+  visio: { nom:'PréventIA Visio', ic:'👁️', url:'https://laurebonnefond.github.io/PreventIA-Depistage-Visuel/',
+           desc:'Acuité de loin (Monoyer) et de près (Parinaud), vision des couleurs, grille d’Amsler.' },
+  audio: { nom:'PréventIA Audio', ic:'🎧', url:'',
+           desc:'Audiométrie tonale au casque 500–8000 Hz et test des chiffres dans le bruit.' }
+};
+
 PP.app({
   title:'Infirmière d’entreprise', sub:'Soins · Premiers secours · Prévention santé', icon:'🩺',
   tabs:[
@@ -126,7 +134,67 @@ PP.app({
         { theme:'Bruit / audition', intitule:'Sensibilisation port des PICB', date:d(25), public:'Atelier', participants:'', statut:'Planifiée' }
       ]
   }},
-  /* 5. Repères */
+  /* 5. Pré-dépistages Visio & Audio (outils externes en iframe) */
+  { id:'depistage', label:'Visio & Audio', icon:'👁️', render: el => {
+      el.innerHTML = `
+      <div class="pp-intro"><div><h2>Pré-dépistages vision et audition</h2>
+        <p>Choisissez un test : il s’ouvre ici, sans quitter le module. Notez ensuite le résultat dans l’onglet « Résultats dépistages ».</p></div>
+        <div class="pp-ref">Pré-dépistage d’orientation : <b>ne remplace pas</b> un examen par l’ophtalmologiste ou l’ORL.</div></div>
+      <div class="pp-grid" style="margin-bottom:16px">${Object.entries(OUTILS).map(([k,o]) => `
+        <div class="pp-card" style="display:flex;flex-direction:column;gap:10px">
+          <h3 style="font-size:17px">${o.ic} ${o.nom} ${o.url ? '<span class="b ok">En ligne</span>' : '<span class="b warn">À publier</span>'}</h3>
+          <p style="font-size:13px;color:var(--muted)">${o.desc}</p>
+          ${o.url ? `<div style="display:flex;gap:8px;margin-top:auto">
+              <button class="btn p" data-open="${k}">▶ Lancer ici</button>
+              <a class="btn" href="${o.url}" target="_blank" rel="noopener">⛶ Plein écran</a></div>`
+            : `<p style="font-size:12px;margin-top:auto">Publiez l’outil puis collez son adresse dans <code>OUTILS.${k}.url</code> en haut de ce fichier.</p>`}
+        </div>`).join('')}</div>
+      <div id="zone" style="display:none">
+        <div class="pp-bar"><b id="zoneTitre" style="flex:1"></b><button class="btn sm" id="fermer">✕ Fermer</button></div>
+        <iframe id="outil" title="Outil de dépistage" allow="autoplay; microphone; fullscreen"
+          style="width:100%;height:82vh;border:1px solid var(--line);border-radius:14px;background:#fff"></iframe>
+      </div>
+      <p class="pp-note" style="margin-top:14px">📏 Acuité visuelle : respectez la distance et l’étalonnage d’écran prévus par l’outil — en cas de doute, utilisez « Plein écran ».
+      🎧 Audition : casque filaire, pièce calme, volume système fixé avant le test.</p>`;
+      const zone = el.querySelector('#zone'), frame = el.querySelector('#outil');
+      el.querySelectorAll('[data-open]').forEach(b => b.onclick = () => {
+        const o = OUTILS[b.dataset.open];
+        frame.src = o.url; el.querySelector('#zoneTitre').textContent = o.ic + ' ' + o.nom;
+        zone.style.display = ''; zone.scrollIntoView({ behavior:'smooth' });
+      });
+      el.querySelector('#fermer').onclick = () => { frame.src = 'about:blank'; zone.style.display = 'none'; };
+  }},
+  /* 6. Traçabilité des résultats (reste dans ce navigateur : données de santé) */
+  { id:'resultats', label:'Résultats dépistages', icon:'📋', registre:{
+      key:'pp_inf_depistages', itemLabel:'dépistage', addLabel:'Nouveau résultat',
+      intro:{ title:'Résultats des pré-dépistages',
+        text:'Un résultat par test et par salarié, identifié par matricule. L’orientation remonte au médecin du travail.' },
+      note:'🔒 Données de santé : conservées uniquement dans ce navigateur, jamais envoyées en ligne.',
+      kpis:[
+        { id:'', label:'Dépistages', color:'var(--navy-2)', test:()=>true },
+        { id:'visio', label:'Vision', color:'var(--teal)', test:r=>r.type==='Vision' },
+        { id:'audio', label:'Audition', color:'oklch(52% .17 258)', test:r=>r.type==='Audition' },
+        { id:'orient', label:'À orienter', color:'var(--bad)', test:r=>r.resultat==='Anomalie — orientation' }
+      ],
+      groupBy:'type',
+      fields:[
+        { k:'date', label:'Date', type:'date', required:true, default:()=>PP.iso(new Date()) },
+        { k:'matricule', label:'Salarié (matricule)', required:true },
+        { k:'type', label:'Test', type:'select', required:true, options:['Vision','Audition'], badge:{'Vision':'info','Audition':'vio'} },
+        { k:'detail', label:'Détail', w:1, hint:'Ex. OD 10/10 – OG 8/10, P2 · Ishihara normal · perte 4 kHz OG' },
+        { k:'resultat', label:'Conclusion', type:'select', required:true,
+          options:['Normal','À surveiller','Anomalie — orientation'],
+          badge:{'Normal':'ok','À surveiller':'warn','Anomalie — orientation':'bad'} },
+        { k:'orientation', label:'Orienté vers', type:'select', options:['—','Médecin du travail','Ophtalmologiste','ORL','Médecin traitant'] },
+        { k:'obs', label:'Observations', type:'textarea', inTable:false }
+      ],
+      seed:[
+        { date:PP.d(-2), matricule:'M-0533', type:'Vision', detail:'Loin OD 10/10 – OG 7/10 · Près P2', resultat:'À surveiller', orientation:'Médecin du travail' },
+        { date:PP.d(-9), matricule:'M-0991', type:'Audition', detail:'Encoche 4 kHz bilatérale', resultat:'Anomalie — orientation', orientation:'ORL' },
+        { date:PP.d(-15), matricule:'M-1210', type:'Vision', detail:'10/10 ODG · Ishihara normal · Amsler normal', resultat:'Normal', orientation:'—' }
+      ]
+  }},
+  /* 7. Repères */
   { id:'reperes', label:'Repères & urgence', icon:'🚑', render: el => {
       el.innerHTML = `
       <div class="pp-intro"><div><h2>Repères pour l’infirmière d’entreprise</h2>

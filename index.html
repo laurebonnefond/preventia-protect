@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PréventIA Protect — Plateforme HSE propulsée par l'IA</title>
 <meta name="description" content="Plateforme HSE modulaire : DUERP, EPI, habilitations, infirmerie, coactivité, environnement ICPE/RSE.">
+<link rel="icon" type="image/png" href="assets/img/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <style>
@@ -28,6 +29,7 @@ a{color:inherit}
 nav{position:sticky;top:0;z-index:100;background:rgb(255 255 255/.85);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
 nav .wrap{display:flex;align-items:center;gap:24px;height:64px}
 .logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo-img{width:44px;height:44px;object-fit:contain;filter:drop-shadow(0 4px 8px rgb(15 118 110/.25))}
 .logo-ico{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;font-size:18px;background:linear-gradient(135deg,var(--teal),var(--teal-l));box-shadow:0 6px 16px -6px var(--teal)}
 .logo b{font-family:'DM Serif Display',serif;font-weight:400;font-size:19px;display:block;line-height:1}
 .logo small{font-size:9.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted)}
@@ -191,7 +193,7 @@ footer a{color:var(--teal);text-decoration:none}
 <body>
 
 <nav><div class="wrap">
-  <a href="#" class="logo"><span class="logo-ico">🛡️</span><span><b>PréventIA Protect</b><small>Santé · Sécurité · Environnement</small></span></a>
+  <a href="#" class="logo"><img class="logo-img" src="assets/img/logo-emblem.png" alt="Logo PréventIA"><span><b>PréventIA Protect</b><small>Santé · Sécurité · Environnement</small></span></a>
   <div class="links">
     <a href="#ecosysteme">Écosystème</a><a href="#modules">Modules</a><a href="#donnees">Données & IA</a><a href="#reglementation">Réglementation</a>
   </div>
@@ -310,7 +312,7 @@ footer a{color:var(--teal);text-decoration:none}
 <!-- ================= CTA ================= -->
 <section style="padding-top:0"><div class="wrap">
   <div class="cta fade">
-    <div style="font-size:38px">🛡️</div>
+    <img src="assets/img/logo-emblem.png" alt="" style="width:84px;height:84px;background:#fff;border-radius:22px;padding:8px;box-shadow:0 12px 30px -12px rgb(0 0 0/.35);margin-bottom:6px">
     <h2 class="h2">Prévenir aujourd’hui, protéger demain</h2>
     <p>Conçu par une IDE-ST préventrice — 20 ans de terrain en urgence et en santé au travail — dans le cadre d’un Master IA & Big Data.</p>
     <div class="hero-btns" style="justify-content:center">
@@ -321,7 +323,7 @@ footer a{color:var(--teal);text-decoration:none}
 </div></section>
 
 <footer><div class="wrap">
-  <span><b class="serif" style="color:var(--ink);font-size:16px">🛡️ PréventIA Protect</b> — branche entreprise de <a href="https://laurebonnefond.github.io/PreventIA-LaB/">PréventIA-LaB</a></span>
+  <span style="display:flex;align-items:center;gap:14px"><a href="https://laurebonnefond.github.io/PreventIA-LaB/" target="_blank"><img src="assets/img/logo-preventia-lab.png" alt="PréventIA-LaB" style="height:84px;display:block"></a><span><b class="serif" style="color:var(--ink);font-size:16px">PréventIA Protect</b><br>branche entreprise de <a href="https://laurebonnefond.github.io/PreventIA-LaB/">PréventIA-LaB</a></span></span>
   <span>© 2025-2026 Laure Bonnefond — IDE-ST / Préventrice</span>
 </div></footer>
 
@@ -358,8 +360,8 @@ const MODULES = [
     p:'Hub des registres : sécurité, incendie, accidents bénins, VGP, formations, déchets, EE…',
     f:['Contenu attendu par registre','Statut de conformité','Base réglementaire intégrée','Durées de conservation'] },
   { id:'inf', dom:'sante', ic:'🩺', t:'Infirmière d’entreprise', short:'Infirmerie', st:'new', href:'modules/sante/infirmiere/index.html',
-    p:'Registre des soins, matériel de premiers secours, couverture SST et actions de prévention santé.',
-    f:['Registre des passages pseudonymisé','Trousses & DAE avec péremptions','Couverture SST par équipe','Repères AES et chaîne des secours'] },
+    p:'Registre des soins, pré-dépistages vision et audition, premiers secours, SST et actions de prévention santé.',
+    f:['Registre des passages pseudonymisé','Pré-dépistages Visio & Audio intégrés','Trousses & DAE, couverture SST','Repères AES et chaîne des secours'] },
   { id:'coact', dom:'coact', ic:'🤝', t:'Coactivité & entreprises extérieures', short:'Coactivité', st:'new', href:'modules/coactivite/plans-prevention/index.html',
     p:'Plans de prévention, vigilance URSSAF, permis de feu, consignations, protocoles de chargement.',
     f:['PdP : statut, ICP, forme écrite auto','Attestations de vigilance à 6 mois','Permis & consignes signées','Aide « PdP écrit obligatoire ? »'] },

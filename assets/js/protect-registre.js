@@ -185,9 +185,11 @@
 
   PP.app = function (cfg) {
     document.title = `${cfg.title} — PréventIA Protect`;
+    const root = (cfg.home || '../../../index.html').replace(/index\.html$/, '');
+    document.head.insertAdjacentHTML('beforeend', `<link rel="icon" type="image/png" href="${root}assets/img/favicon.png">`);
     document.body.insertAdjacentHTML('afterbegin', `
       <header class="pp-top"><div class="in">
-        <a class="back" href="${cfg.home || '../../../index.html'}">← Plateforme</a>
+        <a class="back" href="${cfg.home || '../../../index.html'}"><img src="${root}assets/img/logo-emblem.png" alt="">← Plateforme</a>
         <div class="ico">${cfg.icon}</div><div><h1>${cfg.title}</h1><small>${cfg.sub}</small></div>
         <div class="sp"></div><span class="pill">🔒 Données stockées localement</span>
       </div></header>

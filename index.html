@@ -82,6 +82,8 @@ nav .links a:hover{color:var(--ink);background:oklch(96% .01 250)}
 .cockpit:hover{transform:none}
 .ck-side{background:var(--navy);color:#fff;padding:16px 10px;font-size:12px}
 .ck-side .t{font-family:'DM Serif Display',serif;font-size:15px;padding:0 8px 14px}
+.ck-side .t{display:flex;align-items:center;gap:8px}
+.ck-side .t img{width:28px;height:28px;background:#fff;border-radius:8px;padding:2px}
 .ck-side a{display:flex;gap:8px;align-items:center;padding:8px;border-radius:8px;text-decoration:none;color:rgb(255 255 255/.75)}
 .ck-side a:hover,.ck-side a.on{background:rgb(255 255 255/.1);color:#fff}
 .hero .wrap>*,.ck-main,.ck-kpi,.ck-card{min-width:0}
@@ -240,7 +242,7 @@ footer a{color:var(--teal);text-decoration:none}
 
   <div class="cockpit fade" aria-label="Aperçu du tableau de bord">
     <aside class="ck-side">
-      <div class="t">🛡️ Protect</div>
+      <div class="t"><img src="assets/img/logo-emblem.png" alt="">Protect</div>
       <a class="on" href="#">🏠 Accueil</a>
       <a href="modules/conformite/suivi-global/index.html">📊 Suivi global</a>
       <a href="modules/evaluer/duerp/index.html">📝 DUERP</a>

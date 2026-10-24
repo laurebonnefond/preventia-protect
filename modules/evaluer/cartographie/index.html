@@ -23,9 +23,9 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#f1f5f9;color:#1e293b
 </head>
 <body>
 <div id="root"></div>
+<script src="../../../core/preventia-ia.js"></script>
 <script type="text/babel">
 const {useState,useRef,useEffect}=React;
-const WH="https://hook.eu2.make.com/qhvt4lylqgbykqljwd1sdybpdaoapedu";
 const today=()=>new Date().toLocaleDateString("fr-FR");
 
 /* ═══ Familles de risques (INRS) ═══ */
@@ -120,7 +120,7 @@ function Setup({entreprise,setEntreprise,unites,addUnite}){
     if(!aiSecteur.trim())return;setLd(true);
     try{
       const body={model:"claude-sonnet-4-5-20250514",max_tokens:800,messages:[{role:"user",content:`Expert IPRP. Pour une entreprise du secteur "${aiSecteur}", liste les unités de travail typiques (postes/zones). JSON: {"unites":["unité 1","unité 2",...]} (6-10 unités max)`}]};
-      const r=await fetch(WH,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({token:"preventia-protect",payload:JSON.stringify(body)})});
+      const r=await PIA.fetch(body);
       const t=await r.text();let p;
       try{const j=JSON.parse(t);p=JSON.parse((j?.content?.[0]?.text||t).replace(/```json\n?|```/g,"").trim())}catch{p=null}
       if(p?.unites)p.unites.forEach(u=>addUnite(u));

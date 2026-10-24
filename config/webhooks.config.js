@@ -1,4 +1,5 @@
 /**
+ * ⚠️ OBSOLÈTE — la configuration IA réellement utilisée est dans core/preventia-ia.js
  * PréventIA Protect — Webhooks Configuration
  * ════════════════════════════════════════════
  * ⚠️  SÉCURITÉ : Ce fichier contient les endpoints Make.com.

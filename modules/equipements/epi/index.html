@@ -22,9 +22,9 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#f1f5f9;color:#1e293b
 </head>
 <body>
 <div id="root"></div>
+<script src="../../../core/preventia-ia.js"></script>
 <script type="text/babel">
 const {useState,useRef,useEffect}=React;
-const WH="https://hook.eu2.make.com/qhvt4lylqgbykqljwd1sdybpdaoapedu";
 const today=()=>new Date().toLocaleDateString("fr-FR");
 const nextY=()=>{const d=new Date();d.setFullYear(d.getFullYear()+1);return d.toLocaleDateString("fr-FR")};
 
@@ -171,7 +171,7 @@ IMPORTANT :
 - Chaque clé de epiDesc doit correspondre exactement à un élément de epiI ou epiN.
 - RISQUE BIOLOGIQUE (Art. R4421-3, classement 4 groupes) : pour les métiers du soin et de la santé (IDE, aide-soignant, IADE, IBODE, laborantin, agent mortuaire, etc.), l'exposition relève des GROUPES 3-4 (agents pouvant provoquer une maladie grave : tuberculose/M. tuberculosis groupe 3, agents hémorragiques groupe 4, VIH/VHB/VHC groupe 3, BMR). Ne JAMAIS classer un soignant en biologique 2-3 : c'est une sous-cotation. Formuler "Biologique 3-4" avec les agents concernés (AES, BMR, tuberculose, hépatites, VIH).`
       }]};
-      const r=await fetch(WH,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({token:"preventia-protect",payload:JSON.stringify(body)})});
+      const r=await PIA.fetch(body);
       const t=await r.text();let p;
       try{const j=JSON.parse(t);p=JSON.parse((j?.content?.[0]?.text||t).replace(/```json\n?|```/g,"").trim())}catch{throw new Error("Réponse IA invalide")}
       onDone({...p,date:today(),version:"1.0",source:"ia"});

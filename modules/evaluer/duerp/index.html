@@ -22,9 +22,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal);bo
 </head>
 <body>
 <div id="root"></div>
+<script src="../../../core/preventia-ia.js"></script>
 <script type="text/babel">
 const{useState,useEffect,useRef,useMemo}=React;
-const WH="https://hook.eu2.make.com/qhvt4lylqgbykqljwd1sdybpdaoapedu";
 const LS_KEY="preventia-duerp";
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const today=()=>new Date().toISOString().split("T")[0];
@@ -439,7 +439,7 @@ Si on te demande d'identifier des risques, réponds en JSON (UNIQUEMENT le JSON,
 
 Sinon, réponds normalement en texte.`,
       messages:[...chat.slice(-6).map(m=>({role:m.role,content:m.content})),{role:"user",content:userMsg}]};
-      const r=await fetch(WH,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({token:"preventia-duerp",payload:JSON.stringify(body)})});
+      const r=await PIA.fetch(body);
       const t=await r.text();
       let resp;try{const j=JSON.parse(t);resp=(j?.content?.[0]?.text||t)}catch{resp=t}
       // Try to parse as risques JSON

@@ -21,10 +21,9 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#f1f5f9;color:#1e293b
 </head>
 <body>
 <div id="root"></div>
+<script src="../../../core/preventia-ia.js"></script>
 <script type="text/babel">
 const {useState,useRef,useEffect,useMemo}=React;
-const WH_TXT="https://hook.eu2.make.com/qhvt4lylqgbykqljwd1sdybpdaoapedu";
-const WH_VISION="https://hook.eu2.make.com/y91ilwbt4jpfgt4m42gzurbbmolkxj2x";
 const today=()=>new Date().toLocaleDateString("fr-FR");
 const uid=()=>Math.random().toString(36).slice(2,9);
 const KEY="preventia-inventaire";
@@ -261,7 +260,7 @@ function Form({item,onSave,onClose}){
         {type:"image",source:{type:"base64",media_type:file.type,data:b64}},
         {type:"text",text:`Extrais les infos de cette étiquette/plaque d'équipement. JSON: {"designation":"...","marque":"...","reference":"...","norme":"...","dernierControle":"JJ/MM/AAAA ou vide"}`}
       ]}]};
-      const r=await fetch(WH_VISION,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({token:"preventia-protect",payload:JSON.stringify(body)})});
+      const r=await PIA.fetch(body);
       const t=await r.text();let p;
       try{const j=JSON.parse(t);p=JSON.parse((j?.content?.[0]?.text||t).replace(/```json\n?|```/g,"").trim())}catch{p=null}
       if(p)setF({...f,...Object.fromEntries(Object.entries(p).filter(([k,v])=>v))});

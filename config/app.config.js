@@ -45,7 +45,7 @@ export const APP_CONFIG = {
 
   // IA — Modèle par défaut
   ai: {
-    model: "claude-sonnet-4-5-20250514",
+    model: "claude-sonnet-4-5", // réellement appliqué : core/preventia-ia.js
     maxTokens: 2500,
     temperature: 0.3,
   },

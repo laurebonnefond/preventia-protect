@@ -970,6 +970,7 @@ body {
 
 </main>
 
+<script src="../../../core/preventia-ia.js"></script>
 <script>
 /* ════════════════════════════════════════════════════════════════
    ÉVALUATEUR RISQUE CHIMIQUE — Méthode INRS ED 6179
@@ -979,10 +980,7 @@ body {
 // ── Configuration API (proxy Make.com vers Anthropic Claude) ──
 // ⚠ Webhook public : protéger côté Make par un filtre header secret
 //   et ne pas commit en clair dans un repo public (utiliser config.js gitignored).
-const PREVENTIA_API = "https://hook.eu1.make.com/qhvt4lylqgbykqljwd1sdybpdaoapedu";
-const PREVENTIA_API_VISION = "https://hook.eu1.make.com/y91ilwbt4jpfgt4m42gzurbbmolkxj2x";
-const PREVENTIA_TOKEN = "previa_text_2026_xxx";   // ← doit correspondre au filtre Verif token côté Make
-const PREVENTIA_TOKEN_VISION = "previa_vision_2026_xxx"; // ← à ajuster selon le filtre du scénario Vision
+// Webhooks, tokens et modèle : centralisés dans core/preventia-ia.js
 const PREVENTIA_MODEL = "claude-sonnet-4-5";
 
 // ── État global : Mode IA (par défaut OFF pour économiser les appels API) ──
@@ -1029,12 +1027,7 @@ async function askPreventIA(question) {
       { role: "user", content: `Analyse le produit : "${question}". Réponds UNIQUEMENT par le JSON demandé.` }
     ]
   };
-  const body = JSON.stringify({ token: PREVENTIA_TOKEN, payload });
-  const r = await fetch(PREVENTIA_API, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain" },
-    body
-  });
+  const r = await PIA.fetch(payload);
   if (!r.ok) throw new Error(`Erreur API (${r.status})`);
   const raw = await r.text();
   // Tentative de parsing de la réponse Make → Anthropic
@@ -2441,12 +2434,7 @@ async function askPreventIAVision(base64Jpeg, productName) {
       }
     ]
   };
-  const body = JSON.stringify({ token: PREVENTIA_TOKEN_VISION, payload });
-  const r = await fetch(PREVENTIA_API_VISION, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain" },
-    body
-  });
+  const r = await PIA.fetch(payload);
   if (!r.ok) throw new Error(`Erreur API vision (${r.status})`);
   const raw = await r.text();
   try {

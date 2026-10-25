@@ -138,11 +138,11 @@ PP.app({
   { id:'atmp', label:'AT / MP & indicateurs', icon:'📈', render: el => {
       el.innerHTML = `
       <div class="pp-intro"><div><h2>Accidents du travail, maladies professionnelles, indicateurs RH</h2>
-        <p>Taux de fréquence et de gravité, AT par catégorie, MP par tableau, sièges des lésions, turnover et absentéisme, rapport PDF au logo de l’entreprise.</p></div>
-        <a class="btn" href="../at-mp/index.html" target="_blank" rel="noopener">⛶ Ouvrir en plein écran</a></div>
+        <p>🔒 Espace infirmier : les noms des salariés sont visibles ici uniquement. Taux de fréquence et de gravité, AT par catégorie, MP par tableau, sièges des lésions, turnover et absentéisme, rapport PDF au logo de l’entreprise.</p></div>
+        <a class="btn" href="../at-mp/index.html?espace=infirmier" target="_blank" rel="noopener">⛶ Ouvrir en plein écran</a></div>
       <iframe id="fAtmp" title="Suivi AT / MP" style="width:100%;height:85vh;border:1px solid var(--line);border-radius:14px;background:#fff"></iframe>`;
       /* Chargé seulement à l'ouverture de l'onglet */
-      const charger = () => { const f = el.querySelector('#fAtmp'); if (!f.src) f.src = '../at-mp/index.html?embed'; };
+      const charger = () => { const f = el.querySelector('#fAtmp'); if (!f.src) f.src = '../at-mp/index.html?embed&espace=infirmier'; };
       document.addEventListener('click', e => { if (e.target.closest('.pp-tab[data-t="atmp"]')) charger(); });
       if (location.hash === '#atmp') charger();
   }},

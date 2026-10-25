@@ -62,7 +62,8 @@
           if (c.kpis) { const k = c.kpis.find(k => k.id === status); if (k && !k.test(r)) return false; }
           else if (this.statusOf(r).k !== status) return false;
         }
-        if (q) return Object.values(r).join(' ').toLowerCase().includes(q.toLowerCase());
+        /* Recherche limitée aux champs affichés : un champ masqué (ex. nom) ne doit pas pouvoir être retrouvé */
+        if (q) return c.fields.map(f => r[f.k]).join(' ').toLowerCase().includes(q.toLowerCase());
         return true;
       });
       if (sort) rows.sort((a, b) => String(a[sort] || '￿').localeCompare(String(b[sort] || '￿'), 'fr', { numeric: true }) * dir);

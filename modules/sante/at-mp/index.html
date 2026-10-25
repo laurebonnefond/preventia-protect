@@ -98,6 +98,14 @@ const SIEGES = {
   'Localisations multiples': { p: [], c: '' }
 };
 const d = PP.d;
+
+/* ---- Deux espaces : vue anonyme (par défaut) ou espace infirmier (noms visibles) ---- */
+const INFIRMIER = new URLSearchParams(location.search).get('espace') === 'infirmier';
+const SEUIL_GRAVE = 30;   // arrêt > 30 jours = accident grave
+const gravite = e => (e.type === 'AT avec arrêt' || e.type === 'Accident de trajet')
+  ? ((+e.jours || 0) > SEUIL_GRAVE ? 'Grave (> 30 j)' : 'Arrêt ≤ 30 j') : (e.type === 'AT sans arrêt' ? 'Sans arrêt' : '');
+const LIEUX = ['Atelier', 'Production', 'Logistique / quai', 'Entrepôt / stockage', 'Maintenance', 'Bureaux', 'Accueil', 'Infirmerie',
+  'Parking / extérieur', 'Escaliers / circulations', 'Chantier extérieur', 'Véhicule / route', 'Cabine de peinture'];
 const mois = n => { const x = new Date(); x.setDate(1); x.setMonth(x.getMonth() + n); return PP.iso(x).slice(0, 7); };
 
 /* =====================================================================
@@ -130,6 +138,9 @@ const SEED_EVT = [
   [-410, 'AT sans arrêt', 'Projection oculaire', '', 'Yeux', 0, 'Atelier']
 ].map(([j, type, categorie, tableau, siege, jours, service], i) => ({
   date: d(j), type, categorie, tableau, siege, jours, service, matricule: 'M-' + (1100 + i * 7),
+  nom: ['Martin Julie', 'Bernard Paul', 'Petit Sonia', 'Durand Marc', 'Leroy Inès', 'Moreau Luc', 'Simon Léa', 'Laurent Hugo'][i % 8],
+  lieu: type === 'Accident de trajet' ? 'Véhicule / route' : ({ Logistique: 'Logistique / quai', Atelier: 'Atelier', Production: 'Production', Maintenance: 'Escaliers / circulations',
+    Administration: 'Bureaux', Infirmerie: 'Infirmerie', Accueil: 'Accueil', Peinture: 'Cabine de peinture' }[service] || 'Production'),
   statut: type === 'Maladie professionnelle' ? (j > -60 ? 'En instruction' : 'Reconnu') : 'Reconnu', description: '' }));
 const SEED_RH = Array.from({ length: 16 }, (_, k) => {
   const i = -15 + k, eff = 118 + (k % 5) - 2;
@@ -142,13 +153,15 @@ const SEED_RH = Array.from({ length: 16 }, (_, k) => {
    ===================================================================== */
 let dessinerTDB = () => {};
 PP.app({
-  home: '../infirmiere/index.html#atmp', title: 'Suivi AT / MP', sub: 'Accidents du travail · Maladies professionnelles · Indicateurs RH', icon: '📈',
+  home: INFIRMIER ? '../infirmiere/index.html#atmp' : undefined, title: 'Suivi AT / MP',
+  sub: INFIRMIER ? 'Espace infirmier · données nominatives confidentielles' : 'Vue anonymisée · accidents du travail · maladies professionnelles', icon: '📈',
   tabs: [
   { id: 'tdb', label: 'Tableau de bord', icon: '📊', render: el => { dessinerTDB = () => tableauDeBord(el); setTimeout(dessinerTDB, 0); } },
   { id: 'evenements', label: 'Registre AT / MP', icon: '🩹', registre: {
       key: 'pp_atmp', itemLabel: 'AT ou MP', addLabel: 'Déclarer un AT / MP',
       intro: { title: 'Registre des accidents du travail et maladies professionnelles',
-        text: 'Une ligne par événement. La catégorie sert aux AT, le n° de tableau aux MP, le siège des lésions au bonhomme du tableau de bord. Identifiez le salarié par un matricule.',
+        text: INFIRMIER ? 'Espace infirmier : le nom du salarié est visible ici uniquement. La catégorie sert aux AT, le n° de tableau aux MP, le siège des lésions au bonhomme.'
+          : 'Vue anonymisée : aucun nom ni matricule n’apparaît. Les déclarations nominatives se font depuis l’espace infirmier.',
         ref: '<b>Code de la sécurité sociale</b> — L411-1 (AT) · L411-2 (trajet) · L461-1 (MP) · déclaration employeur sous 48 h (R441-3)' },
       kpis: [
         { id: '', label: 'Total', color: 'var(--navy-2)', test: () => true },
@@ -157,17 +170,22 @@ PP.app({
         { id: 'tr', label: 'Trajet', color: 'var(--urg)', test: r => r.type === 'Accident de trajet' },
         { id: 'mp', label: 'Maladies pro.', color: 'oklch(50% .17 300)', test: r => r.type === 'Maladie professionnelle' }
       ],
+      note: INFIRMIER ? '🔒 <b>Données nominatives confidentielles</b> (secret professionnel) : ne pas laisser cet écran ouvert, ne pas imprimer ni exporter la liste nominative hors du service.'
+        : '👁️ <b>Vue anonymisée</b> pour la direction, les RH et le CSE : noms et matricules sont masqués. Attention aux petits effectifs : un service et une date peuvent suffire à reconnaître une personne.',
       groupBy: 'type',
       fields: [
         { k: 'date', label: 'Date', type: 'date', required: true, default: () => PP.iso(new Date()) },
+        ...(INFIRMIER ? [{ k: 'nom', label: 'Salarié (nom prénom)', required: true }] : []),
         { k: 'type', label: 'Type', type: 'select', required: true, options: TYPES,
           badge: { 'AT avec arrêt': 'bad', 'AT sans arrêt': 'warn', 'Accident de trajet': 'urg', 'Maladie professionnelle': 'vio' } },
         { k: 'categorie', label: 'Catégorie (AT)', type: 'select', options: CATEGORIES_AT, hint: 'Accidents du travail et de trajet' },
         { k: 'tableau', label: 'Tableau (MP)', type: 'select', options: TABLEAUX_MP, hint: 'Maladies professionnelles — régime général' },
         { k: 'siege', label: 'Siège des lésions', type: 'select', options: Object.keys(SIEGES) },
-        { k: 'jours', label: 'Jours d’arrêt', type: 'number' },
+        { k: 'jours', label: 'Jours d’arrêt', type: 'number', hint: 'Plus de 30 jours = accident grave' },
+        { k: 'gravite', label: 'Gravité', computed: true, render: (v, r) => { const g = gravite(r); return g ? `<span class="b ${g.startsWith('Grave') ? 'bad' : g === 'Sans arrêt' ? 'na' : 'warn'}">${g}</span>` : ''; } },
+        { k: 'lieu', label: 'Localisation', list: LIEUX, hint: 'Lieu de l’accident : atelier, quai, bureau…' },
         { k: 'service', label: 'Service' },
-        { k: 'matricule', label: 'Matricule', inTable: false },
+        ...(INFIRMIER ? [{ k: 'matricule', label: 'Matricule', inTable: false }] : []),
         { k: 'statut', label: 'Reconnaissance', type: 'select', options: ['Déclaré', 'En instruction', 'Reconnu', 'Refusé'],
           badge: { 'Déclaré': 'na', 'En instruction': 'warn', 'Reconnu': 'ok', 'Refusé': 'bad' } },
         { k: 'description', label: 'Circonstances', type: 'textarea', inTable: false }
@@ -273,6 +291,7 @@ function indicateurs(evts, rh, p) {
   return {
     E, R, ata: ata.length, ats: E.filter(e => e.type === 'AT sans arrêt').length,
     trajet: E.filter(e => e.type === 'Accident de trajet').length, mp: E.filter(e => e.type === 'Maladie professionnelle').length,
+    graves: ata.filter(e => (+e.jours || 0) > SEUIL_GRAVE).length, legers: ata.filter(e => (+e.jours || 0) <= SEUIL_GRAVE).length,
     joursAT, joursTous,
     tf: R.heures ? ata.length * 1e6 / R.heures : null,
     tg: R.heures ? joursAT * 1e3 / R.heures : null,
@@ -310,7 +329,7 @@ function barresH(data, couleur) {
     return `<g class="bar" data-tip="${x.l} : ${x.v} (${fmt(x.v / tot * 100)} %)">
       <rect x="0" y="${y - 2}" width="${W}" height="${rh}" fill="transparent"/>
       <text class="ax" x="${lw - 8}" y="${y + 14}" text-anchor="end" style="fill:var(--ink)">${x.l.length > 32 ? x.l.slice(0, 31) + '…' : x.l}</text>
-      <path d="M${lw},${y + 2} h${Math.max(w - 4, 1)} q4,0 4,4 v8 q0,4 -4,4 h${-Math.max(w - 4, 1)} z" fill="${couleur}"/>
+      <path d="M${lw},${y + 2} h${Math.max(w - 4, 1)} q4,0 4,4 v8 q0,4 -4,4 h${-Math.max(w - 4, 1)} z" fill="${x.c || couleur}"/>
       <text class="vl" x="${lw + w + 6}" y="${y + 14}">${x.v} · ${fmt(x.v / tot * 100)} %</text></g>`; }).join('')}</svg>`;
 }
 /* Bonhomme : chaque siège coloré selon sa part (une seule teinte, clair → foncé) */
@@ -387,8 +406,10 @@ function tableauDeBord(el) {
     const E = evts.filter(e => e.date && dans(e.date, [t.a, t.b]));
     return { l: t.l, at: E.filter(e => e.type === 'AT avec arrêt').length, j: E.reduce((s, e) => s + (+e.jours || 0), 0) };
   });
-  const parCat = {}, parTab = {};
+  const parCat = {}, parTab = {}, parLieu = {}, parGrav = { 'Sans arrêt': 0, 'Arrêt ≤ 30 j': 0, 'Grave (> 30 j)': 0 };
   I.E.forEach(e => {
+    const g = gravite(e); if (g) parGrav[g]++;
+    if (e.type !== 'Maladie professionnelle') { const k = e.lieu || 'Non précisée'; parLieu[k] = (parLieu[k] || 0) + 1; }
     if (e.type !== 'Maladie professionnelle' && e.categorie) parCat[e.categorie] = (parCat[e.categorie] || 0) + 1;
     if (e.type === 'Maladie professionnelle') { const k = e.tableau || 'Tableau non précisé'; parTab[k] = (parTab[k] || 0) + 1; }
   });
@@ -399,6 +420,8 @@ function tableauDeBord(el) {
   const html = {
     kpis: `<div class="kpis">
       ${kpi('AT avec arrêt', I.ata, Ip.ata, 0, { inverse: true, hl: true })}
+      ${kpi('dont graves (> 30 j)', I.graves, Ip.graves, 0, { inverse: true, hl: true })}
+      ${kpi('dont ≤ 30 j d’arrêt', I.legers, Ip.legers, 0, { inverse: true })}
       ${kpi('Jours d’arrêt AT/MP', I.joursTous, Ip.joursTous, 0, { inverse: true })}
       ${kpi('Taux de fréquence', I.tf, Ip.tf, 1, { inverse: true, hl: true })}
       ${kpi('Taux de gravité', I.tg, Ip.tg, 2, { inverse: true, hl: true })}
@@ -415,6 +438,8 @@ function tableauDeBord(el) {
       <div class="chart"><h3>AT avec arrêt</h3><div class="s">Nombre par ${ETAT.vue === 'annee' ? 'mois' : ETAT.vue === 'mois' ? 'semaine' : 'jour'}</div>${barresV(evol.map(x => ({ l: x.l, v: x.at })), CTEAL, 'AT')}</div>
       <div class="chart"><h3>Jours d’arrêt (AT, trajet, MP)</h3><div class="s">Rattachés à la date de l’événement</div>${barresV(evol.map(x => ({ l: x.l, v: x.j })), CORANGE, 'jours')}</div>
       <div class="chart"><h3>Accidents par catégorie</h3><div class="s">AT et trajets · ${I.E.filter(e => e.type !== 'Maladie professionnelle').length} événement(s)</div>${barresH(tri(parCat), CTEAL)}</div>
+      <div class="chart"><h3>Gravité des accidents</h3><div class="s">AT et trajets · grave = plus de ${SEUIL_GRAVE} jours d’arrêt</div>${barresH(Object.entries(parGrav).filter(([, v]) => v).map(([l, v]) => ({ l, v, c: { 'Sans arrêt': 'oklch(70% .01 250)', 'Arrêt ≤ 30 j': 'oklch(72% .15 70)', 'Grave (> 30 j)': 'oklch(56% .21 27)' }[l] })), CTEAL)}</div>
+      <div class="chart"><h3>Accidents par localisation</h3><div class="s">Lieu de l’accident · AT et trajets</div>${barresH(tri(parLieu), 'oklch(48% .1 230)')}</div>
       <div class="chart"><h3>Maladies professionnelles par tableau</h3><div class="s">Régime général · ${I.mp} MP</div>${barresH(tri(parTab), CVIO)}</div>
       <div class="chart w"><h3>Siège des lésions</h3><div class="s">Répartition en % des lésions localisées</div>
         <div class="seg" id="fCorps" style="margin-bottom:6px">${[['tous', 'AT + MP'], ['at', 'AT et trajets'], ['mp', 'MP']].map(([k, l]) => `<button data-c="${k}" class="${ETAT.filtreCorps === k ? 'on' : ''}">${l}</button>`).join('')}</div>
@@ -484,10 +509,10 @@ function infobulles(el) {
 function exporterCSV(evts, rh) {
   const mois = [...new Set(rh.map(m => m.mois).concat(evts.map(e => (e.date || '').slice(0, 7))).filter(Boolean))].sort();
   const q = v => `"${String(v ?? '').replace('.', ',')}"`;
-  const lignes = [['Mois', 'Effectif', 'Heures', 'AT avec arrêt', 'AT sans arrêt', 'Trajet', 'MP', 'Jours arrêt AT', 'Jours arrêt total', 'TF', 'TG', 'IF', 'Turnover %', 'Arrêts maladie', 'Absentéisme %'].map(q).join(';')];
+  const lignes = [['Mois', 'Effectif', 'Heures', 'AT avec arrêt', 'dont graves > 30 j', 'AT sans arrêt', 'Trajet', 'MP', 'Jours arrêt AT', 'Jours arrêt total', 'TF', 'TG', 'IF', 'Turnover %', 'Arrêts maladie', 'Absentéisme %'].map(q).join(';')];
   mois.forEach(m => {
     const a = new Date(m + '-01T00:00'), I = indicateurs(evts, rh, [a, new Date(a.getFullYear(), a.getMonth() + 1, 1)]), r = v => v == null ? '' : Math.round(v * 100) / 100;
-    lignes.push([m, r(I.R.effectif), r(I.R.heures), I.ata, I.ats, I.trajet, I.mp, I.joursAT, I.joursTous, r(I.tf), r(I.tg), r(I.if), r(I.turnover), r(I.arrets), r(I.absent)].map(q).join(';'));
+    lignes.push([m, r(I.R.effectif), r(I.R.heures), I.ata, I.graves, I.ats, I.trajet, I.mp, I.joursAT, I.joursTous, r(I.tf), r(I.tg), r(I.if), r(I.turnover), r(I.arrets), r(I.absent)].map(q).join(';'));
   });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob(['﻿' + lignes.join('\r\n')], { type: 'text/csv;charset=utf-8' }));
@@ -505,9 +530,9 @@ function rapport(I, html, P) {
       <div><b>${PP.esc(PARAM.entreprise || 'Entreprise')}</b> · ${libelle(ETAT.vue, P)} · édité le ${new Date().toLocaleDateString('fr-FR')}</div></div></div>
     ${html.kpis}${html.graphes.replace(/<div class="seg" id="fCorps".*?<\/div>/s, '')}
     <h3 style="margin-top:12px">Détail des événements de la période (${lignes.length})</h3>
-    <table><thead><tr><th>Date</th><th>Type</th><th>Catégorie / tableau</th><th>Siège</th><th>Jours</th><th>Service</th><th>Reconnaissance</th></tr></thead>
-    <tbody>${lignes.map(e => `<tr><td>${PP.frDate(e.date)}</td><td>${e.type}</td><td>${e.type === 'Maladie professionnelle' ? (e.tableau || '') : (e.categorie || '')}</td><td>${e.siege || ''}</td><td>${e.jours || 0}</td><td>${PP.esc(e.service || '')}</td><td>${e.statut || ''}</td></tr>`).join('')}</tbody></table>
-    <div class="r-foot">TF = AT avec arrêt × 10⁶ ÷ heures travaillées · TG = jours d’arrêt AT × 10³ ÷ heures travaillées · IF = AT avec arrêt × 10³ ÷ effectif moyen. Données pseudonymisées. Généré avec PréventIA Protect.</div>`;
+    <table><thead><tr><th>Date</th><th>Type</th><th>Catégorie / tableau</th><th>Siège</th><th>Jours</th><th>Gravité</th><th>Localisation</th><th>Service</th><th>Reconnaissance</th></tr></thead>
+    <tbody>${lignes.map(e => `<tr><td>${PP.frDate(e.date)}</td><td>${e.type}</td><td>${e.type === 'Maladie professionnelle' ? (e.tableau || '') : (e.categorie || '')}</td><td>${e.siege || ''}</td><td>${e.jours || 0}</td><td>${gravite(e)}</td><td>${PP.esc(e.lieu || '')}</td><td>${PP.esc(e.service || '')}</td><td>${e.statut || ''}</td></tr>`).join('')}</tbody></table>
+    <div class="r-foot">TF = AT avec arrêt × 10⁶ ÷ heures travaillées · TG = jours d’arrêt AT × 10³ ÷ heures travaillées · IF = AT avec arrêt × 10³ ÷ effectif moyen. Rapport anonymisé : aucun nom ni matricule. Généré avec PréventIA Protect.</div>`;
   document.body.classList.add('rap');
   setTimeout(() => { window.print(); document.body.classList.remove('rap'); }, 300);
 }

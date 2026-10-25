@@ -40,6 +40,8 @@ button,input,select,textarea{font:inherit;color:inherit}
 .pp-top .pill{font-size:11px;padding:4px 10px;border-radius:20px;background:rgb(255 255 255/.1)}
 
 /* --- onglets --- */
+.pp-embed .pp-tabs{top:0}
+.pp-embed .pp-foot{display:none}
 .pp-tabs{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:58px;z-index:40}
 .pp-tabs .in{max-width:1280px;margin:0 auto;padding:0 20px;display:flex;gap:4px;overflow-x:auto}
 .pp-tab{border:0;background:none;padding:14px 14px 12px;font-weight:600;font-size:13px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}

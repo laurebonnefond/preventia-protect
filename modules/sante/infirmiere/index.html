@@ -134,7 +134,19 @@ PP.app({
         { theme:'Bruit / audition', intitule:'Sensibilisation port des PICB', date:d(25), public:'Atelier', participants:'', statut:'Planifiée' }
       ]
   }},
-  /* 5. Pré-dépistages Visio & Audio (outils externes en iframe) */
+  /* 5. Suivi AT / MP et indicateurs RH (module intégré) */
+  { id:'atmp', label:'AT / MP & indicateurs', icon:'📈', render: el => {
+      el.innerHTML = `
+      <div class="pp-intro"><div><h2>Accidents du travail, maladies professionnelles, indicateurs RH</h2>
+        <p>Taux de fréquence et de gravité, AT par catégorie, MP par tableau, sièges des lésions, turnover et absentéisme, rapport PDF au logo de l’entreprise.</p></div>
+        <a class="btn" href="../at-mp/index.html" target="_blank" rel="noopener">⛶ Ouvrir en plein écran</a></div>
+      <iframe id="fAtmp" title="Suivi AT / MP" style="width:100%;height:85vh;border:1px solid var(--line);border-radius:14px;background:#fff"></iframe>`;
+      /* Chargé seulement à l'ouverture de l'onglet */
+      const charger = () => { const f = el.querySelector('#fAtmp'); if (!f.src) f.src = '../at-mp/index.html?embed'; };
+      document.addEventListener('click', e => { if (e.target.closest('.pp-tab[data-t="atmp"]')) charger(); });
+      if (location.hash === '#atmp') charger();
+  }},
+  /* 6. Pré-dépistages Visio & Audio (outils externes en iframe) */
   { id:'depistage', label:'Visio & Audio', icon:'👁️', render: el => {
       el.innerHTML = `
       <div class="pp-intro"><div><h2>Pré-dépistages vision et audition</h2>
@@ -164,7 +176,7 @@ PP.app({
       });
       el.querySelector('#fermer').onclick = () => { frame.src = 'about:blank'; zone.style.display = 'none'; };
   }},
-  /* 6. Traçabilité des résultats (reste dans ce navigateur : données de santé) */
+  /* 7. Traçabilité des résultats (reste dans ce navigateur : données de santé) */
   { id:'resultats', label:'Résultats dépistages', icon:'📋', registre:{
       key:'pp_inf_depistages', itemLabel:'dépistage', addLabel:'Nouveau résultat',
       intro:{ title:'Résultats des pré-dépistages',
@@ -194,7 +206,7 @@ PP.app({
         { date:PP.d(-15), matricule:'M-1210', type:'Vision', detail:'10/10 ODG · Ishihara normal · Amsler normal', resultat:'Normal', orientation:'—' }
       ]
   }},
-  /* 7. Repères */
+  /* 8. Repères */
   { id:'reperes', label:'Repères & urgence', icon:'🚑', render: el => {
       el.innerHTML = `
       <div class="pp-intro"><div><h2>Repères pour l’infirmière d’entreprise</h2>

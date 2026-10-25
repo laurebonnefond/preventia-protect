@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suivi AT / MP — PréventIA Protect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/css/protect-ui.css">
+<style>
+/* ---------- Tableau de bord AT/MP ---------- */
+.tb-bar{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.seg{display:inline-flex;background:#fff;border:1px solid var(--line);border-radius:10px;padding:3px}
+.seg button{border:0;background:none;padding:7px 14px;border-radius:8px;font-weight:600;font-size:13px;color:var(--muted);cursor:pointer}
+.seg button.on{background:var(--navy);color:#fff}
+.periode{font-family:'DM Serif Display',serif;font-size:22px;min-width:220px;text-align:center}
+.tb-bar .sp{flex:1}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow)}
+.kpi .l{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.kpi .v{font-size:26px;font-weight:700;line-height:1.2;margin-top:2px}
+.kpi .d{font-size:11.5px;color:var(--muted)}
+.kpi .d b.up{color:oklch(50% .18 27)}.kpi .d b.down{color:oklch(45% .13 150)}
+.kpi.hl{border-left:4px solid var(--teal)}
+.charts{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.chart{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:var(--shadow);position:relative}
+.chart h3{font-size:14px;margin-bottom:2px}
+.chart .s{font-size:12px;color:var(--muted);margin-bottom:8px}
+.chart svg{width:100%;height:auto;display:block}
+.chart.w{grid-column:1/-1}
+.ax{font-size:11px;fill:var(--muted)}
+.vl{font-size:11px;fill:var(--ink);font-weight:600}
+.bar{transition:opacity .15s}.bar:hover{opacity:.75}
+.tip{position:fixed;pointer-events:none;z-index:200;background:var(--navy);color:#fff;font-size:12px;padding:6px 9px;border-radius:8px;opacity:0;transition:opacity .12s;max-width:240px}
+.vide{color:var(--muted);font-size:13px;padding:24px 0;text-align:center}
+.bonhomme-wrap{display:grid;grid-template-columns:1fr 210px;gap:10px;align-items:center}
+.chips{display:flex;flex-direction:column;gap:6px}
+.chip2{display:flex;justify-content:space-between;gap:8px;border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:12.5px}
+.chip2 b{font-weight:700}
+.param{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.param label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:var(--muted)}
+.param input{padding:9px 11px;border:1px solid var(--line);border-radius:9px;font:inherit;font-size:14px;color:var(--ink)}
+.logo-prev{height:56px;max-width:180px;object-fit:contain;border:1px dashed var(--line);border-radius:10px;padding:4px;background:#fff}
+@media(max-width:860px){.charts{grid-template-columns:1fr}.bonhomme-wrap{grid-template-columns:1fr}}
+
+/* ---------- Rapport imprimable (visible uniquement à l'impression) ---------- */
+#rapport{display:none}
+@media print{
+  body.rap > *:not(#rapport){display:none!important}
+  body.rap #rapport{display:block;font-size:12px;color:#000}
+  #rapport .r-head{display:flex;align-items:center;gap:16px;border-bottom:3px solid #0f766e;padding-bottom:10px;margin-bottom:14px}
+  #rapport .r-head img{height:60px;max-width:200px;object-fit:contain}
+  #rapport h1{font-family:'DM Serif Display',serif;font-weight:400;font-size:24px}
+  #rapport .kpis{grid-template-columns:repeat(5,1fr);gap:6px}
+  #rapport .kpi{box-shadow:none;padding:8px}
+  #rapport .kpi .v{font-size:18px}
+  #rapport .charts{grid-template-columns:1fr 1fr;gap:8px}
+  #rapport .chart{box-shadow:none;break-inside:avoid;padding:8px}
+  #rapport table{width:100%;border-collapse:collapse;margin-top:10px;font-size:10.5px}
+  #rapport th,#rapport td{border-bottom:1px solid #ddd;padding:4px;text-align:left}
+  #rapport .r-foot{margin-top:12px;font-size:10px;color:#666}
+  @page{margin:12mm}
+}
+</style>
+</head>
+<body>
+<script src="../../../assets/js/protect-registre.js"></script>
+<script>
+/* =====================================================================
+   RÉFÉRENTIELS
+   ===================================================================== */
+const TYPES = ['AT avec arrêt', 'AT sans arrêt', 'Accident de trajet', 'Maladie professionnelle'];
+const CATEGORIES_AT = ['TMS / manutention', 'Chute de plain-pied', 'Chute de hauteur', 'AES (exposition au sang)', 'Coupure / piqûre', 'Heurt / choc / écrasement',
+  'Projection oculaire', 'Brûlure', 'Risque chimique', 'Risque routier', 'Agression / violence', 'Malaise', 'Autre'];
+const TABLEAUX_MP = [
+  '57 — Affections périarticulaires (TMS)', '98 — Rachis lombaire : charges lourdes', '97 — Rachis lombaire : vibrations corps entier',
+  '79 — Lésions chroniques du ménisque', '69 — Vibrations et chocs (outils)', '42 — Atteinte auditive (bruit)',
+  '30 / 30 bis — Amiante', '25 — Silice cristalline', '47 — Poussières de bois', '65 — Eczéma allergique',
+  '66 — Rhinites et asthmes', '84 — Solvants organiques', '4 — Benzène', '36 — Huiles et graisses minérales',
+  '76 — Maladies infectieuses (milieu de soins)', 'Hors tableau (CRRMP) — dont affections psychiques'];
+/* Siège des lésions : position sur le bonhomme (x, y) et côté de l'étiquette */
+const SIEGES = {
+  'Tête':                 { p: [[150, 34]], c: 'g' },
+  'Yeux':                 { p: [[150, 50]], c: 'd' },
+  'Oreilles':             { p: [[123, 52]], c: 'g' },
+  'Cou / nuque':          { p: [[150, 86]], c: 'd' },
+  'Épaules':              { p: [[108, 112], [192, 112]], c: 'g' },
+  'Bras / coudes':        { p: [[88, 170], [212, 170]], c: 'd' },
+  'Mains / poignets':     { p: [[72, 238], [228, 238]], c: 'g' },
+  'Thorax / poumons':     { p: [[150, 140]], c: 'd' },
+  'Dos / rachis':         { p: [[150, 188]], c: 'g' },
+  'Abdomen / bassin':     { p: [[150, 238]], c: 'd' },
+  'Genoux':               { p: [[132, 322], [168, 322]], c: 'g' },
+  'Jambes':               { p: [[131, 362], [169, 362]], c: 'd' },
+  'Chevilles / pieds':    { p: [[128, 412], [172, 412]], c: 'g' },
+  'Peau':                 { p: [], c: '' },
+  'Psychique':            { p: [], c: '' },
+  'Localisations multiples': { p: [], c: '' }
+};
+const d = PP.d;
+const mois = n => { const x = new Date(); x.setDate(1); x.setMonth(x.getMonth() + n); return PP.iso(x).slice(0, 7); };
+
+/* =====================================================================
+   DONNÉES DE DÉMONSTRATION (dates relatives à aujourd'hui)
+   ===================================================================== */
+const SEED_EVT = [
+  [-3, 'AT avec arrêt', 'TMS / manutention', '', 'Dos / rachis', 12, 'Logistique'],
+  [-11, 'AT sans arrêt', 'Coupure / piqûre', '', 'Mains / poignets', 0, 'Atelier'],
+  [-19, 'AT avec arrêt', 'Chute de plain-pied', '', 'Chevilles / pieds', 21, 'Logistique'],
+  [-27, 'Accident de trajet', 'Risque routier', '', 'Cou / nuque', 15, 'Administration'],
+  [-34, 'AT avec arrêt', 'Projection oculaire', '', 'Yeux', 3, 'Atelier'],
+  [-48, 'Maladie professionnelle', '', '57 — Affections périarticulaires (TMS)', 'Épaules', 64, 'Production'],
+  [-55, 'AT avec arrêt', 'TMS / manutention', '', 'Dos / rachis', 28, 'Production'],
+  [-63, 'AT sans arrêt', 'AES (exposition au sang)', '', 'Mains / poignets', 0, 'Infirmerie'],
+  [-80, 'AT avec arrêt', 'Heurt / choc / écrasement', '', 'Mains / poignets', 9, 'Atelier'],
+  [-92, 'AT avec arrêt', 'Chute de hauteur', '', 'Genoux', 45, 'Maintenance'],
+  [-105, 'Maladie professionnelle', '', '57 — Affections périarticulaires (TMS)', 'Mains / poignets', 90, 'Production'],
+  [-118, 'AT avec arrêt', 'Agression / violence', '', 'Psychique', 30, 'Accueil'],
+  [-130, 'AT sans arrêt', 'Brûlure', '', 'Bras / coudes', 0, 'Atelier'],
+  [-150, 'AT avec arrêt', 'TMS / manutention', '', 'Épaules', 18, 'Logistique'],
+  [-170, 'Maladie professionnelle', '', '98 — Rachis lombaire : charges lourdes', 'Dos / rachis', 120, 'Logistique'],
+  [-190, 'AT avec arrêt', 'Coupure / piqûre', '', 'Mains / poignets', 7, 'Atelier'],
+  [-215, 'AT avec arrêt', 'Chute de plain-pied', '', 'Genoux', 25, 'Production'],
+  [-240, 'Maladie professionnelle', '', '42 — Atteinte auditive (bruit)', 'Oreilles', 0, 'Atelier'],
+  [-260, 'AT avec arrêt', 'Risque chimique', '', 'Peau', 4, 'Peinture'],
+  [-290, 'AT avec arrêt', 'TMS / manutention', '', 'Dos / rachis', 35, 'Logistique'],
+  [-320, 'Accident de trajet', 'Risque routier', '', 'Localisations multiples', 40, 'Production'],
+  [-350, 'AT avec arrêt', 'Heurt / choc / écrasement', '', 'Chevilles / pieds', 14, 'Maintenance'],
+  [-380, 'AT avec arrêt', 'TMS / manutention', '', 'Dos / rachis', 22, 'Production'],
+  [-410, 'AT sans arrêt', 'Projection oculaire', '', 'Yeux', 0, 'Atelier']
+].map(([j, type, categorie, tableau, siege, jours, service], i) => ({
+  date: d(j), type, categorie, tableau, siege, jours, service, matricule: 'M-' + (1100 + i * 7),
+  statut: type === 'Maladie professionnelle' ? (j > -60 ? 'En instruction' : 'Reconnu') : 'Reconnu', description: '' }));
+const SEED_RH = Array.from({ length: 16 }, (_, k) => {
+  const i = -15 + k, eff = 118 + (k % 5) - 2;
+  return { mois: mois(i), effectif: eff, heures: Math.round(eff * 151.67 * (k % 12 === 7 ? 0.82 : 0.97)), entrees: [2, 1, 3, 0, 2, 4, 1, 2][k % 8],
+    sorties: [1, 2, 1, 2, 3, 1, 2, 0][k % 8], arrets: 6 + (k * 3) % 7, jours_maladie: 45 + (k * 11) % 40, jours_ouvres: 21 };
+});
+
+/* =====================================================================
+   APPLICATION
+   ===================================================================== */
+let dessinerTDB = () => {};
+PP.app({
+  home: '../infirmiere/index.html#atmp', title: 'Suivi AT / MP', sub: 'Accidents du travail · Maladies professionnelles · Indicateurs RH', icon: '📈',
+  tabs: [
+  { id: 'tdb', label: 'Tableau de bord', icon: '📊', render: el => { dessinerTDB = () => tableauDeBord(el); setTimeout(dessinerTDB, 0); } },
+  { id: 'evenements', label: 'Registre AT / MP', icon: '🩹', registre: {
+      key: 'pp_atmp', itemLabel: 'AT ou MP', addLabel: 'Déclarer un AT / MP',
+      intro: { title: 'Registre des accidents du travail et maladies professionnelles',
+        text: 'Une ligne par événement. La catégorie sert aux AT, le n° de tableau aux MP, le siège des lésions au bonhomme du tableau de bord. Identifiez le salarié par un matricule.',
+        ref: '<b>Code de la sécurité sociale</b> — L411-1 (AT) · L411-2 (trajet) · L461-1 (MP) · déclaration employeur sous 48 h (R441-3)' },
+      kpis: [
+        { id: '', label: 'Total', color: 'var(--navy-2)', test: () => true },
+        { id: 'ata', label: 'AT avec arrêt', color: 'var(--bad)', test: r => r.type === 'AT avec arrêt' },
+        { id: 'ats', label: 'AT sans arrêt', color: 'var(--warn)', test: r => r.type === 'AT sans arrêt' },
+        { id: 'tr', label: 'Trajet', color: 'var(--urg)', test: r => r.type === 'Accident de trajet' },
+        { id: 'mp', label: 'Maladies pro.', color: 'oklch(50% .17 300)', test: r => r.type === 'Maladie professionnelle' }
+      ],
+      groupBy: 'type',
+      fields: [
+        { k: 'date', label: 'Date', type: 'date', required: true, default: () => PP.iso(new Date()) },
+        { k: 'type', label: 'Type', type: 'select', required: true, options: TYPES,
+          badge: { 'AT avec arrêt': 'bad', 'AT sans arrêt': 'warn', 'Accident de trajet': 'urg', 'Maladie professionnelle': 'vio' } },
+        { k: 'categorie', label: 'Catégorie (AT)', type: 'select', options: CATEGORIES_AT, hint: 'Accidents du travail et de trajet' },
+        { k: 'tableau', label: 'Tableau (MP)', type: 'select', options: TABLEAUX_MP, hint: 'Maladies professionnelles — régime général' },
+        { k: 'siege', label: 'Siège des lésions', type: 'select', options: Object.keys(SIEGES) },
+        { k: 'jours', label: 'Jours d’arrêt', type: 'number' },
+        { k: 'service', label: 'Service' },
+        { k: 'matricule', label: 'Matricule', inTable: false },
+        { k: 'statut', label: 'Reconnaissance', type: 'select', options: ['Déclaré', 'En instruction', 'Reconnu', 'Refusé'],
+          badge: { 'Déclaré': 'na', 'En instruction': 'warn', 'Reconnu': 'ok', 'Refusé': 'bad' } },
+        { k: 'description', label: 'Circonstances', type: 'textarea', inTable: false }
+      ],
+      seed: SEED_EVT
+  }},
+  { id: 'rh', label: 'Effectifs & RH', icon: '👥', registre: {
+      key: 'pp_atmp_rh', itemLabel: 'mois', addLabel: 'Ajouter un mois',
+      intro: { title: 'Données RH mensuelles',
+        text: 'Une ligne par mois : elles servent au calcul du taux de fréquence, du taux de gravité, du turnover et de l’absentéisme. Les heures travaillées réelles figurent sur la DSN ou la paie.' },
+      fields: [
+        { k: 'mois', label: 'Mois', type: 'month', required: true, render: v => v ? new Date(v + '-01T00:00').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }) : '' },
+        { k: 'effectif', label: 'Effectif moyen', type: 'number', required: true },
+        { k: 'heures', label: 'Heures travaillées', type: 'number', required: true },
+        { k: 'entrees', label: 'Entrées', type: 'number' },
+        { k: 'sorties', label: 'Sorties', type: 'number' },
+        { k: 'arrets', label: 'Arrêts maladie (nombre)', type: 'number' },
+        { k: 'jours_maladie', label: 'Jours d’arrêt maladie', type: 'number' },
+        { k: 'jours_ouvres', label: 'Jours ouvrés', type: 'number', default: 21 }
+      ],
+      seed: SEED_RH
+  }},
+  { id: 'aide', label: 'Calculs & définitions', icon: '🧮', render: el => {
+      el.innerHTML = `<div class="pp-intro"><div><h2>Comment sont calculés les indicateurs</h2>
+        <p>Formules usuelles (INRS, CARSAT). Elles permettent de comparer des périodes ou des établissements de tailles différentes.</p></div></div>
+        <div class="pp-grid">
+          <div class="pp-card"><h3>Taux de fréquence (TF)</h3><ul><li>AT avec arrêt × 1 000 000 ÷ heures travaillées</li><li>Nombre d’accidents avec arrêt pour un million d’heures. Hors accidents de trajet.</li></ul></div>
+          <div class="pp-card"><h3>Taux de gravité (TG)</h3><ul><li>Jours d’arrêt × 1 000 ÷ heures travaillées</li><li>Jours perdus pour mille heures. Ici : jours des AT avec arrêt, rattachés à la date de l’accident.</li></ul></div>
+          <div class="pp-card"><h3>Indice de fréquence (IF)</h3><ul><li>AT avec arrêt × 1 000 ÷ effectif moyen</li><li>Accidents pour mille salariés.</li></ul></div>
+          <div class="pp-card"><h3>Turnover</h3><ul><li>((entrées + sorties) ÷ 2) ÷ effectif moyen × 100</li><li>Rotation du personnel sur la période.</li></ul></div>
+          <div class="pp-card"><h3>Absentéisme (approché)</h3><ul><li>(jours maladie + jours AT/MP) ÷ (effectif × jours ouvrés) × 100</li><li>Ordre de grandeur : jours calendaires et ouvrés sont mélangés.</li></ul></div>
+          <div class="pp-card"><h3>Semaine, mois, année</h3><ul><li>Les données RH mensuelles sont réparties au prorata des jours de la période.</li><li>Comparaison avec la période précédente de même durée.</li></ul></div>
+        </div>`;
+  }}
+  ]
+});
+document.querySelectorAll('.pp-tab').forEach(t => t.addEventListener('click', () => { if (t.dataset.t === 'tdb') dessinerTDB(); }));
+
+/* =====================================================================
+   OUTILS DE PÉRIODE
+   ===================================================================== */
+const ETAT = { vue: 'annee', ref: new Date(), filtreCorps: 'tous' };
+const lire = k => { try { return JSON.parse(localStorage.getItem(k)) || []; } catch (e) { return []; } };
+const PARAM = (() => { try { return JSON.parse(localStorage.getItem('pp_atmp_param')) || {}; } catch (e) { return {}; } })();
+const sauverParam = () => { try { localStorage.setItem('pp_atmp_param', JSON.stringify(PARAM)); } catch (e) { alert('Logo trop lourd pour être enregistré.'); } };
+const JOUR = 864e5;
+const jour0 = x => { const y = new Date(x); y.setHours(0, 0, 0, 0); return y; };
+
+function bornes(vue, ref) {
+  const r = jour0(ref);
+  if (vue === 'annee') return [new Date(r.getFullYear(), 0, 1), new Date(r.getFullYear() + 1, 0, 1)];
+  if (vue === 'mois') return [new Date(r.getFullYear(), r.getMonth(), 1), new Date(r.getFullYear(), r.getMonth() + 1, 1)];
+  const lun = new Date(r); lun.setDate(r.getDate() - ((r.getDay() + 6) % 7));
+  const fin = new Date(lun); fin.setDate(lun.getDate() + 7); return [lun, fin];
+}
+function decaler(vue, ref, n) {
+  const r = new Date(ref);
+  if (vue === 'annee') r.setFullYear(r.getFullYear() + n);
+  else if (vue === 'mois') r.setMonth(r.getMonth() + n, 1);
+  else r.setDate(r.getDate() + 7 * n);
+  return r;
+}
+function libelle(vue, [a, b]) {
+  if (vue === 'annee') return String(a.getFullYear());
+  if (vue === 'mois') return a.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  const f = new Date(b - JOUR);
+  return `Semaine du ${a.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} au ${f.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+}
+/* Sous-périodes du graphique d'évolution */
+function tranches(vue, [a, b]) {
+  const out = [];
+  if (vue === 'annee') for (let m = 0; m < 12; m++) out.push({ l: new Date(a.getFullYear(), m, 1).toLocaleDateString('fr-FR', { month: 'short' }).replace('.', ''), a: new Date(a.getFullYear(), m, 1), b: new Date(a.getFullYear(), m + 1, 1) });
+  else if (vue === 'mois') for (let s = 0, x = new Date(a); x < b; s++) { const y = new Date(x); y.setDate(x.getDate() + 7); out.push({ l: 'S' + (s + 1), a: new Date(x), b: y < b ? y : new Date(b) }); x = y; }
+  else for (let i = 0; i < 7; i++) { const x = new Date(a); x.setDate(a.getDate() + i); const y = new Date(x); y.setDate(x.getDate() + 1); out.push({ l: x.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', ''), a: x, b: y }); }
+  return out;
+}
+const dans = (iso, [a, b]) => { const t = new Date(iso + 'T00:00'); return t >= a && t < b; };
+
+/* Données RH ramenées à la période (prorata des jours) */
+function rhPeriode(rh, [a, b]) {
+  const s = { heures: 0, effJours: 0, jours: 0, entrees: 0, sorties: 0, arrets: 0, jours_maladie: 0, ouvres: 0, couvert: 0 };
+  rh.forEach(m => {
+    if (!m.mois) return;
+    const ma = new Date(m.mois + '-01T00:00'), mb = new Date(ma.getFullYear(), ma.getMonth() + 1, 1);
+    const inter = Math.max(0, (Math.min(b, mb) - Math.max(a, ma)) / JOUR); if (!inter) return;
+    const k = inter / ((mb - ma) / JOUR);
+    s.heures += (+m.heures || 0) * k; s.entrees += (+m.entrees || 0) * k; s.sorties += (+m.sorties || 0) * k;
+    s.arrets += (+m.arrets || 0) * k; s.jours_maladie += (+m.jours_maladie || 0) * k;
+    s.ouvres += (+m.effectif || 0) * (+m.jours_ouvres || 21) * k;
+    s.effJours += (+m.effectif || 0) * inter; s.couvert += inter;
+  });
+  s.effectif = s.couvert ? s.effJours / s.couvert : 0;
+  return s;
+}
+
+/* Calcul de tous les indicateurs d'une période */
+function indicateurs(evts, rh, p) {
+  const E = evts.filter(e => e.date && dans(e.date, p));
+  const ata = E.filter(e => e.type === 'AT avec arrêt');
+  const R = rhPeriode(rh, p);
+  const joursAT = ata.reduce((s, e) => s + (+e.jours || 0), 0);
+  const joursTous = E.reduce((s, e) => s + (+e.jours || 0), 0);
+  return {
+    E, R, ata: ata.length, ats: E.filter(e => e.type === 'AT sans arrêt').length,
+    trajet: E.filter(e => e.type === 'Accident de trajet').length, mp: E.filter(e => e.type === 'Maladie professionnelle').length,
+    joursAT, joursTous,
+    tf: R.heures ? ata.length * 1e6 / R.heures : null,
+    tg: R.heures ? joursAT * 1e3 / R.heures : null,
+    if: R.effectif ? ata.length * 1e3 / R.effectif : null,
+    turnover: R.effectif ? ((R.entrees + R.sorties) / 2) / R.effectif * 100 : null,
+    arrets: R.arrets, absent: R.ouvres ? (R.jours_maladie + joursTous) / R.ouvres * 100 : null
+  };
+}
+
+/* =====================================================================
+   GRAPHIQUES SVG (sans bibliothèque)
+   ===================================================================== */
+const CTEAL = 'oklch(52% .1 182)', CORANGE = 'oklch(66% .17 45)', CVIO = 'oklch(50% .15 300)';
+const fmt = (v, dec = 0) => v == null ? '—' : v.toLocaleString('fr-FR', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+
+function barresV(data, couleur, unite) {
+  const W = 560, H = 210, g = 34, b = 24, max = Math.max(1, ...data.map(x => x.v)), n = data.length;
+  const bw = (W - g) / n, ech = (H - b - 16) / max;
+  const ticks = [0, max / 2, max].map(t => Math.round(t));
+  return `<svg viewBox="0 0 ${W} ${H}" role="img">
+    ${[...new Set(ticks)].map(t => `<line x1="${g}" x2="${W}" y1="${H - b - t * ech}" y2="${H - b - t * ech}" stroke="var(--line)"/><text class="ax" x="${g - 6}" y="${H - b - t * ech + 4}" text-anchor="end">${t}</text>`).join('')}
+    ${data.map((x, i) => { const h = x.v * ech, X = g + i * bw + bw * 0.18, w = bw * 0.64;
+      return `<g class="bar" data-tip="${x.l} : ${fmt(x.v)} ${unite}">
+        <rect x="${g + i * bw}" y="0" width="${bw}" height="${H - b}" fill="transparent"/>
+        ${x.v ? `<path d="M${X},${H - b} v${-Math.max(h - 4, 0)} q0,-4 4,-4 h${w - 8} q4,0 4,4 v${Math.max(h - 4, 0)} z" fill="${couleur}"/>` : ''}
+        ${x.v ? `<text class="vl" x="${X + w / 2}" y="${H - b - h - 5}" text-anchor="middle">${fmt(x.v)}</text>` : ''}
+        <text class="ax" x="${X + w / 2}" y="${H - 7}" text-anchor="middle">${x.l}</text></g>`; }).join('')}
+  </svg>`;
+}
+function barresH(data, couleur) {
+  if (!data.length) return '<div class="vide">Aucune donnée sur la période</div>';
+  const W = 560, lw = 210, rh = 26, H = data.length * rh + 6, max = Math.max(...data.map(x => x.v)), tot = data.reduce((s, x) => s + x.v, 0);
+  return `<svg viewBox="0 0 ${W} ${H}" role="img">${data.map((x, i) => {
+    const w = (W - lw - 70) * x.v / max, y = i * rh + 4;
+    return `<g class="bar" data-tip="${x.l} : ${x.v} (${fmt(x.v / tot * 100)} %)">
+      <rect x="0" y="${y - 2}" width="${W}" height="${rh}" fill="transparent"/>
+      <text class="ax" x="${lw - 8}" y="${y + 14}" text-anchor="end" style="fill:var(--ink)">${x.l.length > 32 ? x.l.slice(0, 31) + '…' : x.l}</text>
+      <path d="M${lw},${y + 2} h${Math.max(w - 4, 1)} q4,0 4,4 v8 q0,4 -4,4 h${-Math.max(w - 4, 1)} z" fill="${couleur}"/>
+      <text class="vl" x="${lw + w + 6}" y="${y + 14}">${x.v} · ${fmt(x.v / tot * 100)} %</text></g>`; }).join('')}</svg>`;
+}
+/* Bonhomme : chaque siège coloré selon sa part (une seule teinte, clair → foncé) */
+function bonhomme(evts) {
+  const comptes = {}; let tot = 0;
+  evts.forEach(e => { if (e.siege) { comptes[e.siege] = (comptes[e.siege] || 0) + 1; tot++; } });
+  if (!tot) return '<div class="vide">Aucun siège de lésion renseigné sur la période</div>';
+  const pct = k => (comptes[k] || 0) / tot * 100;
+  const teinte = p => `oklch(${(93 - p * 0.75).toFixed(1)}% ${(0.04 + p * 0.0035).toFixed(3)} 35)`;
+  /* Marques sur le corps, puis étiquettes triées par hauteur de chaque côté (pas de croisement) */
+  let marques = '', etiq = '';
+  const cotes = { g: [], d: [] };
+  Object.entries(SIEGES).forEach(([k, s]) => {
+    if (!s.p.length || !comptes[k]) return;
+    const p = pct(k), r = 7 + Math.sqrt(p) * 2.6;
+    s.p.forEach(([x, y]) => { marques += `<circle cx="${x}" cy="${y}" r="${r}" fill="${teinte(p)}" stroke="#fff" stroke-width="2" class="bar" data-tip="${k} : ${comptes[k]} (${fmt(p)} %)"/>`; });
+    const pt = s.p.reduce((m, q) => (s.c === 'd' ? q[0] > m[0] : q[0] < m[0]) ? q : m);   // point le plus proche de l'étiquette
+    cotes[s.c].push({ k, p, x: pt[0], y: pt[1] });
+  });
+  ['g', 'd'].forEach(c => {
+    let bas = 0;
+    cotes[c].sort((a, b) => a.y - b.y).forEach(e => {
+      const ly = Math.max(e.y, bas + 34); bas = ly;
+      const g = c === 'g', tx = g ? -10 : 310, lx = g ? -4 : 304;
+      etiq += `<line x1="${e.x}" y1="${e.y}" x2="${lx}" y2="${ly}" stroke="var(--muted)" stroke-width=".8" stroke-dasharray="2 2"/>
+        <text x="${tx}" y="${ly - 2}" text-anchor="${g ? 'end' : 'start'}" class="vl" style="font-size:14px">${fmt(e.p)} %</text>
+        <text x="${tx}" y="${ly + 13}" text-anchor="${g ? 'end' : 'start'}" class="ax" style="font-size:12px">${e.k}</text>`;
+    });
+  });
+  const hors = ['Peau', 'Psychique', 'Localisations multiples'].filter(k => comptes[k]);
+  const svg = `<svg viewBox="-130 0 560 450" role="img" aria-label="Répartition des sièges de lésions" style="max-width:620px;margin:0 auto">
+    <g fill="oklch(93% .008 250)" stroke="oklch(85% .01 250)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="150" cy="44" r="28"/>
+      <rect x="139" y="70" width="22" height="22" rx="6"/>
+      <path d="M104,102 Q150,92 196,102 L190,258 Q150,272 110,258 Z"/>
+    </g>
+    <g stroke="oklch(93% .008 250)" stroke-width="22" stroke-linecap="round" fill="none">
+      <path d="M104,110 L86,172 L72,236"/><path d="M196,110 L214,172 L228,236"/>
+      <path d="M132,262 L131,330 L128,410"/><path d="M168,262 L169,330 L172,410"/>
+    </g>
+    <g stroke="oklch(85% .01 250)" stroke-width="1" fill="none" opacity=".6">
+      <path d="M104,110 L86,172 L72,236"/><path d="M196,110 L214,172 L228,236"/><path d="M132,262 L131,330 L128,410"/><path d="M168,262 L169,330 L172,410"/>
+    </g>
+    ${marques}${etiq}
+  </svg>`;
+  const top = Object.entries(comptes).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  return `<div class="bonhomme-wrap">${svg}<div class="chips">
+    <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase">Sièges les plus touchés</div>
+    ${top.map(([k, n]) => `<div class="chip2"><span>${k}</span><b>${fmt(n / tot * 100)} %</b></div>`).join('')}
+    ${hors.length ? `<div style="font-size:11.5px;color:var(--muted);margin-top:4px">Non représentés sur le schéma : ${hors.map(k => `${k} ${fmt(pct(k))} %`).join(' · ')}</div>` : ''}
+    <div style="font-size:11.5px;color:var(--muted)">Base : ${tot} lésion(s) localisée(s)</div></div></div>`;
+}
+
+/* =====================================================================
+   TABLEAU DE BORD
+   ===================================================================== */
+function kpi(l, v, prev, dec, opts = {}) {
+  let delta = '';
+  if (v != null && prev != null && opts.compare !== false) {
+    const dv = v - prev, sens = dv > 0 ? 'up' : dv < 0 ? 'down' : '';
+    delta = `<div class="d">${dv === 0 ? '= période préc.' : `<b class="${opts.inverse ? (sens === 'up' ? 'down' : 'up') : sens}">${dv > 0 ? '▲' : '▼'} ${fmt(Math.abs(dv), dec)}</b> vs préc.`}</div>`;
+  }
+  return `<div class="kpi ${opts.hl ? 'hl' : ''}"><div class="l">${l}</div><div class="v">${fmt(v, dec)}${opts.u || ''}</div>${delta}</div>`;
+}
+
+function tableauDeBord(el) {
+  const evts = lire('pp_atmp'), rh = lire('pp_atmp_rh');
+  const P = bornes(ETAT.vue, ETAT.ref), Pp = bornes(ETAT.vue, decaler(ETAT.vue, ETAT.ref, -1));
+  const I = indicateurs(evts, rh, P), Ip = indicateurs(evts, rh, Pp);
+  const dernierATA = evts.filter(e => e.type === 'AT avec arrêt' && e.date).map(e => e.date).sort().pop();
+  const sansAT = dernierATA ? Math.floor((jour0(new Date()) - new Date(dernierATA + 'T00:00')) / JOUR) : null;
+
+  const evol = tranches(ETAT.vue, P).map(t => {
+    const E = evts.filter(e => e.date && dans(e.date, [t.a, t.b]));
+    return { l: t.l, at: E.filter(e => e.type === 'AT avec arrêt').length, j: E.reduce((s, e) => s + (+e.jours || 0), 0) };
+  });
+  const parCat = {}, parTab = {};
+  I.E.forEach(e => {
+    if (e.type !== 'Maladie professionnelle' && e.categorie) parCat[e.categorie] = (parCat[e.categorie] || 0) + 1;
+    if (e.type === 'Maladie professionnelle') { const k = e.tableau || 'Tableau non précisé'; parTab[k] = (parTab[k] || 0) + 1; }
+  });
+  const tri = o => Object.entries(o).map(([l, v]) => ({ l, v })).sort((a, b) => b.v - a.v);
+  const corps = I.E.filter(e => ETAT.filtreCorps === 'tous' || (ETAT.filtreCorps === 'at' ? e.type !== 'Maladie professionnelle' : e.type === 'Maladie professionnelle'));
+  const pasRH = !I.R.heures;
+
+  const html = {
+    kpis: `<div class="kpis">
+      ${kpi('AT avec arrêt', I.ata, Ip.ata, 0, { inverse: true, hl: true })}
+      ${kpi('Jours d’arrêt AT/MP', I.joursTous, Ip.joursTous, 0, { inverse: true })}
+      ${kpi('Taux de fréquence', I.tf, Ip.tf, 1, { inverse: true, hl: true })}
+      ${kpi('Taux de gravité', I.tg, Ip.tg, 2, { inverse: true, hl: true })}
+      ${kpi('Indice de fréquence', I.if, Ip.if, 1, { inverse: true })}
+      ${kpi('AT sans arrêt', I.ats, Ip.ats, 0, { inverse: true })}
+      ${kpi('Accidents de trajet', I.trajet, Ip.trajet, 0, { inverse: true })}
+      ${kpi('Maladies professionnelles', I.mp, Ip.mp, 0, { inverse: true })}
+      ${kpi('Turnover', I.turnover, Ip.turnover, 1, { u: ' %', inverse: true })}
+      ${kpi('Arrêts maladie', I.arrets, Ip.arrets, 0, { inverse: true })}
+      ${kpi('Absentéisme (approché)', I.absent, Ip.absent, 1, { u: ' %', inverse: true })}
+      ${kpi('Jours sans AT avec arrêt', sansAT, null, 0, { compare: false })}
+    </div>`,
+    graphes: `<div class="charts">
+      <div class="chart"><h3>AT avec arrêt</h3><div class="s">Nombre par ${ETAT.vue === 'annee' ? 'mois' : ETAT.vue === 'mois' ? 'semaine' : 'jour'}</div>${barresV(evol.map(x => ({ l: x.l, v: x.at })), CTEAL, 'AT')}</div>
+      <div class="chart"><h3>Jours d’arrêt (AT, trajet, MP)</h3><div class="s">Rattachés à la date de l’événement</div>${barresV(evol.map(x => ({ l: x.l, v: x.j })), CORANGE, 'jours')}</div>
+      <div class="chart"><h3>Accidents par catégorie</h3><div class="s">AT et trajets · ${I.E.filter(e => e.type !== 'Maladie professionnelle').length} événement(s)</div>${barresH(tri(parCat), CTEAL)}</div>
+      <div class="chart"><h3>Maladies professionnelles par tableau</h3><div class="s">Régime général · ${I.mp} MP</div>${barresH(tri(parTab), CVIO)}</div>
+      <div class="chart w"><h3>Siège des lésions</h3><div class="s">Répartition en % des lésions localisées</div>
+        <div class="seg" id="fCorps" style="margin-bottom:6px">${[['tous', 'AT + MP'], ['at', 'AT et trajets'], ['mp', 'MP']].map(([k, l]) => `<button data-c="${k}" class="${ETAT.filtreCorps === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+        ${bonhomme(corps)}</div>
+    </div>`
+  };
+
+  el.innerHTML = `
+    <div class="tb-bar">
+      <div class="seg" id="vue">${[['semaine', 'Semaine'], ['mois', 'Mois'], ['annee', 'Année']].map(([k, l]) => `<button data-v="${k}" class="${ETAT.vue === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+      <button class="btn sm" id="prec">◀</button><div class="periode">${libelle(ETAT.vue, P)}</div><button class="btn sm" id="suiv">▶</button>
+      <button class="btn sm ghost" id="auj">Aujourd’hui</button>
+      <span class="sp"></span>
+      <button class="btn" id="csv">⬇ Indicateurs CSV</button>
+      <button class="btn p" id="pdf">🖨 Rapport PDF</button>
+    </div>
+    ${pasRH ? '<div class="pp-note">⚠️ Aucune donnée RH pour cette période : TF, TG, turnover et absentéisme ne peuvent pas être calculés. Complétez l’onglet « Effectifs & RH ».</div>' : ''}
+    ${html.kpis}${html.graphes}
+    <h2 class="serif" style="font-size:20px;margin:22px 0 10px">Paramètres du rapport</h2>
+    <div class="pp-card param">
+      <label>Nom de l’entreprise<input id="pEnt" value="${PP.esc(PARAM.entreprise || '')}" placeholder="Ex. Société ACME — site de Limoges"></label>
+      <label>Logo de l’entreprise (PNG, JPG, SVG)<input id="pLogo" type="file" accept="image/*"></label>
+      <div style="display:flex;align-items:center;gap:10px">${PARAM.logo ? `<img class="logo-prev" src="${PARAM.logo}" alt="Logo"><button class="btn sm" id="pSuppr">Retirer</button>` : '<span style="font-size:12px;color:var(--muted)">Aucun logo : le nom de l’entreprise s’affichera seul.</span>'}</div>
+    </div>`;
+
+  /* --- Interactions --- */
+  el.querySelectorAll('#vue button').forEach(b => b.onclick = () => { ETAT.vue = b.dataset.v; tableauDeBord(el); });
+  el.querySelector('#prec').onclick = () => { ETAT.ref = decaler(ETAT.vue, ETAT.ref, -1); tableauDeBord(el); };
+  el.querySelector('#suiv').onclick = () => { ETAT.ref = decaler(ETAT.vue, ETAT.ref, 1); tableauDeBord(el); };
+  el.querySelector('#auj').onclick = () => { ETAT.ref = new Date(); tableauDeBord(el); };
+  el.querySelectorAll('#fCorps button').forEach(b => b.onclick = () => { ETAT.filtreCorps = b.dataset.c; tableauDeBord(el); });
+  el.querySelector('#pEnt').onchange = e => { PARAM.entreprise = e.target.value.trim(); sauverParam(); };
+  el.querySelector('#pLogo').onchange = e => chargerLogo(e.target.files[0], () => tableauDeBord(el));
+  const sup = el.querySelector('#pSuppr'); if (sup) sup.onclick = () => { delete PARAM.logo; sauverParam(); tableauDeBord(el); };
+  el.querySelector('#csv').onclick = () => exporterCSV(evts, rh);
+  el.querySelector('#pdf').onclick = () => rapport(I, html, P);
+  infobulles(el);
+}
+
+/* Logo réduit à 400 px max pour rester léger */
+function chargerLogo(f, fin) {
+  if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    if (f.type === 'image/svg+xml') { PARAM.logo = rd.result; sauverParam(); return fin(); }
+    const img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, 400 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+      c.width = img.width * k; c.height = img.height * k; c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      PARAM.logo = c.toDataURL('image/png'); sauverParam(); fin();
+    };
+    img.src = rd.result;
+  };
+  rd.readAsDataURL(f);
+}
+
+/* Infobulles au survol */
+const tip = document.createElement('div'); tip.className = 'tip'; document.body.appendChild(tip);
+function infobulles(el) {
+  el.querySelectorAll('[data-tip]').forEach(g => {
+    g.onmousemove = e => { tip.textContent = g.dataset.tip; tip.style.opacity = 1; tip.style.left = (e.clientX + 12) + 'px'; tip.style.top = (e.clientY + 12) + 'px'; };
+    g.onmouseleave = () => tip.style.opacity = 0;
+  });
+}
+
+/* Export CSV des indicateurs mensuels (prêt pour Excel / Power BI) */
+function exporterCSV(evts, rh) {
+  const mois = [...new Set(rh.map(m => m.mois).concat(evts.map(e => (e.date || '').slice(0, 7))).filter(Boolean))].sort();
+  const q = v => `"${String(v ?? '').replace('.', ',')}"`;
+  const lignes = [['Mois', 'Effectif', 'Heures', 'AT avec arrêt', 'AT sans arrêt', 'Trajet', 'MP', 'Jours arrêt AT', 'Jours arrêt total', 'TF', 'TG', 'IF', 'Turnover %', 'Arrêts maladie', 'Absentéisme %'].map(q).join(';')];
+  mois.forEach(m => {
+    const a = new Date(m + '-01T00:00'), I = indicateurs(evts, rh, [a, new Date(a.getFullYear(), a.getMonth() + 1, 1)]), r = v => v == null ? '' : Math.round(v * 100) / 100;
+    lignes.push([m, r(I.R.effectif), r(I.R.heures), I.ata, I.ats, I.trajet, I.mp, I.joursAT, I.joursTous, r(I.tf), r(I.tg), r(I.if), r(I.turnover), r(I.arrets), r(I.absent)].map(q).join(';'));
+  });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['﻿' + lignes.join('\r\n')], { type: 'text/csv;charset=utf-8' }));
+  a.download = `indicateurs-at-mp_${PP.iso(new Date())}.csv`; a.click();
+}
+
+/* Rapport imprimable / PDF avec logo */
+function rapport(I, html, P) {
+  let r = document.getElementById('rapport');
+  if (!r) { r = document.createElement('div'); r.id = 'rapport'; document.body.appendChild(r); }
+  const lignes = I.E.slice().sort((a, b) => a.date.localeCompare(b.date));
+  r.innerHTML = `
+    <div class="r-head">${PARAM.logo ? `<img src="${PARAM.logo}" alt="">` : ''}
+      <div><h1>Bilan accidents du travail & maladies professionnelles</h1>
+      <div><b>${PP.esc(PARAM.entreprise || 'Entreprise')}</b> · ${libelle(ETAT.vue, P)} · édité le ${new Date().toLocaleDateString('fr-FR')}</div></div></div>
+    ${html.kpis}${html.graphes.replace(/<div class="seg" id="fCorps".*?<\/div>/s, '')}
+    <h3 style="margin-top:12px">Détail des événements de la période (${lignes.length})</h3>
+    <table><thead><tr><th>Date</th><th>Type</th><th>Catégorie / tableau</th><th>Siège</th><th>Jours</th><th>Service</th><th>Reconnaissance</th></tr></thead>
+    <tbody>${lignes.map(e => `<tr><td>${PP.frDate(e.date)}</td><td>${e.type}</td><td>${e.type === 'Maladie professionnelle' ? (e.tableau || '') : (e.categorie || '')}</td><td>${e.siege || ''}</td><td>${e.jours || 0}</td><td>${PP.esc(e.service || '')}</td><td>${e.statut || ''}</td></tr>`).join('')}</tbody></table>
+    <div class="r-foot">TF = AT avec arrêt × 10⁶ ÷ heures travaillées · TG = jours d’arrêt AT × 10³ ÷ heures travaillées · IF = AT avec arrêt × 10³ ÷ effectif moyen. Données pseudonymisées. Généré avec PréventIA Protect.</div>`;
+  document.body.classList.add('rap');
+  setTimeout(() => { window.print(); document.body.classList.remove('rap'); }, 300);
+}
+</script>
+<p class="pp-foot">PréventIA Protect · Suivi AT / MP — données stockées dans ce navigateur. Les déclarations officielles restent à effectuer auprès de la CPAM (net-entreprises).</p>
+</body>
+</html>

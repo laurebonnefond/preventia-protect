@@ -185,14 +185,17 @@
 
   PP.app = function (cfg) {
     document.title = `${cfg.title} — PréventIA Protect`;
-    const root = (cfg.home || '../../../index.html').replace(/index\.html$/, '');
+    const root = cfg.racine || '../../../';   // dossier racine du site (logo, favicon)
     document.head.insertAdjacentHTML('beforeend', `<link rel="icon" type="image/png" href="${root}assets/img/favicon.png">`);
+    /* Mode intégré (?embed) : le module s'affiche dans un autre, sans sa barre du haut */
+    const integre = new URLSearchParams(location.search).has('embed');
+    if (integre) document.body.classList.add('pp-embed');
     document.body.insertAdjacentHTML('afterbegin', `
-      <header class="pp-top"><div class="in">
-        <a class="back" href="${cfg.home || '../../../index.html'}"><img src="${root}assets/img/logo-emblem.png" alt="">← Plateforme</a>
+      ${integre ? '' : `<header class="pp-top"><div class="in">
+        <a class="back" href="${cfg.home || '../../../index.html'}"><img src="${root}assets/img/logo-emblem.png" alt="">${cfg.home ? "← Retour" : "← Plateforme"}</a>
         <div class="ico">${cfg.icon}</div><div><h1>${cfg.title}</h1><small>${cfg.sub}</small></div>
         <div class="sp"></div><span class="pill">🔒 Données stockées localement</span>
-      </div></header>
+      </div></header>`}
       <nav class="pp-tabs"><div class="in">${cfg.tabs.map((t, i) => `<button class="pp-tab ${i ? '' : 'on'}" data-t="${t.id}">${t.icon || ''} ${t.label}${t.registre && t.registre.due ? '<span class="n" style="display:none"></span>' : ''}</button>`).join('')}</div></nav>
       <main class="pp">${cfg.tabs.map((t, i) => `<section class="pp-panel ${i ? '' : 'on'}" id="p-${t.id}"></section>`).join('')}</main>`);
     cfg.tabs.forEach(t => {

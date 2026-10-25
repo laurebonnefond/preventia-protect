@@ -361,11 +361,10 @@ const DOMAINS = {
   sante:{label:'Santé', color:'oklch(58% .17 15)'},
   coact:{label:'Coactivité', color:'oklch(62% .16 55)'},
   env:{label:'Environnement', color:'oklch(55% .14 150)'},
-  risques:{label:'Risques spécifiques', color:'oklch(55% .18 350)'},
-  pilot:{label:'Pilotage & indicateurs', color:'oklch(48% .1 230)'}
+  risques:{label:'Risques spécifiques', color:'oklch(55% .18 350)'}
 };
 const MODULES = [
-  { id:'atmp', dom:'pilot', ic:'📈', t:'Suivi AT / MP & indicateurs RH', short:'AT / MP', st:'new', href:'modules/pilotage/at-mp/index.html',
+  { id:'atmp', dom:'sante', ic:'📈', t:'Suivi AT / MP & indicateurs RH', short:'AT / MP', st:'new', href:'modules/sante/infirmiere/index.html#atmp',
     p:'Registre des accidents et maladies professionnelles, taux de fréquence et de gravité, turnover, absentéisme, rapport PDF au logo de l’entreprise.',
     f:['Vue semaine, mois, année + comparaison','TF, TG, IF, turnover, arrêts maladie','AT par catégorie, MP par tableau','Bonhomme des sièges de lésions en %'] },
   { id:'duerp', dom:'evaluer', ic:'📝', t:'Aide au DUERP', short:'DUERP', st:'proto', href:'modules/evaluer/duerp/index.html',
@@ -388,7 +387,7 @@ const MODULES = [
     f:['Contenu attendu par registre','Statut de conformité','Base réglementaire intégrée','Durées de conservation'] },
   { id:'inf', dom:'sante', ic:'🩺', t:'Infirmière d’entreprise', short:'Infirmerie', st:'new', href:'modules/sante/infirmiere/index.html',
     p:'Registre des soins, pré-dépistages vision et audition, premiers secours, SST et actions de prévention santé.',
-    f:['Registre des passages pseudonymisé','Pré-dépistages Visio & Audio intégrés','Trousses & DAE, couverture SST','Repères AES et chaîne des secours'] },
+    f:['Registre des passages pseudonymisé','Suivi AT / MP, TF, TG, indicateurs RH','Pré-dépistages Visio & Audio intégrés','Trousses & DAE, couverture SST'] },
   { id:'coact', dom:'coact', ic:'🤝', t:'Coactivité & entreprises extérieures', short:'Coactivité', st:'new', href:'modules/coactivite/plans-prevention/index.html',
     p:'Plans de prévention, vigilance URSSAF, permis de feu, consignations, protocoles de chargement.',
     f:['PdP : statut, ICP, forme écrite auto','Attestations de vigilance à 6 mois','Permis & consignes signées','Aide « PdP écrit obligatoire ? »'] },

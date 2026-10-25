@@ -111,7 +111,7 @@ table.pp-t{width:100%;border-collapse:collapse;min-width:760px}
 .due small{display:block;color:var(--muted);font-size:11px}
 
 /* --- modale formulaire --- */
-.pp-dlg{border:0;border-radius:18px;padding:0;width:min(640px,94vw);box-shadow:0 30px 80px -20px rgb(0 0 0/.4)}
+.pp-dlg{margin:auto;border:0;border-radius:18px;padding:0;width:min(640px,94vw);box-shadow:0 30px 80px -20px rgb(0 0 0/.4)}
 .pp-dlg::backdrop{background:rgb(12 30 60/.45);backdrop-filter:blur(3px)}
 .pp-dlg header{padding:18px 22px;border-bottom:1px solid var(--line);font-family:'DM Serif Display',serif;font-size:20px}
 .pp-dlg .body{padding:18px 22px;display:grid;grid-template-columns:1fr 1fr;gap:12px;max-height:65vh;overflow:auto}

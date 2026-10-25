@@ -361,9 +361,13 @@ const DOMAINS = {
   sante:{label:'Santé', color:'oklch(58% .17 15)'},
   coact:{label:'Coactivité', color:'oklch(62% .16 55)'},
   env:{label:'Environnement', color:'oklch(55% .14 150)'},
-  risques:{label:'Risques spécifiques', color:'oklch(55% .18 350)'}
+  risques:{label:'Risques spécifiques', color:'oklch(55% .18 350)'},
+  pilot:{label:'Pilotage & indicateurs', color:'oklch(48% .1 230)'}
 };
 const MODULES = [
+  { id:'atmp', dom:'pilot', ic:'📈', t:'Suivi AT / MP & indicateurs RH', short:'AT / MP', st:'new', href:'modules/pilotage/at-mp/index.html',
+    p:'Registre des accidents et maladies professionnelles, taux de fréquence et de gravité, turnover, absentéisme, rapport PDF au logo de l’entreprise.',
+    f:['Vue semaine, mois, année + comparaison','TF, TG, IF, turnover, arrêts maladie','AT par catégorie, MP par tableau','Bonhomme des sièges de lésions en %'] },
   { id:'duerp', dom:'evaluer', ic:'📝', t:'Aide au DUERP', short:'DUERP', st:'proto', href:'modules/evaluer/duerp/index.html',
     p:'Évaluation par unité de travail : l’IA identifie les risques, propose la cotation et génère le PAPRIPACT.',
     f:['Identification IA (6-10 risques par UT)','Cotation G × F × Maîtrise','Matrice de criticité','PAPRIPACT priorisé + assistant IA'] },

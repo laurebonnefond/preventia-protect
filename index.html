@@ -51,14 +51,19 @@ nav .links a:hover{color:var(--ink);background:oklch(96% .01 250)}
    --voile-droite  : opacité à droite (0 = vidéo pleinement visible)
    --video-cadrage : partie de la vidéo gardée si l'écran la rogne (x y) — ex. 70% 50%
    --video-flou    : 0px = net ; 2px = adouci
+   --zoom-depart   : zoom à l'ouverture (1.06 = 6 % plus grand, 1 = aucun ; < 1 pour un zoom avant)
+   --zoom-duree    : durée du mouvement (plus long = plus doux)
    ===================================================================== */
 .hero{
   --voile-gauche:.85; --voile-milieu:.45; --voile-droite:0;
   --video-cadrage:60% 50%; --video-flou:0px;
+  --zoom-depart:1.06; --zoom-duree:20s;
   position:relative;isolation:isolate;padding:72px 0 56px;overflow:hidden}
 /* Couche 1 — vidéo plein cadre */
 .hero-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:var(--video-cadrage);
-  filter:blur(var(--video-flou));z-index:-2;pointer-events:none}
+  filter:blur(var(--video-flou));z-index:-2;pointer-events:none;
+  transform-origin:var(--video-cadrage);animation:hero-zoom var(--zoom-duree) cubic-bezier(.33,.2,.4,1) both}
+@keyframes hero-zoom{from{transform:scale(var(--zoom-depart))}to{transform:scale(1)}}
 /* Couche 2 — voile de lisibilité (blanc à gauche → transparent à droite) + fondu bas */
 .hero::before{content:'';position:absolute;inset:0;z-index:-1;background:
   linear-gradient(90deg,

@@ -262,32 +262,6 @@ function escapeHtml(s) {
   return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-function pictoSVG(code, size=36) {
-  const src = PICTO_OFFICIELS[code];
-  if (!src || !PICTOGRAMS[code]) return '';
-  return `<img class="picto-img" src="${src}" alt="Pictogramme ${code} : ${PICTOGRAMS[code].label}" title="${PICTOGRAMS[code].label}" style="width:${size}px;height:${size}px;display:block;" loading="lazy" />`;
-}
-
-// ── Familles chimiques (pour matrice de compatibilité) ────────
-const FAMILIES = {
-  none:        { label: "— Non précisée —" },
-  acide_fort:  { label: "Acide fort (HCl, H₂SO₄, HNO₃...)" },
-  acide_faible:{ label: "Acide faible / organique (acétique, citrique...)" },
-  base_forte:  { label: "Base forte (NaOH, KOH, NH₃...)" },
-  base_faible: { label: "Base faible (carbonates, ammoniaque diluée...)" },
-  comburant:   { label: "Comburant / oxydant (peroxydes, permanganate...)" },
-  inflammable: { label: "Inflammable / solvant organique" },
-  reducteur:   { label: "Réducteur (métaux, hydrures, sulfites...)" },
-  solvant_chl: { label: "Solvant chloré (trichloréthylène, DCM...)" },
-  metal_alc:   { label: "Métal alcalin / alcalino-terreux (Na, K, Ca)" },
-  cyanure:     { label: "Cyanure (NaCN, KCN, HCN)" },
-  hypochlorite:{ label: "Hypochlorite / chlorure (eau de Javel)" },
-  sulfure:     { label: "Sulfure (Na₂S, sulfure d'hydrogène)" },
-  amine:       { label: "Amine / ammoniaque" },
-  peroxyde:    { label: "Peroxyde organique" },
-  nitrate:     { label: "Nitrate / sel oxydant" },
-  autre:       { label: "Autre / non classé" },
-};
 
 // Matrice de compatibilité : pour chaque paire de familles
 // Niveau: ok=0, warn=1, danger=2, critical=3

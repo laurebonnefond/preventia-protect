@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Santé de la femme</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap">
+<link rel="stylesheet" href="femme.css">
+<style>
+/* PréventIA Protect · Santé · Hub « Santé de la femme »
+   Layout : bandeau Protect, deux grands outils côte à côte (dépistage / ménopause), puis ressources d'animation */
+.lead{max-width:760px;display:flex;flex-direction:column;gap:8px}
+.lead h2{font-size:clamp(1.6rem,4vw,2.1rem)}
+.lead p{color:var(--muted)}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow);text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:10px;min-width:0;transition:transform .15s,border-color .15s;border-top:4px solid var(--c)}
+.tile:hover{transform:translateY(-2px);border-color:var(--c)}
+.tile h3{font-family:var(--f-display);font-weight:400;font-size:1.5rem}
+.tile p{color:var(--muted)}
+.tile ul{margin:0;padding-left:1.1rem;display:grid;gap:3px;font-size:.92rem}
+.tile .go{margin-top:auto;font-weight:700;color:var(--c)}
+.mini{display:flex;gap:12px;align-items:center}
+.mini .ic{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:var(--rose-bg);color:var(--rose);flex:none}
+.mini .ic svg{width:22px;height:22px}
+</style>
+</head>
+<body>
+<header class="pp-top gut"><div class="in">
+  <a class="back" href="../../../index.html">← Protect</a>
+  <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5"/><path d="M12 14v7M9 18h6"/></svg></div>
+  <div><small>PréventIA Protect · Santé</small><h1>Santé de la femme</h1></div>
+</div></header>
+<main class="gut">
+  <div class="lead">
+    <h2>Des étapes de vie qui se jouent aussi au travail.</h2>
+    <p>Suivre le dépistage du cancer du sein et animer Octobre rose, accompagner la ménopause en adaptant les postes. Les outils destinés aux salariées sont anonymes ou n'enregistrent rien.</p>
+  </div>
+  <div class="grid g2">
+    <a class="tile" href="seinprev.html" style="--c:var(--rose)">
+      <p class="eyebrow">Dépistage · Octobre rose</p><h3>SeinPrév</h3>
+      <p>Le suivi du dépistage du cancer du sein dans l'entreprise, de la campagne au parcours individuel.</p>
+      <ul><li>Tableau de bord de la campagne et leviers d'action</li><li>Journal des actions Octobre rose</li><li>Enquête anonyme sur tablette : où en sont les salariées, quels freins</li><li>Suivi infirmier des échéances, pseudonymisé</li><li>Parcours de dépistage selon l'âge et les risques, rappel agenda</li></ul>
+      <span class="go">Ouvrir SeinPrév →</span></a>
+    <a class="tile" href="menoprev.html" style="--c:var(--mauve)">
+      <p class="eyebrow" style="color:var(--mauve)">Ménopause et travail</p><h3>MénoPrév</h3>
+      <p>Repérer les symptômes que le poste aggrave et préparer l'échange avec le service de santé au travail.</p>
+      <ul><li>Auto-évaluation : 9 symptômes × 8 contraintes de poste</li><li>Fiche à copier pour la visite</li><li>Enquête collective anonyme et matrice des croisements</li><li>Aménagements par contrainte, démarche DUERP</li><li>Quiz vrai ou faux pour les ateliers</li></ul>
+      <span class="go">Ouvrir MénoPrév →</span></a>
+  </div>
+  <div class="card mini"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="12" rx="4"/><path d="M7 11v4M5 13h4M16 12h.01M18 14h.01"/></svg></span>
+    <div><b>Animer un stand Octobre rose</b><p class="muted small">Les jeux Super Maria, Pink Man et Prévent'Invaders de PréventIA-LaB. <a href="https://laurebonnefond.github.io/PreventIA-LaB/jeux/">Ouvrir l'espace jeux</a></p></div></div>
+  <p class="foot">Ces outils informent et orientent. Ils ne remplacent ni l'avis du médecin, ni celui du médecin du travail.</p>
+</main>
+</body>
+</html>

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MénoPrév</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap">
+<link rel="stylesheet" href="femme.css">
+<style>
+/* MénoPrév v2 · ménopause et travail
+   Layout : bandeau Protect + onglets ; auto-évaluation en deux colonnes (symptômes / poste) puis résultats, côté entreprise : enquête agrégée en matrice */
+:root{--acc:var(--mauve)}
+.sym{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding-block:7px;border-bottom:1px dashed var(--line)}
+.lv{display:flex;gap:3px}
+.lv button{border:1px solid var(--line);background:var(--bg);border-radius:7px;width:34px;height:32px;font-weight:700;font-size:13px}
+.lv button[aria-pressed="true"]{background:var(--mauve);border-color:var(--mauve);color:var(--on-accent)}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.res{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.res:last-child{border-bottom:0}
+.res ul{margin:4px 0 0;padding-left:1.1rem;color:var(--muted);font-size:13.5px}
+.mx td,.mx th{text-align:center} .mx td:first-child,.mx th:first-child{text-align:left}
+.cell{display:grid;place-items:center;min-width:46px;height:30px;border-radius:6px;font-weight:700;font-size:12px;font-variant-numeric:tabular-nums}
+.quiz{display:flex;flex-direction:column;gap:8px}
+.quiz .row button[aria-pressed="true"]{background:var(--mauve-bg);border-color:var(--mauve)}
+.fiche{white-space:pre-wrap;font-size:13px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;max-height:340px;overflow:auto}
+</style>
+</head>
+<body>
+<header class="pp-top gut"><div class="in">
+  <a class="back" href="index.html">← Santé de la femme</a>
+  <div class="ico" aria-hidden="true" style="background:linear-gradient(135deg,var(--mauve),var(--rose-l))"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="4"/></svg></div>
+  <div><small>PréventIA Protect · Santé de la femme</small><h1>MénoPrév</h1></div>
+  <span class="sp"></span><span class="pill">Ménopause et travail</span>
+</div></header>
+<nav class="tabs gut" aria-label="Sections"><div class="in" id="tabs"></div></nav>
+<main class="gut" id="app"></main>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s), app=$('#app');
+const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+
+/* ============================================================
+   MOTEUR DE SCORING (MénoPrév v1, repris tel quel + C8)
+   Score = intensité du symptôme (0-3) × poids de la contrainte (1 ou 2)
+   ============================================================ */
+const CONTRAINTES = {
+  C1: "Ambiance chaude / tenue ou EPI couvrant",
+  C2: "Travail de nuit / horaires décalés",
+  C3: "Accès aux sanitaires limité",
+  C4: "Port de charges / postures pénibles",
+  C5: "Tâches de vigilance / sécurité",
+  C6: "Contact public / charge émotionnelle",
+  C7: "Open space / bruit / interruptions",
+  C8: "Uniforme imposé (matière, couleur, coupe)"      // v2
+};
+const MATRICE = {
+  S1:{label:"Bouffées de chaleur / sueurs",contraintes:{C1:2,C6:1,C8:1},pistes:["Pauses en zone fraîche","Accès à l'eau","Tenue respirante","Ventilateur individuel"]},
+  S2:{label:"Troubles du sommeil / fatigue",contraintes:{C2:2,C5:2},pistes:["Horaires adaptés","Éviter le travail de nuit","Pauses régulières"]},
+  S3:{label:"Difficultés de concentration / mémoire",contraintes:{C5:2,C7:1},pistes:["Check-lists","Zone calme","Tâches critiques en début de poste"]},
+  S4:{label:"Irritabilité / anxiété / humeur",contraintes:{C6:2,C7:1},pistes:["Rotation des tâches","Temps de récupération","Soutien hiérarchique"]},
+  S5:{label:"Douleurs articulaires / musculaires",contraintes:{C4:2},pistes:["Aides à la manutention","Alternance des postures"]},
+  S6:{label:"Maux de tête / migraines",contraintes:{C7:1,C1:1},pistes:["Éclairage adapté","Pauses écran","Hydratation"]},
+  S7:{label:"Besoins urinaires fréquents",contraintes:{C3:2},pistes:["Pauses à la demande","Remplacement organisé"]},
+  S8:{label:"Saignements abondants / irréguliers",contraintes:{C3:2,C1:1,C8:1},pistes:["Accès facilité aux sanitaires","Tenue de rechange"]},
+  S9:{label:"Palpitations",contraintes:{C5:1,C4:1},pistes:["Orientation médicale prioritaire"]}
+};
+const SEUIL_PRIORITAIRE=4, SEUIL_A_DISCUTER=2;
+function calculerScores(symptomes, contraintes){
+  const resultats=[];
+  for(const [code,info] of Object.entries(MATRICE)){
+    const intensite=symptomes[code]||0; if(intensite===0) continue;
+    for(const [codeC,poids] of Object.entries(info.contraintes)){
+      if(!contraintes.includes(codeC)) continue;
+      const score=intensite*poids; if(score<SEUIL_A_DISCUTER) continue;
+      resultats.push({code,codeC,symptome:info.label,contrainte:CONTRAINTES[codeC],score,niveau:score>=SEUIL_PRIORITAIRE?"prioritaire":"à discuter",pistes:info.pistes});
+    }
+  }
+  resultats.sort((a,b)=>b.score-a.score);
+  const orientationMedicale=(symptomes.S9||0)>=2||(symptomes.S8||0)===3;
+  return {resultats,orientationMedicale};
+}
+
+/* ---------- Données ----------
+   Auto-évaluation : rien n'est enregistré.
+   Enquête collective : seulement si la salariée y consent, sans âge ni identité. Phase 2 : table Supabase anonyme (insert seul). */
+const KEY='pp_meno_v1', SEUIL=5;
+const store={get(){try{return JSON.parse(localStorage.getItem(KEY))}catch(e){return null}},set(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}};
+function demo(){let seed=11;const r=()=>{seed=(seed*16807)%2147483647;return (seed-1)/2147483646;};
+  const enq=[];for(let i=0;i<16;i++){const s={};Object.keys(MATRICE).forEach((k,j)=>{const base=[2.1,1.9,1.4,1.3,1.5,.9,.8,.6,.3][j];s[k]=Math.max(0,Math.min(3,Math.round(base+(r()-.5)*2.2)));});
+    const c=Object.keys(CONTRAINTES).filter((k,j)=>r()<[.55,.35,.3,.45,.3,.4,.25,.35][j]);enq.push({s,c});}
+  return {demo:true,enq};}
+let D=store.get()||demo(); const save=()=>store.set(D);
+
+/* ---------- Navigation ---------- */
+const TABS=[['auto','Mon auto-évaluation'],['collectif','Enquête collective'],['amenagements','Côté entreprise'],['comprendre','Comprendre']];
+function route(){const h=(location.hash||'#auto').slice(1);const cur=TABS.some(t=>t[0]===h)?h:'auto';
+  $('#tabs').innerHTML=TABS.map(([k,l])=>`<a href="#${k}" ${k===cur?'aria-current="page"':''}>${l}</a>`).join('');
+  ({auto:vAuto,collectif:vCollectif,amenagements:vAmen,comprendre:vComprendre})[cur]();}
+window.addEventListener('hashchange',()=>{route();scrollTo(0,0);});
+const intro=(e,t,p,ref)=>`<div class="intro"><div><p class="eyebrow">${e}</p><h2>${t}</h2><p class="muted">${p}</p></div>${ref?`<div class="ref">${ref}</div>`:''}</div>`;
+
+/* ---------- 1. Auto-évaluation ---------- */
+const A={s:{},c:[],sent:false};
+const LV=['Absent','Léger','Modéré','Sévère'];
+function fiche(R){
+  const L=['MÉNOPRÉV — Fiche pour préparer l\'échange avec le service de santé au travail',`Date : ${new Date().toLocaleDateString('fr-FR')}`,'','SYMPTÔMES SIGNALÉS (0 = absent, 3 = sévère)'];
+  Object.entries(MATRICE).forEach(([k,m])=>{if(A.s[k])L.push(`- ${m.label} : ${A.s[k]}/3`);});
+  L.push('','CONTRAINTES DU POSTE',...(A.c.length?A.c.map(c=>'- '+CONTRAINTES[c]):['- Aucune cochée']),'','POINTS À ABORDER');
+  if(R.resultats.length) R.resultats.forEach(r=>L.push(`- [${r.niveau.toUpperCase()}] ${r.symptome} × ${r.contrainte} (score ${r.score}) — pistes : ${r.pistes.join(', ')}`)); else L.push('- Aucun croisement significatif.');
+  if(R.orientationMedicale) L.push('','À SIGNALER : symptômes justifiant un avis médical rapide (médecin traitant ou gynécologue).');
+  L.push('','Grille inspirée de la Menopause Rating Scale, adaptée au travail et non validée. Document personnel : vous choisissez de le montrer ou non.');
+  return L.join('\n');
+}
+function vAuto(){
+  const R=calculerScores(A.s,A.c), any=Object.values(A.s).some(v=>v>0);
+  app.innerHTML=`${intro('Pour chaque salariée · rien n\'est enregistré','Ménopause et travail : faire le point',"Indiquez l'intensité de vos symptômes et les contraintes de votre poste. MénoPrév repère les croisements qui méritent un aménagement et prépare une fiche pour en parler au service de santé au travail.",'<b>Méthode :</b> grille de 9 symptômes inspirée de la Menopause Rating Scale, adaptée au contexte du travail. Elle aide à préparer un échange ; elle ne pose aucun diagnostic.')}
+  <div class="grid g2" style="align-items:start">
+    <div class="card"><div class="row" style="margin-bottom:6px"><h3>1. Mes symptômes ces dernières semaines</h3><span class="sp"></span><span class="legend">0 absent · 1 léger · 2 modéré · 3 sévère</span></div>
+      ${Object.entries(MATRICE).map(([k,m])=>`<div class="sym"><span>${m.label}</span><div class="lv" role="group" aria-label="${esc(m.label)}">${[0,1,2,3].map(v=>`<button data-s="${k}" data-v="${v}" aria-pressed="${(A.s[k]||0)===v}" title="${LV[v]}">${v}</button>`).join('')}</div></div>`).join('')}</div>
+    <div class="card grid" style="align-content:start"><h3>2. Mon poste de travail</h3>
+      ${Object.entries(CONTRAINTES).map(([k,l])=>`<label class="check"><input type="checkbox" data-c="${k}" ${A.c.includes(k)?'checked':''}> ${esc(l)}</label>`).join('')}</div>
+  </div>
+  <div class="card" id="res">
+    <h3 style="margin-bottom:4px">3. Ce qui ressort</h3>
+    ${!any?'<p class="muted">Renseignez au moins un symptôme pour voir les résultats.</p>':`
+    ${R.orientationMedicale?'<div class="alert" style="margin-block:8px"><b>Avis médical conseillé.</b> Des palpitations fréquentes ou des saignements très abondants justifient de consulter votre médecin traitant ou votre gynécologue, indépendamment du travail.</div>':''}
+    ${R.resultats.length?R.resultats.map(r=>`<div class="res"><span class="pill ${r.niveau==='prioritaire'?'bad':'warn'}">${r.niveau==='prioritaire'?'Prioritaire':'À discuter'}</span><div><b>${esc(r.symptome)}</b> × ${esc(r.contrainte)} <span class="muted small">(score ${r.score})</span><ul>${r.pistes.map(p=>`<li>${esc(p)}</li>`).join('')}</ul></div></div>`).join('')
+      :'<p class="muted">Pas de croisement marqué avec votre poste. Si les symptômes vous gênent, parlez-en quand même : à votre médecin, ou au service de santé au travail.</p>'}
+    <details style="margin-top:10px"><summary style="cursor:pointer;font-weight:700">Ma fiche pour la visite</summary><div class="fiche" id="fiche" tabindex="0" style="margin-top:8px">${esc(fiche(R))}</div><button class="btn sm" id="cp" style="margin-top:8px">Copier la fiche</button></details>
+    <div class="secret" style="margin-top:12px"><b>Vous pouvez demander à voir le médecin ou l'infirmier·e du travail à tout moment</b>, sans passer par votre employeur (art. R4624-34 du Code du travail). Ils sont tenus au secret médical.</div>
+    <div class="card" style="margin-top:12px;box-shadow:none"><h3>Aider l'entreprise à agir, sans vous identifier</h3><p class="muted small">Vos réponses (symptômes et contraintes, sans âge ni nom) peuvent rejoindre l'enquête collective. L'entreprise ne voit que des résultats regroupés, à partir de ${SEUIL} réponses.</p>
+      ${A.sent?'<p style="margin-top:8px"><b>Merci, vos réponses ont été ajoutées de façon anonyme.</b></p>':`<label class="check" style="margin-top:8px"><input type="checkbox" id="ok"> J'accepte que mes réponses soient ajoutées anonymement à l'enquête collective.</label><button class="btn sm" id="send" style="margin-top:8px" disabled>Ajouter mes réponses</button>`}</div>`}
+  </div>`;
+  app.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{A.s[b.dataset.s]=+b.dataset.v;keep(vAuto);});
+  app.querySelectorAll('[data-c]').forEach(c=>c.onchange=()=>{A.c=[...app.querySelectorAll('[data-c]:checked')].map(x=>x.dataset.c);keep(vAuto);});
+  const cp=$('#cp'); if(cp) cp.onclick=()=>{const t=fiche(R);const sel=()=>{const r=document.createRange();r.selectNodeContents($('#fiche'));const s=getSelection();s.removeAllRanges();s.addRange(r);cp.textContent='Texte sélectionné';};
+    try{navigator.clipboard.writeText(t).then(()=>{cp.textContent='Copiée';setTimeout(()=>cp.textContent='Copier la fiche',1500)},sel)}catch(e){sel()}};
+  const ok=$('#ok'),send=$('#send'); if(ok){ok.onchange=()=>send.disabled=!ok.checked; send.onclick=()=>{D.enq.push({s:{...A.s},c:[...A.c]});save();A.sent=true;keep(vAuto);};}
+}
+const keep=fn=>{const y=scrollY,open=[...app.querySelectorAll('details')].map(d=>d.open);fn();app.querySelectorAll('details').forEach((d,i)=>{if(open[i])d.open=true;});scrollTo(0,y);};
+
+/* ---------- 2. Enquête collective ---------- */
+function vCollectif(){
+  const E=D.enq, n=E.length, masked=n<SEUIL;
+  const prev=Object.entries(MATRICE).map(([k,m])=>({l:m.label,p:E.filter(r=>(r.s[k]||0)>=2).length/n*100})).sort((a,b)=>b.p-a.p);
+  const cons=Object.entries(CONTRAINTES).map(([k,l])=>({k,l,p:E.filter(r=>r.c.includes(k)).length/n*100})).sort((a,b)=>b.p-a.p);
+  const pairs={}; E.forEach(r=>calculerScores(r.s,r.c).resultats.forEach(x=>{const key=x.code+x.codeC;pairs[key]=pairs[key]||{p:0,d:0};x.niveau==='prioritaire'?pairs[key].p++:pairs[key].d++;}));
+  const top=Object.entries(pairs).map(([k,v])=>({s:k.slice(0,2),c:k.slice(2),...v})).sort((a,b)=>b.p-a.p||b.d-a.d).slice(0,5);
+  const cell=v=>{const pc=v/n*100;return `<div class="cell ${pc>=25?'bad':pc>=10?'warn':v?'ok':'na'}">${v?Math.round(pc)+' %':'–'}</div>`;};
+  app.innerHTML=`${D.demo?`<div class="demo"><span><b>Données d'exemple fictives.</b></span><span class="sp"></span><button class="btn sm" id="clr">Vider l'enquête</button></div>`:''}
+  ${intro('Pour l\'infirmier·e, les RH, le CSE','Enquête collective anonyme',"Résultats regroupés des salariées qui ont choisi de partager leurs réponses. Ils montrent où agir sur l'organisation du travail, sans viser personne.",`<b>Anonymat :</b> ni âge, ni nom, ni date. Résultats affichés à partir de ${SEUIL} réponses.`)}
+  <div class="kpis"><div class="kpi"><div class="l">Réponses partagées</div><div class="v">${n}</div></div>
+   ${masked?'':`<div class="kpi"><div class="l">Au moins un croisement prioritaire</div><div class="v" style="color:var(--bad)">${Math.round(E.filter(r=>calculerScores(r.s,r.c).resultats.some(x=>x.niveau==='prioritaire')).length/n*100)} %</div><div class="d">des répondantes</div></div>
+   <div class="kpi"><div class="l">Avis médical conseillé</div><div class="v">${Math.round(E.filter(r=>calculerScores(r.s,r.c).orientationMedicale).length/n*100)} %</div><div class="d">palpitations ou saignements importants</div></div>`}</div>
+  ${masked?`<p class="muted">Résultats masqués sous ${SEUIL} réponses.</p>`:`
+  <div class="grid g2">
+    <div class="card"><h3 style="margin-bottom:8px">Symptômes modérés ou sévères</h3>${prev.map(x=>`<div class="hbar"><span>${esc(x.l)}</span><span class="t"><i style="width:${x.p}%"></i></span><b>${Math.round(x.p)} %</b></div>`).join('')}</div>
+    <div class="card"><h3 style="margin-bottom:8px">Contraintes de poste déclarées</h3>${cons.map(x=>`<div class="hbar"><span>${esc(x.l)}</span><span class="t"><i style="width:${x.p}%"></i></span><b>${Math.round(x.p)} %</b></div>`).join('')}</div>
+  </div>
+  <div class="card"><h3 style="margin-bottom:4px">Croisements prioritaires</h3><p class="muted small" style="margin-bottom:10px">Part des répondantes chez qui le croisement atteint le niveau « prioritaire » (score ≥ ${SEUIL_PRIORITAIRE}). Les croisements de poids 1 plafonnent à 3 : ils ne sont jamais prioritaires, seulement « à discuter ».</p>
+   <div class="tw"><table class="mx"><thead><tr><th>Symptôme</th>${Object.keys(CONTRAINTES).map(c=>`<th title="${esc(CONTRAINTES[c])}">${c}</th>`).join('')}</tr></thead><tbody>
+   ${Object.entries(MATRICE).map(([s,m])=>`<tr><td>${esc(m.label)}</td>${Object.keys(CONTRAINTES).map(c=>m.contraintes[c]?`<td>${cell(pairs[s+c]?.p||0)}</td>`:'<td></td>').join('')}</tr>`).join('')}
+   </tbody></table></div><p class="muted small" style="margin-top:8px">${Object.entries(CONTRAINTES).map(([k,l])=>`${k} : ${esc(l)}`).join(' · ')}</p></div>
+  ${top.length?`<div class="card"><h3 style="margin-bottom:6px">Où agir en premier</h3><ol style="margin:0;padding-left:1.2rem;display:grid;gap:6px">${top.map(t=>`<li><b>${esc(MATRICE[t.s].label)}</b> × ${esc(CONTRAINTES[t.c])} : ${t.p} prioritaire${t.p>1?'s':''}, ${t.d} à discuter. <a href="#amenagements">Voir les aménagements</a></li>`).join('')}</ol></div>`:''}`}`;
+  const c=$('#clr'); if(c) c.onclick=()=>{if(!c.dataset.c){c.dataset.c=1;c.textContent='Confirmer';c.classList.add('danger');return;}D={demo:false,enq:[]};save();vCollectif();};
+}
+
+/* ---------- 3. Côté entreprise ---------- */
+const AMEN={
+  C1:['Points d\'eau fraîche et zones de pause ventilées','Ventilateurs individuels, réglage de la température par zone','Tenues et EPI en matières respirantes, tailles et coupes adaptées'],
+  C2:['Possibilité temporaire de sortir du travail de nuit ou de réduire les postes de nuit','Plannings prévisibles, repos suffisants entre deux postes'],
+  C3:['Sanitaires accessibles et pauses à la demande','Organisation du remplacement sur les postes fixes (caisse, ligne, accueil)','Protections périodiques à disposition'],
+  C4:['Aides à la manutention, rotation des tâches','Alternance des postures, temps de récupération'],
+  C5:['Check-lists et procédures écrites sur les tâches critiques','Tâches de haute vigilance en début de poste, binôme possible'],
+  C6:['Possibilité de s\'isoler quelques minutes après une situation tendue','Soutien de l\'encadrement, débriefing'],
+  C7:['Espaces calmes réservables, casques anti-bruit','Plages sans réunion ni interruption'],
+  C8:['Choix entre plusieurs tenues, matières légères','Tenue de rechange autorisée sur le lieu de travail']
+};
+function vAmen(){
+  app.innerHTML=`${intro('Pour l\'employeur, les RH et le CSE','Agir sur l\'organisation du travail',"La ménopause n'est pas une maladie, mais certaines conditions de travail aggravent nettement les symptômes. Les aménagements les plus utiles sont souvent simples et profitent à tous.",'<b>Cadre :</b> obligation générale de prévention et adaptation du travail à la personne (art. L4121-1 et L4121-2 du Code du travail). Les aménagements individuels passent par le médecin du travail (art. L4624-3).')}
+  <div class="grid g2">${Object.entries(CONTRAINTES).map(([k,l])=>`<div class="card"><p class="eyebrow">${k}</p><h3 style="margin-bottom:6px">${esc(l)}</h3><ul style="margin:0;padding-left:1.1rem;color:var(--muted);display:grid;gap:4px">${AMEN[k].map(a=>`<li>${esc(a)}</li>`).join('')}</ul></div>`).join('')}</div>
+  <div class="card"><h3 style="margin-bottom:8px">Une démarche en quatre temps</h3><ol style="margin:0;padding-left:1.2rem;display:grid;gap:6px">
+    <li><b>Parler du sujet :</b> sensibiliser les managers et les équipes, pour que les salariées osent en parler sans gêne.</li>
+    <li><b>Repérer :</b> enquête collective anonyme (onglet précédent) et retours du service de santé au travail.</li>
+    <li><b>Intégrer au DUERP :</b> traiter la chaleur, les tenues, l'accès aux sanitaires et les horaires comme des facteurs de risque à part entière, par unité de travail.</li>
+    <li><b>Aménager :</b> mesures collectives d'abord, puis aménagements individuels proposés par le médecin du travail.</li></ol></div>`;
+}
+
+/* ---------- 4. Comprendre ---------- */
+const QUIZ=[
+  {q:"La ménopause survient en moyenne vers 51 ans en France.",r:true,e:"Oui. Elle est précédée d'une périménopause qui peut durer plusieurs années, avec des symptômes parfois plus gênants que la ménopause elle-même."},
+  {q:"Les bouffées de chaleur ne durent que quelques semaines.",r:false,e:"Faux. Elles peuvent durer plusieurs années chez certaines femmes, avec une intensité très variable de l'une à l'autre."},
+  {q:"Les troubles de la concentration font partie des symptômes possibles.",r:true,e:"Oui. Les difficultés de concentration et de mémoire sont fréquentes, souvent liées aux troubles du sommeil."},
+  {q:"En parler au travail oblige à révéler sa situation à son employeur.",r:false,e:"Faux. Le médecin ou l'infirmier·e du travail sont tenus au secret médical. Ils peuvent proposer un aménagement sans en donner la raison médicale."},
+  {q:"Un aménagement utile pour la ménopause peut profiter à toute l'équipe.",r:true,e:"Oui. Une meilleure ventilation, des tenues respirantes ou un accès facile aux sanitaires améliorent les conditions de travail de tous."}
+];
+const QA={};
+function vComprendre(){
+  const done=Object.keys(QA).length, good=QUIZ.filter((x,i)=>QA[i]===x.r).length;
+  app.innerHTML=`${intro('Sensibilisation','Vrai ou faux ?',"Cinq idées reçues sur la ménopause au travail. Utilisable en atelier, en réunion d'équipe ou sur un stand.",'')}
+  <div class="grid">${QUIZ.map((x,i)=>`<div class="card quiz"><b>${i+1}. ${esc(x.q)}</b>
+    <div class="row"><button class="btn ghost sm" data-q="${i}" data-r="1" aria-pressed="${QA[i]===true}">Vrai</button><button class="btn ghost sm" data-q="${i}" data-r="0" aria-pressed="${QA[i]===false}">Faux</button>
+    ${QA[i]!==undefined?`<span class="pill ${QA[i]===x.r?'ok':'bad'}">${QA[i]===x.r?'Bonne réponse':'Pas tout à fait'}</span>`:''}</div>
+    ${QA[i]!==undefined?`<p class="muted">${esc(x.e)}</p>`:''}</div>`).join('')}</div>
+  ${done===QUIZ.length?`<div class="card row"><b>${good} / ${QUIZ.length} bonnes réponses.</b><span class="sp"></span><button class="btn sm" id="again">Recommencer</button></div>`:''}`;
+  app.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{QA[b.dataset.q]=b.dataset.r==='1';keep(vComprendre);});
+  const a=$('#again'); if(a) a.onclick=()=>{Object.keys(QA).forEach(k=>delete QA[k]);vComprendre();};
+}
+route();
+})();
+</script>
+</body>
+</html>

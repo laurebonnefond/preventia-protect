@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Mes 100 premiers jours</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap">
+<style>
+/* PréventIA Protect · Santé mentale · module « Mes 100 premiers jours »
+   Layout : bandeau navy + onglets collants (charte Protect), contenu en colonne unique 640px, jauges collantes pendant le parcours */
+:root{
+  --navy:oklch(24% .06 258); --navy-2:oklch(32% .07 255);
+  --teal:oklch(52% .1 182); --teal-l:oklch(72% .13 182); --orange:oklch(70% .17 50);
+  --bg:oklch(98.2% .004 250); --card:#fff; --card-2:oklch(95.5% .008 250); --line:oklch(91% .01 250);
+  --ink:oklch(25% .03 258); --muted:oklch(50% .02 258); --on-accent:#fff;
+  --bad:oklch(55% .19 20); --bad-bg:oklch(95.5% .035 20);
+  --g-sommeil:oklch(52% .15 270); --g-energie:oklch(68% .16 60); --g-moral:oklch(58% .17 0);
+  --g-relations:oklch(52% .1 182); --g-equilibre:oklch(55% .16 310);
+  --f-display:"DM Serif Display", Georgia, serif; --f-body:"DM Sans", system-ui, sans-serif;
+  --r:14px; --shadow:0 1px 2px rgb(15 30 60/.05),0 8px 24px -12px rgb(15 30 60/.15);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:oklch(17% .025 258); --card:oklch(22% .03 258); --card-2:oklch(27% .035 258); --line:oklch(32% .03 258);
+  --ink:oklch(93% .01 250); --muted:oklch(72% .02 250); --teal:oklch(72% .12 182); --on-accent:oklch(17% .025 258);
+  --bad:oklch(72% .15 20); --bad-bg:oklch(28% .06 20);
+  --g-sommeil:oklch(72% .13 270); --g-energie:oklch(78% .14 65); --g-moral:oklch(72% .15 0);
+  --g-relations:oklch(72% .12 182); --g-equilibre:oklch(72% .14 310); --shadow:none; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:oklch(17% .025 258); --card:oklch(22% .03 258); --card-2:oklch(27% .035 258); --line:oklch(32% .03 258);
+  --ink:oklch(93% .01 250); --muted:oklch(72% .02 250); --teal:oklch(72% .12 182); --on-accent:oklch(17% .025 258);
+  --bad:oklch(72% .15 20); --bad-bg:oklch(28% .06 20);
+  --g-sommeil:oklch(72% .13 270); --g-energie:oklch(78% .14 65); --g-moral:oklch(72% .15 0);
+  --g-relations:oklch(72% .12 182); --g-equilibre:oklch(72% .14 310); --shadow:none; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15.5px;line-height:1.55}
+h1,h2,h3{margin:0;text-wrap:balance;line-height:1.15}
+h2{font-family:var(--f-display);font-weight:400;font-size:1.75rem}
+h3{font-size:1.02rem;font-weight:700}
+p{margin:0}
+a{color:var(--teal)}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+.muted{color:var(--muted)}
+.eyebrow{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:700;color:var(--teal)}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* Bandeau Protect */
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--navy)}
+.pp-top{background:var(--navy);color:#fff}
+.pp-top .in{max-width:1280px;margin:0 auto;min-height:58px;display:flex;align-items:center;gap:12px;padding-block:8px}
+.pp-top .back{color:rgb(255 255 255/.75);text-decoration:none;font-size:13px;padding:6px 8px;border-radius:8px;white-space:nowrap}
+.pp-top .back:hover{background:rgb(255 255 255/.08);color:#fff}
+.pp-top .ico{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,var(--teal),var(--teal-l));flex:none}
+.pp-top .ico svg{width:20px;height:20px}
+.pp-top h1{font-family:var(--f-display);font-weight:400;font-size:19px;line-height:1.1}
+.pp-top small{display:block;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;opacity:.65}
+.pp-top .sp{flex:1}
+.pp-top .pill{font-size:11px;padding:4px 10px;border-radius:20px;background:rgb(255 255 255/.12);white-space:nowrap}
+@media (max-width:520px){.pp-top .pill{display:none}}
+
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:var(--card);border-bottom:1px solid var(--line)}
+.tabs .in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+.tabs a{display:block;text-align:center;padding:13px 4px 11px;font-weight:600;font-size:13.5px;color:var(--muted);text-decoration:none;border-bottom:2px solid transparent}
+.tabs a[aria-current="page"]{color:var(--teal);border-color:var(--teal)}
+
+main{max-width:640px;margin:0 auto;padding-block:22px 48px}
+.stack{display:flex;flex-direction:column;gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;box-shadow:var(--shadow)}
+.btn{border:0;border-radius:10px;padding:13px 20px;font-weight:700;background:var(--teal);color:var(--on-accent);font-size:15px}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.linklike{background:none;border:0;padding:0;color:var(--teal);font-weight:700;text-decoration:underline}
+.note{border-left:3px solid var(--orange);background:var(--card);padding:10px 14px;border-radius:0 10px 10px 0;font-size:13px}
+
+/* Accueil */
+.timeline{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;align-items:end;height:64px}
+.timeline i{display:block;border-radius:4px 4px 2px 2px;background:var(--teal);opacity:.25}
+.timeline i.k{opacity:1;background:var(--orange)}
+.tl-legend{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.pick{display:grid;gap:10px}
+.pick.cols{grid-template-columns:repeat(2,minmax(0,1fr))}
+.opt{text-align:left;background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.opt b{font-size:.98rem}
+.opt small{color:var(--muted);font-size:.83rem;line-height:1.35}
+.opt[aria-pressed="true"]{border-color:var(--teal);box-shadow:0 0 0 3px oklch(52% .1 182/.15)}
+.opt[aria-pressed="true"] b{color:var(--teal)}
+.trust{display:flex;gap:10px;align-items:flex-start;font-size:.88rem}
+.trust svg{flex:none;width:20px;height:20px;color:var(--teal);margin-top:2px}
+
+/* Jauges */
+.gauges{position:sticky;top:calc(env(safe-area-inset-top,0px) + 46px);z-index:40;background:var(--bg);border-bottom:1px solid var(--line)}
+.gauges .in{max-width:640px;margin:0 auto;padding-block:10px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.gauge{display:flex;flex-direction:column;gap:4px;min-width:0}
+.gauge span{font-size:.7rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.track{height:7px;background:var(--card-2);border-radius:99px;overflow:hidden}
+.fill{height:100%;border-radius:99px;transition:width .8s cubic-bezier(.3,1.4,.5,1)}
+.gauge.low span{color:var(--bad)}
+
+/* Scène */
+.when{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.day{font-family:var(--f-display);font-size:1.6rem;line-height:1}
+.progress{display:flex;gap:3px}
+.progress i{width:12px;height:4px;border-radius:4px;background:var(--line)}
+.progress i.on{background:var(--teal)}
+.scene-text{font-size:1.1rem;line-height:1.6}
+.choices{display:flex;flex-direction:column;gap:10px}
+.choice{text-align:left;background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:13px 16px;font-size:.98rem;line-height:1.45}
+.choice:hover:not([disabled]){border-color:var(--teal)}
+.choice[disabled]{opacity:.45;cursor:default}
+.choice.chosen{opacity:1;border-color:var(--teal);box-shadow:0 0 0 3px oklch(52% .1 182/.15)}
+.feedback{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--shadow)}
+.deltas{display:flex;flex-wrap:wrap;gap:6px}
+.delta{font-size:.78rem;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--card-2);font-variant-numeric:tabular-nums}
+.delta.up{color:var(--teal)} .delta.down{color:var(--bad)}
+.alertbox{background:var(--bad-bg);border-radius:var(--r);padding:14px 16px;font-size:.93rem}
+.alertbox b{color:var(--bad)}
+
+/* Bilan */
+.bb{display:grid;grid-template-columns:84px 1fr 32px;gap:10px;align-items:center;font-size:.9rem}
+.bb .track{height:11px}
+.bb span:last-child{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.tip{display:grid;grid-template-columns:5px 1fr;gap:12px}
+.tip i{border-radius:5px}
+
+/* Météo */
+.wx-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.wx{background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.72rem;color:var(--muted)}
+.wx svg{width:34px;height:34px}
+.wx[aria-pressed="true"]{border-color:var(--teal);color:var(--ink);font-weight:700}
+.wx-result{display:flex;gap:14px;align-items:center}
+.wx-result svg{width:60px;height:60px;flex:none}
+
+/* Outils */
+.tool summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.tool summary::-webkit-details-marker{display:none}
+.tool summary::after{content:"+";font-family:var(--f-display);font-size:1.6rem;color:var(--teal);line-height:1}
+.tool[open] summary::after{content:"–"}
+.tool .body{padding-top:14px;display:flex;flex-direction:column;gap:12px}
+.breath{display:grid;place-items:center;height:220px;position:relative}
+.orb{width:190px;height:190px;max-width:100%;border-radius:50%;background:radial-gradient(circle at 35% 35%,var(--teal-l),var(--teal));transform:scale(.55);transition:transform 5s ease-in-out;opacity:.85}
+.orb.in{transform:scale(1)}
+.breath-label{position:absolute;font-family:var(--f-display);font-size:1.4rem;text-align:center;color:var(--ink)}
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg button{border:1.5px solid var(--line);background:var(--card);border-radius:99px;padding:7px 14px;font-weight:600}
+.seg button[aria-pressed="true"]{border-color:var(--teal);color:var(--teal)}
+.steps{display:flex;flex-direction:column;gap:9px;margin:0;padding:0;list-style:none}
+.steps li{display:grid;grid-template-columns:32px 1fr;gap:10px;align-items:start}
+.steps .n{width:32px;height:32px;border-radius:50%;background:var(--card-2);display:grid;place-items:center;font-weight:700}
+.ground .big{font-family:var(--f-display);font-size:3rem;color:var(--teal);line-height:1}
+
+/* Aide */
+.contact{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center}
+.contact .num{font-size:1.35rem;font-weight:700;letter-spacing:.01em;font-variant-numeric:tabular-nums;user-select:all}
+.contact small{grid-column:1/-1;color:var(--muted);font-size:.87rem;line-height:1.4}
+.copy{border:1px solid var(--line);background:transparent;border-radius:99px;padding:5px 12px;font-size:.82rem;font-weight:600}
+.urgent{border-left:5px solid var(--bad)}
+.entreprise{border-left:5px solid var(--teal)}
+.form{display:grid;gap:10px}
+.form label{display:flex;flex-direction:column;gap:4px;font-size:.8rem;font-weight:600;color:var(--muted)}
+.form input{padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--bg);font-size:.95rem;color:var(--ink)}
+.foot{font-size:.8rem;color:var(--muted);text-align:center;padding-top:10px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="pp-top gut"><div class="in">
+  <a class="back" href="index.html">← Santé mentale</a>
+  <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-5-8-11a5 5 0 0 1 8-4 5 5 0 0 1 8 4c0 6-8 11-8 11z"/></svg></div>
+  <div><small>PréventIA Protect · Santé mentale</small><h1>Mes 100 premiers jours</h1></div>
+  <span class="sp"></span><span class="pill">Anonyme · rien n'est enregistré</span>
+</div></header>
+<nav class="tabs gut" aria-label="Sections"><div class="in">
+  <a href="#parcours" data-tab="parcours">Parcours</a>
+  <a href="#meteo" data-tab="meteo">Météo</a>
+  <a href="#outils" data-tab="outils">Respirer</a>
+  <a href="#aide" data-tab="aide">Aide</a>
+</div></nav>
+<div id="gz"></div>
+<main class="gut" id="app"></main>
+
+<script>
+(function(){
+const $ = s => document.querySelector(s);
+const app = $('#app'), gz = $('#gz');
+const store = { get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}, set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}} };
+
+/* =========================================================
+   DONNÉES — situations, secteurs, scènes
+   ========================================================= */
+const SITUATIONS = {
+  premier:{label:"Premier emploi", sub:"Je découvre le monde du travail", j1:"Premier jour de votre vie professionnelle."},
+  nouveau:{label:"Nouvelle entreprise", sub:"J'ai déjà travaillé ailleurs", j1:"Premier jour. Dans votre ancienne entreprise, vous connaissiez tout. Ici, vous repartez de zéro."},
+  retour:{label:"Retour à l'emploi", sub:"Après une pause, un arrêt long ou une reconversion", j1:"Premier jour après une longue pause. Vous vous demandez si vous serez à la hauteur."}
+};
+const GAUGES = [{k:"sommeil",l:"Sommeil"},{k:"energie",l:"Énergie"},{k:"moral",l:"Moral"},{k:"relations",l:"Relations"},{k:"equilibre",l:"Équilibre"}];
+const DAYS = ["Jour 1","Jour 5","Semaine 2","Semaine 3","Mois 1","Semaine 6","Mois 2","Semaine 10","Semaine 12","Mois 3"];
+
+const C = {
+ arrivee:{t:"{j1} On vous présente quinze personnes, trois logiciels et une dizaine de sigles maison en une heure. Vous en avez retenu quelques-uns.",c:[
+  {t:"Je fais comme si tout était clair.",fx:{moral:-5,energie:-5},fb:"Faire semblant d'avoir compris, c'est s'exposer au stress toute la semaine. Personne n'attend d'un nouvel arrivant qu'il retienne tout le premier jour."},
+  {t:"Je prends des notes et je demande le livret d'accueil.",fx:{moral:5,relations:5},fb:"Un carnet de questions rassure et montre votre implication. S'il n'existe pas de livret d'accueil, la demande aide aussi l'entreprise à en créer un."},
+  {t:"Je demande qui sera mon ou ma référent·e les premières semaines.",fx:{relations:10,moral:5,energie:-5},fb:"Un référent identifié réduit nettement le stress d'intégration. Si personne n'est prévu, votre question aide l'équipe à s'organiser."}]},
+ referent:{t:"Votre référent·e est en congé toute la semaine. Vous êtes bloqué·e sur une tâche depuis ce matin et tout le monde a l'air débordé.",c:[
+  {t:"Je me débrouille seul·e, je ne veux pas déranger.",fx:{moral:-10,energie:-10},fb:"Rester bloqué·e une journée coûte plus cher, à vous comme à l'entreprise, qu'une question de deux minutes."},
+  {t:"Je regroupe mes questions et je demande 10 minutes à un·e collègue.",fx:{relations:10,moral:5},fb:"Regrouper ses questions et annoncer la durée (« tu aurais 10 minutes ? ») rend la demande facile à accepter."},
+  {t:"J'en parle à mon ou ma manager.",fx:{moral:5,relations:5},fb:"Signaler un blocage n'a rien d'un aveu d'incompétence. C'est une information utile pour organiser le travail."}]},
+ mails:{t:"22 h. Votre téléphone vibre : un mail de votre manager. Vous êtes en période d'essai et vous voulez faire bonne impression.",c:[
+  {t:"Je réponds tout de suite, et je surveille mes mails jusqu'à minuit.",fx:{sommeil:-15,equilibre:-15,energie:-5},fb:"Être joignable en permanence épuise vite, et l'habitude est difficile à défaire. Le droit à la déconnexion est inscrit dans le Code du travail (art. L2242-17)."},
+  {t:"Je lirai demain matin, sauf urgence réelle.",fx:{sommeil:5,equilibre:10},fb:"Un mail envoyé le soir n'appelle pas forcément de réponse le soir. Dans le doute, posez la question : « Quand tu m'écris tard, tu attends une réponse le soir même ? »"},
+  {t:"Je coupe les notifications pro après ma journée.",fx:{sommeil:10,equilibre:15,moral:5},fb:"Séparer nettement temps pro et temps perso, c'est ce qui protège le mieux du surmenage sur la durée."}]},
+ erreur:{t:"Vous vous êtes trompé·e sur un dossier. En réunion, votre manager vous le reproche sèchement, devant toute l'équipe.",c:[
+  {t:"Je réponds sur le même ton.",fx:{relations:-15,moral:-10},fb:"Sur le coup, ça soulage. Après, c'est plus difficile à rattraper. Votre colère est légitime, le moment ne l'est pas.",tool:"stop"},
+  {t:"Je ne dis rien et je rumine toute la soirée.",fx:{moral:-15,sommeil:-10},fb:"Garder tout pour soi, ça s'accumule. Une erreur est normale quand on découvre un poste. Être mis·e en cause publiquement de façon répétée, en revanche, ne l'est pas."},
+  {t:"Je corrige, puis je demande à en reparler en tête à tête.",fx:{moral:5,relations:10,energie:-5},fb:"Vous séparez l'erreur, que vous corrigez, de la façon dont on vous parle, dont vous pouvez discuter : « J'ai compris mon erreur. Je préférerais qu'on en parle à deux. »"}]},
+ remarques:{t:"Depuis quelques semaines, un collègue fait des remarques sur vous : votre accent, votre âge, votre « lenteur ». Les autres rient. Ça recommence ce matin.",c:[
+  {t:"Je ris avec eux, je ne veux pas faire d'histoires.",fx:{moral:-15,relations:-5},fb:"Quand c'est répété et que ça blesse, ce n'est plus de l'humour. Des agissements répétés qui dégradent les conditions de travail peuvent relever du harcèlement moral (art. L1152-1), et des remarques sur l'âge ou l'accent, de la discrimination (art. L1132-1)."},
+  {t:"Je lui dis calmement, en tête à tête, que ça ne me fait pas rire.",fx:{moral:10,relations:5},fb:"Dire stop clairement, sans agressivité, suffit souvent. Si ça continue, ce n'est plus à vous de régler ça seul·e."},
+  {t:"J'en parle : manager, RH, référent·e du CSE ou médecin du travail.",fx:{moral:10,relations:5},fb:"Vous n'avez pas à gérer ça seul·e. Notez les dates et les phrases exactes : ça aidera à vous faire entendre.",help:true}]},
+ pot:{t:"Pot de départ vendredi soir. On vous ressert plusieurs fois. Vous avez 40 minutes de route pour rentrer.",c:[
+  {t:"Je me sens bien, je prends la route.",fx:{moral:-15,energie:-10},fb:"Se sentir bien ne dit rien du taux d'alcool. La limite est de 0,5 g/L, et de 0,2 g/L en permis probatoire. L'alcool est en cause dans près d'un tiers des accidents mortels sur la route, et le trajet domicile-travail fait partie du risque routier professionnel."},
+  {t:"Je passe aux softs après un verre, ou je rentre avec quelqu'un qui n'a pas bu.",fx:{relations:5,moral:5},fb:"Le bon réflexe. Décider avant le pot comment on rentre évite d'avoir à choisir quand on n'est plus lucide."},
+  {t:"J'attends une heure avec un café, ça va passer.",fx:{moral:-10,sommeil:-10,energie:-5},fb:"Le café ne change rien. Le corps élimine environ 0,10 à 0,15 g/L par heure : seul le temps fait baisser l'alcoolémie."}]},
+ coupdemou:{t:"Depuis deux semaines, vous n'avez plus envie de rien. Vous dormez mal, vous mangez peu, et même vos loisirs vous ennuient.",c:[
+  {t:"Ça va passer, je serre les dents.",fx:{moral:-15},fb:"Ça arrive à beaucoup de monde, surtout dans les périodes de changement. Quand ça dure plus de deux semaines, il faut en parler : ça se soigne d'autant mieux qu'on s'en occupe tôt.",help:true},
+  {t:"J'en parle à un proche.",fx:{moral:15,relations:10},fb:"En parler soulage déjà. Si ça ne passe pas, cette personne peut vous accompagner vers un professionnel."},
+  {t:"Je consulte : médecin traitant, médecin ou infirmier·e du travail.",fx:{moral:15},fb:"Très bon réflexe. Vous pouvez demander une visite au service de santé au travail à tout moment (art. R4624-34). L'équipe médicale est tenue au secret : votre employeur ne saura pas ce que vous y dites.",help:true}]},
+ essai:{t:"La fin de votre période d'essai approche. Personne ne vous en a parlé. Vous dormez mal en y pensant.",c:[
+  {t:"J'attends en espérant que tout se passe bien.",fx:{moral:-10,sommeil:-10},fb:"L'incertitude est l'un des stress les plus usants. Ne pas savoir pèse souvent plus lourd qu'une mauvaise nouvelle."},
+  {t:"Je demande un point d'étape à mon ou ma manager.",fx:{moral:15,relations:5},fb:"Un point d'étape permet d'entendre ce qui va, ce qui reste à travailler, et de lever le doute. C'est une démarche professionnelle, et souvent appréciée."},
+  {t:"Je liste ce que j'ai appris et réussi depuis mon arrivée.",fx:{moral:10,sommeil:5},fb:"Faire le point sur ses réussites rééquilibre le regard qu'on porte sur soi. C'est aussi une bonne base pour l'entretien."}]}
+};
+
+const SECTEURS = {
+ bureau:{label:"Bureau et tertiaire",sub:"Open space, écrans, réunions",
+  a:{t:"Open space bruyant, notifications toutes les deux minutes, trois réunions dans la journée. À 17 h, vous n'avez rien terminé.",c:[
+   {t:"Je reste plus tard pour finir au calme.",fx:{equilibre:-15,energie:-10},fb:"Rester tard devient vite la norme. Le problème vient de l'organisation du travail, pas de votre rythme."},
+   {t:"Je bloque deux créneaux sans notifications dans mon agenda.",fx:{energie:10,moral:10},fb:"Chaque interruption demande plusieurs minutes pour se reconcentrer. Protéger des plages de travail est une méthode reconnue."},
+   {t:"Je demande à mon manager ce qui est prioritaire.",fx:{moral:5,relations:5},fb:"Poser la question des priorités, c'est éviter de tout faire à moitié."}]},
+  b:{t:"Deux jours de télétravail par semaine. Vous connaissez encore mal l'équipe et vous vous sentez un peu à l'écart.",c:[
+   {t:"Je reste concentré·e sur mes tâches, on verra bien.",fx:{relations:-10,moral:-10},fb:"En début de poste, le télétravail peut isoler. Les liens se créent surtout dans les moments informels."},
+   {t:"Je propose un café, en visio ou sur place.",fx:{relations:15,moral:5},fb:"Un petit geste suffit souvent. Les collègues apprécient qu'un nouveau prenne l'initiative."},
+   {t:"Je demande plus de présentiel pendant mon intégration.",fx:{relations:10,moral:5},fb:"Beaucoup d'entreprises recommandent plus de présentiel les premiers mois. Ça se discute."}]}},
+ production:{label:"Industrie et production",sub:"Cadence, machines, travail en équipes",
+  a:{t:"La ligne a pris du retard. Le chef d'équipe vous demande de neutraliser un protecteur de machine « juste pour cette fois ».",c:[
+   {t:"J'obéis, je suis nouveau.",fx:{moral:-5,energie:-5},fb:"La pression de production est une cause fréquente d'accidents graves sur machine. Un protecteur neutralisé ne prévient pas."},
+   {t:"Je refuse calmement et je propose d'appeler la maintenance.",fx:{relations:-5,moral:10},fb:"Dire « je ne peux pas le faire en sécurité » est légitime. Face à un danger grave et imminent, vous pouvez exercer votre droit de retrait (art. L4131-1)."},
+   {t:"Je demande l'avis de l'animateur sécurité.",fx:{relations:5,moral:5},fb:"Faire appel à la personne compétente évite de porter seul·e une décision qui ne vous revient pas."}]},
+  b:{t:"Vous passez en 3×8. Cette semaine, vous êtes de nuit. En journée, la maison est bruyante.",c:[
+   {t:"Je dors quand je peux, par petits bouts.",fx:{sommeil:-15,energie:-10},fb:"Un sommeil fractionné récupère mal. La fatigue s'accumule de semaine en semaine."},
+   {t:"Je dors dès le retour : noir, bouchons, téléphone coupé.",fx:{sommeil:15,energie:5},fb:"Le travail de nuit dérègle l'horloge biologique. Un sommeil protégé, toujours à la même heure, limite les dégâts. Le travail de nuit ouvre aussi droit à un suivi médical adapté."},
+   {t:"J'explique mes horaires et mes besoins à mes proches.",fx:{equilibre:10,relations:5,sommeil:5},fb:"Les proches ne peuvent respecter votre sommeil que s'ils connaissent votre rythme."}]}},
+ logistique:{label:"Logistique et transport",sub:"Indicateurs, tournées, route",
+  a:{t:"Votre scanner affiche votre productivité en temps réel. Vous êtes sous l'objectif et le chiffre s'affiche en rouge.",c:[
+   {t:"J'accélère, quitte à mal porter les colis.",fx:{energie:-15,moral:-5},fb:"Accélérer au détriment des gestes, c'est le cocktail des TMS et du stress."},
+   {t:"Je garde les bons gestes et je demande l'objectif prévu pour un débutant.",fx:{moral:10,energie:5},fb:"Les objectifs des nouveaux sont souvent progressifs. Mieux vaut le savoir que s'épuiser à atteindre celui des anciens."},
+   {t:"Je demande leurs astuces aux anciens.",fx:{relations:10,moral:5},fb:"L'expérience des collègues fait gagner du temps sans y laisser son dos."}]},
+  b:{t:"Tournée en retard. Votre téléphone vibre sans arrêt au volant : clients, dispatch, collègues.",c:[
+   {t:"Je réponds en conduisant.",fx:{moral:-10,energie:-5},fb:"Téléphoner en conduisant multiplie par trois le risque d'accident. Votre employeur ne peut pas exiger que vous répondiez en roulant."},
+   {t:"Je m'arrête en sécurité pour répondre.",fx:{moral:5},fb:"Quelques minutes de perdues, contre un risque qui ne vaut pas le coup."},
+   {t:"Je préviens le dispatch que je ne réponds qu'à l'arrêt.",fx:{relations:5,moral:10},fb:"Fixer la règle une fois pour toutes évite d'avoir à choisir à chaque appel."}]}},
+ commerce:{label:"Commerce et accueil",sub:"Clients, objectifs, samedis",
+  a:{t:"Samedi, c'est le rush. Un client vous parle mal : « Vous êtes incompétent, je veux voir le responsable. »",c:[
+   {t:"Je lui réponds du tac au tac.",fx:{relations:-15,moral:-10},fb:"Le client s'en prend souvent à la situation, pas à vous. Répondre sur le même ton fait monter la tension.",tool:"stop"},
+   {t:"Je reste calme : « Je comprends. Je vais chercher ma responsable. »",fx:{moral:5,relations:10},fb:"Reformuler et passer le relais est une compétence professionnelle. Vous n'avez pas à encaisser l'agressivité seul·e."},
+   {t:"Je souris, je subis, puis je craque dans la réserve.",fx:{moral:-15},fb:"Vos émotions sont normales. Une agression verbale se signale et se débriefe en équipe : c'est même une obligation de prévention pour l'employeur."}]},
+  b:{t:"Les résultats de vente sont affichés en salle. Votre nom est en bas du tableau.",c:[
+   {t:"Je me compare et je me dis que je ne suis pas à la hauteur.",fx:{moral:-15,sommeil:-5},fb:"Vous démarrez : être en bas du tableau au début est logique. Comparez-vous plutôt à vous-même il y a un mois."},
+   {t:"Je demande ses astuces au meilleur vendeur.",fx:{relations:10,moral:5},fb:"Les meilleurs aiment souvent transmettre. Vous progressez et vous créez du lien."},
+   {t:"Je demande un objectif adapté à mon ancienneté.",fx:{moral:10,relations:5},fb:"Un objectif réaliste motive. Un objectif inaccessible épuise."}]}},
+ soin:{label:"Soin et aide à la personne",sub:"Charge émotionnelle, sous-effectif",
+  a:{t:"Une résidente que vous accompagniez depuis votre arrivée est décédée cette nuit. Le service continue comme si de rien n'était.",c:[
+   {t:"Je ravale mes émotions et j'enchaîne.",fx:{moral:-15,sommeil:-10},fb:"Être touché·e n'a rien d'un manque de professionnalisme. Ce qui use, c'est de ne jamais pouvoir en parler."},
+   {t:"J'en parle à une collègue pendant la pause.",fx:{moral:10,relations:10},fb:"Partager ce qu'on ressent avec quelqu'un qui connaît le métier soulage vraiment."},
+   {t:"Je demande s'il existe des temps d'analyse de pratiques.",fx:{moral:10},fb:"Ces groupes existent dans beaucoup d'établissements, justement pour ces situations."}]},
+  b:{t:"Deux absents ce soir. On vous demande de rester après votre service. Encore.",c:[
+   {t:"J'accepte, comme toujours.",fx:{equilibre:-15,energie:-15},fb:"Dire oui à tout mène à l'épuisement. Le sous-effectif est un problème d'organisation, pas de bonne volonté."},
+   {t:"J'accepte une heure, pas plus, et je le dis clairement.",fx:{equilibre:-5,relations:5,moral:5},fb:"Poser une limite claire, c'est aider sans s'oublier."},
+   {t:"Je refuse ce soir et je propose une autre date.",fx:{equilibre:10,relations:-5,moral:5},fb:"Un refus argumenté avec une proposition passe beaucoup mieux qu'un non sec.",tool:"non"}]}},
+ btp:{label:"BTP et chantier",sub:"Délais, hauteur, déplacements",
+  a:{t:"Le chantier a du retard. Il faut poser la dernière rangée en hauteur avant la pluie. Votre harnais est resté au camion.",c:[
+   {t:"J'y vais sans, c'est l'affaire de cinq minutes.",fx:{moral:-5},fb:"Les chutes de hauteur restent une des premières causes d'accidents mortels dans le BTP. Aller chercher le harnais prend moins de temps qu'un accident."},
+   {t:"Je vais chercher le harnais.",fx:{energie:-5,moral:5},fb:"Le bon réflexe, même sous pression."},
+   {t:"Je dis au chef que ce n'est pas faisable en sécurité avant la pluie.",fx:{relations:-5,moral:10},fb:"Mieux vaut un retard qu'un accident. Un bon chef de chantier le sait."}]},
+  b:{t:"Grand déplacement : trois semaines loin de chez vous. Le soir à l'hôtel, l'équipe boit beaucoup.",c:[
+   {t:"Je suis le mouvement tous les soirs.",fx:{sommeil:-15,energie:-10,relations:5},fb:"L'alcool aide à s'endormir mais dégrade la qualité du sommeil. Au réveil, la vigilance sur le chantier en pâtit."},
+   {t:"Je participe un peu, puis j'appelle mes proches.",fx:{equilibre:10,relations:5},fb:"Garder le lien avec la maison protège le moral pendant les déplacements."},
+   {t:"Je garde une activité à moi : marche, sport, lecture.",fx:{sommeil:5,moral:10},fb:"Un moment pour soi chaque soir, c'est un vrai sas entre travail et repos."}]}},
+ restauration:{label:"Restauration et hôtellerie",sub:"Coup de feu, horaires coupés",
+  a:{t:"Coup de feu. Le chef crie sur toute la brigade, et sur vous en particulier.",c:[
+   {t:"Je crie à mon tour.",fx:{relations:-15,moral:-5},fb:"Ajouter du bruit au bruit ne règle rien pendant le service.",tool:"stop"},
+   {t:"Je reste sur mes gestes et j'en reparle après le service.",fx:{moral:5,relations:5},fb:"Le coup de feu n'excuse pas tout. À froid, on peut dire : « J'ai besoin qu'on me parle autrement. »"},
+   {t:"Je ne dis rien, mais j'y pense toute la nuit.",fx:{sommeil:-15,moral:-10},fb:"Ruminer seul·e ronge le sommeil. En parler à un collègue de confiance aide à prendre du recul."}]},
+  b:{t:"Horaires coupés : 10 h-15 h puis 18 h-minuit, six jours sur sept. Vous ne voyez plus vos proches.",c:[
+   {t:"Je tiens, ça ira mieux plus tard.",fx:{equilibre:-15,moral:-10},fb:"Tenir sans aménagement, c'est souvent comme ça que l'épuisement s'installe."},
+   {t:"J'utilise la coupure pour une vraie pause : repas, sieste, marche.",fx:{energie:10,sommeil:5},fb:"Une coupure bien utilisée recharge les batteries pour le service du soir."},
+   {t:"Je vérifie mon planning et mes repos avec le manager.",fx:{equilibre:10,moral:5},fb:"En règle générale, 11 heures de repos sont dues entre deux journées de travail. Vérifier son planning, c'est son droit."}]}},
+ autre:{label:"Autre métier",sub:"Situations communes à tous",
+  a:{t:"On vous confie chaque jour des tâches qui n'ont rien à voir avec votre fiche de poste.",c:[
+   {t:"Je fais sans rien dire.",fx:{moral:-10},fb:"Quelques tâches annexes, ça arrive. Si elles prennent le pas sur votre poste, il faut en parler."},
+   {t:"J'en parle à mon manager en rappelant mes missions.",fx:{moral:10,relations:5},fb:"S'appuyer sur la fiche de poste rend la discussion factuelle, pas personnelle."},
+   {t:"Je demande conseil aux RH.",fx:{moral:5},fb:"Les RH peuvent clarifier ce qui relève ou non de votre poste."}]},
+  b:{t:"Votre planning change au dernier moment, pour la troisième fois ce mois-ci. Vous aviez prévu quelque chose.",c:[
+   {t:"J'accepte, comme à chaque fois.",fx:{relations:5,moral:-10,equilibre:-10},fb:"Dire oui à tout finit par épuiser, et la frustration s'accumule."},
+   {t:"Je refuse sèchement.",fx:{relations:-10,moral:5},fb:"Votre besoin est légitime, mais le ton ferme la discussion."},
+   {t:"J'explique mon empêchement et je propose une autre solution.",fx:{moral:5,relations:5,equilibre:5},fb:"Je comprends, je ne peux pas parce que…, je propose… : la formule en trois temps marche presque partout.",tool:"non"}]}}
+};
+
+/* =========================================================
+   ÉTAT
+   ========================================================= */
+const S = {sit:null, sect:null, step:-1, g:null, answered:false};
+const fill = s => s.replace('{j1}', SITUATIONS[S.sit]?.j1 || '');
+const clamp = v => Math.max(0,Math.min(100,v));
+const scenes = () => { const m = SECTEURS[S.sect]; return [C.arrivee,C.referent,m.a,C.mails,C.erreur,m.b,C.remarques,C.pot,C.coupdemou,C.essai]; };
+const reset = () => { S.g={sommeil:60,energie:60,moral:60,relations:55,equilibre:60}; };
+const label = k => GAUGES.find(x=>x.k===k).l;
+const scrollTop = () => window.scrollTo(0,0);
+
+/* =========================================================
+   PARCOURS
+   ========================================================= */
+function gaugesHTML(){
+  return `<div class="gauges gut"><div class="in" role="group" aria-label="Vos jauges">${GAUGES.map(x=>`
+    <div class="gauge ${S.g[x.k]<=25?'low':''}"><span>${x.l}</span>
+    <div class="track" role="meter" aria-label="${x.l}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${S.g[x.k]}"><div class="fill" style="width:${S.g[x.k]}%;background:var(--g-${x.k})"></div></div></div>`).join('')}</div></div>`;
+}
+function renderAccueil(){
+  gz.innerHTML='';
+  const days=[1,5,14,21,30,42,60,70,84,90], keyD=[0,4,9];
+  app.innerHTML = `<section class="stack">
+    <p class="eyebrow">Intégration et santé mentale</p>
+    <h2>Les 100 premiers jours dans une entreprise comptent double.</h2>
+    <p class="muted">Dix situations que vivent beaucoup de nouveaux salariés, du premier jour à la fin de la période d'essai. À chaque fois, trois réactions possibles et leurs effets sur cinq jauges : sommeil, énergie, moral, relations, équilibre.</p>
+    <div class="card"><div class="timeline" aria-hidden="true">${days.map((d,i)=>`<i class="${keyD.includes(i)?'k':''}" style="height:${18+i*4.5}px"></i>`).join('')}</div>
+      <div class="tl-legend"><span>Jour 1</span><span>Mois 1</span><span>Fin de période d'essai</span></div></div>
+    <h3>Votre situation</h3><div class="pick">${Object.entries(SITUATIONS).map(([k,s])=>`<button class="opt" data-s="${k}" aria-pressed="${S.sit===k}"><b>${s.label}</b><small>${s.sub}</small></button>`).join('')}</div>
+    <h3>Votre secteur</h3><div class="pick cols">${Object.entries(SECTEURS).map(([k,s])=>`<button class="opt" data-m="${k}" aria-pressed="${S.sect===k}"><b>${s.label}</b><small>${s.sub}</small></button>`).join('')}</div>
+    <button class="btn" id="go" ${S.sit&&S.sect?'':'disabled'}>Commencer le parcours</button>
+    <div class="card trust"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+      <p>Vos réponses ne sont ni enregistrées ni transmises à l'employeur. Cet outil de prévention ne pose aucun diagnostic.</p></div>
+  </section>`;
+  app.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{S.sit=b.dataset.s;renderAccueil();});
+  app.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{S.sect=b.dataset.m;renderAccueil();});
+  $('#go').onclick=()=>{reset();S.step=0;S.answered=false;renderParcours();scrollTop();};
+}
+function renderParcours(){
+  if(!S.sit||!S.sect||S.step<0){renderAccueil();return;}
+  if(S.answered){S.step++;S.answered=false;}
+  const list=scenes();
+  if(S.step>=list.length){renderBilan();return;}
+  const sc=list[S.step];
+  gz.innerHTML=gaugesHTML();
+  app.innerHTML=`<section class="stack">
+    <div class="when"><div><p class="eyebrow">${SECTEURS[S.sect].label}</p><p class="day">${DAYS[S.step]}</p></div>
+      <div class="progress" aria-label="Étape ${S.step+1} sur ${list.length}">${list.map((_,i)=>`<i class="${i<=S.step?'on':''}"></i>`).join('')}</div></div>
+    <p class="scene-text">${fill(sc.t)}</p>
+    <div class="choices">${sc.c.map((c,i)=>`<button class="choice" data-i="${i}">${c.t}</button>`).join('')}</div>
+    <div id="fb" class="stack"></div>
+  </section>`;
+  app.querySelectorAll('.choice').forEach(b=>b.onclick=()=>choose(sc,+b.dataset.i,b));
+}
+function choose(sc,i,btn){
+  if(S.answered)return; S.answered=true;
+  const c=sc.c[i], d=Object.entries(c.fx);
+  app.querySelectorAll('.choice').forEach(b=>b.disabled=true); btn.classList.add('chosen');
+  d.forEach(([k,v])=>S.g[k]=clamp(S.g[k]+v));
+  gz.querySelectorAll('.gauge').forEach((g,j)=>{const k=GAUGES[j].k;g.querySelector('.fill').style.width=S.g[k]+'%';g.classList.toggle('low',S.g[k]<=25);g.querySelector('.track').setAttribute('aria-valuenow',S.g[k]);});
+  const tools={stop:"la méthode STOP",breath:"la respiration 3-6-5",non:"la formule pour dire non"};
+  const last=S.step===scenes().length-1;
+  $('#fb').innerHTML=`<div class="feedback" role="status">
+      <div class="deltas">${d.map(([k,v])=>`<span class="delta ${v>0?'up':'down'}">${v>0?'+':''}${v} ${label(k)}</span>`).join('')}</div>
+      <p>${c.fb}</p>
+      ${c.tool?`<p><button class="linklike" data-goto="outils" data-open="${c.tool}">Essayer ${tools[c.tool]}</button></p>`:''}
+      ${c.help?`<p><button class="linklike" data-goto="aide">Voir qui peut vous aider</button></p>`:''}
+    </div>
+    ${S.g.moral<=25?`<div class="alertbox"><b>Le moral est bas.</b> Dans le jeu comme dans la réalité, ça ne se porte pas seul·e. <button class="linklike" data-goto="aide">Qui peut m'aider ?</button></div>`:''}
+    <button class="btn" id="next">${last?'Voir mon bilan des 100 jours':'Étape suivante'}</button>`;
+  bindGoto($('#fb'));
+  $('#next').onclick=()=>{S.step++;S.answered=false;renderParcours();scrollTop();};
+  $('#fb').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'nearest'});
+}
+const TIPS={
+  sommeil:"Une heure de coucher régulière, le téléphone pro coupé le soir, et une chambre noire si vous travaillez de nuit.",
+  energie:"Toutes vos pauses, un vrai repas, et des objectifs réalistes pour un débutant.",
+  moral:"En parler tôt : un proche, votre médecin, le service de santé au travail.",
+  relations:"Demander de l'aide, proposer un café, dire les choses au calme et en tête à tête.",
+  equilibre:"Le droit à la déconnexion, des limites claires sur les heures en plus, du temps pour vous."
+};
+function renderBilan(){
+  gz.innerHTML='';
+  const avg=Math.round(GAUGES.reduce((a,x)=>a+S.g[x.k],0)/5);
+  const msg=avg>=65?"Une intégration réussie : vous avez trouvé votre place en prenant soin de vous."
+          :avg>=45?"Une intégration en dents de scie, comme pour beaucoup de nouveaux salariés. Vous savez où sont vos points de vigilance."
+          :"Une intégration difficile. Dans la réalité, vous ne seriez pas seul·e : des personnes sont là pour vous aider.";
+  const low=[...GAUGES].sort((a,b)=>S.g[a.k]-S.g[b.k]).slice(0,2);
+  app.innerHTML=`<section class="stack">
+    <p class="eyebrow">Jour 100 · Bilan</p>
+    <h2>${msg}</h2>
+    <div class="card stack" style="gap:10px">${GAUGES.map(x=>`<div class="bb"><span>${x.l}</span><div class="track"><div class="fill" style="width:${S.g[x.k]}%;background:var(--g-${x.k})"></div></div><span>${S.g[x.k]}</span></div>`).join('')}</div>
+    <h3>À garder pour la suite</h3>
+    ${low.map(x=>`<div class="card tip"><i style="background:var(--g-${x.k})"></i><div><b>${x.l}</b><p class="muted">${TIPS[x.k]}</p></div></div>`).join('')}
+    <p class="note">Dans la réalité, il existe bien plus que trois réactions possibles. Si une situation ressemble à ce que vous vivez, <button class="linklike" data-goto="aide">parlez-en à quelqu'un</button>.</p>
+    <button class="btn" id="again">Refaire le parcours avec un autre secteur</button>
+    <button class="btn ghost" data-goto="meteo">Faire ma météo intérieure</button>
+  </section>`;
+  bindGoto(app);
+  $('#again').onclick=()=>{S.step=-1;S.sect=null;renderAccueil();scrollTop();};
+}
+
+/* =========================================================
+   MÉTÉO INTÉRIEURE
+   ========================================================= */
+const WX=[{l:"Grand soleil",v:3},{l:"Éclaircies",v:2},{l:"Pluie",v:1},{l:"Orage",v:0}];
+function wxSVG(v){
+  const sun=`<circle cx="20" cy="20" r="8" fill="var(--orange)"/><g stroke="var(--orange)" stroke-width="2.5" stroke-linecap="round"><path d="M20 4v4M20 32v4M4 20h4M32 20h4M8.7 8.7l2.8 2.8M28.5 28.5l2.8 2.8M8.7 31.3l2.8-2.8M28.5 11.5l2.8-2.8"/></g>`;
+  const cloud=(x=0,y=0,c='var(--muted)')=>`<path transform="translate(${x} ${y})" d="M12 34h18a7 7 0 0 0 0-14 9 9 0 0 0-17 3 5.5 5.5 0 0 0-1 11z" fill="${c}"/>`;
+  if(v===3)return `<svg viewBox="0 0 40 40" aria-hidden="true">${sun}</svg>`;
+  if(v===2)return `<svg viewBox="0 0 40 40" aria-hidden="true"><g transform="translate(-6 -6) scale(.85)">${sun}</g>${cloud(2,2)}</svg>`;
+  if(v===1)return `<svg viewBox="0 0 40 40" aria-hidden="true">${cloud(0,-6)}<g stroke="var(--g-sommeil)" stroke-width="2.5" stroke-linecap="round"><path d="M14 32l-2 4M21 32l-2 4M28 32l-2 4"/></g></svg>`;
+  return `<svg viewBox="0 0 40 40" aria-hidden="true">${cloud(0,-6,'var(--ink)')}<path d="M21 28l-5 7h5l-3 5 8-9h-5l3-3z" fill="var(--orange)"/></svg>`;
+}
+const WXQ=[
+  {k:"sommeil",q:"Votre sommeil cette semaine ?",tip:"Gardez une heure de coucher régulière et coupez les notifications pro le soir."},
+  {k:"energie",q:"Votre énergie au travail ?",tip:"Prenez toutes vos pauses et un vrai repas. Si la fatigue dure, parlez-en au service de santé au travail."},
+  {k:"moral",q:"Votre moral ?",tip:"Quand le moral est bas plus de deux semaines, il faut en parler : un proche, votre médecin, l'équipe santé au travail."},
+  {k:"stress",q:"Votre calme face aux tensions ?",tip:"Essayez la respiration 3-6-5 : 5 minutes, 3 fois par jour. Et repérez ce qui vous met le plus sous tension."},
+  {k:"ambiance",q:"L'ambiance avec votre équipe ?",tip:"Si quelque chose se répète et vous blesse (remarques, cris, mise à l'écart), notez-le et parlez-en à une personne de confiance."}
+];
+const W={};
+function renderMeteo(){
+  gz.innerHTML='';
+  const done=WXQ.every(q=>W[q.k]!==undefined);
+  app.innerHTML=`<section class="stack">
+    <p class="eyebrow">30 secondes</p>
+    <h2>Ma météo intérieure</h2>
+    <p class="muted">Pas de bonne ou de mauvaise réponse. Choisissez le temps qu'il fait à l'intérieur, cette semaine.</p>
+    ${WXQ.map(q=>`<div class="stack" style="gap:8px"><h3>${q.q}</h3><div class="wx-row">${WX.map(w=>`<button class="wx" data-k="${q.k}" data-v="${w.v}" aria-pressed="${W[q.k]===w.v}">${wxSVG(w.v)}${w.l}</button>`).join('')}</div></div>`).join('')}
+    <div>${done?meteoResult():`<p class="muted">Répondez aux cinq questions pour voir votre météo.</p>`}</div>
+    <p class="foot">Rien n'est enregistré ni transmis. Ce n'est pas un diagnostic, juste un moyen de faire le point.</p>
+  </section>`;
+  app.querySelectorAll('.wx').forEach(b=>b.onclick=()=>{W[b.dataset.k]=+b.dataset.v;const y=window.scrollY;renderMeteo();window.scrollTo(0,y);});
+  const r=$('#wxreset'); if(r) r.onclick=()=>{Object.keys(W).forEach(k=>delete W[k]);renderMeteo();};
+  bindGoto(app);
+}
+function meteoResult(){
+  const vals=WXQ.map(q=>W[q.k]), avg=vals.reduce((a,b)=>a+b,0)/vals.length, storms=vals.filter(v=>v===0).length;
+  const overall=avg>=2.5?3:avg>=1.75?2:avg>=1?1:0;
+  const weak=WXQ.filter(q=>W[q.k]<=1), strong=storms>=2||W.moral===0;
+  return `<div class="stack">
+    <div class="card wx-result">${wxSVG(overall)}<div><p class="eyebrow">Votre météo de la semaine</p><h3>${["Ciel orageux","Temps pluvieux","Temps variable","Beau temps"][overall]}</h3></div></div>
+    ${strong?`<div class="alertbox"><b>Ça a l'air lourd en ce moment.</b> Vous méritez d'en parler : un proche, votre médecin, l'équipe santé au travail. <button class="linklike" data-goto="aide">Voir les contacts</button></div>`:''}
+    ${weak.length?weak.map(q=>`<div class="card"><b>${q.q.replace(' ?','')}</b><p class="muted">${q.tip}</p></div>`).join(''):`<div class="card"><p>Plutôt beau fixe. Notez ce qui vous aide en ce moment : ça servira les semaines plus grises.</p></div>`}
+    <button class="btn ghost" id="wxreset">Recommencer</button>
+  </div>`;
+}
+
+/* =========================================================
+   OUTILS
+   ========================================================= */
+let breathTimer=null;
+function renderOutils(openId){
+  gz.innerHTML=''; stopBreath();
+  app.innerHTML=`<section class="stack">
+    <p class="eyebrow">Utile tout de suite</p>
+    <h2>Ma boîte à outils</h2>
+    <details class="card tool" id="t-breath"><summary><div><h3>Respiration 3-6-5</h3><p class="muted">Retrouver son calme en 1 à 5 minutes</p></div></summary><div class="body">
+      <p>3 fois par jour, 6 respirations par minute, pendant 5 minutes : inspirez 5 secondes, expirez 5 secondes. Avant une réunion difficile, après un conflit, ou pour s'endormir.</p>
+      <div class="seg" role="group" aria-label="Durée"><button data-d="60" aria-pressed="true">1 min</button><button data-d="180" aria-pressed="false">3 min</button><button data-d="300" aria-pressed="false">5 min</button></div>
+      <div class="breath"><div class="orb" id="orb"></div><div class="breath-label" id="blab">Prêt·e ?</div></div>
+      <button class="btn" id="bgo">Démarrer</button>
+    </div></details>
+    <details class="card tool" id="t-ground"><summary><div><h3>Ancrage 5-4-3-2-1</h3><p class="muted">Quand les pensées s'emballent</p></div></summary><div class="body">
+      <div class="ground" id="ground"></div><button class="btn" id="gnext">Suivant</button>
+    </div></details>
+    <details class="card tool" id="t-stop"><summary><div><h3>Méthode STOP</h3><p class="muted">Avant de réagir à chaud</p></div></summary><div class="body">
+      <ol class="steps">
+        <li><span class="n">S</span><div><b>Stop.</b> Je m'arrête et je ne réponds pas tout de suite.</div></li>
+        <li><span class="n">T</span><div><b>Temps de respirer.</b> Trois expirations longues.</div></li>
+        <li><span class="n">O</span><div><b>Observer.</b> Qu'est-ce que je ressens ? Que se passe-t-il vraiment ?</div></li>
+        <li><span class="n">P</span><div><b>Poursuivre.</b> Je choisis ma réponse au lieu de la subir. Parfois : « On peut en reparler dans dix minutes ? »</div></li>
+      </ol></div></details>
+    <details class="card tool" id="t-non"><summary><div><h3>Dire non sans casser la relation</h3><p class="muted">La formule en trois temps</p></div></summary><div class="body">
+      <ol class="steps">
+        <li><span class="n">1</span><div><b>Je comprends.</b> « Je vois que c'est urgent pour l'équipe. »</div></li>
+        <li><span class="n">2</span><div><b>Je ne peux pas, parce que…</b> « Ce soir, j'ai un engagement que je ne peux pas déplacer. »</div></li>
+        <li><span class="n">3</span><div><b>Je propose.</b> « Je peux arriver plus tôt demain, ou prendre le créneau de jeudi. »</div></li>
+      </ol>
+      <p class="muted">Ça marche aussi face à une demande dangereuse : « Je comprends qu'il faut aller vite. Je ne peux pas le faire sans protection. Je m'y mets dès que j'ai le bon matériel. »</p></div></details>
+    <details class="card tool" id="t-deco"><summary><div><h3>Se déconnecter le soir</h3><p class="muted">Le droit à la déconnexion, en pratique</p></div></summary><div class="body">
+      <ol class="steps">
+        <li><span class="n">1</span><div>Demandez à votre manager ce qu'il attend vraiment quand il écrit tard.</div></li>
+        <li><span class="n">2</span><div>Coupez les notifications pro à heure fixe, ou utilisez le mode « ne pas déranger ».</div></li>
+        <li><span class="n">3</span><div>Si vous écrivez le soir, programmez l'envoi au lendemain matin.</div></li>
+        <li><span class="n">4</span><div>Renseignez-vous sur la charte ou l'accord de déconnexion de l'entreprise.</div></li>
+      </ol></div></details>
+    <details class="card tool" id="t-nuit"><summary><div><h3>Dormir en horaires décalés</h3><p class="muted">Travail posté, de nuit, horaires coupés</p></div></summary><div class="body">
+      <ol class="steps">
+        <li><span class="n">1</span><div>Toujours la même heure de coucher après un poste de nuit.</div></li>
+        <li><span class="n">2</span><div>Chambre noire et fraîche, bouchons d'oreilles, téléphone coupé.</div></li>
+        <li><span class="n">3</span><div>Une sieste de 20 minutes avant un poste de nuit, pas plus de 30.</div></li>
+        <li><span class="n">4</span><div>Pas de caféine dans les 6 heures avant de dormir.</div></li>
+        <li><span class="n">5</span><div>Un vrai repas au milieu du poste, léger avant de se coucher.</div></li>
+      </ol></div></details>
+  </section>`;
+  let dur=60;
+  app.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{dur=+b.dataset.d;app.querySelectorAll('.seg button').forEach(x=>x.setAttribute('aria-pressed',x===b));});
+  $('#bgo').onclick=()=>{ if(breathTimer){stopBreath();return;} startBreath(dur); };
+  const G=[[5,"choses que vous voyez"],[4,"choses que vous pouvez toucher"],[3,"sons que vous entendez"],[2,"odeurs que vous sentez"],[1,"respiration lente et complète"]];
+  let gi=0; const gr=()=>{$('#ground').innerHTML=`<div class="big">${G[gi][0]}</div><p>${G[gi][1]}. Prenez le temps de les nommer mentalement.</p>`;$('#gnext').textContent=gi<G.length-1?'Suivant':'Recommencer';};
+  gr(); $('#gnext').onclick=()=>{gi=(gi+1)%G.length;gr();};
+  if(openId){const d=$('#t-'+openId); if(d){d.open=true; setTimeout(()=>d.scrollIntoView({block:'center'}),50);}}
+}
+function startBreath(dur){
+  const orb=$('#orb'),lab=$('#blab'); let t=0,phase=0; $('#bgo').textContent='Arrêter';
+  const tick=()=>{ const left=dur-t;
+    if(left<=0){stopBreath();lab.textContent='Bravo.';return;}
+    if(t%5===0){phase=(t/5)%2;orb.classList.toggle('in',phase===0);}
+    lab.innerHTML=`${phase===0?'Inspirez':'Expirez'}<br><small class="muted" style="font-size:.9rem;font-family:var(--f-body)">${Math.floor(left/60)}:${String(left%60).padStart(2,'0')}</small>`; t++; };
+  tick(); breathTimer=setInterval(tick,1000);
+}
+function stopBreath(){ if(breathTimer){clearInterval(breathTimer);breathTimer=null;} const o=$('#orb'); if(o){o.classList.remove('in');$('#bgo').textContent='Démarrer';$('#blab').textContent='Prêt·e ?';} }
+
+/* =========================================================
+   AIDE — contacts nationaux + contacts de l'entreprise (paramétrables)
+   ========================================================= */
+const CFG_KEY='pp_sm_contacts';
+const CFG_FIELDS=[
+  {k:"entreprise",l:"Nom de l'entreprise",ph:"Ex. : Menuiserie Dupont"},
+  {k:"sst",l:"Service de prévention et de santé au travail",ph:"Ex. : SPSTI de votre département"},
+  {k:"sstTel",l:"Téléphone du service de santé au travail",ph:"05 00 00 00 00"},
+  {k:"rh",l:"Contact RH",ph:"Prénom Nom, poste ou e-mail"},
+  {k:"referent",l:"Référent·e harcèlement (CSE ou employeur)",ph:"Prénom Nom"},
+  {k:"ecoute",l:"Cellule d'écoute psychologique (si l'entreprise en a une)",ph:"Numéro gratuit"}
+];
+const AIDE=[
+  {g:"Danger immédiat",items:[
+    {n:"15",t:"SAMU",d:"Urgence médicale, 24 h/24. Le 112 fonctionne aussi depuis tout portable.",u:true},
+    {n:"3114",t:"Numéro national de prévention du suicide",d:"En cas d'idées suicidaires, ou si vous vous inquiétez pour quelqu'un. Gratuit, 24 h/24, 7 j/7.",u:true}]},
+  {g:"Pour en parler",items:[
+    {n:"09 72 39 40 50",t:"SOS Amitié",d:"Écoute anonyme, 24 h/24, 7 j/7."},
+    {n:"0 800 235 236",t:"Fil Santé Jeunes",d:"Jusqu'à 25 ans. Gratuit et anonyme, tous les jours de 9 h à 23 h."},
+    {n:"0 980 980 930",t:"Alcool Info Service",d:"Anonyme, tous les jours de 8 h à 2 h."},
+    {n:"0 800 23 13 13",t:"Drogues Info Service",d:"Gratuit et anonyme, tous les jours de 8 h à 2 h."}]},
+  {g:"Au travail",items:[
+    {t:"Le médecin ou l'infirmier·e du travail",d:"Vous pouvez demander une visite à tout moment, sans passer par votre employeur (art. R4624-34). Secret médical garanti."},
+    {t:"Les représentants du personnel (CSE)",d:"Ils peuvent vous écouter, vous accompagner et alerter l'employeur."},
+    {t:"L'inspection du travail",d:"Pour faire respecter le droit du travail : horaires, repos, harcèlement."},
+    {n:"3928",t:"Défenseur des droits",d:"En cas de discrimination liée à l'âge, l'origine, le handicap, le sexe…"}]},
+  {g:"Pour être suivi·e",items:[
+    {t:"Votre médecin traitant",d:"Souvent la première porte. Il peut vous orienter."},
+    {t:"Mon soutien psy",d:"Des séances chez un·e psychologue remboursées par l'Assurance Maladie. Informations sur ameli.fr."}]}
+];
+const esc=s=>String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+function contactCard(it){return `<div class="card contact ${it.u?'urgent':''} ${it.e?'entreprise':''}">
+  <div><b>${esc(it.t)}</b>${it.n?`<div class="num">${esc(it.n)}</div>`:''}</div>
+  ${it.n?`<button class="copy" data-copy="${esc(it.n)}">Copier</button>`:'<span></span>'}
+  ${it.d?`<small>${esc(it.d)}</small>`:''}</div>`;}
+function renderAide(){
+  gz.innerHTML='';
+  const cfg=store.get(CFG_KEY)||{};
+  const ent=[];
+  if(cfg.sst||cfg.sstTel) ent.push({t:cfg.sst||"Service de santé au travail",n:cfg.sstTel,d:"Médecin et infirmier·e du travail, tenus au secret médical.",e:1});
+  if(cfg.rh) ent.push({t:"Ressources humaines",d:cfg.rh,e:1});
+  if(cfg.referent) ent.push({t:"Référent·e harcèlement",d:cfg.referent,e:1});
+  if(cfg.ecoute) ent.push({t:"Cellule d'écoute psychologique",n:cfg.ecoute,d:"Proposée par l'entreprise. Anonyme et confidentielle.",e:1});
+  app.innerHTML=`<section class="stack">
+    <p class="eyebrow">Vous n'êtes pas seul·e</p>
+    <h2>Qui peut m'aider ?</h2>
+    <p class="muted">Demander de l'aide est un réflexe professionnel, comme demander comment fonctionne un outil qu'on ne connaît pas.</p>
+    <h3>${cfg.entreprise?'Chez '+esc(cfg.entreprise):'Dans votre entreprise'}</h3>
+    ${ent.length?ent.map(contactCard).join(''):`<p class="note">Les contacts internes (santé au travail, RH, référent·e, cellule d'écoute) n'ont pas encore été renseignés. Le service RH ou HSE peut les ajouter en bas de cette page.</p>`}
+    ${AIDE.map(sec=>`<h3>${sec.g}</h3>${sec.items.map(contactCard).join('')}`).join('')}
+    <details class="card tool" id="cfg"><summary><div><h3>Paramétrer les contacts de l'entreprise</h3><p class="muted">Réservé au service RH ou HSE</p></div></summary>
+      <form class="form body" id="cfgForm">${CFG_FIELDS.map(f=>`<label for="cfg-${f.k}">${f.l}<input id="cfg-${f.k}" name="${f.k}" value="${esc(cfg[f.k]||'')}" placeholder="${f.ph}" autocomplete="off"></label>`).join('')}
+        <button class="btn" type="submit">Enregistrer les contacts</button>
+        <p class="muted" style="font-size:.82rem">Enregistrés sur ce poste uniquement. Aucune donnée personnelle de salarié n'est stockée.</p>
+      </form></details>
+    <p class="foot">Les numéros sont à composer depuis votre téléphone.</p>
+  </section>`;
+  app.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>{
+    const txt=b.dataset.copy.replace(/\s/g,''), ok=()=>{b.textContent='Copié';setTimeout(()=>b.textContent='Copier',1500);};
+    try{navigator.clipboard.writeText(txt).then(ok,()=>selectNum(b));}catch(e){selectNum(b);}
+  });
+  $('#cfgForm').onsubmit=e=>{e.preventDefault();const o={};new FormData(e.target).forEach((v,k)=>o[k]=String(v).trim());store.set(CFG_KEY,o);renderAide();scrollTop();};
+}
+function selectNum(b){const n=b.parentElement.querySelector('.num');if(!n)return;const r=document.createRange();r.selectNodeContents(n);const s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent='Sélectionné';}
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+let pendingOpen=null;
+function bindGoto(root){root.querySelectorAll('[data-goto]').forEach(b=>b.onclick=()=>{pendingOpen=b.dataset.open||null;if(location.hash==='#'+b.dataset.goto)route();else location.hash=b.dataset.goto;});}
+function route(){
+  const h=(location.hash||'').slice(1)||'parcours';
+  stopBreath();
+  document.querySelectorAll('.tabs a').forEach(a=>{ if(a.dataset.tab===h) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
+  const open=pendingOpen; pendingOpen=null;
+  if(h==='meteo')renderMeteo(); else if(h==='outils')renderOutils(open); else if(h==='aide')renderAide(); else renderParcours();
+  if(!open) scrollTop();
+}
+window.addEventListener('hashchange',route);
+route();
+})();
+</script>
+</body>
+</html>

@@ -123,14 +123,18 @@ section{padding:80px 0}
 .eco{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 .eco svg{width:100%;max-width:980px;display:block;margin:30px auto 0;overflow:visible}
 .eco .node{cursor:pointer}
-.eco .node circle.bgc{fill:#fff;stroke:var(--line);stroke-width:1.5;transition:all .25s}
-.eco .node:hover circle.bgc{stroke:var(--teal);stroke-width:3;filter:drop-shadow(0 8px 14px rgb(15 118 110/.25))}
-.eco .node text.lb{font-size:12px;font-weight:600;fill:var(--ink);text-anchor:middle}
-.eco .node text.em{font-size:24px;text-anchor:middle;dominant-baseline:central}
-.eco .spoke{stroke:oklch(80% .06 182);stroke-width:1.5;stroke-dasharray:4 5;animation:flow 1.6s linear infinite}
+.eco .node .halo{fill:var(--c);opacity:.09;transition:opacity .25s,r .25s}
+.eco .node .tile{transition:transform .25s cubic-bezier(.3,1.5,.5,1);filter:drop-shadow(0 10px 14px color-mix(in oklch,var(--c) 38%,transparent))}
+.eco .node:hover .tile,.eco .node:focus-visible .tile{transform:scale(1.1)}
+.eco .node:hover .halo{opacity:.18}
+.eco .node .pill{fill:#fff;stroke:var(--line);transition:stroke .25s}
+.eco .node:hover .pill{stroke:var(--c)}
+.eco .node text.lb{font-size:12px;font-weight:600;fill:var(--ink);text-anchor:middle;dominant-baseline:central}
+.eco .spoke{stroke:var(--c);stroke-opacity:.45;stroke-width:1.5;stroke-dasharray:3 6;stroke-linecap:round;animation:flow 1.6s linear infinite}
 @keyframes flow{to{stroke-dashoffset:-18}}
-.eco .new circle.bgc{stroke:var(--orange);stroke-width:2.5}
-.eco .newtag{font-size:9px;font-weight:700;fill:#fff}
+.eco .dot-new{fill:var(--orange);stroke:#fff;stroke-width:2.5}
+.eco .legende text{font-size:12px;font-weight:600;fill:var(--muted);dominant-baseline:central}
+@media (prefers-reduced-motion:reduce){.eco .spoke{animation:none}.eco .node .tile{transition:none}}
 
 /* ---------- MODULES ---------- */
 .filters{display:flex;gap:8px;flex-wrap:wrap;margin:28px 0 24px}
@@ -282,7 +286,7 @@ footer a{color:var(--teal);text-decoration:none}
   <div class="kicker">Écosystème</div>
   <h2 class="h2">Une plateforme, tous les risques</h2>
   <p class="sub">Chaque module alimente les autres : une habilitation expirée remonte au cockpit, un AT de l’infirmerie nourrit le DUERP, un plan de prévention s’appuie sur le référentiel des entreprises extérieures.</p>
-  <svg id="hub" viewBox="0 0 980 600" role="img" aria-label="Carte des modules PréventIA Protect"></svg>
+  <svg id="hub" viewBox="0 -10 980 640" role="img" aria-label="Carte des modules PréventIA Protect"></svg>
 </div></section>
 
 <!-- ================= MODULES ================= -->
@@ -433,10 +437,30 @@ filters.onclick = e => {
   grid.querySelectorAll('.card').forEach(c => c.classList.toggle('hide', !!b.dataset.f && c.dataset.dom !== b.dataset.f));
 };
 
-/* ---------- 3. Carte écosystème (moniteur central + modules en couronne) ---------- */
+/* ---------- 3. Carte écosystème (moniteur central + modules en couronne) ----------
+   Pictogrammes au trait (grille 24 × 24) : une seule famille graphique pour toute la couronne.
+   Pour un nouveau module : ajouter son id ici, sinon l'emoji du module est utilisé. */
+const PICTOS = {
+  atmp:  '<path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/><path d="M15 8h4v4"/>',
+  duerp: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="m9 15 2 2 4-4"/>',
+  carto: '<path d="m9 4-6 2v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>',
+  suivi: '<path d="M3 20h18"/><path d="M6 20v-6M11 20V8M16 20v-9"/><path d="m19 4-3 3-2-2"/>',
+  epi:   '<path d="M4 16v-1a8 8 0 0 1 16 0v1"/><path d="M2 16h20v3H2z"/><path d="M10 7.4V5h4v2.4"/>',
+  inv:   '<path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/>',
+  reg:   '<path d="M2 5h6a4 4 0 0 1 4 4v11a3 3 0 0 0-3-3H2z"/><path d="M22 5h-6a4 4 0 0 0-4 4v11a3 3 0 0 1 3-3h7z"/>',
+  inf:   '<path d="M5 3H4v6a5 5 0 0 0 10 0V3h-1"/><path d="M9 14v1a5 5 0 0 0 10 0v-2"/><circle cx="19" cy="11" r="2"/>',
+  sm:    '<path d="M9 21v-3H6.5A2.5 2.5 0 0 1 4 15.5V13l-2-1 2-3.5A7.5 7.5 0 1 1 15 16v5"/><path d="M11.5 12.5s-2.5-1.4-2.5-3a1.5 1.5 0 0 1 2.5-1 1.5 1.5 0 0 1 2.5 1c0 1.6-2.5 3-2.5 3z"/>',
+  sf:    '<path d="M12 3c-2 0-3 1.6-3 3.5 0 2.4 3 6 3 6s3-3.6 3-6C15 4.6 14 3 12 3z"/><path d="M10.5 12.5 7 21M13.5 12.5 17 21"/>',
+  coact: '<circle cx="9" cy="7" r="3.5"/><path d="M2 21v-1.5A4.5 4.5 0 0 1 6.5 15h5a4.5 4.5 0 0 1 4.5 4.5V21"/><path d="M16 3.5a3.5 3.5 0 0 1 0 7M22 21v-1.5a4.5 4.5 0 0 0-3-4.2"/>',
+  env:   '<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10z"/><path d="M2 21c0-3 1.9-5.4 5.1-6.4"/>',
+  chim:  '<path d="M9 3h6M10 3v6L4.6 18.4A2 2 0 0 0 6.3 21.5h11.4a2 2 0 0 0 1.7-3.1L14 9V3"/><path d="M7.5 15h9"/>',
+  radon: '<circle cx="12" cy="12" r="1.7"/><path d="M10.40 9.23L7.25 3.77A9.5 9.5 0 0 1 16.75 3.77L13.60 9.23A3.2 3.2 0 0 0 10.40 9.23ZM15.20 12.00L21.50 12.00A9.5 9.5 0 0 1 16.75 20.23L13.60 14.77A3.2 3.2 0 0 0 15.20 12.00ZM10.40 14.77L7.25 20.23A9.5 9.5 0 0 1 2.50 12.00L8.80 12.00A3.2 3.2 0 0 0 10.40 14.77Z"/>'
+};
 (function hub(){
   const svg = document.getElementById('hub'), cx = 490, cy = 300, rx = 400, ry = 245, n = MODULES.length;
-  let s = `<rect x="${cx-150}" y="${cy-88}" width="300" height="176" rx="18" fill="oklch(24% .06 258)"/>
+  const defs = Object.entries(DOMAINS).map(([k,D]) =>
+    `<linearGradient id="g-${k}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:color-mix(in oklch,${D.color} 70%,white)"/><stop offset="1" style="stop-color:${D.color}"/></linearGradient>`).join('');
+  let s = `<defs>${defs}</defs><rect x="${cx-150}" y="${cy-88}" width="300" height="176" rx="18" fill="oklch(24% .06 258)"/>
     <rect x="${cx-136}" y="${cy-74}" width="272" height="148" rx="10" fill="oklch(32% .07 255)"/>
     <text x="${cx}" y="${cy-8}" text-anchor="middle" fill="#fff" style="font:28px 'DM Serif Display',serif">PréventIA Protect</text>
     <text x="${cx}" y="${cy+22}" text-anchor="middle" fill="oklch(72% .13 182)" style="font:600 11px 'DM Sans';letter-spacing:2px">COCKPIT HSE · IA</text>
@@ -444,13 +468,25 @@ filters.onclick = e => {
   const nodes = MODULES.map((m,i) => {
     const a = -Math.PI/2 + i * 2*Math.PI/n, x = cx + rx*Math.cos(a), y = cy + ry*Math.sin(a);
     const ex = cx + 150*Math.cos(a)*1.02, ey = cy + 95*Math.sin(a)*1.02;
-    s += `<line class="spoke" x1="${ex}" y1="${ey}" x2="${x}" y2="${y}"/>`;
-    return `<a href="${m.href}" class="node ${m.st==='new'?'new':''}"><title>${m.t}</title>
-      <circle class="bgc" cx="${x}" cy="${y}" r="34"/><text class="em" x="${x}" y="${y}">${m.ic}</text>
-      <text class="lb" x="${x}" y="${y+52}">${m.short}</text>
-      ${m.st==='new'?`<rect x="${x+14}" y="${y-40}" width="44" height="16" rx="8" fill="oklch(70% .17 50)"/><text class="newtag" x="${x+36}" y="${y-29}" text-anchor="middle">NOUVEAU</text>`:''}</a>`;
+    const c = DOMAINS[m.dom].color, w = m.short.length * 6.6 + 22;
+    const dx = x-ex, dy = y-ey, L = Math.hypot(dx,dy);   // le rayon s'arrête au bord du halo
+    s += `<line class="spoke" style="--c:${c}" x1="${ex}" y1="${ey}" x2="${x-dx/L*44}" y2="${y-dy/L*44}"/>`;
+    const picto = PICTOS[m.id]
+      ? `<g transform="translate(${x-13} ${y-13}) scale(1.083)" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${PICTOS[m.id]}</g>`
+      : `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central" style="font-size:24px">${m.ic}</text>`;
+    return `<a href="${m.href}" class="node" style="--c:${c}"><title>${m.t}</title>
+      <circle class="halo" cx="${x}" cy="${y}" r="40"/>
+      <g class="tile" style="transform-origin:${x}px ${y}px">
+        <rect x="${x-29}" y="${y-29}" width="58" height="58" rx="18" fill="url(#g-${m.dom})"/>
+        <rect x="${x-27}" y="${y-27}" width="54" height="54" rx="16" fill="none" stroke="rgb(255 255 255/.35)"/>
+        ${picto}
+      </g>
+      <rect class="pill" x="${x-w/2}" y="${y+40}" width="${w}" height="24" rx="12"/>
+      <text class="lb" x="${x}" y="${y+52.5}">${m.short}</text>
+      ${m.st==='new'?`<circle class="dot-new" cx="${x+27}" cy="${y-27}" r="7"/>`:''}</a>`;
   });
-  svg.innerHTML = s + nodes.join('');
+  const legende = `<g class="legende"><circle class="dot-new" cx="26" cy="8" r="6"/><text x="40" y="8">Nouveau module</text></g>`;
+  svg.innerHTML = s + nodes.join('') + legende;
 })();
 
 /* ---------- 4. Cockpit : lit les données des modules (localStorage), sinon démo ---------- */

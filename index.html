@@ -91,8 +91,13 @@ nav .links a:hover{color:var(--ink);background:oklch(96% .01 250)}
 .ck-side .t{font-family:'DM Serif Display',serif;font-size:15px;padding:0 8px 14px}
 .ck-side .t{display:flex;align-items:center;gap:8px}
 .ck-side .t img{width:28px;height:28px;background:#fff;border-radius:8px;padding:2px}
-.ck-side a{display:flex;gap:8px;align-items:center;padding:8px;border-radius:8px;text-decoration:none;color:rgb(255 255 255/.75)}
-.ck-side a:hover,.ck-side a.on{background:rgb(255 255 255/.1);color:#fff}
+.ck-side a{display:flex;gap:10px;align-items:center;padding:7px 8px;border-radius:10px;text-decoration:none;color:rgb(255 255 255/.72);transition:background .2s,color .2s}
+.ck-side a:hover,.ck-side a.on{background:rgb(255 255 255/.08);color:#fff}
+.ck-side .si{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;flex:none;color:oklch(80% .1 182);background:rgb(255 255 255/.07);box-shadow:inset 0 0 0 1px rgb(255 255 255/.08)}
+.ck-side a.on .si{color:#fff;background:linear-gradient(145deg,oklch(66% .12 182),oklch(48% .1 190));box-shadow:inset 0 1px 0 rgb(255 255 255/.35),0 6px 12px -6px oklch(52% .1 182)}
+.btn .bi{display:grid;place-items:center;color:var(--teal);flex:none}
+.btn .bi svg{display:block}
+.cta .btn-o .bi{color:#fff}
 .hero .wrap>*,.ck-main,.ck-kpi,.ck-card{min-width:0}
 .ck-main{padding:18px;display:grid;gap:12px}
 .ck-head{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:600}
@@ -233,7 +238,7 @@ footer a{color:var(--teal);text-decoration:none}
   <div class="links">
     <a href="#ecosysteme">Écosystème</a><a href="#modules">Modules</a><a href="#donnees">Données & IA</a><a href="#reglementation">Réglementation</a>
   </div>
-  <a href="https://laurebonnefond.github.io/PreventIA-LaB/" target="_blank" class="btn btn-o sm">🔬 PréventIA-LaB</a>
+  <a href="https://laurebonnefond.github.io/PreventIA-LaB/" target="_blank" class="btn btn-o sm"><span class="bi" data-p="lab"></span>PréventIA-LaB</a>
 </div></nav>
 
 <!-- ================= HERO ================= -->
@@ -249,7 +254,7 @@ footer a{color:var(--teal);text-decoration:none}
     <p class="lead">DUERP, habilitations, EPI, infirmerie, coactivité, ICPE et RSE : des modules reliés entre eux, conçus par une infirmière de santé au travail préventrice.</p>
     <div class="hero-btns">
       <a href="#modules" class="btn btn-p">Découvrir les modules →</a>
-      <a href="modules/conformite/suivi-global/index.html" class="btn btn-o">📊 Ouvrir le suivi global</a>
+      <a href="modules/conformite/suivi-global/index.html" class="btn btn-o"><span class="bi" data-p="suivi"></span>Ouvrir le suivi global</a>
     </div>
     <div class="trust">
       <div><b id="nbMod">11</b>modules</div>
@@ -261,12 +266,12 @@ footer a{color:var(--teal);text-decoration:none}
   <div class="cockpit fade" aria-label="Aperçu du tableau de bord">
     <aside class="ck-side">
       <div class="t"><img src="assets/img/logo-emblem.png" alt="">Protect</div>
-      <a class="on" href="#">🏠 Accueil</a>
-      <a href="modules/conformite/suivi-global/index.html">📊 Suivi global</a>
-      <a href="modules/evaluer/duerp/index.html">📝 DUERP</a>
-      <a href="modules/sante/infirmiere/index.html">🩺 Infirmerie</a>
-      <a href="modules/coactivite/plans-prevention/index.html">🤝 Coactivité</a>
-      <a href="modules/environnement/rse-icpe/index.html">🌿 Environnement</a>
+      <a class="on" href="#"><span class="si" data-p="home"></span>Accueil</a>
+      <a href="modules/conformite/suivi-global/index.html"><span class="si" data-p="suivi"></span>Suivi global</a>
+      <a href="modules/evaluer/duerp/index.html"><span class="si" data-p="duerp"></span>DUERP</a>
+      <a href="modules/sante/infirmiere/index.html"><span class="si" data-p="inf"></span>Infirmerie</a>
+      <a href="modules/coactivite/plans-prevention/index.html"><span class="si" data-p="coact"></span>Coactivité</a>
+      <a href="modules/environnement/rse-icpe/index.html"><span class="si" data-p="env"></span>Environnement</a>
     </aside>
     <div class="ck-main">
       <div class="ck-head">Tableau de bord <span id="ckSrc">Démo</span></div>
@@ -357,8 +362,8 @@ footer a{color:var(--teal);text-decoration:none}
     <h2 class="h2">Prévenir aujourd’hui, protéger demain</h2>
     <p>Conçu par une IDE-ST préventrice — 20 ans de terrain en urgence et en santé au travail — dans le cadre d’un Master IA & Big Data.</p>
     <div class="hero-btns" style="justify-content:center">
-      <a href="https://laurebonnefond.github.io/PreventIA-LaB/" target="_blank" class="btn btn-p" style="background:#fff;color:var(--teal)">🔬 PréventIA-LaB</a>
-      <a href="https://github.com/laurebonnefond" target="_blank" class="btn btn-o">🐙 GitHub</a>
+      <a href="https://laurebonnefond.github.io/PreventIA-LaB/" target="_blank" class="btn btn-p" style="background:#fff;color:var(--teal)"><span class="bi" data-p="lab"></span>PréventIA-LaB</a>
+      <a href="https://github.com/laurebonnefond" target="_blank" class="btn btn-o"><span class="bi" data-p="code"></span>GitHub</a>
     </div>
   </div>
 </div></section>
@@ -445,6 +450,9 @@ const PICTOS = {
   env:   '<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10z"/><path d="M2 21c0-3 1.9-5.4 5.1-6.4"/>',
   chim:  '<path d="M9 3h6M10 3v6L4.6 18.4A2 2 0 0 0 6.3 21.5h11.4a2 2 0 0 0 1.7-3.1L14 9V3"/><path d="M7.5 15h9"/>',
   radon: '<circle cx="12" cy="12" r="1.7"/><path d="M10.40 9.23L7.25 3.77A9.5 9.5 0 0 1 16.75 3.77L13.60 9.23A3.2 3.2 0 0 0 10.40 9.23ZM15.20 12.00L21.50 12.00A9.5 9.5 0 0 1 16.75 20.23L13.60 14.77A3.2 3.2 0 0 0 15.20 12.00ZM10.40 14.77L7.25 20.23A9.5 9.5 0 0 1 2.50 12.00L8.80 12.00A3.2 3.2 0 0 0 10.40 14.77Z"/>',
+  code:  '<rect x="2.5" y="4" width="19" height="16" rx="3"/><path d="m9 10-2.5 2.5L9 15M15 10l2.5 2.5L15 15M13 9l-2 7"/>',
+  home:  '<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',
+  lab:   '<path d="M9 3h6M10 3v5.5L4.8 18a2.2 2.2 0 0 0 1.9 3.3h10.6a2.2 2.2 0 0 0 1.9-3.3L14 8.5V3"/><path d="M7.2 14.5h9.6"/><path d="M18.5 3.5v3M17 5h3" stroke-width="1.5"/>',
   med:   '<circle cx="12" cy="7" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/><path d="M12 15v5M9.5 17.5h5"/>'
 };
 /* Pictogramme bicolore : aplat translucide + trait (même tracé). */
@@ -455,6 +463,7 @@ function picto(id, size){
 
 /* ---------- 2. Cartes + filtres ---------- */
 document.querySelectorAll('.persona .e[data-p]').forEach(e => e.innerHTML = picto(e.dataset.p, 26));
+document.querySelectorAll('.si[data-p], .bi[data-p]').forEach(e => e.innerHTML = picto(e.dataset.p, e.classList.contains('si') ? 15 : 18));
 const grid = document.getElementById('grid');
 grid.innerHTML = MODULES.map(m => {
   const D = DOMAINS[m.dom];

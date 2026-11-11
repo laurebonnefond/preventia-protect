@@ -44,6 +44,8 @@
 @media (max-width:760px){.st{grid-template-columns:1fr}}
 .disp{font-family:var(--f-display);font-weight:400;font-size:1.5rem}
 .illbox{background:var(--rose-bg);border-radius:14px;padding:14px;display:grid;place-items:center}
+.illbox.photo{background:#fff;padding:6px;overflow:hidden}
+.illbox.photo img{width:100%;max-width:460px;height:auto;display:block;border-radius:10px}
 .ill{width:100%;max-width:360px;height:auto;fill:none;stroke:var(--rose);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .ill .thin{stroke-width:1.2;opacity:.7} .ill .dash,.carte .dash{stroke-dasharray:4 4;stroke-width:1;opacity:.5;stroke:var(--muted)}
 .ill .fill{fill:var(--rose);stroke:none} .ill .fill-soft{fill:var(--card);stroke:var(--rose);stroke-width:1.5}
@@ -393,6 +395,9 @@ const torse=(x,bras)=>{
   return `<circle cx="${x}" cy="17" r="10"/><path d="M${x} 27v6"/><path d="M${x-27} 42 Q${x} 31 ${x+27} 42 L${x+23} 112 M${x-27} 42 L${x-23} 112"/>
   <path d="M${x-21} 60 q10 17 19 2 M${x+2} 62 q9 15 19-2" /><circle cx="${x-11}" cy="68" r="1.6" class="fill"/><circle cx="${x+11}" cy="68" r="1.6" class="fill"/><path d="${B}"/>`;
 };
+/* Illustrations raster (img/auto-*.webp) : prioritaires sur les schémas SVG ci-dessous */
+const IMG={miroir:'Trois positions devant le miroir : bras le long du corps, bras levés, mains sur les hanches',allongee:'Allongée sur le dos, coussin sous l\'épaule, bras derrière la tête, palpation de l\'aisselle',doigts:'Trois doigts à plat sur le sein, petits mouvements circulaires',pressions:'Trois niveaux de pression : légère, moyenne, profonde jusqu\'aux côtes',zone:'Zone à examiner : de la clavicule au sillon sous les seins, du sternum à l\'aisselle',parcours:'Parcours en bandes verticales, ou en spirale'};
+const illHtml=k=>IMG[k]?`<div class="illbox photo"><img src="img/auto-${k}.webp" alt="${IMG[k]}" width="960" height="720" loading="lazy"></div>`:`<div class="illbox">${ILL[k]}</div>`;
 const ILL={
  miroir:`<svg viewBox="0 0 330 140" class="ill" role="img" aria-label="Trois positions devant le miroir"><g>${torse(55,'bas')}${torse(165,'haut')}${torse(275,'hanches')}</g>
    <g class="lab"><text x="55" y="132">Bras le long du corps</text><text x="165" y="132">Bras levés</text><text x="275" y="132">Mains sur les hanches</text></g></svg>`,
@@ -452,10 +457,11 @@ const SUBS=[['quand','Quand'],['comment','Comment, pas à pas'],['observer','Quo
 const ETAPES=[
  {t:'Choisir le bon moment',ill:null,p:['Une fois par mois, environ une semaine après le début des règles : les seins sont moins tendus et moins granuleux.','Sans règles (ménopause, contraception continue, grossesse) : une date fixe, par exemple le 1er du mois.','Prévoyez 10 minutes au calme. Le but n\'est pas de « chercher un cancer », mais de connaître vos seins pour repérer ce qui change.']},
  {t:'Observer devant le miroir',ill:'miroir',p:['Torse nu, bien éclairée, dans trois positions : bras le long du corps, bras levés au-dessus de la tête, puis mains appuyées sur les hanches en contractant les muscles de la poitrine.','Comparez avec votre aspect habituel : forme, taille, peau, mamelons. Une légère différence entre les deux seins est fréquente et normale si elle est ancienne.']},
- {t:'Palper allongée sur le dos',ill:'doigts',p:['Allongez-vous, un petit coussin sous l\'épaule du côté examiné, ce bras replié derrière la tête : le sein s\'étale et se palpe mieux.','Utilisez la pulpe des trois doigts du milieu de l\'autre main, doigts à plat, et faites de petits cercles de la taille d\'une pièce de monnaie.']},
+ {t:'S\'allonger, bras derrière la tête',ill:'allongee',p:['Allongez-vous sur le dos, un petit coussin sous l\'épaule du côté examiné, ce bras replié derrière la tête : le sein s\'étale sur le thorax et se palpe mieux.','Examinez le sein droit avec la main gauche, puis le sein gauche avec la main droite.']},
+ {t:'Palper avec trois doigts à plat',ill:'doigts',p:['Utilisez la pulpe des trois doigts du milieu, doigts joints et à plat, pas le bout des doigts.','Faites de petits cercles de la taille d\'une pièce de monnaie, sans lever les doigts, avant de passer au point voisin.']},
  {t:'Trois pressions à chaque endroit',ill:'pressions',p:['À chaque point : une pression légère (juste sous la peau), moyenne, puis profonde (jusqu\'à sentir les côtes).','Il est normal de sentir les côtes et, en bas du sein, une crête plus ferme : c\'est le sillon sous-mammaire.']},
  {t:'Couvrir toute la zone',ill:'zone',p:['La glande mammaire s\'étend plus loin qu\'on ne le croit : de la clavicule au sillon sous le sein, et du sternum jusqu\'au milieu de l\'aisselle.','Ne sautez aucune partie : c\'est souvent la partie haute et externe, vers l\'aisselle, qui contient le plus de glande.']},
- {t:'Suivre un parcours régulier',ill:'bandes',p:['Le plus complet : des bandes verticales, de haut en bas puis de bas en haut, en décalant les doigts d\'un cran à chaque passage.','Une spirale, du mamelon vers l\'extérieur, convient aussi. L\'important est de garder le même parcours chaque mois.']},
+ {t:'Suivre un parcours régulier',ill:'parcours',p:['Le plus complet : des bandes verticales, de haut en bas puis de bas en haut, en décalant les doigts d\'un cran à chaque passage.','Une spirale, du mamelon vers l\'extérieur, convient aussi. L\'important est de garder le même parcours chaque mois.']},
  {t:'Aisselle et clavicule',ill:'aisselle',p:['Bras légèrement écarté, palpez le creux de l\'aisselle, puis au-dessus et au-dessous de la clavicule.','On y recherche une grosseur persistante (ganglion) qui n\'était pas là auparavant.']},
  {t:'Mamelon et aréole',ill:'mamelon',p:['Regardez l\'aspect, la couleur, la direction du mamelon, la présence d\'une croûte ou d\'une plaie.','Inutile de presser le mamelon : ce qui compte est un écoulement spontané, par exemple une tache sur le soutien-gorge.']},
  {t:'L\'autre côté, puis noter',ill:null,p:['Recommencez de l\'autre côté. Vous pouvez aussi palper debout sous la douche : les doigts savonnés glissent mieux.','Notez le résultat dans votre journal : c\'est la comparaison d\'un mois sur l\'autre qui permet de repérer un changement.']}
@@ -482,7 +488,7 @@ function vConnaitre(){
    comment:()=>{const E=ETAPES[step];return `<div class="card stepper">
        <div class="row"><span class="eyebrow num">Étape ${step+1} / ${ETAPES.length}</span><span class="sp"></span><span class="muted small">≈ 10 minutes en tout</span></div>
        <div class="prog" aria-hidden="true">${ETAPES.map((_,i)=>`<i class="${i<=step?'on':''}"></i>`).join('')}</div>
-       <div class="st ${E.ill?'':'noill'}">${E.ill?`<div class="illbox">${ILL[E.ill]}</div>`:''}<div class="grid" style="gap:8px;align-content:start"><h3 class="disp">${E.t}</h3>${E.p.map(p=>`<p>${p}</p>`).join('')}</div></div>
+       <div class="st ${E.ill?'':'noill'}">${E.ill?illHtml(E.ill):''}<div class="grid" style="gap:8px;align-content:start"><h3 class="disp">${E.t}</h3>${E.p.map(p=>`<p>${p}</p>`).join('')}</div></div>
        <div class="row"><button class="btn ghost" id="sPrev" ${step?'':'disabled'}>Étape précédente</button><span class="sp"></span>
          ${step<ETAPES.length-1?'<button class="btn" id="sNext">Étape suivante</button>':'<button class="btn" id="sJour">Noter le résultat</button>'}</div></div>
      <details class="card"><summary><b>Voir toutes les étapes sur une page</b></summary><ol class="steps" style="margin-top:12px">${ETAPES.map((e,i)=>`<li><span class="n">${i+1}</span><div><b>${e.t}.</b> ${e.p.join(' ')}</div></li>`).join('')}</ol></details>`;},

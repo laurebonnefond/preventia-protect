@@ -125,6 +125,30 @@ td input.i{padding:6px 8px;width:90px}
 .lvsel button[aria-pressed="true"].b1{background:var(--l1-bg);color:var(--ink);border-color:var(--l1)}
 .lvsel button[aria-pressed="true"].b2{background:var(--l2-bg);color:var(--l2);border-color:var(--l2)}
 .lvsel button[aria-pressed="true"].b3{background:var(--l3-bg);color:var(--l3);border-color:var(--l3)}
+.qrow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,360px);gap:12px;align-items:start;padding-block:10px;border-top:1px dashed var(--line)}
+.qrow p{margin-top:2px}
+@media (max-width:760px){.qrow{grid-template-columns:1fr}}
+.q4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin-bottom:6px}
+.q4 button{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:6px 3px;font-size:11px;font-weight:600;color:var(--muted);line-height:1.25}
+.q4 button[aria-pressed="true"].L1{background:var(--l0-bg);color:var(--l0);border-color:var(--l0)}
+.q4 button[aria-pressed="true"].L2{background:var(--l1-bg);color:var(--ink);border-color:var(--l1)}
+.q4 button[aria-pressed="true"].L3{background:var(--l2-bg);color:var(--l2);border-color:var(--l2)}
+.q4 button[aria-pressed="true"].L4{background:var(--l3-bg);color:var(--l3);border-color:var(--l3)}
+.inv{font-size:10.5px;font-weight:700;color:var(--teal);background:var(--card-2);border-radius:6px;padding:1px 6px;white-space:nowrap}
+.filtre-eq{border:1px solid var(--line);background:var(--bg);border-radius:99px;padding:6px 12px;font-size:13px;font-weight:600;color:var(--muted)}
+.filtre-eq.on{background:var(--teal);border-color:var(--teal);color:var(--on-accent)}
+select.i.sm{padding:5px 6px;font-size:12.5px;min-width:130px}
+input.i.al{border-color:var(--l2);background:var(--l2-bg);color:var(--l2);font-weight:700}
+.indiv{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.critwrap{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:18px;align-items:start}
+@media (max-width:1000px){.critwrap{grid-template-columns:1fr}}
+table.crit td:first-child{min-width:170px}
+.matrice{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;gap:6px;max-width:340px;width:100%;justify-self:center}
+.matrice .ax-y{writing-mode:vertical-rl;transform:rotate(180deg);font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;text-align:center}
+.matrice .ax-x{grid-column:2;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;text-align:center}
+.mx{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+.mc{min-height:56px;border-radius:8px;display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:3px;padding:3px;max-width:100%}
+.mc span{font-size:9.5px;font-weight:700;background:var(--card);color:var(--ink);border-radius:5px;padding:1px 5px;box-shadow:0 1px 3px rgb(0 0 0/.15)}
 .axrow{display:grid;grid-template-columns:minmax(0,190px) minmax(0,1fr);gap:10px;align-items:center;padding-block:5px;border-bottom:1px dashed var(--line)}
 @media (max-width:640px){.axrow{grid-template-columns:1fr}}
 details.acteur summary{cursor:pointer;list-style:none;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
@@ -185,22 +209,27 @@ const store={get(){try{return JSON.parse(localStorage.getItem(KEY))}catch(e){ret
 /* =========================================================
    RÉFÉRENTIELS
    ========================================================= */
-// Les 6 familles de facteurs de RPS (rapport Gollac, 2011), reprises par l'INRS
+// Les 7 familles de facteurs de RPS de l'INRS (ED 6403, outil RPS-DU, grille 2022) :
+// les 6 axes du rapport Gollac (2011), avec les horaires de travail difficiles distingués de l'intensité.
+// Les clés f1…f7 sont stables (données enregistrées) ; l'ordre d'affichage est celui de l'INRS.
 const F=[
- {k:'f1',l:'Intensité et temps de travail',s:'Intensité'},
+ {k:'f1',l:'Intensité et complexité du travail',s:'Intensité'},
+ {k:'f7',l:'Horaires de travail difficiles',s:'Horaires'},
  {k:'f2',l:'Exigences émotionnelles',s:'Émotions'},
- {k:'f3',l:'Autonomie et marges de manœuvre',s:'Autonomie'},
- {k:'f4',l:'Rapports sociaux et reconnaissance',s:'Rapports sociaux'},
- {k:'f5',l:'Conflits de valeurs et qualité empêchée',s:'Valeurs'},
- {k:'f6',l:'Insécurité de la situation de travail',s:'Insécurité'}
+ {k:'f3',l:'Faible autonomie au travail',s:'Autonomie'},
+ {k:'f4',l:'Rapports sociaux au travail dégradés',s:'Rapports sociaux'},
+ {k:'f5',l:'Conflits de valeurs',s:'Valeurs'},
+ {k:'f6',l:'Insécurité de l\'emploi et du travail',s:'Insécurité'}
 ];
 const fl=k=>F.find(x=>x.k===k).l;
+const FI=k=>F.findIndex(x=>x.k===k);
+const vide=()=>F.map(()=>-1);
 
 // Baromètre : 24 items (4 par facteur), échelle 0-3. inv = item positif (risque = 3 - réponse)
 const ITEMS=[
  {f:'f1',t:"Je dois travailler très vite."},
  {f:'f1',t:"Je manque de temps pour faire correctement mon travail."},
- {f:'f1',t:"Je dépasse mes horaires ou je travaille sur mon temps de repos."},
+ {f:'f7',t:"Je dépasse mes horaires ou je travaille sur mon temps de repos."},
  {f:'f1',t:"Je suis souvent interrompu·e dans mon travail."},
  {f:'f2',t:"Je suis confronté·e à des situations difficiles sur le plan émotionnel (détresse, colère, souffrance)."},
  {f:'f2',t:"Je dois cacher mes émotions ou faire semblant d'être de bonne humeur."},
@@ -221,13 +250,60 @@ const ITEMS=[
  {f:'f6',t:"Je crains de perdre mon emploi."},
  {f:'f6',t:"Mon travail a changé sans que j'aie été informé·e ou consulté·e."},
  {f:'f6',t:"Je ne sais pas comment mon travail va évoluer dans les prochains mois."},
- {f:'f6',t:"Je crains de ne pas pouvoir tenir dans ce travail jusqu'à ma retraite."}
+ {f:'f6',t:"Je crains de ne pas pouvoir tenir dans ce travail jusqu'à ma retraite."},
+ {f:'f7',t:"Mes horaires (nuit, décalés, changements de planning) sont difficiles à concilier avec ma vie personnelle."}
 ];
 const HEALTH=[
  {k:'h1',t:"Ces dernières semaines, je me suis senti·e épuisé·e par mon travail."},
  {k:'h2',t:"Mon travail a des effets négatifs sur mon sommeil ou ma santé."}
 ];
 const LIK=['Jamais','Parfois','Souvent','Toujours'];
+
+/* Grille RPS-DU (INRS ED 6403, version octobre 2022) : 26 questions, évaluation COLLECTIVE par unité de travail.
+   Réponse 0..3 = Jamais/Non · Parfois/Plutôt non · Souvent/Plutôt oui · Toujours/Oui.
+   Niveau d'intensité INRS : 1 = non concerné ou situation favorable, 2 = faible, 3 = modéré, 4 = élevé.
+   fav = question formulée positivement (« Oui » = favorable) : la cotation est inversée. */
+const RPSDU=[
+ {f:'f1',t:'Contraintes de rythmes de travail',q:'Les salariés sont-ils soumis à des contraintes de rythmes élevés ?'},
+ {f:'f1',t:'Niveau de précision des objectifs de travail',q:'Les objectifs des salariés sont-ils clairement définis ?',fav:1},
+ {f:'f1',t:'Adéquation des objectifs avec les moyens et les responsabilités',q:'Les objectifs fixés sont-ils compatibles avec les moyens et responsabilités alloués pour les atteindre ?',fav:1},
+ {f:'f1',t:'Compatibilité des instructions de travail entre elles',q:'Les salariés reçoivent-ils des instructions, ordres ou demandes qui peuvent être contradictoires ?'},
+ {f:'f1',t:'Gestion de la polyvalence',q:'Les salariés sont-ils amenés à changer de tâches, de postes ou de fonctions à l\'improviste ?'},
+ {f:'f1',t:'Interruptions dans le travail',q:'Les salariés sont-ils fréquemment interrompus par des tâches non prévues ?'},
+ {f:'f1',t:'Attention et vigilance dans le travail',q:'Les salariés exercent-ils des activités qui nécessitent une attention soutenue ou une vigilance permanente ?'},
+ {f:'f7',t:'Durée hebdomadaire de travail',q:'Arrive-t-il que des salariés travaillent plus de 45 heures par semaine ?'},
+ {f:'f7',t:'Travail en horaires atypiques',q:'Les salariés sont-ils soumis à des horaires de nuit, alternants ou décalés ?'},
+ {f:'f7',t:'Extension de la disponibilité hors horaires',q:'Les salariés sont-ils contactés en dehors des horaires de travail pour des raisons professionnelles ?'},
+ {f:'f7',t:'Prévisibilité des horaires',q:'Les salariés connaissent-ils suffisamment à l\'avance leurs horaires ou les changements de planning ?',fav:1},
+ {f:'f7',t:'Conciliation vie professionnelle et vie personnelle',q:'L\'entreprise permet-elle aux salariés de concilier vie professionnelle et vie personnelle ?',fav:1},
+ {f:'f2',t:'Tensions avec le public',q:'L\'organisation du travail génère-t-elle des situations de tension avec le public (clients, usagers, patients) ?'},
+ {f:'f2',t:'Confrontation à la souffrance d\'autrui',q:'Les salariés ont-ils les moyens d\'agir efficacement face à la souffrance ou à la détresse des personnes prises en charge ?',fav:1},
+ {f:'f2',t:'Maîtrise des émotions',q:'Dans leur travail, les salariés doivent-ils « faire bonne figure » en toutes circonstances ?'},
+ {f:'f3',t:'Autonomie dans la tâche',q:'Les salariés ont-ils des marges de manœuvre dans la manière de réaliser leur travail ?',fav:1},
+ {f:'f3',t:'Autonomie temporelle',q:'Les salariés peuvent-ils interrompre momentanément leur travail quand ils en ressentent le besoin ?',fav:1},
+ {f:'f3',t:'Utilisation et développement des compétences',q:'Les salariés peuvent-ils utiliser leurs compétences et en développer de nouvelles ?',fav:1},
+ {f:'f4',t:'Soutien de la part des collègues',q:'Existe-t-il des possibilités d\'entraide entre les salariés (surcharge, travail délicat ou compliqué) ?',fav:1},
+ {f:'f4',t:'Soutien de la part des supérieurs hiérarchiques',q:'Les salariés reçoivent-ils un soutien de la part de l\'encadrement ?',fav:1},
+ {f:'f4',t:'Désaccords professionnels',q:'Existe-t-il des causes de désaccord ayant pour origine l\'organisation du travail (flou des rôles, inégalité de traitement) ?'},
+ {f:'f4',t:'Reconnaissance dans le travail',q:'Les salariés reçoivent-ils des marques de reconnaissance de leur travail de la part de l\'entreprise ?',fav:1},
+ {f:'f5',t:'Qualité empêchée',q:'Les salariés considèrent-ils qu\'ils font un travail de qualité ?',fav:1},
+ {f:'f5',t:'Travail inutile',q:'Les salariés estiment-ils en général que leur travail est reconnu comme utile ?',fav:1},
+ {f:'f6',t:'Insécurité socio-économique (emploi, salaire, carrière)',q:'Les salariés sont-ils confrontés à des incertitudes quant au maintien de leur activité dans les prochains mois ?'},
+ {f:'f6',t:'Conduite du changement',q:'Les changements sont-ils suffisamment anticipés, accompagnés et clairement expliqués aux salariés ?',fav:1}
+];
+const RPSDU_REP=['Jamais · Non','Parfois · Plutôt non','Souvent · Plutôt oui','Toujours · Oui'];
+const NIV_INRS=['Favorable ou non concerné','Faible','Modéré','Élevé'];
+const niveauQ=(q,idx)=>idx==null?null:(q.fav?4-idx:idx+1);
+
+/* Repères nationaux : Dares, enquête Conditions de travail et risques psychosociaux 2024-2025
+   (25 300 salariés, publication du 9 septembre 2026). Formulations proches mais non identiques :
+   comparaison indicative. Clé = index (base 0) de l'affirmation dans ITEMS. */
+const DARES={
+ 1:{v:25,l:'Un salarié sur quatre manque de temps pour bien faire son travail'},
+ 5:{v:27,l:'22 % des hommes et 32 % des femmes doivent cacher leurs émotions'},
+ 6:{v:40,l:'40 % des salariés en contact avec le public vivent des tensions avec lui'},
+ 23:{v:41,l:'41 % ne se sentent pas capables de faire le même travail jusqu\'à la retraite'}
+};
 const SEUIL_ANONYMAT=5;
 
 // COPSOQ — version courte française V3 : 46 items, 24 échelles, 6 domaines (Dupret, Bocéréan et al., Santé Publique 2012 ; fiche INRS FRPS 36).
@@ -265,7 +341,7 @@ const COP=[
  {k:'sante',l:'Santé auto-évaluée',dom:'Santé et bien-être',set:'sante',f:null,items:[{t:"De manière générale, diriez-vous que votre santé est :"}]},
  {k:'stress',l:'Stress',dom:'Santé et bien-être',set:'abs',risk:1,f:null,items:[{t:"Au cours des 4 dernières semaines, à quelle fréquence vous êtes-vous senti·e stressé·e ?"},{t:"Au cours des 4 dernières semaines, à quelle fréquence vous êtes-vous senti·e irritable ?"}]},
  {k:'epuisement',l:'Épuisement',dom:'Santé et bien-être',set:'abs',risk:1,f:null,items:[{t:"Au cours des 4 dernières semaines, à quelle fréquence vous êtes-vous senti·e physiquement épuisé·e ?"},{t:"Au cours des 4 dernières semaines, à quelle fréquence vous êtes-vous senti·e émotionnellement épuisé·e ?"}]},
- {k:'famille',l:'Conflit travail / vie privée',dom:'Santé et bien-être',set:'fam',risk:1,f:'f1',items:[{t:"Sentez-vous que votre travail vous prend tellement d'énergie que cela a des répercussions négatives sur votre vie privée ?"},{t:"Sentez-vous que votre travail vous prend tellement de temps que cela a des répercussions négatives sur votre vie privée ?"}]},
+ {k:'famille',l:'Conflit travail / vie privée',dom:'Santé et bien-être',set:'fam',risk:1,f:'f7',items:[{t:"Sentez-vous que votre travail vous prend tellement d'énergie que cela a des répercussions négatives sur votre vie privée ?"},{t:"Sentez-vous que votre travail vous prend tellement de temps que cela a des répercussions négatives sur votre vie privée ?"}]},
  {k:'insecurite',l:'Insécurité de l\'emploi',dom:'Santé et bien-être',set:'mesure',risk:1,f:'f6',items:[{t:"Êtes-vous inquiet·e de perdre votre emploi ?"},{t:"Êtes-vous inquiet·e d'être muté·e contre votre volonté ?"}]},
  {k:'sens',l:'Sens du travail',dom:'Vécu professionnel',set:'mesure',f:'f5',items:[{t:"Votre travail a-t-il du sens pour vous ?"},{t:"Avez-vous le sentiment que le travail que vous faites est important ?"}]},
  {k:'engagement',l:'Engagement dans l\'entreprise',dom:'Vécu professionnel',set:'mesure',f:null,items:[{t:"Recommanderiez-vous à un·e ami·e de postuler dans votre entreprise ?"},{t:"Avez-vous le sentiment que votre entreprise a une grande importance pour vous ?"}]},
@@ -281,7 +357,13 @@ const IND=[
  {k:'turnover',g:'Fonctionnement de l\'entreprise',l:'Taux de rotation du personnel',u:'%',thr:15,f:['f4','f6']},
  {k:'demissions',g:'Fonctionnement de l\'entreprise',l:'Démissions et ruptures conventionnelles',u:'nb',f:['f4','f5']},
  {k:'mobilite',g:'Fonctionnement de l\'entreprise',l:'Demandes de mobilité interne',u:'nb',f:['f4']},
- {k:'hsup',g:'Fonctionnement de l\'entreprise',l:'Heures supplémentaires par salarié et par an',u:'h',thr:220,f:['f1']},
+ {k:'hsup',g:'Fonctionnement de l\'entreprise',l:'Heures supplémentaires par salarié et par an',u:'h',thr:220,f:['f1','f7']},
+ {k:'conges',g:'Fonctionnement de l\'entreprise',l:'Jours de congés non pris par salarié',u:'j',f:['f1','f7']},
+ {k:'postes_vacants',g:'Fonctionnement de l\'entreprise',l:'Postes vacants ou difficiles à pourvoir',u:'nb',f:['f1','f6']},
+ {k:'reorg',g:'Fonctionnement de l\'entreprise',l:'Réorganisations, déménagements ou changements d\'outils dans l\'année',u:'nb',thr:2,f:['f6','f1']},
+ {k:'entretiens',g:'Fonctionnement de l\'entreprise',l:'Entretiens annuels ou professionnels non réalisés',u:'%',thr:20,f:['f3','f4']},
+ {k:'plaintes',g:'Fonctionnement de l\'entreprise',l:'Plaintes et réclamations des clients ou usagers',u:'nb',f:['f2','f5']},
+ {k:'isoles',g:'Fonctionnement de l\'entreprise',l:'Postes en travail isolé',u:'nb',f:['f2','f4']},
  {k:'precaires',g:'Fonctionnement de l\'entreprise',l:'Part d\'intérim et de CDD',u:'%',thr:15,f:['f6']},
  {k:'conflits',g:'Fonctionnement de l\'entreprise',l:'Conflits collectifs, grèves, débrayages',u:'nb',thr:1,f:['f4','f6']},
  {k:'sanctions',g:'Fonctionnement de l\'entreprise',l:'Procédures disciplinaires',u:'nb',f:['f4']},
@@ -291,10 +373,30 @@ const IND=[
  {k:'vad',g:'Santé et sécurité',l:'Visites à la demande du salarié (SPST)',u:'nb',f:['f1','f4']},
  {k:'inf',g:'Santé et sécurité',l:'Passages infirmerie pour stress ou mal-être',u:'nb',f:['f1','f2','f4']},
  {k:'inapt',g:'Santé et sécurité',l:'Inaptitudes et restrictions d\'aptitude',u:'nb',f:['f1']},
+ {k:'arrets_longs',g:'Santé et sécurité',l:'Arrêts maladie de plus de 30 jours',u:'nb',f:['f1','f4']},
+ {k:'amenag',g:'Santé et sécurité',l:'Demandes d\'aménagement de poste',u:'nb',f:['f1','f3']},
  {k:'violences_ext',g:'Santé et sécurité',l:'Agressions et incivilités du public déclarées',u:'nb',thr:1,f:['f2']},
  {k:'harc',g:'Santé et sécurité',l:'Signalements de harcèlement ou de violences internes',u:'nb',thr:1,crit:1,f:['f4']},
  {k:'psy',g:'Santé et sécurité',l:'Affections psychiques déclarées en AT ou MP',u:'nb',thr:1,crit:1,f:['f1','f4']},
  {k:'grave',g:'Santé et sécurité',l:'Événements graves (tentative de suicide, décompensation au travail)',u:'nb',thr:1,crit:1,f:['f1','f2','f4','f5','f6']}
+];
+
+// Indicateurs suivis PAR ÉQUIPE (comparés à la valeur de l'entreprise)
+const EQ_IND=[
+ {k:'abs',l:'Absentéisme',u:'%',taux:1},{k:'turnover',l:'Départs',u:'%',taux:1},{k:'hsup',l:'Heures sup. / salarié',u:'h',taux:1},
+ {k:'arrets_courts',l:'Arrêts courts',u:'nb'},{k:'inf',l:'Passages infirmerie (stress, mal-être)',u:'nb'},{k:'violences_ext',l:'Agressions du public',u:'nb'}
+];
+// Signaux individuels AGRÉGÉS (entretiens infirmiers de la période) : des effectifs, jamais de nom
+const INDIV=[
+ {k:'vus',l:'Salariés vus en entretien infirmier',base:1},
+ {k:'stress',l:'Plaintes de stress ou de souffrance au travail',f:['f1','f2','f4','f5']},
+ {k:'sommeil',l:'Troubles du sommeil liés au travail',f:['f1','f7']},
+ {k:'epuisement',l:'Signes d\'épuisement professionnel',f:['f1','f2','f7']},
+ {k:'conso',l:'Consommations à risque déclarées (alcool, médicaments, autres)',f:['f1','f2']},
+ {k:'idees',l:'Idées suicidaires repérées',crit:1},
+ {k:'orient',l:'Orientations vers le médecin du travail ou un psychologue'},
+ {k:'burnout_n',l:'Pré-dépistages burn-out réalisés',base:1},
+ {k:'burnout_haut',l:'… dont risque élevé',sur:'burnout_n',f:['f1','f2','f3']}
 ];
 
 const ACTEURS=[
@@ -320,6 +422,7 @@ const levelOf=s=>s==null?null:s<25?0:s<50?1:s<70?2:3;
 // Pistes d'actions par facteur : P = primaire (agir sur l'organisation), S = secondaire, T = tertiaire
 const ACTIONS={
  f1:[['P','Analyser la charge réelle par poste (écart prescrit / réel) et ajuster effectifs, objectifs et délais.'],['P','Encadrer les heures supplémentaires et le travail hors horaires ; formaliser le droit à la déconnexion (art. L2242-17).'],['P','Réduire les interruptions : plages protégées, circuits d\'information clarifiés.'],['S','Former l\'encadrement à repérer la surcharge.'],['T','Orienter les salariés en difficulté vers le service de santé au travail.']],
+ f7:[['P','Limiter les dépassements d\'horaires et l\'amplitude ; garantir les repos (11 h consécutives par jour).'],['P','Planifier les horaires à l\'avance, prévenir des changements et associer les salariés aux plannings.'],['P','Encadrer la joignabilité hors travail par une charte ou un accord de déconnexion (art. L2242-17).'],['S','Informer sur le sommeil et le travail de nuit ; suivi individuel adapté des travailleurs de nuit.'],['T','Orienter vers le service de santé au travail en cas de troubles du sommeil ou d\'épuisement.']],
  f2:[['P','Organiser le travail en binôme sur les situations à risque et prévoir des possibilités de relais.'],['P','Mettre en place une procédure de signalement et de débriefing après chaque incident avec le public.'],['S','Former à la gestion des situations de tension et des conflits avec le public.'],['S','Instaurer des temps d\'analyse de pratiques.'],['T','Assurer un soutien psychologique après un événement violent ; déclarer l\'accident du travail.']],
  f3:[['P','Associer les salariés à l\'organisation de leur travail (groupes d\'expression, retours d\'expérience).'],['P','Enrichir les tâches répétitives par la polyvalence ou la rotation choisie.'],['P','Construire un plan de développement des compétences accessible à tous.'],['S','Former les managers au management participatif.']],
  f4:[['P','Clarifier les rôles, les responsabilités et les circuits de décision.'],['P','Instaurer des temps collectifs réguliers et des entretiens individuels de qualité.'],['P','Diffuser une procédure de signalement et de traitement des comportements hostiles.'],['S','Former l\'encadrement à la reconnaissance du travail et à la régulation des conflits.'],['T','Accompagner les salariés concernés et les orienter (médecin du travail, référent·e).']],
@@ -332,7 +435,7 @@ const ACTIONS={
    ========================================================= */
 function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
 function demo(){
-  const r=rng(42), bias={'Quai et préparation':[2.3,1,1.9,1.7,1.3,1.4],'Conducteurs':[2.1,2,1.2,1.3,1.1,1.9],'Administratif':[1.4,.7,.8,1,.9,1.1]};
+  const r=rng(42), bias={'Quai et préparation':[2.3,1,1.9,1.7,1.3,1.4,1.7],'Conducteurs':[2.1,2,1.2,1.3,1.1,1.9,2.1],'Administratif':[1.4,.7,.8,1,.9,1.1,1]};
   const counts={'Quai et préparation':11,'Conducteurs':8,'Administratif':4};
   const baro=[];
   Object.entries(counts).forEach(([eq,n])=>{for(let j=0;j<n;j++){
@@ -353,17 +456,30 @@ function demo(){
       {id:5,date:'2026-10-21',src:SOURCES[1],eq:'Conducteurs',f:'f6',g:1,txt:'Inquiétudes sur la réorganisation des tournées annoncée sans calendrier.',st:'À traiter'},
       {id:6,date:'2026-11-02',src:SOURCES[0],eq:'Administratif',f:'f1',g:1,txt:'Mails tardifs fréquents de la direction, sentiment d\'obligation de répondre le soir.',st:'Traité'}],
     avis:{
-      infirmiere:{f:[2,2,1,2,1,1],c:'Les entretiens infirmiers font ressortir une fatigue marquée au quai et une exposition aux tensions avec le public chez les conducteurs.'},
-      medecin:{f:[2,1,-1,2,-1,1],c:'Éléments collectifs : augmentation des plaintes de fatigue et de troubles du sommeil chez les préparateurs. Aucune donnée individuelle transmise.'},
-      cse:{f:[3,2,2,3,2,2],c:'Situation jugée préoccupante au quai depuis le changement de logiciel. Demande d\'un plan d\'action rapide.'},
-      ref_cse:{f:[-1,-1,-1,3,-1,-1],c:'Un signalement en cours, traité selon la procédure.'},
-      ref_emp:{f:[-1,-1,-1,-1,-1,-1],c:'Non concerné : effectif inférieur à 250 salariés.'},
-      rh:{f:[1,1,1,1,0,1],c:'Hausse des départs volontaires au quai, difficultés de recrutement.'},
-      direction:{f:[1,0,0,1,0,0],c:'Période de forte activité, situation jugée transitoire.'},
-      managers:{f:[2,1,1,1,1,1],c:'Objectifs de productivité difficiles à tenir avec l\'effectif actuel.'},
-      autres:{f:[-1,-1,-1,-1,-1,-1],c:''}},
-    baro, copsoq:demoCop(r,bias)
+      infirmiere:{f:[2,2,2,1,2,1,1],c:'Les entretiens infirmiers font ressortir une fatigue marquée au quai et une exposition aux tensions avec le public chez les conducteurs.'},
+      medecin:{f:[2,2,1,-1,2,-1,1],c:'Éléments collectifs : augmentation des plaintes de fatigue et de troubles du sommeil chez les préparateurs. Aucune donnée individuelle transmise.'},
+      cse:{f:[3,2,2,2,3,2,2],c:'Situation jugée préoccupante au quai depuis le changement de logiciel. Demande d\'un plan d\'action rapide.'},
+      ref_cse:{f:[-1,-1,-1,-1,3,-1,-1],c:'Un signalement en cours, traité selon la procédure.'},
+      ref_emp:{f:[-1,-1,-1,-1,-1,-1,-1],c:'Non concerné : effectif inférieur à 250 salariés.'},
+      rh:{f:[1,1,1,1,1,0,1],c:'Hausse des départs volontaires au quai, difficultés de recrutement.'},
+      direction:{f:[1,0,0,0,1,0,0],c:'Période de forte activité, situation jugée transitoire.'},
+      managers:{f:[2,1,1,1,1,1,1],c:'Objectifs de productivité difficiles à tenir avec l\'effectif actuel.'},
+      autres:{f:[-1,-1,-1,-1,-1,-1,-1],c:''}},
+    baro, copsoq:demoCop(r,bias),
+    grille:demoGrille(r,bias),
+    indEq:{'Quai et préparation':{abs:10.2,turnover:24,hsup:290,arrets_courts:26,inf:7,violences_ext:0},
+      'Conducteurs':{abs:6.1,turnover:14,hsup:230,arrets_courts:10,inf:3,violences_ext:5},
+      'Administratif':{abs:4,turnover:8,hsup:120,arrets_courts:5,inf:1,violences_ext:0}},
+    indiv:{vus:38,stress:11,sommeil:9,epuisement:8,conso:2,idees:0,orient:6,burnout_n:14,burnout_haut:3},
+    crit:{f4:{m:1}}
   };
+}
+function demoGrille(r,bias){
+  const out={};
+  Object.keys(bias).forEach(eq=>{out[eq]={a:RPSDU.map(q=>{const L=Math.max(1,Math.min(4,Math.round(1+bias[eq][+q.f[1]-1]/3*3+(r()-.5)*1.4)));return q.fav?4-L:L-1;}),notes:{}};});
+  out['Quai et préparation'].notes={f1:'Cadences imposées par le nouveau logiciel de préparation ; objectifs revus à la hausse sans renfort.',f4:'Entraide forte entre anciens, tensions avec le chef de quai de nuit.'};
+  out['Conducteurs'].notes={f2:'Clients agressifs lors des retards de livraison, pas de procédure de remontée.',f7:'Plannings connus la veille au soir.'};
+  return out;
 }
 function demoCop(r,bias){
   const counts={'Quai et préparation':12,'Conducteurs':9,'Administratif':3}, out=[];
@@ -374,9 +490,11 @@ function demoCop(r,bias){
     out.push({eq,a});}});
   return out;
 }
-function blank(){return {demo:false,ctx:{entreprise:'',secteur:'',effectif:'',periode:'',equipes:[{n:'Équipe 1',eff:''}],pilotage:'',demande:''},ind:{},rem:[],avis:{},baro:[],copsoq:[]};}
+function blank(){return {demo:false,ctx:{entreprise:'',secteur:'',effectif:'',periode:'',equipes:[{n:'Équipe 1',eff:''}],pilotage:'',demande:''},ind:{},rem:[],avis:{},baro:[],copsoq:[],grille:{},indEq:{},indiv:{},crit:{}};}
 let S=store.get()||demo();
-S.copsoq=S.copsoq||[];
+S.copsoq=S.copsoq||[]; S.grille=S.grille||{}; S.indEq=S.indEq||{}; S.indiv=S.indiv||{}; S.crit=S.crit||{};
+// Migration : avis enregistrés sur 6 familles → 7 (« Horaires » insérée en 2e position, non évaluée)
+Object.values(S.avis).forEach(a=>{if(a.f&&a.f.length===6)a.f.splice(1,0,-1);}); try{store.set(S);}catch(e){}
 const save=()=>store.set(S);
 
 /* =========================================================
@@ -391,20 +509,74 @@ function baroScores(eq){
   const h=HEALTH.map((x,i)=>{const vals=R.map(b=>b.h[i]).filter(v=>v!=null);return {mean:vals.reduce((a,b)=>a+b,0)/vals.length/3*100,pct:vals.filter(v=>v>=2).length/vals.length*100};});
   return {n:R.length,masked:false,ax,h};
 }
+/* Grille RPS-DU : score de famille 0-100 = (niveau moyen − 1) / 3 ; une question au niveau « élevé » porte la famille à 50 au moins */
+function grilleEq(eq){
+  const G=S.grille[eq]; if(!G) return null; const out={}; let n=0;
+  F.forEach(f=>{const L=RPSDU.map((q,i)=>q.f===f.k?niveauQ(q,G.a[i]):null).filter(v=>v!=null); n+=L.length;
+    if(!L.length){out[f.k]=null;return;} let sc=(L.reduce((a,b)=>a+b,0)/L.length-1)/3*100; if(L.includes(4))sc=Math.max(sc,50); out[f.k]=sc;});
+  return n?out:null;
+}
+function grilleGlobale(){
+  const res={}; F.forEach(f=>{let s=0,w=0; S.ctx.equipes.forEach(e=>{const g=grilleEq(e.n); if(g&&g[f.k]!=null){const p=+e.eff||1; s+=g[f.k]*p; w+=p;}}); res[f.k]=w?s/w:null;});
+  return Object.values(res).some(v=>v!=null)?res:null;
+}
+/* Indicateurs par équipe : alerte si supérieur au repère ou à 1,25 × la valeur entreprise (taux), 1,5 × par salarié (effectifs) */
+function eqIndAlert(eq,k){
+  const d=EQ_IND.find(x=>x.k===k), I=IND.find(x=>x.k===k), tv=S.indEq?.[eq]?.[k];
+  if(tv===''||tv==null) return null; const t=+tv, cv=+(S.ind[k]?.n);
+  if(I?.thr!=null && t>=I.thr) return 1;
+  if(d.taux) return cv && t>cv*1.25 ? 1 : 0;
+  const e=+(S.ctx.equipes.find(x=>x.n===eq)?.eff), ce=+S.ctx.effectif;
+  return e&&ce&&cv ? (t/e > cv/ce*1.5 ? 1 : 0) : 0;
+}
 function compute(eq){
   const b=baroScores(eq), cp=copScores(eq), hasInd=!eq&&indFilled(), hasRem=S.rem.length>0;
+  const gr=eq?grilleEq(eq):grilleGlobale();
+  const eqInd=eq&&S.indEq[eq]&&EQ_IND.some(d=>eqIndAlert(eq,d.k)!=null);
   return F.map(f=>{
     const src={};
+    if(gr&&gr[f.k]!=null) src.grille=gr[f.k];
     const qv=[!b.masked?b.ax[f.k]:null,!cp.masked?cp.ax[f.k]:null].filter(v=>v!=null); if(qv.length) src.baro=qv.reduce((a,c)=>a+c,0)/qv.length;
-    if(!eq){const lv=ACTEURS.map(a=>S.avis[a.k]?.f?.[+f.k[1]-1]).filter(v=>v!=null&&v>=0); if(lv.length) src.avis=lv.reduce((a,c)=>a+c,0)/lv.length/3*100;}
+    if(!eq){const lv=ACTEURS.map(a=>S.avis[a.k]?.f?.[FI(f.k)]).filter(v=>v!=null&&v>=0); if(lv.length) src.avis=lv.reduce((a,c)=>a+c,0)/lv.length/3*100;}
     if(hasRem){const rr=S.rem.filter(r=>r.f===f.k&&(!eq||r.eq===eq)&&r.st!=='Traité'); src.rem=Math.min(100,rr.reduce((a,r)=>a+[0,1,2,4][r.g],0)*12);}
-    if(eq&&b.masked&&cp.masked&&src.rem===0) delete src.rem; // pas de faux « 0 » quand seule l'absence de remontée renseigne l'équipe
+    if(eq&&b.masked&&cp.masked&&!gr&&src.rem===0) delete src.rem; // pas de faux « 0 » quand seule l'absence de remontée renseigne l'équipe
     if(hasInd){let s=0;IND.forEach(d=>{if(d.f.includes(f.k)){const a=indAlert(d.k);s+=a===2?100:a===1?25:0;}}); src.ind=Math.min(100,s);}
-    const W={baro:.4,avis:.3,rem:.15,ind:.15}; let tw=0,ts=0; Object.entries(src).forEach(([k,v])=>{if(v!=null){tw+=W[k];ts+=W[k]*v;}});
+    if(eqInd){let s=0;EQ_IND.forEach(d=>{const I=IND.find(x=>x.k===d.k); if(I.f.includes(f.k)&&eqIndAlert(eq,d.k)) s+=35;}); src.ind=Math.min(100,s);}
+    // Pondération : grille RPS-DU 30 %, questionnaires 30 %, avis 20 %, remontées 10 %, indicateurs 10 %
+    const W={grille:.3,baro:.3,avis:.2,rem:.1,ind:.1}; let tw=0,ts=0; Object.entries(src).forEach(([k,v])=>{if(v!=null){tw+=W[k];ts+=W[k]*v;}});
     let score=tw?ts/tw:null, lv=levelOf(score);
     const grave=S.rem.some(r=>r.f===f.k&&r.g===3&&r.st!=='Traité'&&(!eq||r.eq===eq))||(!eq&&IND.some(d=>d.f.includes(f.k)&&indAlert(d.k)===2));
     if(grave&&lv!=null&&lv<2)lv=2;
     return {f,src,score,lv,grave};
+  });
+}
+/* =========================================================
+   CRITICITÉ (critères classants, réseau Anact-Aract, kit « RPS dans le DU », 2017)
+   Exposition (1-4, issue du score croisé) × Gravité (1-4 : effets sur les personnes, le collectif, le travail),
+   pondérée par le niveau de maîtrise (mesures de prévention existantes) → priorité d'action pour le DUERP.
+   ========================================================= */
+const GRAV_L=['','Légère : inconfort, gêne ponctuelle','Modérée : plaintes, tensions, signaux d\'alerte','Importante : atteintes à la santé, arrêts, collectif durablement dégradé','Grave : violence, détresse, atteinte grave à la santé'];
+const MAIT_L=['Aucune mesure','Mesures partielles','Mesures efficaces et suivies'];
+const PRIO=[null,{l:'P1 · Immédiat',c:'lv3'},{l:'P2 · Sous 6 mois',c:'lv2'},{l:'P3 · À planifier',c:'lv1'},{l:'P4 · Surveiller',c:'lv0'}];
+function graviteAuto(fk){
+  const why=[]; let g=1;
+  const rem=S.rem.filter(r=>r.f===fk&&r.st!=='Traité');
+  const indOn=IND.filter(d=>d.f.includes(fk)&&indAlert(d.k));
+  if(rem.some(r=>r.g===3)||indOn.some(d=>indAlert(d.k)===2)){g=4;why.push('situation grave ou indicateur critique');}
+  const iv=S.indiv||{}, vus=+iv.vus||0;
+  INDIV.filter(x=>x.f&&x.f.includes(fk)).forEach(x=>{const base=x.sur?+iv[x.sur]||0:vus, n=+iv[x.k]||0; if(base<5||!n)return; const p=n/base;
+    if(p>=.2&&g<3){g=3;why.push(`${x.l.toLowerCase()} : ${Math.round(p*100)} %`);} else if(p>=.1&&g<2){g=2;why.push(`${x.l.toLowerCase()} : ${Math.round(p*100)} %`);}});
+  if(g<3&&(rem.filter(r=>r.g>=2).length>=2||indOn.some(d=>['psy','arrets_longs','vad','inapt','amenag'].includes(d.k)))){g=3;why.push('atteintes à la santé signalées');}
+  if(g<2&&(rem.length||indOn.length)){g=2;why.push('signaux d\'alerte');}
+  return {g,why};
+}
+function criticite(rows){
+  return rows.map(r=>{
+    const E=r.lv==null?null:r.lv+1, ga=graviteAuto(r.f.k), c=S.crit[r.f.k]||{};
+    const G=c.g||ga.g, M=c.m||0;
+    if(E==null) return {...r,E,G,ga,M,C:null,P:null};
+    const C=Math.round(E*G*(1-.25*M)*10)/10;
+    return {...r,E,G,ga,M,C,P:C>=9?1:C>=6?2:C>=3?3:4};
   });
 }
 function ecarts(){
@@ -415,10 +587,10 @@ function ecarts(){
 /* =========================================================
    NAVIGATION
    ========================================================= */
-const TABS=[['contexte','Contexte'],['indicateurs','Indicateurs'],['remontees','Remontées'],['avis','Avis des acteurs'],['barometre','Questionnaires'],['synthese','Synthèse']];
-const done={contexte:()=>!!S.ctx.entreprise,indicateurs:indFilled,remontees:()=>S.rem.length>0,avis:()=>Object.values(S.avis).some(a=>a.f?.some(v=>v>=0)),barometre:()=>S.baro.length+S.copsoq.length>0,synthese:()=>false};
+const TABS=[['contexte','Contexte'],['indicateurs','Indicateurs'],['remontees','Remontées'],['grille','Grille RPS-DU'],['avis','Avis des acteurs'],['barometre','Questionnaires'],['synthese','Synthèse']];
+const done={contexte:()=>!!S.ctx.entreprise,indicateurs:indFilled,remontees:()=>S.rem.length>0,grille:()=>Object.keys(S.grille).some(k=>grilleEq(k)),avis:()=>Object.values(S.avis).some(a=>a.f?.some(v=>v>=0)),barometre:()=>S.baro.length+S.copsoq.length>0,synthese:()=>false};
 function renderTabs(cur){$('#tabs').innerHTML=TABS.map(([k,l],i)=>`<a href="#${k}" class="${done[k]()?'done':''}" ${k===cur?'aria-current="page"':''}><span class="n">${i+1}</span>${l}</a>`).join('');}
-function route(){const h=(location.hash||'#contexte').slice(1);const cur=TABS.some(t=>t[0]===h)?h:'contexte';renderTabs(cur);({contexte:vContexte,indicateurs:vInd,remontees:vRem,avis:vAvis,barometre:vBaro,synthese:vSynth})[cur]();}
+function route(){const h=(location.hash||'#contexte').slice(1);const cur=TABS.some(t=>t[0]===h)?h:'contexte';renderTabs(cur);({contexte:vContexte,indicateurs:vInd,remontees:vRem,grille:vGrille,avis:vAvis,barometre:vBaro,synthese:vSynth})[cur]();}
 window.addEventListener('hashchange',()=>{route();window.scrollTo(0,0);});
 const demoBar=()=>S.demo?`<div class="demo"><span><b>Données d'exemple fictives.</b> Explorez l'outil, puis démarrez votre propre évaluation.</span><span class="sp"></span><button class="btn sm" id="newEval">Démarrer une évaluation vierge</button></div>`:'';
 function bindDemo(){const b=$('#newEval');if(!b)return;b.onclick=()=>{if(b.dataset.c){S=blank();save();location.hash='contexte';route();}else{b.dataset.c=1;b.textContent='Confirmer : effacer l\'exemple';b.classList.add('danger');}};}
@@ -428,7 +600,7 @@ const pill=lv=>lv==null?`<span class="pill lvn">Non évalué</span>`:`<span clas
 /* ---------- 1. Contexte ---------- */
 function vContexte(){
   const c=S.ctx;
-  app.innerHTML=`${demoBar()}${intro('Étape 1','Cadre de la démarche',"Une évaluation des RPS se mène en démarche collective : comité de pilotage, information des salariés, consultation du CSE. Le résultat s'intègre au DUERP.",'<b>Références :</b> art. L4121-1 et L4121-2 (obligation de prévention, dont le harcèlement), R4121-1 (DUERP), INRS ED 6349 et ED 6403.')}
+  app.innerHTML=`${demoBar()}${intro('Étape 1','Cadre de la démarche',"Une évaluation des RPS se mène en démarche collective : comité de pilotage, information des salariés, consultation du CSE. Le résultat s'intègre au DUERP.",'<b>Références :</b> art. L4121-1 et L4121-2 (obligation de prévention, dont le harcèlement), R4121-1 (DUERP), INRS ED 6349 et ED 6403 (2022) ; kit Anact-Aract « RPS dans le DU » (2017) ; guide DGAFP.')}
   <div class="grid g2">
     <div class="card grid">
       <label class="f">Entreprise<input class="i" data-c="entreprise" value="${esc(c.entreprise)}"></label>
@@ -458,7 +630,7 @@ function vContexte(){
 function vInd(){
   const groups=[...new Set(IND.map(d=>d.g))];
   const nA=IND.filter(d=>indAlert(d.k)).length, nC=IND.filter(d=>indAlert(d.k)===2).length;
-  app.innerHTML=`${demoBar()}${intro('Étape 2','Indicateurs de l\'entreprise',"Saisissez les valeurs de la période et de la période précédente. Une alerte se déclenche au-delà d'un repère, ou si la hausse dépasse 20 %.",'<b>Source :</b> INRS ED 6012, « Dépister les risques psychosociaux. Des indicateurs pour vous guider ». Les repères sont indicatifs et à adapter au secteur.')}
+  app.innerHTML=`${demoBar()}${intro('Étape 2','Indicateurs : entreprise, équipes, individuel',"Trois niveaux : les indicateurs de l'entreprise (période et période précédente), leur déclinaison par équipe, et les signaux individuels agrégés de l'infirmerie. Une alerte se déclenche au-delà d'un repère, ou si la hausse dépasse 20 %.",'<b>Sources :</b> INRS ED 6012 « Dépister les RPS, des indicateurs pour vous guider » ; DGAFP, guide méthodologique RPS (indicateurs de fonctionnement, de santé, de vécu). Repères indicatifs, à adapter au secteur.')}
   <div class="card row"><div style="max-width:720px"><h3>Importer depuis le suivi AT / MP</h3><p class="muted small">Calcule le TF, le TG, les AT avec arrêt, l'absentéisme, le turnover, les AT pour agression et les affections psychiques à partir du registre AT/MP et des données RH mensuelles de Protect. Période N : les 12 derniers mois ; N-1 : les 12 mois précédents.</p><p class="small" id="impMsg" role="status"></p></div><span class="sp"></span><button class="btn" id="imp">Importer</button></div>
   <div class="kpis"><div class="kpi"><div class="l">Indicateurs renseignés</div><div class="v">${IND.filter(d=>S.ind[d.k]?.n!==''&&S.ind[d.k]?.n!=null).length}<span class="muted small"> / ${IND.length}</span></div></div>
    <div class="kpi"><div class="l">En alerte</div><div class="v" style="color:var(--l2)">${nA}</div></div>
@@ -474,7 +646,18 @@ function vInd(){
      <td class="small muted">${d.f.map(k=>F.find(x=>x.k===k).s).join(', ')}</td>
      <td>${a===2?'<span class="pill lv3">Critique</span>':a===1?'<span class="pill lv2">Alerte</span>':(v.n!==''&&v.n!=null)?'<span class="pill lv0">RAS</span>':'<span class="pill lvn">–</span>'}</td></tr>`;}).join('')}
    </tbody></table></div></div>`).join('')}
+  <div class="card"><h3>Indicateurs par équipe</h3><p class="muted small" style="margin:2px 0 10px">Une case passe en alerte si la valeur dépasse le repère, 1,25 fois la valeur de l'entreprise (taux) ou 1,5 fois la valeur par salarié (effectifs). Ces alertes alimentent la cartographie par équipe.</p>
+   <div class="tw"><table><thead><tr><th>Équipe</th>${EQ_IND.map(d=>`<th>${d.l} <span style="text-transform:none">(${d.u})</span></th>`).join('')}</tr></thead><tbody>
+   ${S.ctx.equipes.map(e=>`<tr><td><b>${esc(e.n)}</b>${e.eff?` <span class="muted small">${e.eff} sal.</span>`:''}</td>${EQ_IND.map(d=>{const a=eqIndAlert(e.n,d.k);return `<td><input class="i num ${a?'al':''}" type="number" step="any" min="0" data-eqi="${esc(e.n)}" data-k="${d.k}" value="${esc(S.indEq[e.n]?.[d.k])}" aria-label="${esc(d.l)} ${esc(e.n)}"></td>`;}).join('')}</tr>`).join('')}
+   <tr><td class="muted small">Entreprise (période N)</td>${EQ_IND.map(d=>`<td class="num muted small">${esc(S.ind[d.k]?.n??'–')}</td>`).join('')}</tr>
+   </tbody></table></div></div>
+  <div class="card"><h3>Signaux individuels agrégés <span class="muted small">(entretiens infirmiers de la période)</span></h3>
+   <p class="muted small" style="margin:2px 0 10px">Des effectifs uniquement, jamais de nom : ces données restent couvertes par le secret professionnel. Elles servent à estimer la gravité des facteurs (critères classants Anact) et ne figurent dans le rapport que sous forme de pourcentages, à partir de 5 salariés vus.</p>
+   <div class="indiv">${INDIV.map(x=>{const iv=S.indiv||{}, base=x.base?null:(x.sur?+iv[x.sur]||0:+iv.vus||0), n=+iv[x.k]||0, p=base?Math.round(n/base*100):null;
+     return `<label class="f">${x.l}<span class="row" style="flex-wrap:nowrap"><input class="i num" type="number" min="0" data-iv="${x.k}" value="${esc(iv[x.k])}" style="max-width:110px">${p!=null&&n?`<span class="pill ${x.crit?'lv3':p>=20?'lv2':p>=10?'lv1':'lv0'}">${x.crit?'Alerte':p+' %'}</span>`:''}</span></label>`;}).join('')}</div></div>
   <div class="row"><a class="btn ghost" href="#contexte">Retour</a><span class="sp"></span><a class="btn" href="#remontees">Étape suivante : remontées</a></div>`;
+  app.querySelectorAll('[data-eqi]').forEach(el=>el.onchange=()=>{const e=el.dataset.eqi;S.indEq[e]=S.indEq[e]||{};S.indEq[e][el.dataset.k]=el.value;save();const y=scrollY;vInd();scrollTo(0,y);});
+  app.querySelectorAll('[data-iv]').forEach(el=>el.onchange=()=>{S.indiv[el.dataset.iv]=el.value;save();const y=scrollY;vInd();scrollTo(0,y);});
   app.querySelectorAll('[data-ind]').forEach(el=>el.onchange=()=>{const k=el.dataset.ind;S.ind[k]=S.ind[k]||{};S.ind[k][el.dataset.p]=el.value;save();vInd();});
   $('#imp').onclick=()=>{const r=importATMP();if(r.ok){save();vInd();renderTabs('indicateurs');} $('#impMsg').textContent=r.msg;};
   bindDemo();
@@ -534,7 +717,7 @@ function vRem(){
       <p><b>${fl(r.f)}</b> · ${GRAV[r.g-1].l}</p><p class="muted">${esc(r.txt)}</p></div>
       <div class="grid" style="gap:6px"><select class="i" data-st="${r.id}" aria-label="Statut">${STATUTS.map(s=>`<option ${s===r.st?'selected':''}>${s}</option>`)}</select><button class="btn ghost sm" data-rdel="${r.id}">Supprimer</button></div></div>`).join(''):`<p class="muted">Aucune remontée ${remFilter!=='Tous'?'avec ce statut':'pour l\'instant'}.</p>`}
    </div></div>
-  <div class="row"><a class="btn ghost" href="#indicateurs">Retour</a><span class="sp"></span><a class="btn" href="#avis">Étape suivante : avis des acteurs</a></div>`;
+  <div class="row"><a class="btn ghost" href="#indicateurs">Retour</a><span class="sp"></span><a class="btn" href="#grille">Étape suivante : grille RPS-DU</a></div>`;
   $('#remForm').onsubmit=e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target));S.rem.push({id:Date.now(),date:d.date,src:d.src,eq:d.eq,f:d.f,g:+d.g,txt:d.txt.trim(),st:'À traiter'});save();vRem();renderTabs('remontees');};
   app.querySelectorAll('[data-rf]').forEach(b=>b.onclick=()=>{remFilter=b.dataset.rf;vRem();});
   app.querySelectorAll('[data-st]').forEach(s=>s.onchange=()=>{S.rem.find(r=>r.id==s.dataset.st).st=s.value;save();});
@@ -542,22 +725,46 @@ function vRem(){
   bindDemo();
 }
 
-/* ---------- 4. Avis des acteurs ---------- */
+/* ---------- 4. Grille RPS-DU (INRS) ---------- */
+let gridEq=null;
+function vGrille(){
+  const eqs=S.ctx.equipes.map(e=>e.n); if(!eqs.includes(gridEq)) gridEq=eqs[0];
+  const G=S.grille[gridEq]||{a:[],notes:{}}, nRep=RPSDU.filter((q,i)=>G.a[i]!=null).length, gs=grilleEq(gridEq);
+  app.innerHTML=`${demoBar()}${intro('Étape 4','Grille RPS-DU par unité de travail',"Évaluation collective, en groupe de travail, de 26 questions réparties en 7 familles. Pour chaque question, le groupe choisit la réponse qui décrit le mieux la situation, à partir d'exemples concrets de travail. Ce n'est pas un questionnaire individuel : la réponse est délibérée en groupe, et les divergences sont notées.",'<b>Source :</b> INRS ED 6403, outil RPS-DU (grille version octobre 2022). Niveau d\'intensité : 1 favorable ou non concerné, 2 faible, 3 modéré, 4 élevé. Les questions formulées positivement sont cotées à l\'envers.')}
+  <div class="card row"><span class="small muted">Unité de travail évaluée</span>${eqs.map(e=>`<button class="filtre-eq ${e===gridEq?'on':''}" data-geq="${esc(e)}">${esc(e)}${grilleEq(e)?' ✓':''}</button>`).join('')}<span class="sp"></span><span class="num small"><b>${nRep}</b> / ${RPSDU.length} questions</span></div>
+  ${F.map(f=>`<div class="card"><div class="row" style="margin-bottom:6px"><h3>${f.l}</h3><span class="sp"></span>${gs&&gs[f.k]!=null?`<span class="pill ${LEVELS[levelOf(gs[f.k])].c}">${Math.round(gs[f.k])} / 100</span>`:''}</div>
+    ${RPSDU.map((q,i)=>q.f!==f.k?'':(()=>{const idx=G.a[i], L=niveauQ(q,idx);return `<div class="qrow"><div><b class="small">${i+1}. ${q.t}</b><p class="muted small">${q.q}${q.fav?' <span class="inv">cotation inversée</span>':''}</p></div>
+      <div><div class="q4" role="group" aria-label="${esc(q.t)}">${RPSDU_REP.map((l,j)=>`<button data-q="${i}" data-v="${j}" class="L${niveauQ(q,j)}" aria-pressed="${idx===j}">${l}</button>`).join('')}</div>
+      ${L?`<span class="pill ${['lv0','lv1','lv2','lv3'][L-1]} small">${L} · ${NIV_INRS[L-1]}</span>`:''}</div></div>`;})()).join('')}
+    <label class="f" style="margin-top:8px">Situations concrètes, divergences, ce qui fonctionne bien et qu'il faut préserver<textarea class="i" data-note="${f.k}">${esc(G.notes?.[f.k]||'')}</textarea></label></div>`).join('')}
+  <div class="note"><b>Situation critique pendant l'entretien ?</b> L'INRS recommande de la traiter dans un temps dédié, distinct de l'évaluation, et de consigner l'analyse dans les remontées (étape 3).</div>
+  ${Object.keys(S.grille).length?`<div class="card"><h3 style="margin-bottom:8px">Tableau de synthèse par unité de travail</h3><div class="tw"><table><thead><tr><th>Question</th>${eqs.map(e=>`<th style="text-align:center">${esc(e)}</th>`).join('')}</tr></thead><tbody>
+    ${F.map(f=>`<tr><td colspan="${eqs.length+1}" class="small" style="font-weight:700;background:var(--card-2)">${f.l}</td></tr>`+RPSDU.map((q,i)=>q.f!==f.k?'':`<tr><td class="small">${i+1}. ${q.t}</td>${eqs.map(e=>{const L=niveauQ(q,S.grille[e]?.a?.[i]);return `<td><div class="cell ${L?['lv0','lv1','lv2','lv3'][L-1]:'lvn'}">${L||'–'}</div></td>`;}).join('')}</tr>`).join('')).join('')}
+  </tbody></table></div></div>`:''}
+  <div class="row"><a class="btn ghost" href="#remontees">Retour</a><span class="sp"></span><a class="btn" href="#avis">Étape suivante : avis des acteurs</a></div>`;
+  app.querySelectorAll('[data-geq]').forEach(b=>b.onclick=()=>{gridEq=b.dataset.geq;vGrille();});
+  const ens=()=>S.grille[gridEq]=S.grille[gridEq]||{a:RPSDU.map(()=>null),notes:{}};
+  app.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{const g=ens();const i=+b.dataset.q,v=+b.dataset.v;g.a[i]=g.a[i]===v?null:v;save();const y=scrollY;vGrille();scrollTo(0,y);renderTabs('grille');});
+  app.querySelectorAll('[data-note]').forEach(t=>t.oninput=()=>{const g=ens();g.notes[t.dataset.note]=t.value;save();});
+  bindDemo();
+}
+
+/* ---------- 5. Avis des acteurs ---------- */
 function vAvis(){
   const ec=ecarts();
-  app.innerHTML=`${demoBar()}${intro('Étape 4','Avis des acteurs',"Recueillez la lecture de chaque acteur sur les six facteurs. Croiser les regards rend l'évaluation plus objective, et les écarts de perception sont eux-mêmes une information.",'<b>Acteurs clés :</b> CSE (art. L2312-9), référents harcèlement (L2314-1, L1153-5-1), médecin du travail, RH, direction, encadrement.')}
+  app.innerHTML=`${demoBar()}${intro('Étape 5','Avis des acteurs',"Recueillez la lecture de chaque acteur sur les sept familles de facteurs. Croiser les regards rend l'évaluation plus objective, et les écarts de perception sont eux-mêmes une information.",'<b>Acteurs clés :</b> CSE (art. L2312-9), référents harcèlement (L2314-1, L1153-5-1), médecin du travail, RH, direction, encadrement.')}
   <div class="card"><h3 style="margin-bottom:10px">Vue d'ensemble</h3><div class="tw"><table><thead><tr><th>Acteur</th>${F.map(f=>`<th style="text-align:center">${f.s}</th>`).join('')}</tr></thead><tbody>
    ${ACTEURS.map(a=>`<tr><td>${a.l}${a.secret?' <span class="pill lvn">secret médical</span>':''}</td>${F.map((f,i)=>{const v=S.avis[a.k]?.f?.[i];return `<td><div class="cell ${v==null||v<0?'lvn':LEVELS[v].c}">${v==null||v<0?'–':AV_LV[v+1].l}</div></td>`;}).join('')}</tr>`).join('')}
   </tbody></table></div>
   ${ec.length?`<div class="note" style="margin-top:12px"><b>Écarts de perception à discuter en comité de pilotage :</b> ${ec.map(e=>`${e.f.s} (« ${AV_LV[e.mx.v+1].l} » pour ${e.mx.a.l}, « ${AV_LV[e.mn.v+1].l} » pour ${e.mn.a.l})`).join(' ; ')}.</div>`:''}</div>
-  <div class="grid">${ACTEURS.map(a=>{const av=S.avis[a.k]||{f:[-1,-1,-1,-1,-1,-1],c:''};return `<details class="card acteur"><summary><div><h3>${a.l}</h3><p class="muted small">${a.d}</p></div>
+  <div class="grid">${ACTEURS.map(a=>{const av=S.avis[a.k]||{f:vide(),c:''};return `<details class="card acteur"><summary><div><h3>${a.l}</h3><p class="muted small">${a.d}</p></div>
     <div class="dots" aria-hidden="true">${av.f.map(v=>`<i class="${v<0?'lvn':LEVELS[v].c}" style="background:var(--${v<0?'na-bg':'l'+v})"></i>`).join('')}</div></summary>
     <div class="grid" style="margin-top:12px">
     ${a.secret?`<div class="secret">Le médecin du travail est tenu au secret médical. Ne consignez ici que des constats collectifs, anonymisés, qu'il ou elle accepte de partager : aucune donnée de santé individuelle.</div>`:''}
     ${F.map((f,i)=>`<div class="axrow"><span class="small"><b>${f.l}</b></span><div class="lvsel" role="group" aria-label="${esc(f.l)}">${AV_LV.map(l=>`<button class="b${l.v}" data-a="${a.k}" data-i="${i}" data-v="${l.v}" aria-pressed="${av.f[i]===l.v}">${l.l}</button>`).join('')}</div></div>`).join('')}
     <label class="f">Commentaire, éléments factuels<textarea class="i" data-ac="${a.k}">${esc(av.c)}</textarea></label></div></details>`;}).join('')}</div>
-  <div class="row"><a class="btn ghost" href="#remontees">Retour</a><span class="sp"></span><a class="btn" href="#barometre">Étape suivante : questionnaires</a></div>`;
-  const ens=k=>S.avis[k]=S.avis[k]||{f:[-1,-1,-1,-1,-1,-1],c:''};
+  <div class="row"><a class="btn ghost" href="#grille">Retour</a><span class="sp"></span><a class="btn" href="#barometre">Étape suivante : questionnaires</a></div>`;
+  const ens=k=>S.avis[k]=S.avis[k]||{f:vide(),c:''};
   app.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{const av=ens(b.dataset.a);av.f[+b.dataset.i]=+b.dataset.v;save();const open=[...app.querySelectorAll('details.acteur')].map(d=>d.open);const y=scrollY;vAvis();app.querySelectorAll('details.acteur').forEach((d,i)=>d.open=open[i]);scrollTo(0,y);renderTabs('avis');});
   app.querySelectorAll('[data-ac]').forEach(t=>t.oninput=()=>{ens(t.dataset.ac).c=t.value;save();});
   bindDemo();
@@ -577,10 +784,10 @@ const copRisk=s=>v=>v==null?null:(s.risk?v:100-v);
 function vBaro(){
   const eqs=S.ctx.equipes, g=baroScores(), c=copScores(), eff=+S.ctx.effectif||0;
   const part=n=>eff?`${Math.round(n/eff*100)} % de l'effectif`:'Renseignez l\'effectif à l\'étape 1';
-  app.innerHTML=`${demoBar()}${intro('Étape 5','Questionnaires anonymes',"Deux questionnaires au choix, ou les deux : le baromètre PréventIA pour un repérage rapide, le COPSOQ pour une mesure reconnue. Chaque salarié répond seul sur une tablette ou un poste en mode kiosque. Aucune identité ni heure de réponse n'est enregistrée.",'<b>COPSOQ :</b> Copenhagen Psychosocial Questionnaire, version courte française validée (Dupret et al., <i>Santé Publique</i>, 2012). <b>Baromètre PréventIA :</b> repérage construit sur les 6 axes Gollac, non validé.')}
+  app.innerHTML=`${demoBar()}${intro('Étape 6','Questionnaires anonymes',"Deux questionnaires au choix, ou les deux : le baromètre PréventIA pour un repérage rapide, le COPSOQ pour une mesure reconnue. Chaque salarié répond seul sur une tablette ou un poste en mode kiosque. Aucune identité ni heure de réponse n'est enregistrée.",'<b>COPSOQ :</b> Copenhagen Psychosocial Questionnaire, version courte française validée (Dupret et al., <i>Santé Publique</i>, 2012). <b>Baromètre PréventIA :</b> repérage construit sur les 7 familles INRS (axes Gollac), non validé.')}
   ${!COPSOQ_OFFICIEL?`<div class="note"><b>COPSOQ, libellés à vérifier.</b> La structure (46 items, 24 échelles), les modalités de réponse et la cotation suivent la version validée. Les formulations sont des libellés de travail : remplacez-les par ceux de l'annexe 2 de l'article de validation avant d'utiliser les résultats.</div>`:''}
   <div class="grid g2">
-    <div class="card grid" style="align-content:start"><div><p class="eyebrow">Repérage · 4 min</p><h3>Baromètre PréventIA</h3><p class="muted small">${ITEMS.length} affirmations sur les 6 facteurs, 2 questions de santé perçue.</p></div>
+    <div class="card grid" style="align-content:start"><div><p class="eyebrow">Repérage · 4 min</p><h3>Baromètre PréventIA</h3><p class="muted small">${ITEMS.length} affirmations sur les 7 familles de facteurs, 2 questions de santé perçue.</p></div>
       <div class="row"><span class="num"><b>${S.baro.length}</b> réponses · <span class="muted">${part(S.baro.length)}</span></span><span class="sp"></span><button class="btn" data-k="baro">Lancer la saisie</button></div></div>
     <div class="card grid" style="align-content:start"><div><p class="eyebrow">Échelle reconnue · 10 min</p><h3>COPSOQ, version courte</h3><p class="muted small">${COP_ITEMS.length} questions, ${COP.length} échelles, 6 domaines. Scores de 0 à 100.</p></div>
       <div class="row"><span class="num"><b>${S.copsoq.length}</b> réponses · <span class="muted">${part(S.copsoq.length)}</span></span><span class="sp"></span><button class="btn" data-k="copsoq">Lancer la saisie</button></div></div>
@@ -591,16 +798,16 @@ function vBaro(){
   </div>
   <div class="card"><h3 style="margin-bottom:10px">Baromètre PréventIA par équipe <span class="muted small">(score de risque 0 à 100)</span></h3><div class="tw"><table><thead><tr><th>Équipe</th><th>Réponses</th>${F.map(f=>`<th style="text-align:center">${f.s}</th>`).join('')}</tr></thead><tbody>
    ${[{n:'Toute l\'entreprise',all:1},...eqs].map(e=>{const s=baroScores(e.all?null:e.n);
-     return `<tr><td><b>${esc(e.n)}</b></td><td class="num">${s.n}${e.eff&&!e.all?` <span class="muted small">/ ${e.eff}</span>`:''}</td>${s.masked?`<td colspan="6"><span class="muted small">Moins de ${SEUIL_ANONYMAT} réponses : résultats masqués pour préserver l'anonymat.</span></td>`:F.map(f=>{const v=s.ax[f.k];return `<td><div class="cell ${LEVELS[levelOf(v)].c}">${Math.round(v)}</div></td>`;}).join('')}</tr>`;}).join('')}
+     return `<tr><td><b>${esc(e.n)}</b></td><td class="num">${s.n}${e.eff&&!e.all?` <span class="muted small">/ ${e.eff}</span>`:''}</td>${s.masked?`<td colspan="${F.length}"><span class="muted small">Moins de ${SEUIL_ANONYMAT} réponses : résultats masqués pour préserver l'anonymat.</span></td>`:F.map(f=>{const v=s.ax[f.k];return `<td><div class="cell ${LEVELS[levelOf(v)].c}">${Math.round(v)}</div></td>`;}).join('')}</tr>`;}).join('')}
   </tbody></table></div></div>
   <div class="card"><h3 style="margin-bottom:4px">COPSOQ par échelle</h3><p class="muted small" style="margin-bottom:10px">Score de 0 à 100 sur le concept mesuré. La couleur indique s'il est favorable (vert) ou défavorable (rouge) selon le sens de l'échelle. Les seuils sont indicatifs : le COPSOQ compare normalement à une population de référence.</p>
    <div class="tw"><table><thead><tr><th>Échelle</th><th>Domaine</th>${[{n:'Entreprise',all:1},...eqs].map(e=>{const s=copScores(e.all?null:e.n);return `<th style="text-align:center">${esc(e.n)}<br><span class="num" style="text-transform:none">n = ${s.n}</span></th>`;}).join('')}</tr></thead><tbody>
    ${COP.map(s=>`<tr><td>${s.l}${s.risk?' <span class="muted small">(↑ défavorable)</span>':''}</td><td class="small muted">${s.dom}</td>${[{all:1},...eqs].map(e=>{const r=copScores(e.all?null:e.n);if(r.masked)return `<td><div class="cell lvn">–</div></td>`;const v=r.sc[s.k];return `<td><div class="cell ${LEVELS[levelOf(copRisk(s)(v))].c}">${Math.round(v)}</div></td>`;}).join('')}</tr>`).join('')}
    </tbody></table></div><p class="muted small" style="margin-top:8px">« – » : moins de ${SEUIL_ANONYMAT} réponses, résultats masqués.</p></div>
-  ${!g.masked?`<details class="card acteur"><summary><h3>Détail des affirmations du baromètre</h3></summary><div class="tw" style="margin-top:10px"><table><thead><tr><th>Affirmation</th><th>Facteur</th><th>« Souvent » ou « toujours »</th></tr></thead><tbody>
-    ${ITEMS.map((it,i)=>{const vals=S.baro.map(b=>b.a[i]).filter(v=>v!=null);const p=vals.filter(v=>v>=2).length/vals.length*100;const risk=it.inv?100-p:p;
-      return `<tr><td>${it.t}${it.inv?' <span class="muted small">(item positif)</span>':''}</td><td class="small muted">${F.find(f=>f.k===it.f).s}</td><td class="num"><span class="pill ${LEVELS[levelOf(risk)].c}">${Math.round(p)} %</span></td></tr>`;}).join('')}
-  </tbody></table></div></details>`:''}
+  ${!g.masked?`<details class="card acteur"><summary><h3>Détail des affirmations du baromètre</h3></summary><div class="tw" style="margin-top:10px"><table><thead><tr><th>Affirmation</th><th>Facteur</th><th>« Souvent » ou « toujours »</th><th>Repère national</th></tr></thead><tbody>
+    ${ITEMS.map((it,i)=>{const vals=S.baro.map(b=>b.a[i]).filter(v=>v!=null);if(!vals.length)return `<tr><td>${it.t}</td><td class="small muted">${F.find(f=>f.k===it.f).s}</td><td class="muted small">pas encore de réponse</td><td></td></tr>`;const p=vals.filter(v=>v>=2).length/vals.length*100;const risk=it.inv?100-p:p;const d=DARES[i];
+      return `<tr><td>${it.t}${it.inv?' <span class="muted small">(item positif)</span>':''}</td><td class="small muted">${F.find(f=>f.k===it.f).s}</td><td class="num"><span class="pill ${LEVELS[levelOf(risk)].c}">${Math.round(p)} %</span></td><td class="small">${d?`<span title="${esc(d.l)}"><b class="num">${d.v} %</b> <span class="muted">Dares 2024</span>${p>d.v*1.25?' <span class="pill lv2">au-dessus</span>':''}</span>`:''}</td></tr>`;}).join('')}
+  </tbody></table></div><p class="muted small" style="margin-top:8px">Repères : Dares, enquête Conditions de travail et risques psychosociaux 2024-2025 (25 300 salariés, publiée le 9 septembre 2026). Les formulations diffèrent légèrement : comparaison indicative. « Au-dessus » : plus de 1,25 fois le repère.</p></details>`:''}
   <div class="row"><a class="btn ghost" href="#avis">Retour</a><span class="sp"></span><a class="btn" href="#synthese">Étape suivante : synthèse</a></div>`;
   app.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>kiosk(b.dataset.k));
   bindDemo();
@@ -644,16 +851,25 @@ function radar(rows){
   const poly=rows.map((r,i)=>pt(i,r.score??0).join(',')).join(' ');
   const labs=rows.map((r,i)=>{const [x,y]=pt(i,128);const anc=Math.abs(x-cx)<10?'middle':x>cx?'start':'end';return `<text class="lab" x="${x}" y="${y}" text-anchor="${anc}" dominant-baseline="middle">${r.f.s}</text><text x="${x}" y="${y+14}" text-anchor="${anc}" dominant-baseline="middle">${r.score==null?'–':Math.round(r.score)}</text>`;}).join('');
   const dots=rows.map((r,i)=>{const [x,y]=pt(i,r.score??0);return `<circle cx="${x}" cy="${y}" r="4" fill="var(--${r.lv==null?'muted':'l'+r.lv})"/>`;}).join('');
-  return `<svg class="radar" viewBox="0 0 ${W} ${H}" role="img" aria-label="Radar des 6 facteurs de risques psychosociaux" style="width:100%;max-width:460px;height:auto;display:block;margin:auto">${rings}${axes}<polygon points="${poly}" fill="var(--teal)" fill-opacity=".18" stroke="var(--teal)" stroke-width="2"/>${dots}${labs}</svg>`;
+  return `<svg class="radar" viewBox="0 0 ${W} ${H}" role="img" aria-label="Radar des 7 familles de facteurs de risques psychosociaux" style="width:100%;max-width:460px;height:auto;display:block;margin:auto">${rings}${axes}<polygon points="${poly}" fill="var(--teal)" fill-opacity=".18" stroke="var(--teal)" stroke-width="2"/>${dots}${labs}</svg>`;
+}
+/* Matrice exposition × gravité (4 × 4), familles positionnées */
+function matrice(crit){
+  const col=(e,g)=>{const c=e*g;return c>=9?'lv3':c>=6?'lv2':c>=3?'lv1':'lv0';};
+  let h='<div class="matrice" role="img" aria-label="Matrice exposition par gravité"><span class="ax-y">Gravité</span><div class="mx">';
+  for(let g=4;g>=1;g--) for(let e=1;e<=4;e++){const here=crit.filter(c=>c.E===e&&c.G===g);
+    h+=`<div class="mc ${col(e,g)}">${here.map(c=>`<span title="${esc(c.f.l)}">${c.f.s}</span>`).join('')}</div>`;}
+  return h+'</div><span class="ax-x">Exposition</span></div>';
 }
 function synthData(){
   const rows=compute(), eqs=S.ctx.equipes, g=baroScores(), cp=copScores(), ec=ecarts();
   const nAvis=ACTEURS.filter(a=>S.avis[a.k]?.f?.some(v=>v>=0)).length;
   const nq=Math.max(S.baro.length,S.copsoq.length), eff=+S.ctx.effectif||0, part=eff?nq/eff*100:null;
-  const srcN=[!g.masked||!cp.masked,nAvis>0,S.rem.length>0,indFilled()].filter(Boolean).length;
-  let fiab=srcN/4*60+Math.min(nAvis,6)/6*20+(part==null?0:Math.min(part,60)/60*20);
+  const srcN=[!!grilleGlobale(),!g.masked||!cp.masked,nAvis>0,S.rem.length>0,indFilled()].filter(Boolean).length;
+  let fiab=srcN/5*60+Math.min(nAvis,6)/6*20+(part==null?0:Math.min(part,60)/60*20);
   const alerts=[];
   const grave3=S.rem.filter(r=>r.g===3&&r.st!=='Traité');
+  if(grave3.length||(+S.indiv?.idees>0)) alerts.push(`Situation critique : selon l'INRS (ED 6403), elle doit être analysée dans un temps dédié, distinct de l'évaluation, avec le médecin du travail.${+S.indiv?.idees>0?' Des idées suicidaires ont été repérées en entretien : s\'assurer de la prise en charge de chaque personne concernée.':''}`);
   if(grave3.length) alerts.push(`${grave3.length} situation${grave3.length>1?'s':''} grave${grave3.length>1?'s':''} non traitée${grave3.length>1?'s':''} dans les remontées : action immédiate de l'employeur attendue.`);
   IND.filter(d=>indAlert(d.k)===2).forEach(d=>alerts.push(`Indicateur critique : ${d.l.toLowerCase()} (${S.ind[d.k].n}).`));
   if(!cp.masked&&cp.sc.epuisement>=50) alerts.push(`COPSOQ : score d'épuisement de ${Math.round(cp.sc.epuisement)}/100 sur l'ensemble des répondants.`);
@@ -671,13 +887,15 @@ function synthData(){
   if(rows.some(r=>r.lv===3)) cons.push(['p3','Niveau critique sur au moins un facteur : le CSE peut exercer son droit d\'alerte (art. L2312-59, L4131-2) et recourir à une expertise pour risque grave (art. L2315-94). Un accompagnement externe (ARACT, CARSAT, IPRP) est recommandé.']);
   if(part!=null&&part<30) cons.push(['p2',`Participation aux questionnaires de ${Math.round(part)} % : résultats à interpréter avec prudence. Relancer l'information des salariés.`]);
   if(!COPSOQ_OFFICIEL&&S.copsoq.length) cons.push(['p2','COPSOQ : remplacer les libellés de travail par les libellés officiels de la version française validée avant de diffuser ces résultats.']);
-  return {rows,eqs,g,cp,ec,nAvis,part,srcN,fiab,alerts,cons};
+  const crit=criticite(rows), p1=crit.filter(c=>c.P===1);
+  if(p1.length) cons.unshift(['p3',`Priorité 1 (action immédiate) : ${p1.map(c=>c.f.l.toLowerCase()).join(', ')}. Inscrire ces facteurs au DUERP avec une action, un responsable et une échéance.`]);
+  return {rows,crit,eqs,g,cp,ec,nAvis,part,srcN,fiab,alerts,cons};
 }
 function vSynth(){
   const D=synthData(), {rows}=D;
   const hot=rows.filter(r=>r.lv!=null&&r.lv>=2).sort((a,b)=>b.score-a.score);
   const srcCell=(v)=>v==null?`<span class="lvn">–</span>`:`<span class="${LEVELS[levelOf(v)].c}">${Math.round(v)}</span>`;
-  app.innerHTML=`${demoBar()}${intro('Étape 6','Synthèse et conséquences',"Le score de chaque facteur croise les quatre sources disponibles : questionnaires anonymes 40 % (moyenne du baromètre et du COPSOQ), avis des acteurs 30 %, remontées 15 %, indicateurs 15 %. Une source manquante est retirée du calcul. Une situation grave relève le niveau à « élevé » au minimum.",'<b>Statut :</b> aide à la décision établie par l\'infirmier·e en santé au travail. Elle ne remplace ni l\'évaluation des risques qui incombe à l\'employeur, ni l\'avis du médecin du travail.')}
+  app.innerHTML=`${demoBar()}${intro('Étape 7','Synthèse et conséquences',"Le score d'exposition de chaque famille croise cinq sources : grille RPS-DU 30 %, questionnaires anonymes 30 % (baromètre et COPSOQ), avis des acteurs 20 %, remontées 10 %, indicateurs 10 %. Une source manquante est retirée du calcul. La criticité combine ensuite exposition, gravité et maîtrise pour hiérarchiser les actions du DUERP.",'<b>Statut :</b> aide à la décision établie par l\'infirmier·e en santé au travail. Elle ne remplace ni l\'évaluation des risques qui incombe à l\'employeur, ni l\'avis du médecin du travail.')}
   ${D.alerts.length?`<div class="alert"><div><b>Alertes</b><ul style="margin:.3rem 0 0;padding-left:1.1rem">${D.alerts.map(a=>`<li>${esc(a)}</li>`).join('')}</ul></div></div>`:''}
   <div class="grid g2">
     <div class="card">${radar(rows)}<p class="muted small" style="text-align:center">Score de risque de 0 à 100 · repères 25, 50, 70</p></div>
@@ -685,19 +903,29 @@ function vSynth(){
       <h3>Fiabilité de l'évaluation</h3>
       <div class="row"><div class="fiab" style="flex:1"><i style="width:${Math.round(D.fiab)}%"></i></div><b class="num">${Math.round(D.fiab)} / 100</b></div>
       <ul class="small" style="margin:0;padding-left:1.1rem">
-        <li>${D.srcN} source${D.srcN>1?'s':''} sur 4 renseignée${D.srcN>1?'s':''}</li>
+        <li>${D.srcN} source${D.srcN>1?'s':''} sur 5 renseignée${D.srcN>1?'s':''}</li>
+        <li>Grille RPS-DU : ${Object.keys(S.grille).filter(k=>grilleEq(k)).length} unité${Object.keys(S.grille).filter(k=>grilleEq(k)).length>1?'s':''} de travail évaluée${Object.keys(S.grille).filter(k=>grilleEq(k)).length>1?'s':''} sur ${S.ctx.equipes.length}</li>
         <li>${D.nAvis} acteur${D.nAvis>1?'s':''} ont donné un avis</li>
         <li>${S.baro.length} réponse${S.baro.length>1?'s':''} au baromètre, ${S.copsoq.length} au COPSOQ${D.part!=null?`, soit ${Math.round(D.part)} % de l'effectif au mieux`:''}</li>
         <li>${S.rem.length} remontée${S.rem.length>1?'s':''} consignée${S.rem.length>1?'s':''}</li></ul>
       <h3 style="margin-top:6px">Facteurs prioritaires</h3>
       ${hot.length?hot.map(r=>`<div class="row"><span>${r.f.l}</span><span class="sp"></span>${pill(r.lv)}</div>`).join(''):'<p class="muted">Aucun facteur au niveau élevé ou critique.</p>'}
     </div></div>
-  <div class="card"><h3 style="margin-bottom:10px">Détail par facteur</h3><div class="tw"><table><thead><tr><th>Facteur</th><th style="text-align:center">Questionnaires</th><th style="text-align:center">Avis</th><th style="text-align:center">Remontées</th><th style="text-align:center">Indicateurs</th><th style="text-align:center">Score</th><th>Niveau</th></tr></thead><tbody>
-   ${rows.map(r=>`<tr><td>${r.f.l}${r.grave?' <span class="pill lv3">situation grave</span>':''}</td>${['baro','avis','rem','ind'].map(k=>`<td><div class="cell ${r.src[k]==null?'lvn':LEVELS[levelOf(r.src[k])].c}">${r.src[k]==null?'–':Math.round(r.src[k])}</div></td>`).join('')}<td class="num" style="text-align:center"><b>${r.score==null?'–':Math.round(r.score)}</b></td><td>${pill(r.lv)}</td></tr>`).join('')}
+  <div class="card"><h3 style="margin-bottom:10px">Détail par facteur</h3><div class="tw"><table><thead><tr><th>Facteur</th><th style="text-align:center">Grille RPS-DU</th><th style="text-align:center">Questionnaires</th><th style="text-align:center">Avis</th><th style="text-align:center">Remontées</th><th style="text-align:center">Indicateurs</th><th style="text-align:center">Score</th><th>Niveau</th></tr></thead><tbody>
+   ${rows.map(r=>`<tr><td>${r.f.l}${r.grave?' <span class="pill lv3">situation grave</span>':''}</td>${['grille','baro','avis','rem','ind'].map(k=>`<td><div class="cell ${r.src[k]==null?'lvn':LEVELS[levelOf(r.src[k])].c}">${r.src[k]==null?'–':Math.round(r.src[k])}</div></td>`).join('')}<td class="num" style="text-align:center"><b>${r.score==null?'–':Math.round(r.score)}</b></td><td>${pill(r.lv)}</td></tr>`).join('')}
   </tbody></table></div></div>
-  <div class="card"><h3 style="margin-bottom:10px">Cartographie par équipe <span class="muted small">(questionnaires et remontées)</span></h3><div class="tw"><table><thead><tr><th>Équipe</th>${F.map(f=>`<th style="text-align:center">${f.s}</th>`).join('')}</tr></thead><tbody>
+  <div class="card"><h3 style="margin-bottom:10px">Cartographie par équipe <span class="muted small">(grille, questionnaires, remontées, indicateurs d'équipe)</span></h3><div class="tw"><table><thead><tr><th>Équipe</th>${F.map(f=>`<th style="text-align:center">${f.s}</th>`).join('')}</tr></thead><tbody>
    ${D.eqs.map(e=>{const rr=compute(e.n);return `<tr><td><b>${esc(e.n)}</b>${baroScores(e.n).masked&&copScores(e.n).masked?' <span class="muted small">(questionnaires masqués)</span>':''}</td>${rr.map(r=>`<td><div class="cell ${r.lv==null?'lvn':LEVELS[r.lv].c}">${r.score==null?'–':Math.round(r.score)}</div></td>`).join('')}</tr>`;}).join('')}
   </tbody></table></div></div>
+  <div class="card"><h3>Criticité et priorités pour le DUERP</h3>
+   <p class="muted small" style="margin:2px 0 10px">Criticité = exposition (1 à 4) × gravité (1 à 4), réduite de 25 % par niveau de maîtrise. La gravité est estimée à partir des remontées, des indicateurs et des signaux individuels agrégés ; le comité de pilotage peut la corriger. Priorités : P1 ≥ 9 · P2 ≥ 6 · P3 ≥ 3 · P4 en dessous.</p>
+   <div class="critwrap"><div class="tw"><table class="crit"><thead><tr><th>Famille</th><th style="text-align:center">Exposition</th><th>Gravité</th><th>Maîtrise</th><th style="text-align:center">Criticité</th><th>Priorité</th></tr></thead><tbody>
+   ${D.crit.map(c=>`<tr><td>${c.f.l}</td><td><div class="cell ${c.E?['lv0','lv1','lv2','lv3'][c.E-1]:'lvn'}">${c.E??'–'}</div></td>
+     <td><select class="i sm" data-cg="${c.f.k}" title="${esc(c.ga.why.join(' ; ')||'Aucun signal')}">${[0,1,2,3,4].map(v=>`<option value="${v}" ${(S.crit[c.f.k]?.g||0)===v?'selected':''}>${v?v+' · '+GRAV_L[v].split(' :')[0]:'Auto ('+c.ga.g+')'}</option>`).join('')}</select></td>
+     <td><select class="i sm" data-cm="${c.f.k}">${MAIT_L.map((l,v)=>`<option value="${v}" ${c.M===v?'selected':''}>${l}</option>`).join('')}</select></td>
+     <td class="num" style="text-align:center"><b>${c.C??'–'}</b></td><td>${c.P?`<span class="pill ${PRIO[c.P].c}">${PRIO[c.P].l}</span>`:'<span class="pill lvn">Non évalué</span>'}</td></tr>`).join('')}
+   </tbody></table></div>${matrice(D.crit)}</div>
+   <p class="muted small" style="margin-top:8px">Gravité : ${GRAV_L.slice(1).map((l,i)=>`<b>${i+1}</b> ${l}`).join(' · ')}.</p></div>
   <div class="card"><h3 style="margin-bottom:6px">Ce que cela entraîne</h3>
    ${D.cons.map(([t,x])=>`<div class="action"><span class="tag ${t}">${t==='ob'?'Obligation':t==='p3'?'Prioritaire':'À prévoir'}</span><span>${esc(x)}</span></div>`).join('')}</div>
   ${hot.length?`<div class="card"><h3 style="margin-bottom:6px">Pistes d'actions pour les facteurs prioritaires</h3><p class="muted small" style="margin-bottom:6px">Prévention primaire (agir sur l'organisation du travail) en premier, puis secondaire (renforcer les ressources), puis tertiaire (prendre en charge).</p>
@@ -706,6 +934,8 @@ function vSynth(){
    <div class="report" id="rep" tabindex="0">${esc(report(D))}</div>
    <div class="row"><span class="muted small">Données brutes de l'évaluation, prêtes à verser dans Supabase.</span><span class="sp"></span><button class="btn ghost sm" id="cpj">Copier les données (JSON)</button></div></div>
   <div class="row"><a class="btn ghost" href="#barometre">Retour</a></div>`;
+  app.querySelectorAll('[data-cg]').forEach(s=>s.onchange=()=>{const k=s.dataset.cg;S.crit[k]=S.crit[k]||{};S.crit[k].g=+s.value||0;save();const y=scrollY;vSynth();scrollTo(0,y);});
+  app.querySelectorAll('[data-cm]').forEach(s=>s.onchange=()=>{const k=s.dataset.cm;S.crit[k]=S.crit[k]||{};S.crit[k].m=+s.value;save();const y=scrollY;vSynth();scrollTo(0,y);});
   $('#cp').onclick=()=>{const t=report(D),b=$('#cp');const ok=()=>{b.textContent='Copié';setTimeout(()=>b.textContent='Copier le rapport',1500)};
     try{navigator.clipboard.writeText(t).then(ok,sel)}catch(e){sel()} function sel(){const r=document.createRange();r.selectNodeContents($('#rep'));const s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent='Texte sélectionné';}};
   $('#cpj').onclick=()=>{const b=$('#cpj'),t=JSON.stringify({version:1,exporte_le:new Date().toISOString().slice(0,10),...S},null,1);
@@ -721,9 +951,15 @@ function report(D){
   if(c.pilotage) L.push('COMITÉ DE PILOTAGE',c.pilotage,'');
   L.push('SOURCES MOBILISÉES',`- Indicateurs : ${IND.filter(d=>indAlert(d.k)).length} en alerte sur ${IND.filter(d=>S.ind[d.k]?.n!==''&&S.ind[d.k]?.n!=null).length} renseignés`,`- Remontées : ${S.rem.length} consignées`,`- Avis : ${D.nAvis} acteurs`,`- Questionnaires anonymes : baromètre PréventIA ${S.baro.length} réponses, COPSOQ ${S.copsoq.length} réponses${D.part!=null?` (participation ${Math.round(D.part)} %)`:''}`,`- Indice de fiabilité : ${Math.round(D.fiab)}/100`,'');
   if(D.alerts.length) L.push('ALERTES',...D.alerts.map(a=>'- '+a),'');
-  L.push('RÉSULTATS PAR FACTEUR (score de risque 0-100)');
-  D.rows.forEach(r=>L.push(`- ${r.f.l} : ${r.score==null?'non évalué':Math.round(r.score)+' — '+LEVELS[r.lv].l}${r.grave?' (situation grave signalée)':''}`));
+  L.push('RÉSULTATS PAR FAMILLE DE FACTEURS (INRS) — exposition 0-100, criticité, priorité');
+  D.crit.forEach(c=>L.push(`- ${c.f.l} : ${c.score==null?'non évalué':`exposition ${Math.round(c.score)} (${LEVELS[c.lv].l.toLowerCase()}), gravité ${c.G}, maîtrise « ${MAIT_L[c.M].toLowerCase()} », criticité ${c.C} → ${PRIO[c.P].l}`}${c.grave?' — situation grave signalée':''}`));
   L.push('');
+  const evals=S.ctx.equipes.filter(e=>grilleEq(e.n));
+  if(evals.length){L.push('GRILLE RPS-DU (INRS ED 6403) — familles au niveau modéré ou élevé, par unité de travail');
+    evals.forEach(e=>{const g=grilleEq(e.n);const hot=F.filter(f=>g[f.k]!=null&&g[f.k]>=50);L.push(`- ${e.n} : ${hot.length?hot.map(f=>`${f.s} (${Math.round(g[f.k])})`).join(', '):'aucune famille au-delà de faible'}`);
+      Object.entries(S.grille[e.n].notes||{}).forEach(([k,t])=>{if(t)L.push(`    ${fl(k)} : ${t}`);});});L.push('');}
+  const iv=S.indiv||{}, vus=+iv.vus||0;
+  if(vus>=5){L.push(`SIGNAUX INDIVIDUELS AGRÉGÉS (${vus} salariés vus en entretien infirmier)`);INDIV.filter(x=>!x.base&&!x.crit&&+iv[x.k]).forEach(x=>{const b=x.sur?+iv[x.sur]:vus;if(b>=5)L.push(`- ${x.l} : ${Math.round(+iv[x.k]/b*100)} %`);});L.push('');}
   if(!D.cp.masked){L.push('COPSOQ — SCORES PAR ÉCHELLE (0-100, entreprise)');COP.forEach(sc=>L.push(`- ${sc.l} : ${Math.round(D.cp.sc[sc.k])}${sc.risk?' (un score élevé est défavorable)':''}`));if(!COPSOQ_OFFICIEL)L.push('  Libellés de travail, à remplacer par la version officielle avant diffusion.');L.push('');}
   if(D.ec.length) L.push('ÉCARTS DE PERCEPTION',...D.ec.map(e=>`- ${e.f.l} : ${e.mx.a.l} (${AV_LV[e.mx.v+1].l}) / ${e.mn.a.l} (${AV_LV[e.mn.v+1].l})`),'');
   const av=ACTEURS.filter(a=>S.avis[a.k]?.c);

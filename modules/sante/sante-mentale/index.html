@@ -61,6 +61,14 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .trust span{display:flex;align-items:center;gap:7px}
 .trust svg{width:16px;height:16px;color:var(--teal-l)}
 
+.hero{--art:min(36vw,440px)}
+.hero-art{position:absolute;right:max(12px,env(safe-area-inset-right,0px));top:50%;transform:translateY(-52%);width:var(--art);aspect-ratio:1;z-index:0;pointer-events:none}
+.hero-art img{width:100%;height:100%;display:block;object-fit:cover;-webkit-mask-image:radial-gradient(circle at 50% 50%,#000 58%,transparent 71%);mask-image:radial-gradient(circle at 50% 50%,#000 58%,transparent 71%)}
+/* Le texte ne passe jamais sous l'image : sa largeur est réduite de celle de l'image */
+.hero-txt,.hero .paths,.hero .trust{position:relative;z-index:1;max-width:calc(100% - var(--art) - 16px)}
+@media (max-width:760px){.hero{--art:150px}.hero-art{top:56px;transform:none}.hero-txt,.hero .paths,.hero .trust{max-width:none}.hero h1{padding-right:calc(var(--art) - 8px)}}
+@media (max-width:480px){.hero{--art:118px}}
+
 /* Sections */
 main{padding-block:44px 64px;display:flex;flex-direction:column;gap:48px}
 .sec{display:grid;grid-template-columns:240px minmax(0,1fr);gap:28px;scroll-margin-top:20px}
@@ -104,8 +112,9 @@ main{padding-block:44px 64px;display:flex;flex-direction:column;gap:48px}
 
 <header class="hero">
   <div class="wrap">
+    <div class="hero-art"><img src="img/hero-sante-mentale.webp" alt="" width="760" height="760" fetchpriority="high"></div>
     <nav class="crumb" aria-label="Fil d'Ariane"><a href="../../../index.html">← PréventIA Protect</a><span>Santé</span><span aria-hidden="true">›</span><span>Santé mentale</span></nav>
-    <div style="display:flex;flex-direction:column;gap:14px">
+    <div class="hero-txt" style="display:flex;flex-direction:column;gap:14px">
       <h1>Prendre soin de la <em>santé mentale</em> au travail</h1>
       <p class="sub">Évaluer les risques psychosociaux, repérer la souffrance, agir et récupérer. Des outils pour l'infirmier·e d'entreprise, les RH, le CSE, et pour les salariés eux-mêmes.</p>
     </div>

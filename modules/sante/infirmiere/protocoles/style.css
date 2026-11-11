@@ -1,0 +1,483 @@
+/* =========================================================
+   Protocoles urgences — feuille de style
+   Esthetique clinique : lisibilite maximale, reperage rapide.
+   Mobile-first. Variables CSS pour faciliter le theming.
+   ========================================================= */
+
+:root {
+  /* Surfaces et texte */
+  --bg:          #F4F5F3;
+  --surface:     #FFFFFF;
+  --surface-2:   #ECEEEB;
+  --text:        #1A2320;
+  --text-muted:  #5C635E;
+  --text-faint:  #969C97;
+  --border:      #E3E5E1;
+
+  /* Accent principal (teal clinique) */
+  --accent:      #0E6F58;
+  --accent-deep: #0A5544;
+  --accent-soft: #E1F0EC;
+
+  /* Couleurs de criticite */
+  --critique:      #BE3A2B;
+  --critique-soft: #FAE8E6;
+  --haute:         #9C6212;
+  --haute-soft:    #F8EFDC;
+  --moyenne:       #5C635E;
+  --moyenne-soft:  #EAECE8;
+
+  /* Geometrie */
+  --radius:    10px;
+  --radius-sm: 7px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  max-width: 560px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+/* ---------- En-tete ---------- */
+
+.entete {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.entete__nom {
+  display: block;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.entete__sous {
+  display: block;
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.badge-statut {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.point {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* ---------- Contenu ---------- */
+
+.contenu { padding: 16px 18px 28px; }
+
+.label-section {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+  margin: 22px 0 10px;
+}
+
+.label-section--danger { color: var(--critique); }
+
+.message-vide {
+  font-size: 14px;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 28px 12px;
+}
+
+/* ---------- Recherche ---------- */
+
+.recherche { position: relative; }
+
+.recherche__icone {
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-faint);
+  display: flex;
+}
+
+#champ-recherche {
+  width: 100%;
+  height: 48px;
+  padding: 0 14px 0 42px;
+  font: inherit;
+  font-size: 15px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  outline: none;
+}
+
+#champ-recherche:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* ---------- Liste des motifs ---------- */
+
+.liste { display: flex; flex-direction: column; gap: 8px; }
+
+.carte {
+  display: flex;
+  align-items: stretch;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.carte:focus-within { border-color: var(--accent); }
+
+.carte__fav {
+  flex-shrink: 0;
+  width: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-right: 1px solid var(--border);
+  color: var(--text-faint);
+  cursor: pointer;
+}
+
+.carte__fav.actif { color: #C9941F; }
+.carte__fav:hover { background: var(--surface-2); }
+
+.carte__ouvrir {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 66px;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  font: inherit;
+  text-align: left;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.carte__ouvrir:hover { background: var(--surface-2); }
+
+.carte__titre { font-size: 15px; font-weight: 500; }
+
+.carte__meta {
+  display: block;
+  font-size: 12.5px;
+  color: var(--text-faint);
+  margin-top: 2px;
+}
+
+.carte__chevron { color: var(--text-faint); display: flex; }
+
+/* ---------- Bouton retour ---------- */
+
+.btn-retour {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+  padding: 8px 12px 8px 8px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--accent-deep);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.btn-retour:hover { background: var(--accent-soft); }
+
+/* ---------- Detail : en-tete du protocole ---------- */
+
+.detail-titre {
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.detail-specialite {
+  font-size: 13px;
+  color: var(--text-faint);
+  margin-top: 2px;
+}
+
+.detail-duree {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 10px;
+  padding: 5px 10px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--accent-deep);
+  background: var(--accent-soft);
+  border-radius: 999px;
+}
+
+.detail-objectif {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+/* ---------- Banniere de validation ---------- */
+
+.banniere {
+  display: flex;
+  gap: 9px;
+  margin-top: 14px;
+  padding: 11px 13px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.banniere--attention {
+  background: var(--haute-soft);
+  color: #6E4509;
+}
+
+.banniere--valide {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.banniere svg { flex-shrink: 0; margin-top: 1px; }
+
+/* ---------- Liste des etapes ---------- */
+
+.etapes { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+
+.etape {
+  display: flex;
+  gap: 12px;
+  padding: 12px 13px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: var(--radius-sm);
+}
+
+.etape[data-criticite="critique"] { border-left-color: var(--critique); }
+.etape[data-criticite="haute"]    { border-left-color: var(--haute); }
+.etape[data-criticite="moyenne"]  { border-left-color: var(--moyenne); }
+
+.etape__num {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.etape__corps { flex: 1; min-width: 0; }
+
+.etape__action { font-size: 14.5px; font-weight: 500; }
+.etape[data-criticite="critique"] .etape__action { font-weight: 700; }
+
+.etape__details {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+.etape__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.tag {
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+}
+
+.tag--delai {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tag--delai[data-criticite="critique"] { background: var(--critique-soft); color: var(--critique); }
+.tag--delai[data-criticite="haute"]    { background: var(--haute-soft);    color: var(--haute); }
+.tag--delai[data-criticite="moyenne"]  { background: var(--moyenne-soft);  color: var(--moyenne); }
+
+/* ---------- Criteres d'alerte ---------- */
+
+.alerte {
+  display: flex;
+  gap: 9px;
+  padding: 11px 13px;
+  background: var(--critique-soft);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+}
+
+.alerte__icone { color: var(--critique); flex-shrink: 0; margin-top: 1px; }
+.alerte__libelle { font-size: 14px; font-weight: 700; color: #8A2A1F; }
+.alerte__conduite { font-size: 13px; color: #8A2A1F; margin-top: 2px; }
+
+/* ---------- Scores et references ---------- */
+
+.puces { display: flex; flex-wrap: wrap; gap: 7px; }
+
+.puce {
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 5px 11px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+}
+
+.references { list-style: none; }
+
+.references li {
+  font-size: 12.5px;
+  color: var(--text-faint);
+  padding: 4px 0 4px 14px;
+  position: relative;
+}
+
+.references li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 12px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--text-faint);
+}
+
+.detail-avertissement {
+  font-size: 12px;
+  color: var(--text-faint);
+  font-style: italic;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+/* ---------- Pied de page ---------- */
+
+.pied {
+  padding: 18px;
+  font-size: 11.5px;
+  color: var(--text-faint);
+  text-align: center;
+  border-top: 1px solid var(--border);
+}
+
+/* ---------- Icones ---------- */
+
+.ic { width: 20px; height: 20px; display: block; }
+.ic--sm { width: 14px; height: 14px; }
+
+/* =========================================================
+   NOUVEAU — version entreprise (PréventIA Protect)
+   ========================================================= */
+
+/* En-tête aux couleurs Protect */
+.entete { background: #13233F; border-bottom: 0; color: #fff; }
+.entete__nom { color: #fff; }
+.entete__sous { color: rgba(255, 255, 255, .6); }
+.entete__retour { display: block; font-size: 12px; color: rgba(255, 255, 255, .7); text-decoration: none; margin-bottom: 2px; }
+.entete__retour:hover { color: #fff; }
+.badge-statut { color: rgba(255, 255, 255, .75); }
+.point { background: #5FD3B5; }
+
+/* Bandeau des numéros d'urgence */
+.numeros {
+  display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none;
+  padding: 10px 18px; background: var(--critique-soft); border-bottom: 1px solid var(--border);
+}
+.numeros span {
+  flex-shrink: 0; font-size: 12.5px; color: #8A2A1F;
+  padding: 4px 10px; background: var(--surface); border-radius: 999px;
+}
+.numeros b { font-size: 14px; color: var(--critique); margin-right: 3px; }
+
+/* Filtres par catégorie */
+.filtres { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+.filtre {
+  font: inherit; font-size: 12.5px; font-weight: 500; cursor: pointer;
+  padding: 6px 11px; border-radius: 999px;
+  background: var(--surface); border: 1px solid var(--border); color: var(--text-muted);
+}
+.filtre[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.carte__meta + .carte__meta { margin-top: 0; }
+
+.cadre {
+  font-size: 12.5px; color: var(--text-muted); margin-top: 18px;
+  padding: 11px 13px; background: var(--accent-soft); border-radius: var(--radius-sm);
+}
+
+.barre-detail { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+
+:focus-visible { outline: 3px solid #D98B2B; outline-offset: 2px; }
+
+/* Impression : le protocole seul, pour affichage au poste de secours */
+@media print {
+  .entete, .numeros, .barre-detail, .pied, #vue-liste { display: none !important; }
+  body, .app { background: #fff; }
+  .app { max-width: none; }
+  .etape, .alerte { break-inside: avoid; }
+}

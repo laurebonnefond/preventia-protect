@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>SeinPrév</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap">
+<link rel="stylesheet" href="femme.css">
+<style>
+/* SeinPrév · suivi du dépistage du cancer du sein et campagne Octobre rose
+   Layout : bandeau Protect + onglets ; tableau de bord en tête, puis actions, enquête anonyme, suivi infirmier, parcours salariée */
+.ribbon{width:16px;height:22px;flex:none}
+.steps{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+.steps li{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:start}
+.steps .n{width:30px;height:30px;border-radius:50%;background:var(--rose-bg);color:var(--rose);display:grid;place-items:center;font-weight:700}
+.orient{border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.orient.o-ok{background:var(--ok-bg)} .orient.o-warn{background:var(--warn-bg)} .orient.o-rose{background:var(--rose-bg)}
+.orient h3{font-family:var(--f-display);font-weight:400;font-size:1.35rem}
+.qrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding-block:8px;border-bottom:1px dashed var(--line)}
+.yn{display:flex;gap:4px}
+.yn button{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:6px 12px;font-weight:600;font-size:13px}
+.yn button[aria-pressed="true"]{border-color:var(--rose);background:var(--rose-bg);color:var(--rose)}
+</style>
+</head>
+<body>
+<header class="pp-top gut"><div class="in">
+  <a class="back" href="index.html">← Santé de la femme</a>
+  <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-2 0-3 1.6-3 3.5 0 2.4 3 6 3 6s3-3.6 3-6C15 4.6 14 3 12 3z"/><path d="M10.5 12.5 7 21M13.5 12.5 17 21"/></svg></div>
+  <div><small>PréventIA Protect · Santé de la femme</small><h1>SeinPrév</h1></div>
+  <span class="sp"></span><span class="pill">Dépistage du cancer du sein · Octobre rose</span>
+</div></header>
+<nav class="tabs gut" aria-label="Sections"><div class="in" id="tabs"></div></nav>
+<main class="gut" id="app"></main>
+<div class="kiosk gut" id="kiosk" hidden></div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s), app=$('#app');
+const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+const fmt=d=>d?new Date(d+'T00:00').toLocaleDateString('fr-FR'):'–';
+
+/* ---------- Repères de dépistage (France) ----------
+   Bornes du dépistage organisé : la HAS réévalue l'élargissement des âges.
+   Modifier ces constantes suffit à mettre l'outil à jour. */
+const DEP={AGE_MIN:50, AGE_MAX:74, INTERVALLE_MOIS:24, EXAMEN_CLINIQUE_DES:25};
+
+/* ---------- Couche de données ----------
+   Phase 1 : localStorage (ce poste). Phase 2 : Supabase UE pour la campagne et l'enquête anonyme.
+   Le suivi infirmier (données de santé) reste local ou chez un hébergeur HDS : jamais dans Supabase. */
+const KEY='pp_sein_v1';
+const store={get(){try{return JSON.parse(localStorage.getItem(KEY))}catch(e){return null}},set(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}};
+const SEUIL=5;
+
+const AGES=['Moins de 40 ans','40 à 49 ans','50 à 74 ans','75 ans et plus'];
+const MAMMO=['Il y a moins de 2 ans','Il y a 2 à 5 ans','Il y a plus de 5 ans','Jamais','Je ne sais pas'];
+const INVIT=['Oui','Non','Je ne sais pas'];
+const FREINS=['Manque de temps, horaires de travail','Peur du résultat','Peur que l\'examen fasse mal','Pas reçu ou perdu l\'invitation','Oubli','Je ne me sens pas concernée','Distance, transport','Aucun frein'];
+const SOUHAITS=['Mieux comprendre le dépistage','Pouvoir m\'absenter pour l\'examen','Recevoir un rappel','Échanger avec l\'infirmier·e','Rien de particulier'];
+const ACT_TYPES=['Stand d\'information','Conférence ou intervention','Atelier','Jeu de prévention','Affichage, flyers','Intervention du CRCDC ou de la Ligue','Marche ou course solidaire','Autre'];
+const EXAMS=['Dépistage organisé (mammographie)','Suivi spécialisé (risque élevé)','Examen clinique annuel'];
+
+function demo(){
+  const R=[]; const pick=(a,w)=>{let x=Math.random()*w.reduce((s,v)=>s+v,0);for(let i=0;i<a.length;i++){x-=w[i];if(x<=0)return a[i];}return a[0];};
+  let seed=7; Math.random=(()=>{return()=>{seed=(seed*16807)%2147483647;return (seed-1)/2147483646;}})();
+  for(let i=0;i<26;i++){const age=pick(AGES,[3,6,15,1]);R.push({age,mammo:age==='50 à 74 ans'?pick(MAMMO,[9,3,1,1,1]):pick(MAMMO,[2,1,1,6,1]),invit:pick(INVIT,[7,2,2]),
+    freins:[pick(FREINS,[6,2,2,3,3,2,1,4])].concat(Math.random()<.4?[pick(FREINS,[3,2,1,2,4,1,1,0])]:[]).filter((v,j,a)=>a.indexOf(v)===j),souhaits:[pick(SOUHAITS,[4,5,4,2,2])]});}
+  return {demo:true,cfg:{entreprise:'Logistique du Val (exemple fictif)',effectifF:41,crcdc:'Centre régional de coordination des dépistages des cancers (CRCDC) de votre région'},
+    actions:[
+      {id:1,date:'2026-10-02',type:ACT_TYPES[0],intervenants:'Infirmière, Ligue contre le cancer',participants:34,notes:'Stand à la pause de midi, flyers et goodies roses.'},
+      {id:2,date:'2026-10-09',type:ACT_TYPES[3],intervenants:'Infirmière',participants:22,notes:'Jeu Super Maria sur tablette, quiz en équipe.'},
+      {id:3,date:'2026-10-16',type:ACT_TYPES[5],intervenants:'CRCDC',participants:18,notes:'Explication du dépistage organisé, questions-réponses.'},
+      {id:4,date:'2026-10-25',type:ACT_TYPES[6],intervenants:'CSE',participants:27,notes:'Marche solidaire de 5 km.'}],
+    enquete:R,
+    suivi:[
+      {id:1,code:'F-014',age:52,date:'2025-03-12',type:EXAMS[0],relance:'',notes:'Invitation reçue, RDV pris.',consent:true},
+      {id:2,code:'F-021',age:61,date:'2024-06-03',type:EXAMS[0],relance:'2026-10-05',notes:'Relancée lors d\'Octobre rose.',consent:true},
+      {id:3,code:'F-007',age:47,date:'2025-12-10',type:EXAMS[2],relance:'',notes:'',consent:true},
+      {id:4,code:'F-030',age:44,date:'2026-02-18',type:EXAMS[1],relance:'',notes:'Suivi gynécologique renforcé.',consent:true},
+      {id:5,code:'F-002',age:68,date:'2024-12-01',type:EXAMS[0],relance:'',notes:'',consent:true}]};
+}
+function blank(){return {demo:false,cfg:{entreprise:'',effectifF:'',crcdc:''},actions:[],enquete:[],suivi:[]};}
+let S=store.get()||demo(); const save=()=>store.set(S);
+
+/* ---------- Calculs ---------- */
+const addMonths=(d,m)=>{const x=new Date(d+'T00:00');x.setMonth(x.getMonth()+m);return x;};
+function echeance(r){const m=r.type===EXAMS[0]?DEP.INTERVALLE_MOIS:12;return addMonths(r.date,m);}
+function statut(r){if(!r.date)return {c:'na',l:'Date inconnue'};const j=Math.round((echeance(r)-new Date())/864e5);
+  return j<0?{c:'bad',l:`En retard de ${-j} j`,j}:j<=60?{c:'warn',l:`À prévoir (J-${j})`,j}:{c:'ok',l:'À jour',j};}
+const count=(arr,key,opts)=>opts.map(o=>({l:o,n:arr.filter(r=>Array.isArray(r[key])?r[key].includes(o):r[key]===o).length}));
+const bars=(rows,tot)=>rows.map(r=>`<div class="hbar"><span>${esc(r.l)}</span><span class="t"><i style="width:${tot?r.n/tot*100:0}%"></i></span><b>${tot?Math.round(r.n/tot*100):0} %</b></div>`).join('');
+
+/* ---------- Navigation ---------- */
+const TABS=[['bord','Tableau de bord'],['actions','Actions Octobre rose'],['enquete','Enquête anonyme'],['suivi','Suivi infirmier'],['parcours','Mon parcours']];
+function route(){const h=(location.hash||'#bord').slice(1);const cur=TABS.some(t=>t[0]===h)?h:'bord';
+  $('#tabs').innerHTML=TABS.map(([k,l])=>`<a href="#${k}" ${k===cur?'aria-current="page"':''}>${l}</a>`).join('');
+  ({bord:vBord,actions:vActions,enquete:vEnquete,suivi:vSuivi,parcours:vParcours})[cur]();}
+window.addEventListener('hashchange',()=>{route();scrollTo(0,0);});
+const intro=(e,t,p,ref)=>`<div class="intro"><div><p class="eyebrow">${e}</p><h2>${t}</h2><p class="muted">${p}</p></div>${ref?`<div class="ref">${ref}</div>`:''}</div>`;
+const demoBar=()=>S.demo?`<div class="demo"><span><b>Données d'exemple fictives.</b> Explorez l'outil, puis démarrez votre propre suivi.</span><span class="sp"></span><button class="btn sm" id="newS">Démarrer un suivi vierge</button></div>`:'';
+function bindDemo(){const b=$('#newS');if(!b)return;b.onclick=()=>{if(b.dataset.c){S=blank();save();route();}else{b.dataset.c=1;b.textContent='Confirmer : effacer l\'exemple';b.classList.add('danger');}};}
+
+/* ---------- 1. Tableau de bord ---------- */
+function vBord(){
+  const E=S.enquete, cible=E.filter(r=>r.age==='50 à 74 ans'), eff=+S.cfg.effectifF||0;
+  const ajour=cible.filter(r=>r.mammo===MAMMO[0]).length;
+  const part=S.actions.reduce((s,a)=>s+(+a.participants||0),0);
+  const st=S.suivi.map(statut), nBad=st.filter(s=>s.c==='bad').length, nWarn=st.filter(s=>s.c==='warn').length;
+  const masked=E.length<SEUIL, fr=count(E,'freins',FREINS).sort((a,b)=>b.n-a.n);
+  const top=fr.filter(f=>f.l!=='Aucun frein'&&f.n>0).slice(0,3).map(f=>f.l);
+  const LEV={'Manque de temps, horaires de travail':'Autoriser une absence rémunérée pour la mammographie ou aménager les horaires le jour de l\'examen.',
+    'Peur du résultat':'Proposer une intervention du CRCDC ou de la Ligue et des témoignages : un cancer dépisté tôt se soigne mieux.',
+    'Peur que l\'examen fasse mal':'Expliquer le déroulé de la mammographie : quelques secondes de compression par sein, examen rapide.',
+    'Pas reçu ou perdu l\'invitation':`Rappeler que l'invitation peut être redemandée au ${S.cfg.crcdc||'CRCDC de la région'} ou que le médecin peut prescrire l'examen.`,
+    'Oubli':'Proposer un rappel dans l\'agenda (onglet Mon parcours) et une relance lors d\'Octobre rose.',
+    'Je ne me sens pas concernée':'Rappeler que 8 cancers du sein sur 10 surviennent après 50 ans, même sans antécédent familial.',
+    'Distance, transport':'Recenser les centres de radiologie agréés proches du site et les créneaux du samedi.'};
+  app.innerHTML=`${demoBar()}${intro('Synthèse','Tableau de bord du dépistage',"Vue collective et anonyme de la campagne : actions menées, résultats de l'enquête et échéances du suivi infirmier.",`<b>Dépistage organisé :</b> femmes de ${DEP.AGE_MIN} à ${DEP.AGE_MAX} ans, mammographie et examen clinique tous les 2 ans, pris en charge à 100 % sans avance de frais.`)}
+  <div class="kpis">
+    <div class="kpi"><div class="l">Réponses à l'enquête</div><div class="v">${E.length}</div><div class="d">${eff?`${Math.round(E.length/eff*100)} % des ${eff} salariées`:'Effectif féminin non renseigné'}</div></div>
+    <div class="kpi"><div class="l">${DEP.AGE_MIN}-${DEP.AGE_MAX} ans à jour</div><div class="v" style="color:var(--${!masked&&cible.length&&ajour/cible.length>=.7?'ok':'rose'})">${masked||!cible.length?'–':Math.round(ajour/cible.length*100)+' %'}</div><div class="d">${masked?`Masqué sous ${SEUIL} réponses`:`Mammographie de moins de 2 ans · objectif européen 70 %`}</div></div>
+    <div class="kpi"><div class="l">Actions menées</div><div class="v">${S.actions.length}</div><div class="d">${part} participations</div></div>
+    <div class="kpi"><div class="l">Suivi infirmier</div><div class="v">${S.suivi.length}</div><div class="d"><span style="color:var(--bad)">${nBad} en retard</span> · ${nWarn} à prévoir</div></div>
+  </div>
+  <div class="grid g2">
+    <div class="card"><h3 style="margin-bottom:8px">Freins au dépistage</h3>${masked?`<p class="muted">Résultats masqués sous ${SEUIL} réponses.</p>`:bars(fr,E.length)}</div>
+    <div class="card"><h3 style="margin-bottom:8px">Ce que les salariées souhaitent</h3>${masked?`<p class="muted">Résultats masqués sous ${SEUIL} réponses.</p>`:bars(count(E,'souhaits',SOUHAITS).sort((a,b)=>b.n-a.n),E.length)}</div>
+  </div>
+  ${!masked&&top.length?`<div class="card"><h3 style="margin-bottom:8px">Leviers d'action pour les freins les plus cités</h3><ul style="margin:0;padding-left:1.1rem;display:grid;gap:6px">${top.map(t=>`<li><b>${esc(t)}</b> : ${esc(LEV[t])}</li>`).join('')}</ul></div>`:''}
+  <div class="card grid g3">
+    <label class="f">Entreprise<input class="i" data-cfg="entreprise" value="${esc(S.cfg.entreprise)}"></label>
+    <label class="f">Effectif féminin<input class="i num" type="number" min="0" data-cfg="effectifF" value="${esc(S.cfg.effectifF)}"></label>
+    <label class="f">Centre de coordination des dépistages (CRCDC)<input class="i" data-cfg="crcdc" value="${esc(S.cfg.crcdc)}" placeholder="Nom et téléphone du CRCDC"></label>
+  </div>`;
+  app.querySelectorAll('[data-cfg]').forEach(el=>el.onchange=()=>{S.cfg[el.dataset.cfg]=el.value;save();vBord();});
+  bindDemo();
+}
+
+/* ---------- 2. Actions ---------- */
+function vActions(){
+  const L=[...S.actions].sort((a,b)=>b.date.localeCompare(a.date));
+  app.innerHTML=`${demoBar()}${intro('Campagne','Actions Octobre rose',"Consignez chaque action de sensibilisation : elles alimentent le bilan de la campagne et le programme de prévention.",'<b>Idée :</b> les jeux Super Maria, Pink Man et Prévent\'Invaders de PréventIA-LaB fonctionnent bien sur un stand.')}
+  <div class="grid g2" style="align-items:start">
+    <form class="card grid" id="fa"><h3>Nouvelle action</h3>
+      <div class="grid g2"><label class="f">Date<input class="i" type="date" name="date" required value="${new Date().toISOString().slice(0,10)}"></label>
+      <label class="f">Type<select class="i" name="type">${ACT_TYPES.map(t=>`<option>${esc(t)}</option>`)}</select></label>
+      <label class="f">Intervenants<input class="i" name="intervenants" placeholder="Infirmière, CRCDC, Ligue…"></label>
+      <label class="f">Participants<input class="i num" type="number" min="0" name="participants"></label></div>
+      <label class="f">Notes<textarea class="i" name="notes"></textarea></label>
+      <button class="btn" style="justify-self:start">Ajouter</button></form>
+    <div class="card"><h3 style="margin-bottom:6px">Actions menées</h3>${L.length?`<div class="tw"><table><thead><tr><th>Date</th><th>Action</th><th>Participants</th><th></th></tr></thead><tbody>
+      ${L.map(a=>`<tr><td class="num">${fmt(a.date)}</td><td><b>${esc(a.type)}</b><br><span class="muted small">${esc(a.intervenants)}${a.notes?' · '+esc(a.notes):''}</span></td><td class="num">${esc(a.participants||'–')}</td><td><button class="btn ghost sm" data-del="${a.id}">Supprimer</button></td></tr>`).join('')}
+      </tbody></table></div>`:'<p class="muted">Aucune action consignée.</p>'}</div>
+  </div>`;
+  $('#fa').onsubmit=e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target));S.actions.push({id:Date.now(),...d});save();vActions();};
+  app.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{if(!b.dataset.c){b.dataset.c=1;b.textContent='Confirmer';b.classList.add('danger');return;}S.actions=S.actions.filter(a=>a.id!=b.dataset.del);save();vActions();});
+  bindDemo();
+}
+
+/* ---------- 3. Enquête anonyme ---------- */
+function vEnquete(){
+  const E=S.enquete, masked=E.length<SEUIL;
+  app.innerHTML=`${demoBar()}${intro('Anonyme','Enquête sur le dépistage',"Cinq questions, une minute. Chaque salariée répond seule sur une tablette en mode kiosque, par exemple sur le stand Octobre rose. Ni nom ni heure de réponse ne sont enregistrés.",`Résultats affichés à partir de ${SEUIL} réponses.`)}
+  <div class="card row"><div><h3>Saisie anonyme</h3><p class="muted small">L'écran revient à l'accueil après chaque réponse.</p></div><span class="sp"></span><button class="btn" id="kgo">Lancer l'enquête</button></div>
+  ${masked?`<p class="muted">${E.length} réponse${E.length>1?'s':''} pour l'instant : résultats masqués sous ${SEUIL}.</p>`:`<div class="grid g2">
+    <div class="card"><h3 style="margin-bottom:8px">Âge</h3>${bars(count(E,'age',AGES),E.length)}</div>
+    <div class="card"><h3 style="margin-bottom:8px">Dernière mammographie (${DEP.AGE_MIN}-${DEP.AGE_MAX} ans)</h3>${(()=>{const c=E.filter(r=>r.age==='50 à 74 ans');return c.length>=SEUIL?bars(count(c,'mammo',MAMMO),c.length):`<p class="muted">Moins de ${SEUIL} répondantes dans cette tranche.</p>`;})()}</div>
+    <div class="card"><h3 style="margin-bottom:8px">Invitation au dépistage reçue</h3>${bars(count(E,'invit',INVIT),E.length)}</div>
+    <div class="card"><h3 style="margin-bottom:8px">Freins</h3>${bars(count(E,'freins',FREINS).sort((a,b)=>b.n-a.n),E.length)}</div></div>`}`;
+  $('#kgo').onclick=kiosk; bindDemo();
+}
+function kiosk(){
+  const K=$('#kiosk'); K.hidden=false; document.body.style.overflow='hidden';
+  const Q=[{k:'age',t:'Quel est votre âge ?',o:AGES},{k:'mammo',t:'Votre dernière mammographie date de :',o:MAMMO},{k:'invit',t:'Avez-vous déjà reçu une invitation au dépistage organisé ?',o:INVIT},
+    {k:'freins',t:'Qu\'est-ce qui pourrait vous freiner pour faire ce dépistage ?',o:FREINS,multi:1},{k:'souhaits',t:'Qu\'est-ce qui vous aiderait ?',o:SOUHAITS,multi:1}];
+  let i=0,A={};
+  const close=()=>{K.hidden=true;document.body.style.overflow='';route();};
+  const home=()=>{i=0;A={};K.innerHTML=`<div class="in"><div class="row"><span class="eyebrow">Octobre rose · enquête anonyme</span><span class="sp"></span><button class="btn ghost sm" id="kx">Fermer l'enquête</button></div>
+    <h2>Le dépistage du cancer du sein, où en êtes-vous ?</h2><p>5 questions, une minute.</p>
+    <div class="secret">Vos réponses sont anonymes : ni votre nom ni l'heure ne sont enregistrés. Les résultats ne sont présentés qu'à partir de ${SEUIL} réponses.</div>
+    <button class="btn" id="kgo2" style="justify-self:start">Commencer</button></div>`;$('#kx').onclick=close;$('#kgo2').onclick=q;};
+  const q=()=>{const it=Q[i];const sel=new Set(A[it.k]||[]);
+    K.innerHTML=`<div class="in"><div class="row"><span class="eyebrow num">${i+1} / ${Q.length}</span><span class="sp"></span>${i?'<button class="btn ghost sm" id="kb">Question précédente</button>':''}</div>
+    <div class="kprog"><i style="width:${i/Q.length*100}%"></i></div><p class="kq">${it.t}</p>${it.multi?'<p class="muted">Plusieurs réponses possibles.</p>':''}
+    <div class="kopts">${it.o.map((o,j)=>`<button data-j="${j}" aria-pressed="${sel.has(o)}">${esc(o)}</button>`).join('')}</div>
+    ${it.multi?'<button class="btn" id="kn" style="justify-self:start">Valider</button>':''}</div>`;
+    const b=$('#kb');if(b)b.onclick=()=>{i--;q();};
+    K.querySelectorAll('[data-j]').forEach(btn=>btn.onclick=()=>{const o=it.o[+btn.dataset.j];
+      if(it.multi){sel.has(o)?sel.delete(o):sel.add(o);btn.setAttribute('aria-pressed',sel.has(o));A[it.k]=[...sel];}
+      else{A[it.k]=o;next();}});
+    const n=$('#kn');if(n)n.onclick=()=>{A[it.k]=A[it.k]||[];next();};
+    K.scrollTo(0,0);};
+  const next=()=>{i++;i<Q.length?q():fin();};
+  const fin=()=>{S.enquete.push({age:A.age,mammo:A.mammo,invit:A.invit,freins:A.freins||[],souhaits:A.souhaits||[]});save();
+    const cible=A.age==='50 à 74 ans', ajour=A.mammo===MAMMO[0];
+    K.innerHTML=`<div class="in"><h2>Merci.</h2>
+      ${cible&&!ajour?`<div class="card"><b>Vous avez entre ${DEP.AGE_MIN} et ${DEP.AGE_MAX} ans</b><p>Le dépistage organisé vous est proposé tous les 2 ans, pris en charge à 100 %. Si vous n'avez plus votre invitation, votre médecin peut prescrire l'examen.</p></div>`:''}
+      <p class="muted">Un changement dans un sein (boule, peau qui se rétracte, écoulement du mamelon) justifie de consulter sans attendre, quel que soit l'âge.</p>
+      <button class="btn" id="knext" style="justify-self:start">Personne suivante</button></div>`;$('#knext').onclick=home;};
+  home();
+}
+
+/* ---------- 4. Suivi infirmier ---------- */
+function vSuivi(){
+  const L=[...S.suivi].sort((a,b)=>echeance(a)-echeance(b));
+  app.innerHTML=`${demoBar()}${intro('Espace infirmier','Suivi individuel des échéances',"Pour les salariées qui le souhaitent : l'infirmier·e note la date du dernier examen et l'outil calcule la prochaine échéance. Identifiant pseudonyme uniquement.",'<b>Données de santé :</b> secret professionnel (art. L1110-4 CSP). Consentement de la salariée requis. Données conservées sur ce poste uniquement, jamais transmises à l\'employeur.')}
+  <div class="grid g2" style="align-items:start">
+    <form class="card grid" id="fs"><h3>Ajouter un suivi</h3>
+      <div class="grid g2"><label class="f">Code pseudonyme<input class="i" name="code" required placeholder="Ex. : F-031"></label>
+      <label class="f">Âge<input class="i num" type="number" min="18" max="100" name="age" required></label>
+      <label class="f">Date du dernier examen<input class="i" type="date" name="date" required></label>
+      <label class="f">Type de suivi<select class="i" name="type">${EXAMS.map(t=>`<option>${esc(t)}</option>`)}</select></label></div>
+      <label class="f">Notes (sans donnée médicale détaillée)<input class="i" name="notes"></label>
+      <label class="check"><input type="checkbox" name="consent" required> La salariée a donné son accord pour ce suivi de ses échéances.</label>
+      <button class="btn" style="justify-self:start">Ajouter</button></form>
+    <div class="card"><h3 style="margin-bottom:6px">Échéances</h3>${L.length?`<div class="tw"><table><thead><tr><th>Code</th><th>Âge</th><th>Dernier examen</th><th>Prochaine échéance</th><th>Statut</th><th>Relance</th><th></th></tr></thead><tbody>
+      ${L.map(r=>{const s=statut(r);return `<tr><td><b>${esc(r.code)}</b><br><span class="muted small">${esc(r.type)}</span></td><td class="num">${esc(r.age)}</td><td class="num">${fmt(r.date)}</td><td class="num">${echeance(r).toLocaleDateString('fr-FR')}</td><td><span class="pill ${s.c}">${s.l}</span></td>
+      <td>${r.relance?`<span class="small num">${fmt(r.relance)}</span>`:`<button class="btn ghost sm" data-rel="${r.id}">Noter une relance</button>`}</td><td><button class="btn ghost sm" data-del="${r.id}">Supprimer</button></td></tr>`;}).join('')}
+      </tbody></table></div>`:'<p class="muted">Aucun suivi.</p>'}
+      <p class="muted small" style="margin-top:8px">Échéance : ${DEP.INTERVALLE_MOIS} mois pour le dépistage organisé, 12 mois pour l'examen clinique et le suivi spécialisé (à ajuster selon la prescription).</p></div>
+  </div>`;
+  $('#fs').onsubmit=e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target));S.suivi.push({id:Date.now(),code:d.code.trim(),age:+d.age,date:d.date,type:d.type,notes:d.notes,relance:'',consent:true});save();vSuivi();};
+  app.querySelectorAll('[data-rel]').forEach(b=>b.onclick=()=>{S.suivi.find(r=>r.id==b.dataset.rel).relance=new Date().toISOString().slice(0,10);save();vSuivi();});
+  app.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{if(!b.dataset.c){b.dataset.c=1;b.textContent='Confirmer';b.classList.add('danger');return;}S.suivi=S.suivi.filter(r=>r.id!=b.dataset.del);save();vSuivi();});
+  bindDemo();
+}
+
+/* ---------- 5. Mon parcours (salariée, rien n'est enregistré) ---------- */
+const P={age:52,perso:null,mutation:null,famille:null,radio:null,last:''};
+function orientation(){
+  const risque=P.perso==='oui'||P.mutation==='oui'||P.radio==='oui', fam=P.famille==='oui', a=+P.age;
+  if(risque) return {c:'o-rose',t:'Un suivi spécialisé vous concerne',p:"Avec un antécédent personnel de cancer du sein, une mutation génétique connue ou une radiothérapie du thorax, le dépistage organisé n'est pas adapté. Votre médecin ou votre gynécologue définit un suivi personnalisé, parfois dès un âge jeune."};
+  if(fam) return {c:'o-warn',t:'Parlez de vos antécédents familiaux à votre médecin',p:"Selon le nombre de cas, leur âge et le lien de parenté, il peut proposer un suivi plus précoce ou une consultation d'oncogénétique. En attendant, les repères ci-dessous restent valables."};
+  if(!a) return null;
+  if(a<DEP.EXAMEN_CLINIQUE_DES) return {c:'o-ok',t:'Pas de dépistage à votre âge',p:"Connaître ses seins suffit : si vous remarquez un changement, consultez."};
+  if(a<DEP.AGE_MIN) return {c:'o-ok',t:'Un examen clinique des seins chaque année',p:`Dès ${DEP.EXAMEN_CLINIQUE_DES} ans, la palpation des seins par un médecin, un·e gynécologue ou une sage-femme est recommandée une fois par an. La mammographie de dépistage commence à ${DEP.AGE_MIN} ans, sauf facteur de risque.`};
+  if(a<=DEP.AGE_MAX) return {c:'o-rose',t:'Le dépistage organisé, tous les 2 ans',p:`Entre ${DEP.AGE_MIN} et ${DEP.AGE_MAX} ans, vous recevez une invitation tous les 2 ans pour une mammographie et un examen clinique, pris en charge à 100 % sans avance de frais. Sans invitation, votre médecin peut prescrire l'examen.`};
+  return {c:'o-warn',t:'Parlez-en à votre médecin',p:`Après ${DEP.AGE_MAX} ans, le dépistage organisé s'arrête. Votre médecin décide avec vous de la poursuite d'un suivi.`};
+}
+function ics(date){
+  const d=date.toISOString().slice(0,10).replace(/-/g,'');
+  return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//PreventIA Protect//SeinPrev//FR','BEGIN:VEVENT',`UID:seinprev-${Date.now()}@preventia`,`DTSTAMP:${new Date().toISOString().replace(/[-:]/g,'').slice(0,15)}Z`,
+   `DTSTART;VALUE=DATE:${d}`,'SUMMARY:Penser à mon dépistage du cancer du sein','DESCRIPTION:Prendre rendez-vous pour la mammographie ou l\'examen clinique.','END:VEVENT','END:VCALENDAR'].join('\r\n');
+}
+function vParcours(){
+  const o=orientation(); const yn=(k,t)=>`<div class="qrow"><span>${t}</span><div class="yn">${['oui','non'].map(v=>`<button data-k="${k}" data-v="${v}" aria-pressed="${P[k]===v}">${v==='oui'?'Oui':'Non'}</button>`).join('')}</div></div>`;
+  const next=P.last?addMonths(P.last,+P.age>=DEP.AGE_MIN&&+P.age<=DEP.AGE_MAX?DEP.INTERVALLE_MOIS:12):null;
+  app.innerHTML=`${intro('Pour chaque salariée · rien n\'est enregistré','Mon parcours de dépistage',"Quelques questions pour savoir quel dépistage vous concerne. Les réponses restent sur cet écran et disparaissent quand vous quittez la page.",'<b>Sources :</b> Haute Autorité de santé, Institut national du cancer. Cet outil oriente, il ne remplace pas l\'avis de votre médecin.')}
+  <div class="grid g2" style="align-items:start">
+    <div class="card"><label class="f" style="margin-bottom:6px">Votre âge<input class="i num" type="number" min="18" max="100" id="age" value="${esc(P.age)}"></label>
+      ${yn('perso','Avez-vous déjà eu un cancer du sein ?')}${yn('mutation','Une mutation génétique (BRCA ou autre) est-elle connue chez vous ou dans votre famille ?')}
+      ${yn('famille','Votre mère, sœur ou fille a-t-elle eu un cancer du sein ?')}${yn('radio','Avez-vous reçu une radiothérapie du thorax avant 30 ans ?')}</div>
+    <div class="grid">${o?`<div class="orient ${o.c}"><p class="eyebrow">Ce qui vous concerne</p><h3>${o.t}</h3><p>${o.p}</p></div>`:''}
+      <div class="card grid"><h3>Me faire un rappel</h3><label class="f">Date de mon dernier examen<input class="i" type="date" id="last" value="${esc(P.last)}"></label>
+        ${next?`<p>Prochain examen à prévoir vers le <b>${next.toLocaleDateString('fr-FR')}</b>.</p><a class="btn" style="justify-self:start" download="rappel-depistage.ics" href="data:text/calendar;charset=utf-8,${encodeURIComponent(ics(next))}">Ajouter le rappel à mon agenda</a>`:'<p class="muted small">Indiquez la date pour calculer la prochaine échéance.</p>'}</div></div>
+  </div>
+  <div class="grid g2">
+    <div class="card"><h3 style="margin-bottom:8px">Consultez sans attendre si vous remarquez</h3><ol class="steps">
+      <li><span class="n">1</span><div>Une boule ou une grosseur dans un sein ou sous l'aisselle.</div></li>
+      <li><span class="n">2</span><div>Une modification de la peau : rétraction, rougeur, aspect de « peau d'orange ».</div></li>
+      <li><span class="n">3</span><div>Un mamelon qui se rétracte, change d'aspect ou présente un écoulement.</div></li>
+      <li><span class="n">4</span><div>Un changement de forme ou de taille d'un sein.</div></li></ol>
+      <p class="muted small" style="margin-top:8px">L'autopalpation seule n'est pas une méthode de dépistage. Connaître ses seins aide à repérer un changement, en complément des examens.</p></div>
+    <div class="card"><h3 style="margin-bottom:8px">Travail et dépistage</h3><ul style="margin:0;padding-left:1.1rem;display:grid;gap:6px">
+      <li><b>Travail de nuit :</b> classé « cancérogène probable » (groupe 2A) par le CIRC en 2019. Le suivi en santé au travail en tient compte.</li>
+      <li><b>S'absenter pour l'examen :</b> renseignez-vous auprès des RH. Beaucoup d'entreprises facilitent l'absence pendant Octobre rose.</li>
+      <li><b>Après un cancer :</b> la visite de pré-reprise avec le médecin du travail prépare un retour adapté (aménagement, temps partiel thérapeutique).</li>
+      <li><b>Secret médical :</b> l'infirmier·e et le médecin du travail ne transmettent rien à l'employeur sans votre accord.</li></ul></div>
+  </div>`;
+  $('#age').onchange=e=>{P.age=e.target.value;vParcours();};
+  $('#last').onchange=e=>{P.last=e.target.value;vParcours();};
+  app.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{P[b.dataset.k]=b.dataset.v;vParcours();});
+}
+route();
+})();
+</script>
+</body>
+</html>

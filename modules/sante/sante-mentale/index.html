@@ -6,125 +6,202 @@
 <title>Santé mentale</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display:ital@0;1&display=swap">
 <style>
 /* PréventIA Protect · Santé · Hub « Santé mentale »
-   Layout : bandeau navy (charte Protect), trois rangées d'outils classées par usage (évaluer · repérer · agir et récupérer), bandeau urgence en pied */
+   Layout : hero navy pleine largeur (titre + trois chemins), puis trois parcours numérotés Évaluer → Repérer → Récupérer en cartes, bandeau urgence */
 :root{
-  --navy:oklch(24% .06 258); --teal:oklch(52% .1 182); --teal-l:oklch(72% .13 182); --orange:oklch(70% .17 50);
-  --bg:oklch(98.2% .004 250); --card:#fff; --line:oklch(91% .01 250); --ink:oklch(25% .03 258); --muted:oklch(50% .02 258);
-  --bad:oklch(55% .19 20); --bad-bg:oklch(95.5% .035 20);
-  --c-eval:oklch(50% .14 258); --c-rep:oklch(60% .16 45); --c-agir:oklch(52% .1 182); --c-psy:oklch(52% .16 300);
+  --navy:oklch(22% .06 258); --navy-2:oklch(30% .08 255);
+  --teal:oklch(52% .1 182); --teal-l:oklch(74% .12 182); --orange:oklch(70% .17 50);
+  --bg:oklch(98% .005 250); --card:#fff; --card-2:oklch(96% .008 250); --line:oklch(91% .012 250);
+  --ink:oklch(24% .03 258); --muted:oklch(50% .02 258);
+  --bad:oklch(55% .19 20); --bad-bg:oklch(96% .03 20);
+  --c-eval:oklch(52% .14 258); --c-rep:oklch(62% .16 45); --c-rec:oklch(52% .1 182); --c-psy:oklch(52% .16 300);
   --f-display:"DM Serif Display", Georgia, serif; --f-body:"DM Sans", system-ui, sans-serif;
-  --shadow:0 1px 2px rgb(15 30 60/.05),0 8px 24px -12px rgb(15 30 60/.15);
+  --shadow:0 1px 2px rgb(15 30 60/.04),0 12px 32px -16px rgb(15 30 60/.22);
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:oklch(17% .025 258); --card:oklch(22% .03 258); --line:oklch(33% .03 258); --ink:oklch(93% .01 250); --muted:oklch(72% .02 250);
-  --teal:oklch(72% .12 182); --bad:oklch(72% .15 20); --bad-bg:oklch(28% .06 20);
-  --c-eval:oklch(72% .12 258); --c-rep:oklch(76% .14 50); --c-agir:oklch(72% .12 182); --c-psy:oklch(72% .14 300); --shadow:none; color-scheme:dark}}
+  --bg:oklch(16% .025 258); --card:oklch(21% .03 258); --card-2:oklch(25% .035 258); --line:oklch(31% .03 258);
+  --ink:oklch(94% .01 250); --muted:oklch(72% .02 250); --teal:oklch(74% .12 182); --bad:oklch(74% .15 20); --bad-bg:oklch(27% .06 20);
+  --c-eval:oklch(74% .12 258); --c-rep:oklch(78% .13 50); --c-rec:oklch(74% .12 182); --c-psy:oklch(74% .13 300); --shadow:none; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:oklch(17% .025 258); --card:oklch(22% .03 258); --line:oklch(33% .03 258); --ink:oklch(93% .01 250); --muted:oklch(72% .02 250);
-  --teal:oklch(72% .12 182); --bad:oklch(72% .15 20); --bad-bg:oklch(28% .06 20);
-  --c-eval:oklch(72% .12 258); --c-rep:oklch(76% .14 50); --c-agir:oklch(72% .12 182); --c-psy:oklch(72% .14 300); --shadow:none; color-scheme:dark}
+  --bg:oklch(16% .025 258); --card:oklch(21% .03 258); --card-2:oklch(25% .035 258); --line:oklch(31% .03 258);
+  --ink:oklch(94% .01 250); --muted:oklch(72% .02 250); --teal:oklch(74% .12 182); --bad:oklch(74% .15 20); --bad-bg:oklch(27% .06 20);
+  --c-eval:oklch(74% .12 258); --c-rep:oklch(78% .13 50); --c-rec:oklch(74% .12 182); --c-psy:oklch(74% .13 300); --shadow:none; color-scheme:dark}
 *{box-sizing:border-box}
 html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
-h1,h2,h3{margin:0;text-wrap:balance;line-height:1.2}
+h1,h2,h3,h4{margin:0;text-wrap:balance;line-height:1.15}
 p{margin:0}
 a{color:var(--teal)}
-:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
-.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+:focus-visible{outline:3px solid var(--orange);outline-offset:3px}
+.wrap{max-width:1160px;margin:0 auto;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--navy)}
-.pp-top{background:var(--navy);color:#fff}
-.pp-top .in{max-width:1120px;margin:0 auto;min-height:58px;display:flex;align-items:center;gap:12px;padding-block:8px}
-.pp-top .back{color:rgb(255 255 255/.75);text-decoration:none;font-size:13px;padding:6px 8px;border-radius:8px;white-space:nowrap}
-.pp-top .ico{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,var(--teal),var(--teal-l));flex:none}
-.pp-top .ico svg{width:20px;height:20px}
-.pp-top h1{font-family:var(--f-display);font-weight:400;font-size:19px}
-.pp-top small{display:block;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;opacity:.65}
-main{max-width:1120px;margin:0 auto;padding-block:26px 56px;display:flex;flex-direction:column;gap:26px}
-.lead{max-width:760px;display:flex;flex-direction:column;gap:8px}
-.lead h2{font-family:var(--f-display);font-weight:400;font-size:clamp(1.6rem,4vw,2.1rem)}
-.lead p{color:var(--muted)}
-.sec{display:flex;flex-direction:column;gap:12px}
-.sec-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
-.sec-h h3{font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;color:var(--c)}
-.sec-h span{font-size:.85rem;color:var(--muted)}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));gap:14px}
-.tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow);text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:8px;transition:transform .15s,border-color .15s;min-width:0}
-.tile:hover{transform:translateY(-2px);border-color:var(--c)}
-.tile .top{display:flex;align-items:center;gap:10px}
-.tile .ic{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:color-mix(in oklch,var(--c) 14%,transparent);color:var(--c);flex:none}
-.tile .ic svg{width:21px;height:21px}
-.tile h4{margin:0;font-size:1.05rem}
-.tile p{color:var(--muted);font-size:.9rem}
-.tile .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:4px}
-.chip{font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
-.chip.who{color:var(--c);border-color:color-mix(in oklch,var(--c) 40%,transparent)}
-.sos{display:flex;gap:14px;align-items:flex-start;background:var(--bad-bg);border-radius:14px;padding:14px 18px;font-size:.92rem}
+
+/* Hero */
+.hero{position:relative;overflow:hidden;color:#fff;background:
+  radial-gradient(60% 90% at 88% 0%, oklch(52% .1 182/.55), transparent 60%),
+  radial-gradient(50% 80% at 0% 100%, oklch(45% .12 258/.7), transparent 65%),
+  var(--navy)}
+.hero::after{content:"";position:absolute;inset:0;background-image:radial-gradient(rgb(255 255 255/.09) 1px,transparent 1px);background-size:22px 22px;mask-image:linear-gradient(to bottom,#000,transparent 85%);pointer-events:none}
+.hero .wrap{position:relative;z-index:1;padding-block:18px 44px;display:flex;flex-direction:column;gap:26px}
+.crumb{display:flex;align-items:center;gap:10px;font-size:13px;color:rgb(255 255 255/.7)}
+.crumb a{color:rgb(255 255 255/.85);text-decoration:none;padding:6px 10px;border-radius:99px;background:rgb(255 255 255/.08);border:1px solid rgb(255 255 255/.12)}
+.crumb a:hover{background:rgb(255 255 255/.14)}
+.hero h1{font-family:var(--f-display);font-weight:400;font-size:clamp(2.2rem,6vw,3.6rem);letter-spacing:-.01em;max-width:14ch}
+.hero h1 em{font-style:italic;color:var(--teal-l)}
+.hero .sub{max-width:62ch;color:rgb(255 255 255/.78);font-size:1.05rem}
+.paths{display:flex;gap:10px;flex-wrap:wrap}
+.paths a{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none;padding:10px 16px 10px 10px;border-radius:14px;background:rgb(255 255 255/.07);border:1px solid rgb(255 255 255/.14);backdrop-filter:blur(6px);transition:background .2s,transform .2s}
+.paths a:hover{background:rgb(255 255 255/.14);transform:translateY(-2px)}
+.paths .n{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-weight:700;font-size:13px;background:var(--c);color:#fff}
+.paths b{display:block;font-size:14px}
+.paths small{display:block;font-size:12px;color:rgb(255 255 255/.65)}
+.trust{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:rgb(255 255 255/.75)}
+.trust span{display:flex;align-items:center;gap:7px}
+.trust svg{width:16px;height:16px;color:var(--teal-l)}
+
+/* Sections */
+main{padding-block:44px 64px;display:flex;flex-direction:column;gap:48px}
+.sec{display:grid;grid-template-columns:240px minmax(0,1fr);gap:28px;scroll-margin-top:20px}
+@media (max-width:900px){.sec{grid-template-columns:1fr;gap:16px}}
+.sec-h{display:flex;flex-direction:column;gap:8px;position:sticky;top:20px;align-self:start}
+@media (max-width:900px){.sec-h{position:static}}
+.sec-h .k{font-family:var(--f-display);font-size:3rem;line-height:1;color:var(--c)}
+.sec-h h2{font-size:1.35rem}
+.sec-h p{color:var(--muted);font-size:.92rem}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:16px}
+.card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:var(--shadow);text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:12px;min-width:0;overflow:hidden;transition:transform .2s,box-shadow .2s,border-color .2s}
+.card::before{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,var(--c),transparent)}
+.card:hover{transform:translateY(-3px);border-color:color-mix(in oklch,var(--c) 45%,var(--line));box-shadow:0 1px 2px rgb(15 30 60/.05),0 22px 44px -20px rgb(15 30 60/.3)}
+.card.feat{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:22px;align-items:center}
+@media (max-width:700px){.card.feat{grid-template-columns:1fr}}
+.ic{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:color-mix(in oklch,var(--c) 13%,transparent);color:var(--c);flex:none}
+.ic svg{width:24px;height:24px}
+.card h3{font-size:1.15rem}
+.card p{color:var(--muted);font-size:.93rem}
+.meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}
+.chip{font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:99px;background:var(--card-2);color:var(--muted)}
+.chip.who{background:color-mix(in oklch,var(--c) 12%,transparent);color:var(--c)}
+.go{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;color:var(--c)}
+.go svg{width:16px;height:16px;transition:transform .2s}
+.card:hover .go svg{transform:translateX(4px)}
+.feat-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.feat-list li{display:grid;grid-template-columns:22px 1fr;gap:8px;font-size:.92rem;align-items:start}
+.feat-list svg{width:18px;height:18px;color:var(--c);margin-top:2px}
+.sos{display:flex;gap:16px;align-items:flex-start;background:var(--bad-bg);border-radius:18px;padding:18px 22px}
+.sos .ic{background:color-mix(in oklch,var(--bad) 15%,transparent);color:var(--bad)}
 .sos b{color:var(--bad)}
-.note{font-size:.85rem;color:var(--muted);border-left:3px solid var(--teal);padding:4px 0 4px 12px}
+.foot{font-size:.85rem;color:var(--muted);text-align:center}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="check" viewBox="0 0 24 24"><path d="m5 12 5 5L20 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
 
-<header class="pp-top gut"><div class="in">
-  <a class="back" href="../../../index.html">← Protect</a>
-  <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-5-8-11a5 5 0 0 1 8-4 5 5 0 0 1 8 4c0 6-8 11-8 11z"/></svg></div>
-  <div><small>PréventIA Protect · Santé</small><h1>Santé mentale</h1></div>
-</div></header>
-
-<main class="gut">
-  <div class="lead">
-    <h2>Évaluer les risques psychosociaux, repérer la souffrance, agir et récupérer.</h2>
-    <p>Des outils pour l'infirmier·e d'entreprise, les RH, le CSE et les salariés eux-mêmes. Les outils destinés aux salariés sont anonymes : rien n'est transmis à l'employeur.</p>
+<header class="hero">
+  <div class="wrap">
+    <nav class="crumb" aria-label="Fil d'Ariane"><a href="../../../index.html">← PréventIA Protect</a><span>Santé</span><span aria-hidden="true">›</span><span>Santé mentale</span></nav>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <h1>Prendre soin de la <em>santé mentale</em> au travail</h1>
+      <p class="sub">Évaluer les risques psychosociaux, repérer la souffrance, agir et récupérer. Des outils pour l'infirmier·e d'entreprise, les RH, le CSE, et pour les salariés eux-mêmes.</p>
+    </div>
+    <div class="paths">
+      <a href="#evaluer" style="--c:var(--c-eval)"><span class="n">1</span><span><b>Évaluer</b><small>Diagnostic RPS, burn-out</small></span></a>
+      <a href="#reperer" style="--c:var(--c-rep)"><span class="n">2</span><span><b>Repérer</b><small>Violences, signaux, intégration</small></span></a>
+      <a href="#recuperer" style="--c:var(--c-rec)"><span class="n">3</span><span><b>Récupérer</b><small>Respiration, relaxation</small></span></a>
+    </div>
+    <div class="trust">
+      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Questionnaires anonymes</span>
+      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/></svg>Rien n'est transmis à l'employeur</span>
+      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>De 1 à 10 minutes</span>
+    </div>
   </div>
+</header>
 
-  <section class="sec" style="--c:var(--c-eval)">
-    <div class="sec-h"><h3>Évaluer</h3><span>Pour l'infirmier·e et le comité de pilotage</span></div>
-    <div class="grid">
-      <a class="tile" href="rps.html">
-        <div class="top"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg></span><h4>Diagnostic RPS</h4></div>
-        <p>Indicateurs (dont TF et TG importés du suivi AT/MP), remontées, avis du CSE, des référents, des RH et du médecin du travail, baromètre et COPSOQ anonymes, synthèse sur les 6 facteurs Gollac.</p>
-        <div class="meta"><span class="chip who">Infirmier·e</span><span class="chip">COPSOQ</span><span class="chip">DUERP</span></div></a>
-      <a class="tile" href="burnout.html" style="--c:var(--c-psy)">
-        <div class="top"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="16" height="10" rx="2"/><path d="M21 11v2"/><path d="M6 10v4"/></svg></span><h4>Pré-dépistage du burn-out</h4></div>
-        <p>Questionnaire inspiré du MBI de Maslach : 22 questions, 6 dimensions, radar et recommandations INRS et HAS. Repérage, pas diagnostic.</p>
-        <div class="meta"><span class="chip who">Salarié ou entretien infirmier</span><span class="chip">MBI</span></div></a>
+<main class="wrap">
+  <section class="sec" id="evaluer" style="--c:var(--c-eval)">
+    <div class="sec-h"><span class="k">01</span><h2>Évaluer</h2><p>Pour l'infirmier·e et le comité de pilotage : objectiver la situation avant d'agir.</p></div>
+    <div class="cards">
+      <a class="card feat" href="rps.html">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg></span>
+          <h3>Diagnostic RPS</h3>
+          <p>Une évaluation complète des risques psychosociaux, menée en 6 étapes et restituée sur les 6 facteurs Gollac, avec ce qu'elle entraîne pour l'entreprise.</p>
+          <div class="meta"><span class="chip who">Infirmier·e</span><span class="chip">COPSOQ</span><span class="chip">DUERP</span></div>
+          <span class="go">Ouvrir le diagnostic <svg><use href="#arrow"/></svg></span>
+        </div>
+        <ul class="feat-list">
+          <li><svg><use href="#check"/></svg>Indicateurs, dont TF et TG importés du suivi AT/MP</li>
+          <li><svg><use href="#check"/></svg>Remontées et signalements, sans nom</li>
+          <li><svg><use href="#check"/></svg>Avis du CSE, des référents, des RH, du médecin du travail</li>
+          <li><svg><use href="#check"/></svg>Baromètre et COPSOQ anonymes, par équipe</li>
+          <li><svg><use href="#check"/></svg>Synthèse, obligations et pistes d'actions</li>
+        </ul>
+      </a>
+      <a class="card" href="burnout.html" style="--c:var(--c-psy)">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="16" height="10" rx="2"/><path d="M21 11v2M6 10v4"/></svg></span>
+        <h3>Pré-dépistage du burn-out</h3>
+        <p>22 questions inspirées du MBI de Maslach, 6 dimensions, radar et recommandations. Repérage, pas diagnostic.</p>
+        <div class="meta"><span class="chip who">Salarié ou entretien</span><span class="chip">22 questions</span></div>
+        <span class="go">Commencer <svg><use href="#arrow"/></svg></span>
+      </a>
     </div>
   </section>
 
-  <section class="sec" style="--c:var(--c-rep)">
-    <div class="sec-h"><h3>Repérer</h3><span>Mettre des mots sur une situation, savoir qui alerter</span></div>
-    <div class="grid">
-      <a class="tile" href="violentometre.html">
-        <div class="top"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg></span><h4>Violentomètre au travail</h4></div>
-        <p>Des incivilités du quotidien aux violences graves, entre collègues, avec la hiérarchie, l'organisation ou le public : thermomètre de gravité, effets sur la santé, contacts de l'entreprise.</p>
-        <div class="meta"><span class="chip who">Salariés</span><span class="chip">Incivilités</span><span class="chip">Violences</span></div></a>
-      <a class="tile" href="reperer-agir.html">
-        <div class="top"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></svg></span><h4>Repérer et agir</h4></div>
-        <p>Signaux d'alerte, comment aborder une personne en souffrance, conduite à tenir en cas d'urgence et ressources à mobiliser.</p>
-        <div class="meta"><span class="chip who">Managers, RH, CSE</span><span class="chip">Urgence</span></div></a>
-      <a class="tile" href="premiers-jours.html">
-        <div class="top"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span><h4>Mes 100 premiers jours</h4></div>
-        <p>Parcours ludique pour les nouveaux salariés : 10 situations d'intégration, 5 jauges, météo intérieure et contacts d'aide paramétrables.</p>
-        <div class="meta"><span class="chip who">Nouveaux salariés</span><span class="chip">Intégration</span></div></a>
+  <section class="sec" id="reperer" style="--c:var(--c-rep)">
+    <div class="sec-h"><span class="k">02</span><h2>Repérer</h2><p>Mettre des mots sur une situation et savoir qui alerter.</p></div>
+    <div class="cards">
+      <a class="card" href="violentometre.html">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg></span>
+        <h3>Violentomètre au travail</h3>
+        <p>Des incivilités du quotidien aux violences graves, avec les collègues, la hiérarchie ou le public. Effets sur la santé et contacts utiles.</p>
+        <div class="meta"><span class="chip who">Salariés</span><span class="chip">Incivilités</span></div>
+        <span class="go">Ouvrir <svg><use href="#arrow"/></svg></span>
+      </a>
+      <a class="card" href="reperer-agir.html">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></svg></span>
+        <h3>Repérer et agir</h3>
+        <p>Signaux d'alerte, comment aborder une personne en souffrance, conduite à tenir en cas d'urgence.</p>
+        <div class="meta"><span class="chip who">Managers, RH, CSE</span><span class="chip">Urgence</span></div>
+        <span class="go">Ouvrir <svg><use href="#arrow"/></svg></span>
+      </a>
+      <a class="card" href="premiers-jours.html">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span>
+        <h3>Mes 100 premiers jours</h3>
+        <p>Parcours ludique d'intégration : 10 situations, 5 jauges, météo intérieure et contacts d'aide.</p>
+        <div class="meta"><span class="chip who">Nouveaux salariés</span><span class="chip">10 min</span></div>
+        <span class="go">Jouer <svg><use href="#arrow"/></svg></span>
+      </a>
     </div>
   </section>
 
-  <section class="sec" style="--c:var(--c-agir)">
-    <div class="sec-h"><h3>Récupérer</h3><span>Utile tout de suite</span></div>
-    <div class="grid">
-      <a class="tile" href="detente.html">
-        <div class="top"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="9"/></svg></span><h4>Cohérence cardiaque et relaxation</h4></div>
-        <p>Respiration guidée par une bulle (méthode 3-6-5) et séance de relaxation inspirée de l'hypnose, avec une voix qui accompagne.</p>
-        <div class="meta"><span class="chip who">Tous</span><span class="chip">3-6-5</span><span class="chip">Hypnose</span></div></a>
+  <section class="sec" id="recuperer" style="--c:var(--c-rec)">
+    <div class="sec-h"><span class="k">03</span><h2>Récupérer</h2><p>Des exercices utilisables tout de suite, au poste ou en pause.</p></div>
+    <div class="cards">
+      <a class="card feat" href="detente.html">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="9"/></svg></span>
+          <h3>Cohérence cardiaque et relaxation</h3>
+          <p>Une bulle qui guide la respiration et une séance de relaxation inspirée de l'hypnose, accompagnée par une voix.</p>
+          <div class="meta"><span class="chip who">Tous</span><span class="chip">À la demande</span></div>
+          <span class="go">Respirer <svg><use href="#arrow"/></svg></span>
+        </div>
+        <ul class="feat-list">
+          <li><svg><use href="#check"/></svg>Méthode 3-6-5 : 3 fois par jour, 6 respirations par minute, 5 minutes</li>
+          <li><svg><use href="#check"/></svg>Relaxation guidée par la voix</li>
+          <li><svg><use href="#check"/></svg>Sans compte, sans enregistrement</li>
+        </ul>
+      </a>
     </div>
   </section>
 
-  <div class="sos"><div><b>Une personne est en danger immédiat ?</b> Ne la laissez pas seule et appelez le <b>15</b> ou le <b>112</b>. En cas d'idées suicidaires : <b>3114</b>, gratuit, 24 h/24. <a href="reperer-agir.html#urgence">Conduite à tenir détaillée</a></div></div>
-  <p class="note">Ces outils aident à repérer, évaluer et orienter. Ils ne posent ni diagnostic médical ni qualification juridique, et ne remplacent pas l'avis du médecin du travail.</p>
+  <div class="sos"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg></span>
+    <div><b>Une personne est en danger immédiat ?</b> Ne la laissez pas seule et appelez le <b>15</b> ou le <b>112</b>. En cas d'idées suicidaires : <b>3114</b>, gratuit, 24 h/24. <a href="reperer-agir.html#urgence">Conduite à tenir détaillée</a></div></div>
+  <p class="foot">Ces outils aident à repérer, évaluer et orienter. Ils ne posent ni diagnostic médical ni qualification juridique, et ne remplacent pas l'avis du médecin du travail.</p>
 </main>
 </body>
 </html>

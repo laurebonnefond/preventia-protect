@@ -22,6 +22,49 @@
 .yn{display:flex;gap:4px}
 .yn button{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:6px 12px;font-weight:600;font-size:13px}
 .yn button[aria-pressed="true"]{border-color:var(--rose);background:var(--rose-bg);color:var(--rose)}
+.orient.o-bad{background:var(--bad-bg)} .orient.o-bad .eyebrow{color:var(--bad)}
+/* Connaître mes seins */
+.seg{display:flex;gap:4px;padding:4px;background:var(--card-2);border-radius:12px;overflow-x:auto;scrollbar-width:none}
+.seg button{flex:1 0 auto;border:0;background:transparent;border-radius:9px;padding:9px 14px;font-weight:600;font-size:13.5px;color:var(--muted);white-space:nowrap}
+.seg button[aria-selected="true"]{background:var(--card);color:var(--rose);box-shadow:0 1px 3px rgb(20 20 40/.12)}
+.seg.sm button{flex:1 1 0;min-width:0;padding:7px 8px;font-size:12.5px;white-space:normal;line-height:1.25}
+.seg button.r-ok[aria-selected="true"]{color:var(--ok)} .seg button.r-warn[aria-selected="true"]{color:var(--ink);background:var(--warn-bg)} .seg button.r-bad[aria-selected="true"]{color:var(--bad);background:var(--bad-bg)}
+.next{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-radius:12px;background:var(--rose-bg)}
+.next b{font-family:var(--f-display);font-weight:400;font-size:1.35rem;color:var(--rose)}
+.tl{display:flex;flex-direction:column;gap:14px;position:relative;padding-left:22px}
+.tl::before{content:"";position:absolute;left:6px;top:6px;bottom:6px;width:2px;background:var(--rose-bg)}
+.tl > div{position:relative}
+.tl .dot{position:absolute;left:-22px;top:4px;width:14px;height:14px;border-radius:50%;background:var(--rose);box-shadow:0 0 0 3px var(--card)}
+.tl .dot.alt{background:var(--mauve)}
+.stepper{display:flex;flex-direction:column;gap:14px}
+.prog{display:grid;grid-auto-flow:column;gap:4px}
+.prog i{height:5px;border-radius:99px;background:var(--card-2)} .prog i.on{background:var(--rose)}
+.st{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px;align-items:center;min-height:220px}
+.st.noill{grid-template-columns:1fr;min-height:0}
+@media (max-width:760px){.st{grid-template-columns:1fr}}
+.disp{font-family:var(--f-display);font-weight:400;font-size:1.5rem}
+.illbox{background:var(--rose-bg);border-radius:14px;padding:14px;display:grid;place-items:center}
+.illbox.photo{background:#fff;padding:6px;overflow:hidden}
+.illbox.photo img{width:100%;max-width:460px;height:auto;display:block;border-radius:10px}
+.ill{width:100%;max-width:360px;height:auto;fill:none;stroke:var(--rose);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ill .thin{stroke-width:1.2;opacity:.7} .ill .dash,.carte .dash{stroke-dasharray:4 4;stroke-width:1;opacity:.5;stroke:var(--muted)}
+.ill .fill{fill:var(--rose);stroke:none} .ill .fill-soft{fill:var(--card);stroke:var(--rose);stroke-width:1.5}
+.ill .zonefill{fill:var(--card);stroke:var(--rose);stroke-width:1.2;stroke-dasharray:5 4}
+.ill .arrow{stroke:var(--ink);stroke-width:1.6}
+.ill text,.carte text{fill:var(--muted);stroke:none;font-size:10.5px;font-family:var(--f-body);text-anchor:middle}
+.ill [text-anchor="start"] text,.ill text[text-anchor="start"]{text-anchor:start} .ill text[text-anchor="end"]{text-anchor:end}
+.ill .strong text,.carte text.strong{fill:var(--ink);font-weight:700}
+.obs ul,.ul{margin:8px 0 0;padding-left:1.1rem;display:grid;gap:6px;font-size:.92rem}
+.obs .card{border:0} .obs .o-ok{background:var(--ok-bg)} .obs .o-warn{background:var(--warn-bg)} .obs .o-bad{background:var(--bad-bg)}
+.obs .o-ok .eyebrow{color:var(--ok)} .obs .o-bad .eyebrow{color:var(--bad)} .obs h3{margin-top:2px}
+.carte{width:100%;max-width:380px;height:auto;display:block;margin-inline:auto}
+.carte .zn{fill:var(--card-2);stroke:var(--card);stroke-width:2;cursor:pointer;transition:fill .15s}
+.carte .zn:hover{fill:var(--rose-bg)} .carte .zn.on{fill:var(--rose)}
+.sig{border:0;padding:0;margin:0;display:grid;gap:6px}
+.hist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.hist li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:start;padding-block:10px;border-bottom:1px dashed var(--line)}
+details summary{cursor:pointer}
+p.f,legend.f{font-size:12px;font-weight:600;color:var(--muted);margin:0 0 4px}
 </style>
 </head>
 <body>
@@ -92,10 +135,10 @@ const count=(arr,key,opts)=>opts.map(o=>({l:o,n:arr.filter(r=>Array.isArray(r[ke
 const bars=(rows,tot)=>rows.map(r=>`<div class="hbar"><span>${esc(r.l)}</span><span class="t"><i style="width:${tot?r.n/tot*100:0}%"></i></span><b>${tot?Math.round(r.n/tot*100):0} %</b></div>`).join('');
 
 /* ---------- Navigation ---------- */
-const TABS=[['bord','Tableau de bord'],['actions','Actions Octobre rose'],['enquete','Enquête anonyme'],['suivi','Suivi infirmier'],['parcours','Mon parcours']];
+const TABS=[['bord','Tableau de bord'],['actions','Actions Octobre rose'],['enquete','Enquête anonyme'],['suivi','Suivi infirmier'],['parcours','Mon parcours'],['connaitre','Connaître mes seins']];
 function route(){const h=(location.hash||'#bord').slice(1);const cur=TABS.some(t=>t[0]===h)?h:'bord';
   $('#tabs').innerHTML=TABS.map(([k,l])=>`<a href="#${k}" ${k===cur?'aria-current="page"':''}>${l}</a>`).join('');
-  ({bord:vBord,actions:vActions,enquete:vEnquete,suivi:vSuivi,parcours:vParcours})[cur]();}
+  ({bord:vBord,actions:vActions,enquete:vEnquete,suivi:vSuivi,parcours:vParcours,connaitre:vConnaitre})[cur]();}
 window.addEventListener('hashchange',()=>{route();scrollTo(0,0);});
 const intro=(e,t,p,ref)=>`<div class="intro"><div><p class="eyebrow">${e}</p><h2>${t}</h2><p class="muted">${p}</p></div>${ref?`<div class="ref">${ref}</div>`:''}</div>`;
 const demoBar=()=>S.demo?`<div class="demo"><span><b>Données d'exemple fictives.</b> Explorez l'outil, puis démarrez votre propre suivi.</span><span class="sp"></span><button class="btn sm" id="newS">Démarrer un suivi vierge</button></div>`:'';
@@ -261,7 +304,8 @@ function vParcours(){
       <li><span class="n">2</span><div>Une modification de la peau : rétraction, rougeur, aspect de « peau d'orange ».</div></li>
       <li><span class="n">3</span><div>Un mamelon qui se rétracte, change d'aspect ou présente un écoulement.</div></li>
       <li><span class="n">4</span><div>Un changement de forme ou de taille d'un sein.</div></li></ol>
-      <p class="muted small" style="margin-top:8px">L'autopalpation seule n'est pas une méthode de dépistage. Connaître ses seins aide à repérer un changement, en complément des examens.</p></div>
+      <p class="muted small" style="margin-top:8px">L'autopalpation seule n'est pas une méthode de dépistage. Connaître ses seins aide à repérer un changement, en complément des examens.</p>
+      <a class="btn ghost sm" href="#connaitre" style="margin-top:10px;display:inline-block;text-decoration:none">Apprendre le geste et tenir mon journal</a></div>
     <div class="card"><h3 style="margin-bottom:8px">Travail et dépistage</h3><ul style="margin:0;padding-left:1.1rem;display:grid;gap:6px">
       <li><b>Travail de nuit :</b> classé « cancérogène probable » (groupe 2A) par le CIRC en 2019. Le suivi en santé au travail en tient compte.</li>
       <li><b>S'absenter pour l'examen :</b> renseignez-vous auprès des RH. Beaucoup d'entreprises facilitent l'absence pendant Octobre rose.</li>
@@ -272,6 +316,266 @@ function vParcours(){
   $('#last').onchange=e=>{P.last=e.target.value;vParcours();};
   app.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{P[b.dataset.k]=b.dataset.v;vParcours();});
 }
+
+/* ---------- 5. Connaître mes seins : guide d'auto-examen et journal personnel ----------
+   Repères : INCa et HAS. L'autopalpation n'est pas une méthode de dépistage : elle aide à connaître ses seins
+   pour repérer un changement, en complément de l'examen clinique (dès 25 ans) et de la mammographie (50-74 ans).
+   Le journal est une donnée de santé personnelle : il reste dans ce navigateur, sur une clé distincte,
+   jamais dans le suivi infirmier ni dans Supabase. */
+const KEY_MOI='pp_sein_moi_v1';
+const moiStore={get(){try{return JSON.parse(localStorage.getItem(KEY_MOI))}catch(e){return null}},set(v){try{localStorage.setItem(KEY_MOI,JSON.stringify(v))}catch(e){}},del(){try{localStorage.removeItem(KEY_MOI)}catch(e){}}};
+let M=moiStore.get()||{consent:false,rythme:'regles',regles:'',jour:1,journal:[]};
+const saveMoi=()=>{if(M.consent)moiStore.set(M);};
+const iso=d=>{const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10);};
+const addDays=(d,n)=>{const x=new Date(d+'T00:00');x.setDate(x.getDate()+n);return x;};
+
+/* Signes : r = consulter rapidement (dans les jours qui viennent), d = à revérifier après les règles puis consulter s'il persiste */
+const SIGNES=[
+ {k:'boule',l:'Une boule ou une grosseur nouvelle',d:1},
+ {k:'boule_dure',l:'Une boule dure, irrégulière ou qui ne bouge pas',r:1},
+ {k:'zone',l:'Une zone plus ferme ou plus épaisse que de l\'autre côté',d:1},
+ {k:'douleur',l:'Une douleur localisée, d\'un seul côté, qui dure',d:1},
+ {k:'peau',l:'Une fossette, un plissement ou une rétraction de la peau',r:1},
+ {k:'orange',l:'Un aspect de « peau d\'orange »',r:1},
+ {k:'rouge',l:'Une rougeur, une chaleur ou un gonflement du sein',r:1},
+ {k:'mamelon_retr',l:'Un mamelon qui rentre ou change de direction (récent)',r:1},
+ {k:'ecoulement',l:'Un écoulement spontané d\'un seul mamelon (clair ou sanglant)',r:1},
+ {k:'croute',l:'Une croûte, une plaie ou un eczéma du mamelon qui ne guérit pas',r:1},
+ {k:'ganglion',l:'Une grosseur dans l\'aisselle ou au-dessus de la clavicule',r:1},
+ {k:'forme',l:'Un changement de taille ou de forme d\'un sein',r:1}
+];
+const RESULTATS=[
+ {k:'rien',l:'Rien de nouveau',c:'ok'},
+ {k:'doute',l:'Un doute, à revérifier',c:'warn'},
+ {k:'anomalie',l:'Un changement net',c:'bad'}
+];
+const ZONES={SE:'quadrant supéro-externe (haut, côté aisselle)',SI:'quadrant supéro-interne (haut, côté sternum)',IE:'quadrant inféro-externe (bas, côté aisselle)',II:'quadrant inféro-interne (bas, côté sternum)',C:'mamelon et aréole',A:'aisselle'};
+const zoneL=z=>`sein ${z[0]==='D'?'droit':'gauche'}, ${ZONES[z.slice(2)]}`.replace('sein droit, aisselle','aisselle droite').replace('sein gauche, aisselle','aisselle gauche');
+
+/* Prochaine auto-observation : une semaine après le début des règles (seins moins tendus), sinon à date fixe */
+function prochaine(){
+  const t=new Date();t.setHours(0,0,0,0);
+  if(M.rythme==='regles'){
+    if(!M.regles) return null;
+    let d=addDays(M.regles,7); while(d<t) d=addDays(iso(d),28);
+    return {d,l:'environ une semaine après le début des règles (à ajuster à votre cycle)'};
+  }
+  const j=Math.min(28,Math.max(1,+M.jour||1)); let d=new Date(t.getFullYear(),t.getMonth(),j); if(d<t) d=new Date(t.getFullYear(),t.getMonth()+1,j);
+  return {d,l:`le ${j} de chaque mois`};
+}
+function icsMensuel(d){
+  const s=iso(d).replace(/-/g,'');
+  return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//PreventIA Protect//SeinPrev//FR','BEGIN:VEVENT',`UID:seinprev-auto-${Date.now()}@preventia`,`DTSTAMP:${new Date().toISOString().replace(/[-:]/g,'').slice(0,15)}Z`,
+   `DTSTART;VALUE=DATE:${s}`,'RRULE:FREQ=MONTHLY','SUMMARY:Observer mes seins (10 minutes)','DESCRIPTION:Miroir puis palpation allongée. En cas de changement : consulter.','END:VEVENT','END:VCALENDAR'].join('\r\n');
+}
+
+/* Date de contre-vérification : une semaine après le début des règles suivantes (cycle estimé à 28 jours) */
+function recheck(date){
+  const t=new Date(date+'T00:00'); if(!M.regles) return addDays(date,28);
+  let d=addDays(M.regles,7); while(d<=addDays(date,7)) d=addDays(iso(d),28); return d;
+}
+/* Conduite à tenir pour une observation */
+function conduite(e,prev){
+  const sg=SIGNES.filter(s=>e.signes?.includes(s.k)), rouge=sg.filter(s=>s.r);
+  const menop=M.rythme!=='regles';
+  const persist=prev&&prev.res!=='rien'&&e.res!=='rien'&&(e.zones||[]).some(z=>(prev.zones||[]).includes(z));
+  if(rouge.length||e.res==='anomalie') return {c:'bad',t:'Prenez rendez-vous rapidement',p:`${rouge.length?`Signe${rouge.length>1?'s':''} à faire examiner : ${rouge.map(s=>s.l.toLowerCase()).join(' ; ')}. `:''}Consultez dans les jours qui viennent votre médecin traitant, votre gynécologue ou votre sage-femme, sans attendre la prochaine invitation au dépistage. En prenant rendez-vous, dites : « j'ai remarqué un changement au sein ».`};
+  if(persist) return {c:'bad',t:'Le changement persiste : consultez',p:`La même zone était déjà notée le ${fmt(prev.date)}. Un changement qui dure d'un cycle à l'autre doit être examiné par un professionnel.`};
+  if(e.res==='doute'||sg.length) return menop
+    ? {c:'bad',t:'Faites examiner ce changement',p:'Sans règles, les seins varient peu : une boule ou une zone nouvelle se fait examiner, sans attendre un mois.'}
+    : {c:'warn',t:'Revérifiez après vos prochaines règles',p:`Beaucoup de seins sont naturellement granuleux et changent avec le cycle. Refaites l'examen de cette zone vers le ${recheck(e.date).toLocaleDateString('fr-FR')}, une semaine après le début des prochaines règles. S'il est toujours là, consultez. Si vous êtes inquiète, consulter dès maintenant est toujours légitime.`};
+  return {c:'ok',t:'Rien de nouveau',p:'Continuez une fois par mois, à la même période du cycle. L\'auto-observation ne remplace pas l\'examen clinique ni la mammographie.'};
+}
+
+/* ---------- Illustrations (traits, couleur rose du module) ---------- */
+const torse=(x,bras)=>{
+  const B={bas:`M${x-27} 42 L${x-33} 104 M${x+27} 42 L${x+33} 104`,
+           haut:`M${x-27} 42 Q${x-38} 20 ${x-20} 4 M${x+27} 42 Q${x+38} 20 ${x+20} 4`,
+           hanches:`M${x-27} 42 L${x-44} 66 L${x-25} 84 M${x+27} 42 L${x+44} 66 L${x+25} 84`}[bras];
+  return `<circle cx="${x}" cy="17" r="10"/><path d="M${x} 27v6"/><path d="M${x-27} 42 Q${x} 31 ${x+27} 42 L${x+23} 112 M${x-27} 42 L${x-23} 112"/>
+  <path d="M${x-21} 60 q10 17 19 2 M${x+2} 62 q9 15 19-2" /><circle cx="${x-11}" cy="68" r="1.6" class="fill"/><circle cx="${x+11}" cy="68" r="1.6" class="fill"/><path d="${B}"/>`;
+};
+/* Illustrations raster (img/auto-*.webp) : prioritaires sur les schémas SVG ci-dessous */
+const IMG={miroir:'Trois positions devant le miroir : bras le long du corps, bras levés, mains sur les hanches',allongee:'Allongée sur le dos, coussin sous l\'épaule, bras derrière la tête, palpation de l\'aisselle',doigts:'Trois doigts à plat sur le sein, petits mouvements circulaires',pressions:'Trois niveaux de pression : légère, moyenne, profonde jusqu\'aux côtes',zone:'Zone à examiner : de la clavicule au sillon sous les seins, du sternum à l\'aisselle',parcours:'Parcours en bandes verticales, ou en spirale'};
+const illHtml=k=>IMG[k]?`<div class="illbox photo"><img src="img/auto-${k}.webp" alt="${IMG[k]}" width="960" height="720" loading="lazy"></div>`:`<div class="illbox">${ILL[k]}</div>`;
+const ILL={
+ miroir:`<svg viewBox="0 0 330 140" class="ill" role="img" aria-label="Trois positions devant le miroir"><g>${torse(55,'bas')}${torse(165,'haut')}${torse(275,'hanches')}</g>
+   <g class="lab"><text x="55" y="132">Bras le long du corps</text><text x="165" y="132">Bras levés</text><text x="275" y="132">Mains sur les hanches</text></g></svg>`,
+ zone:`<svg viewBox="0 0 300 190" class="ill" role="img" aria-label="Zone à examiner, de la clavicule au sillon sous le sein et du sternum à l'aisselle">
+   <path class="zonefill" d="M150 34 L232 30 Q262 48 266 82 L262 140 Q214 160 150 152 Z"/><path class="zonefill" d="M150 34 L68 30 Q38 48 34 82 L38 140 Q86 160 150 152 Z"/>
+   <g><path d="M150 4v20"/><path d="M40 36 Q150 14 260 36"/><path d="M40 36 L46 184 M260 36 L254 184"/><path d="M62 92 q34 48 74 6 M164 98 q40 42 74-6"/><circle cx="99" cy="112" r="2" class="fill"/><circle cx="201" cy="112" r="2" class="fill"/>
+   <path d="M72 30 Q110 40 140 32 M228 30 Q190 40 160 32" class="thin"/></g>
+   <g class="lab"><text x="150" y="182">sternum</text><text x="196" y="18">clavicules</text><text x="286" y="84" text-anchor="end" transform="rotate(90 286 84)">aisselle</text></g>
+   <path d="M150 34v118" class="dash"/></svg>`,
+ pressions:`<svg viewBox="0 0 300 150" class="ill" role="img" aria-label="Trois niveaux de pression : légère, moyenne, profonde">
+   <path d="M10 28 Q150 18 290 28" /><path d="M10 64 Q150 58 290 64" class="thin"/><path d="M10 100 Q150 96 290 100" class="thin"/>
+   <g class="fill-soft"><ellipse cx="60" cy="122" rx="22" ry="8"/><ellipse cx="150" cy="122" rx="22" ry="8"/><ellipse cx="240" cy="122" rx="22" ry="8"/></g>
+   <g class="lab" text-anchor="middle"><text x="60" y="144">côtes</text><text x="150" y="144">côtes</text><text x="240" y="144">côtes</text></g>
+   <g class="arrow"><path d="M60 8v34"/><path d="M54 34l6 9 6-9"/><path d="M150 8v68"/><path d="M144 68l6 9 6-9"/><path d="M240 8v102"/><path d="M234 101l6 9 6-9"/></g>
+   <g class="lab strong"><text x="76" y="50" text-anchor="start">légère</text><text x="166" y="86" text-anchor="start">moyenne</text><text x="232" y="112" text-anchor="end">profonde</text></g></svg>`,
+ doigts:`<svg viewBox="0 0 300 150" class="ill" role="img" aria-label="Pulpe des trois doigts du milieu, petits cercles">
+   <path d="M40 140 Q30 80 70 40 Q90 20 120 30 L210 60 Q226 68 218 82 Q212 92 196 88 L150 76"/><path d="M118 52 L214 92 Q230 100 222 114 Q214 124 198 118 L140 98"/><path d="M128 80 L206 116 Q220 124 212 136 Q204 144 190 138 L120 112"/>
+   <g class="fill-soft"><ellipse cx="206" cy="78" rx="11" ry="7"/><ellipse cx="212" cy="106" rx="11" ry="7"/><ellipse cx="202" cy="130" rx="11" ry="7"/></g>
+   <g class="arrow"><path d="M246 70 a22 22 0 1 1 -2 40"/><path d="M240 104l4 7 7-4"/></g>
+   <g class="lab strong"><text x="268" y="62" text-anchor="middle">petits</text><text x="268" y="74" text-anchor="middle">cercles</text></g></svg>`,
+ bandes:(()=>{
+   // bandes verticales contenues dans le sein (cercle de centre 92,92, rayon 58), puis spirale d'Archimède
+   const cx=92,cy=92,r=56;let p='';for(let i=0,x=cx-r+8;x<=cx+r-8;x+=13,i++){const h=Math.sqrt(r*r-(x-cx)**2)-4;p+=(i?' L':'M')+x.toFixed(1)+' '+(i%2?cy-h:cy+h).toFixed(1)+' L'+x.toFixed(1)+' '+(i%2?cy+h:cy-h).toFixed(1);}
+   let sp='';for(let t=0;t<=6*Math.PI;t+=.15){const rr=2+t*2.6;sp+=(t?' L':'M')+(232+rr*Math.cos(t)).toFixed(1)+' '+(92+rr*Math.sin(t)).toFixed(1);}
+   return `<svg viewBox="0 0 300 175" class="ill" role="img" aria-label="Parcours en bandes verticales, ou en spirale">
+   <circle cx="92" cy="92" r="60" class="thin"/><circle cx="92" cy="92" r="3" class="fill"/><path class="arrow" d="${p}"/>
+   <circle cx="232" cy="92" r="54" class="thin"/><path class="arrow" d="${sp}"/>
+   <g class="lab"><text x="92" y="170">en bandes (le plus complet)</text><text x="232" y="170">en spirale</text></g></svg>`;})(),
+ aisselle:`<svg viewBox="0 0 330 170" class="ill" role="img" aria-label="Aisselle et creux au-dessus et au-dessous de la clavicule">
+   <path d="M70 166 L74 62 Q60 28 84 6"/><path d="M74 62 Q110 44 160 46 L250 40"/><path d="M160 46 Q205 56 250 52" class="thin"/>
+   <path d="M96 128 q34 30 68 0"/><circle cx="130" cy="138" r="2" class="fill"/>
+   <g class="fill-soft"><circle cx="64" cy="84" r="13"/><circle cx="196" cy="28" r="9"/><circle cx="200" cy="72" r="9"/></g>
+   <g class="thin"><path d="M51 92 L24 118"/><path d="M205 24 L232 12"/><path d="M209 76 L236 92"/><path d="M250 46 L262 46"/></g>
+   <g class="lab strong" text-anchor="start"><text x="8" y="132">aisselle</text><text x="234" y="14">au-dessus</text><text x="238" y="102">au-dessous</text><text x="266" y="50" class="sm">clavicule</text></g></svg>`,
+ mamelon:`<svg viewBox="0 0 300 150" class="ill" role="img" aria-label="Mamelon et aréole : aspect, rétraction, croûte, écoulement">
+   <circle cx="90" cy="76" r="62" class="thin"/><circle cx="90" cy="76" r="24" class="fill-soft"/><circle cx="90" cy="76" r="8"/>
+   <g class="thin"><path d="M98 68 L176 26"/><path d="M98 78 L176 60"/><path d="M108 90 L176 94"/><path d="M96 98 L176 128"/></g>
+   <g class="lab strong" text-anchor="start"><text x="182" y="30">aspect, couleur</text><text x="182" y="64">rentre ou dévie ?</text><text x="182" y="98">croûte, plaie</text><text x="182" y="132">écoulement spontané</text></g></svg>`
+};
+
+/* Carte des zones (vue dans le miroir : le sein droit apparaît à droite) */
+function carte(sel,ro){
+  const pt=(cx,cy,r,a)=>[cx+r*Math.cos(a*Math.PI/180),cy+r*Math.sin(a*Math.PI/180)].map(v=>v.toFixed(1)).join(' ');
+  const slice=(cx,cy,r,a0,a1)=>`M${cx} ${cy} L${pt(cx,cy,r,a0)} A${r} ${r} 0 0 1 ${pt(cx,cy,r,a1)} Z`;
+  const sein=(side,cx)=>{const ext=side==='D'?1:-1, cy=100, r=54;
+    const Q=ext>0?{SE:[-90,0],IE:[0,90],II:[90,180],SI:[180,270]}:{SI:[-90,0],II:[0,90],IE:[90,180],SE:[180,270]};
+    const z=k=>`${side}-${k}`, on=k=>sel.includes(z(k))?' on':'';
+    return Object.entries(Q).map(([k,[a,b]])=>`<path class="zn${on(k)}" data-z="${z(k)}" d="${slice(cx,cy,r,a,b)}"><title>${zoneL(z(k))}</title></path>`).join('')
+     +`<circle class="zn${on('C')}" data-z="${z('C')}" cx="${cx}" cy="${cy}" r="15"><title>${zoneL(z('C'))}</title></circle>`
+     +`<ellipse class="zn${on('A')}" data-z="${z('A')}" cx="${cx+ext*70}" cy="${cy-50}" rx="15" ry="22" transform="rotate(${ext*-30} ${cx+ext*70} ${cy-50})"><title>${zoneL(z('A'))}</title></ellipse>`
+     +`<text x="${cx}" y="${cy+76}" class="lab strong">Sein ${side==='D'?'droit':'gauche'}</text>`;};
+  return `<svg viewBox="0 0 340 186" class="carte${ro?' ro':''}" role="group" aria-label="Carte des seins, vue dans le miroir">${sein('G',96)}${sein('D',244)}<path d="M170 30v120" class="dash"/></svg>`;
+}
+
+let sub='quand', step=0, draft=null;
+const SUBS=[['quand','Quand'],['comment','Comment, pas à pas'],['observer','Quoi observer'],['journal','Mon journal'],['gardefous','Garde-fous']];
+const ETAPES=[
+ {t:'Choisir le bon moment',ill:null,p:['Une fois par mois, environ une semaine après le début des règles : les seins sont moins tendus et moins granuleux.','Sans règles (ménopause, contraception continue, grossesse) : une date fixe, par exemple le 1er du mois.','Prévoyez 10 minutes au calme. Le but n\'est pas de « chercher un cancer », mais de connaître vos seins pour repérer ce qui change.']},
+ {t:'Observer devant le miroir',ill:'miroir',p:['Torse nu, bien éclairée, dans trois positions : bras le long du corps, bras levés au-dessus de la tête, puis mains appuyées sur les hanches en contractant les muscles de la poitrine.','Comparez avec votre aspect habituel : forme, taille, peau, mamelons. Une légère différence entre les deux seins est fréquente et normale si elle est ancienne.']},
+ {t:'S\'allonger, bras derrière la tête',ill:'allongee',p:['Allongez-vous sur le dos, un petit coussin sous l\'épaule du côté examiné, ce bras replié derrière la tête : le sein s\'étale sur le thorax et se palpe mieux.','Examinez le sein droit avec la main gauche, puis le sein gauche avec la main droite.']},
+ {t:'Palper avec trois doigts à plat',ill:'doigts',p:['Utilisez la pulpe des trois doigts du milieu, doigts joints et à plat, pas le bout des doigts.','Faites de petits cercles de la taille d\'une pièce de monnaie, sans lever les doigts, avant de passer au point voisin.']},
+ {t:'Trois pressions à chaque endroit',ill:'pressions',p:['À chaque point : une pression légère (juste sous la peau), moyenne, puis profonde (jusqu\'à sentir les côtes).','Il est normal de sentir les côtes et, en bas du sein, une crête plus ferme : c\'est le sillon sous-mammaire.']},
+ {t:'Couvrir toute la zone',ill:'zone',p:['La glande mammaire s\'étend plus loin qu\'on ne le croit : de la clavicule au sillon sous le sein, et du sternum jusqu\'au milieu de l\'aisselle.','Ne sautez aucune partie : c\'est souvent la partie haute et externe, vers l\'aisselle, qui contient le plus de glande.']},
+ {t:'Suivre un parcours régulier',ill:'parcours',p:['Le plus complet : des bandes verticales, de haut en bas puis de bas en haut, en décalant les doigts d\'un cran à chaque passage.','Une spirale, du mamelon vers l\'extérieur, convient aussi. L\'important est de garder le même parcours chaque mois.']},
+ {t:'Aisselle et clavicule',ill:'aisselle',p:['Bras légèrement écarté, palpez le creux de l\'aisselle, puis au-dessus et au-dessous de la clavicule.','On y recherche une grosseur persistante (ganglion) qui n\'était pas là auparavant.']},
+ {t:'Mamelon et aréole',ill:'mamelon',p:['Regardez l\'aspect, la couleur, la direction du mamelon, la présence d\'une croûte ou d\'une plaie.','Inutile de presser le mamelon : ce qui compte est un écoulement spontané, par exemple une tache sur le soutien-gorge.']},
+ {t:'L\'autre côté, puis noter',ill:null,p:['Recommencez de l\'autre côté. Vous pouvez aussi palper debout sous la douche : les doigts savonnés glissent mieux.','Notez le résultat dans votre journal : c\'est la comparaison d\'un mois sur l\'autre qui permet de repérer un changement.']}
+];
+
+function vConnaitre(){
+  const nav=`<div class="seg" role="tablist" aria-label="Rubriques">${SUBS.map(([k,l])=>`<button role="tab" aria-selected="${k===sub}" data-sub="${k}">${l}</button>`).join('')}</div>`;
+  const P=prochaine();
+  const body={
+   quand:()=>`<div class="grid g2" style="align-items:start">
+     <div class="card grid"><h3>Mon rythme</h3>
+       <div class="seg sm">${[['regles','J\'ai mes règles'],['fixe','Je n\'ai pas de règles']].map(([k,l])=>`<button data-ry="${k}" aria-selected="${M.rythme===k}">${l}</button>`).join('')}</div>
+       ${M.rythme==='regles'?`<label class="f">Premier jour de mes dernières règles<input class="i" type="date" id="regles" value="${esc(M.regles)}"></label>`:`<label class="f">Jour du mois choisi<input class="i num" type="number" min="1" max="28" id="jour" value="${esc(M.jour)}" style="max-width:120px"></label>`}
+       ${P?`<div class="next"><span class="eyebrow">Prochaine auto-observation</span><b class="num">${P.d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}</b><span class="muted small">Puis ${P.l}.</span></div>
+         <a class="btn" style="justify-self:start" download="observer-mes-seins.ics" href="data:text/calendar;charset=utf-8,${encodeURIComponent(icsMensuel(P.d))}">Ajouter un rappel mensuel à mon agenda</a>`:'<p class="muted small">Indiquez la date pour calculer le bon moment.</p>'}
+     </div>
+     <div class="card"><h3 style="margin-bottom:10px">Les trois repères selon l'âge</h3>
+       <div class="tl">
+        <div><span class="dot"></span><b>Tout âge</b><p class="small">Connaître ses seins, une fois par mois. Consulter en cas de changement.</p></div>
+        <div><span class="dot"></span><b>Dès ${DEP.EXAMEN_CLINIQUE_DES} ans</b><p class="small">Un examen clinique des seins par un professionnel, chaque année.</p></div>
+        <div><span class="dot"></span><b>De ${DEP.AGE_MIN} à ${DEP.AGE_MAX} ans</b><p class="small">Mammographie de dépistage tous les 2 ans, prise en charge à 100 %.</p></div>
+        <div><span class="dot alt"></span><b>Risque élevé</b><p class="small">Antécédent, mutation, radiothérapie du thorax : suivi personnalisé (voir « Mon parcours »).</p></div>
+       </div></div></div>`,
+   comment:()=>{const E=ETAPES[step];return `<div class="card stepper">
+       <div class="row"><span class="eyebrow num">Étape ${step+1} / ${ETAPES.length}</span><span class="sp"></span><span class="muted small">≈ 10 minutes en tout</span></div>
+       <div class="prog" aria-hidden="true">${ETAPES.map((_,i)=>`<i class="${i<=step?'on':''}"></i>`).join('')}</div>
+       <div class="st ${E.ill?'':'noill'}">${E.ill?illHtml(E.ill):''}<div class="grid" style="gap:8px;align-content:start"><h3 class="disp">${E.t}</h3>${E.p.map(p=>`<p>${p}</p>`).join('')}</div></div>
+       <div class="row"><button class="btn ghost" id="sPrev" ${step?'':'disabled'}>Étape précédente</button><span class="sp"></span>
+         ${step<ETAPES.length-1?'<button class="btn" id="sNext">Étape suivante</button>':'<button class="btn" id="sJour">Noter le résultat</button>'}</div></div>
+     <details class="card"><summary><b>Voir toutes les étapes sur une page</b></summary><ol class="steps" style="margin-top:12px">${ETAPES.map((e,i)=>`<li><span class="n">${i+1}</span><div><b>${e.t}.</b> ${e.p.join(' ')}</div></li>`).join('')}</ol></details>`;},
+   observer:()=>`<div class="grid g3 obs">
+     <div class="card o-ok"><p class="eyebrow">Souvent normal</p><h3>Ce que l'on sent sans s'inquiéter</h3><ul>
+       <li>Une texture granuleuse ou bosselée, la même des deux côtés.</li><li>Une crête ferme en bas du sein (sillon sous-mammaire) et les côtes.</li>
+       <li>Des seins gonflés, tendus ou sensibles avant les règles.</li><li>Une différence de taille ancienne entre les deux seins.</li>
+       <li>Un mamelon tourné vers l'intérieur depuis toujours.</li></ul></div>
+     <div class="card o-warn"><p class="eyebrow">À revérifier</p><h3>Refaire l'examen après les règles</h3><ul>
+       <li>Une zone plus ferme ou plus granuleuse d'un seul côté.</li><li>Une petite boule souple, mobile, sensible, apparue avant les règles.</li>
+       <li>Une douleur localisée d'un seul côté.</li></ul>
+       <p class="small" style="margin-top:8px"><b>Toujours là après les règles ?</b> Consultez. Sans règles, consultez directement.</p></div>
+     <div class="card o-bad"><p class="eyebrow">Consulter rapidement</p><h3>Prendre rendez-vous dans les jours qui viennent</h3><ul>
+       ${SIGNES.filter(s=>s.r).map(s=>`<li>${s.l}.</li>`).join('')}</ul></div></div>
+     <div class="card"><h3 style="margin-bottom:6px">Ce qu'une anomalie peut être</h3><p class="muted small" style="margin-bottom:10px">La plupart des anomalies des seins ne sont pas des cancers. Mais seul un examen (clinique, échographie, mammographie, parfois prélèvement) permet de faire la différence : on ne conclut jamais seule.</p>
+       <div class="tw"><table><thead><tr><th>Ce que l'on remarque</th><th>Causes fréquentes, souvent bénignes</th><th>Pourquoi consulter quand même</th></tr></thead><tbody>
+        <tr><td>Boule ronde, souple, mobile</td><td>Kyste, adénofibrome (femme jeune)</td><td>Confirmer la nature par échographie</td></tr>
+        <tr><td>Seins bosselés et douloureux selon le cycle</td><td>Mastose (seins fibrokystiques), variations hormonales</td><td>Si une zone se distingue du reste ou persiste</td></tr>
+        <tr><td>Rougeur, chaleur, douleur, parfois fièvre</td><td>Mastite, surtout pendant l'allaitement</td><td>Traitement adapté ; une rougeur sans fièvre qui dure doit être vérifiée</td></tr>
+        <tr><td>Écoulement des deux seins, laiteux</td><td>Hormonal, médicaments, allaitement récent</td><td>Un écoulement d'un seul côté, spontané ou sanglant, se fait toujours examiner</td></tr>
+        <tr><td>Boule dure, irrégulière, fixe, peau qui se rétracte</td><td>Parfois bénin (cicatrice, cytostéatonécrose)</td><td>Signe à faire examiner rapidement</td></tr>
+       </tbody></table></div></div>`,
+   journal:()=>{const J=[...M.journal].sort((a,b)=>b.date.localeCompare(a.date));
+     if(!draft) draft={date:iso(new Date()),res:'rien',zones:[],signes:[],note:''};
+     const prev=J.find(e=>e.date<draft.date); const c=conduite(draft,prev);
+     return `${M.consent?'':`<div class="secret"><b>Votre journal reste sur cet appareil.</b> Il n'est envoyé à personne, ni à l'infirmier·e ni à l'employeur. Utilisez votre téléphone personnel, jamais un poste partagé.
+         <label class="check" style="margin-top:8px"><input type="checkbox" id="consent"> J'accepte que mon journal soit enregistré dans ce navigateur.</label></div>`}
+     <div class="grid g2" style="align-items:start">
+      <form class="card grid" id="fj"><h3>Nouvelle observation</h3>
+        <label class="f">Date<input class="i" type="date" id="jd" value="${esc(draft.date)}" max="${iso(new Date())}"></label>
+        <div class="seg sm" role="group" aria-label="Résultat">${RESULTATS.map(r=>`<button type="button" data-res="${r.k}" aria-selected="${draft.res===r.k}" class="r-${r.c}">${r.l}</button>`).join('')}</div>
+        ${draft.res!=='rien'?`<div><p class="f" style="margin-bottom:4px">Où ? <span class="muted">(touchez les zones, vue dans le miroir)</span></p>${carte(draft.zones)}
+          <p class="small muted">${draft.zones.length?draft.zones.map(zoneL).join(' · '):'Aucune zone sélectionnée'}</p></div>
+          <fieldset class="sig"><legend class="f">Ce que j'ai remarqué</legend>${SIGNES.map(s=>`<label class="check"><input type="checkbox" data-sig="${s.k}" ${draft.signes.includes(s.k)?'checked':''}> ${s.l}</label>`).join('')}</fieldset>`:''}
+        <label class="f">Note (facultatif)<textarea class="i" id="jn" placeholder="Ex. : petite boule souple en haut à gauche, sensible">${esc(draft.note)}</textarea></label>
+        <div class="orient ${c.c==='ok'?'o-ok':c.c==='warn'?'o-warn':'o-bad'}"><p class="eyebrow">Conduite à tenir</p><h3>${c.t}</h3><p>${c.p}</p></div>
+        <button class="btn" ${M.consent?'':'disabled'}>Enregistrer dans mon journal</button>
+        ${M.consent?'':'<p class="muted small">Sans enregistrement, la conduite à tenir reste valable : rien n\'est conservé.</p>'}
+      </form>
+      <div class="card"><div class="row" style="margin-bottom:8px"><h3>Mon historique</h3><span class="sp"></span><span class="muted small num">${J.length} observation${J.length>1?'s':''}</span></div>
+        ${J.length?`<ol class="hist">${J.map((e,i)=>{const cc=conduite(e,J[i+1]);const R=RESULTATS.find(r=>r.k===e.res);return `<li><span class="pill ${R.c}">${R.l}</span><div><b class="num">${fmt(e.date)}</b>${(e.zones||[]).length?`<span class="small"> · ${e.zones.map(zoneL).join(' · ')}</span>`:''}
+          ${e.note?`<p class="small muted">${esc(e.note)}</p>`:''}${e.res!=='rien'?`<p class="small"><b>${cc.t}.</b></p>`:''}</div><button class="btn ghost sm" data-delj="${e.id}" aria-label="Supprimer">✕</button></li>`;}).join('')}</ol>`
+          :'<p class="muted">Aucune observation enregistrée.</p>'}
+        ${M.consent?`<div class="row" style="margin-top:12px"><span class="sp"></span><button class="btn ghost sm" id="wipe">Effacer tout mon journal</button></div>`:''}</div>
+     </div>`;},
+   gardefous:()=>`<div class="grid g2">
+     <div class="card"><h3 style="margin-bottom:8px">Les règles à garder en tête</h3><ol class="steps">
+       <li><span class="n">1</span><div><b>L'auto-examen ne remplace rien.</b> Ni l'examen clinique annuel dès ${DEP.EXAMEN_CLINIQUE_DES} ans, ni la mammographie de ${DEP.AGE_MIN} à ${DEP.AGE_MAX} ans. Un auto-examen normal ne permet pas de repousser une mammographie.</div></li>
+       <li><span class="n">2</span><div><b>Un changement ne se surveille pas indéfiniment.</b> Au plus un cycle pour un doute léger ; tout de suite pour un signe net. N'attendez pas la prochaine invitation au dépistage.</div></li>
+       <li><span class="n">3</span><div><b>On ne conclut pas seule.</b> Ni pour s'alarmer, ni pour se rassurer : seul un examen fait la différence.</div></li>
+       <li><span class="n">4</span><div><b>Une fois par mois suffit.</b> Se palper tous les jours entretient l'inquiétude et rend les changements plus difficiles à repérer.</div></li>
+       <li><span class="n">5</span><div><b>Rassurée, mais ça évolue ?</b> Reconsultez. Il est légitime de demander un second avis ou un examen complémentaire.</div></li></ol></div>
+     <div class="grid" style="align-content:start">
+      <div class="card"><h3 style="margin-bottom:8px">Qui consulter, comment</h3><ul class="ul">
+        <li>Votre <b>médecin traitant</b>, votre <b>gynécologue</b> ou une <b>sage-femme</b>. En prenant rendez-vous, précisez : « j'ai remarqué un changement au sein », pour être vue rapidement.</li>
+        <li>Ils peuvent prescrire une échographie ou une mammographie à tout âge : il s'agit alors d'un examen de diagnostic, remboursé, et non d'un dépistage.</li>
+        <li>L'<b>infirmier·e en santé au travail</b> peut vous montrer le geste, répondre à vos questions et vous orienter, dans le respect du secret professionnel.</li></ul></div>
+      <div class="card"><h3 style="margin-bottom:8px">Situations particulières</h3><ul class="ul">
+        <li><b>Grossesse, allaitement :</b> les seins changent beaucoup. Une rougeur douloureuse avec fièvre évoque une mastite : consultez. Une boule qui persiste se fait examiner aussi.</li>
+        <li><b>Prothèses mammaires :</b> la palpation reste utile ; signalez les prothèses lors des examens. Un gonflement tardif d'un sein se fait examiner.</li>
+        <li><b>Hommes :</b> environ 1 % des cancers du sein. Une boule sous le mamelon ou un écoulement chez un homme se fait examiner.</li></ul></div>
+      <div class="card"><h3 style="margin-bottom:8px">Parler, se faire aider</h3><ul class="ul">
+        <li><b>Cancer info</b> (Institut national du cancer) : <span class="num">0 805 123 124</span>, service et appel gratuits.</li>
+        <li><b>Ligue contre le cancer</b>, écoute et soutien : <span class="num">0 800 940 939</span>, appel gratuit.</li>
+        <li>L'inquiétude est normale pendant l'attente d'un examen : n'hésitez pas à en parler à l'infirmier·e ou au médecin du travail.</li></ul></div>
+     </div></div>`
+  }[sub]();
+  app.innerHTML=`${intro('Pour chaque salariée · guide et journal personnel','Connaître mes seins',"Quand et comment s'observer, ce qui est normal, ce qui doit faire consulter, et un journal pour comparer d'un mois sur l'autre. Connaître ses seins aide à repérer un changement : ce n'est pas un dépistage à lui seul.",'<b>Sources :</b> Institut national du cancer, Haute Autorité de santé. Cet outil aide à observer, il ne pose pas de diagnostic. En cas de doute, consultez.')}${nav}${body}`;
+  app.querySelectorAll('[data-sub]').forEach(b=>b.onclick=()=>{sub=b.dataset.sub;vConnaitre();});
+  app.querySelectorAll('[data-ry]').forEach(b=>b.onclick=()=>{M.rythme=b.dataset.ry;saveMoi();vConnaitre();});
+  const on=(id,ev,f)=>{const el=$('#'+id);if(el)el[ev]=f;};
+  on('regles','onchange',e=>{M.regles=e.target.value;saveMoi();vConnaitre();});
+  on('jour','onchange',e=>{M.jour=e.target.value;saveMoi();vConnaitre();});
+  on('sPrev','onclick',()=>{step=Math.max(0,step-1);vConnaitre();});
+  on('sNext','onclick',()=>{step=Math.min(ETAPES.length-1,step+1);vConnaitre();});
+  on('sJour','onclick',()=>{sub='journal';step=0;vConnaitre();});
+  on('consent','onchange',e=>{M.consent=e.target.checked;saveMoi();vConnaitre();});
+  on('jd','onchange',e=>{draft.date=e.target.value;vConnaitre();});
+  on('jn','oninput',e=>{draft.note=e.target.value;});
+  app.querySelectorAll('[data-res]').forEach(b=>b.onclick=()=>{draft.res=b.dataset.res;if(draft.res==='rien'){draft.zones=[];draft.signes=[];}vConnaitre();});
+  app.querySelectorAll('.carte [data-z]').forEach(z=>z.onclick=()=>{const k=z.dataset.z,i=draft.zones.indexOf(k);i<0?draft.zones.push(k):draft.zones.splice(i,1);vConnaitre();});
+  app.querySelectorAll('[data-sig]').forEach(c=>c.onchange=()=>{const k=c.dataset.sig,i=draft.signes.indexOf(k);c.checked?(i<0&&draft.signes.push(k)):(i>=0&&draft.signes.splice(i,1));vConnaitre();});
+  on('fj','onsubmit',e=>{e.preventDefault();if(!M.consent)return;M.journal.push({id:Date.now(),...draft,zones:[...draft.zones],signes:[...draft.signes]});saveMoi();draft=null;vConnaitre();});
+  app.querySelectorAll('[data-delj]').forEach(b=>b.onclick=()=>{M.journal=M.journal.filter(e=>e.id!==+b.dataset.delj);saveMoi();vConnaitre();});
+  on('wipe','onclick',function(){if(this.dataset.c){moiStore.del();M={consent:false,rythme:'regles',regles:'',jour:1,journal:[]};draft=null;vConnaitre();}else{this.dataset.c=1;this.textContent='Confirmer : tout effacer';this.classList.add('danger');}});
+}
+
 route();
 })();
 </script>

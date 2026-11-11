@@ -40,6 +40,47 @@
 .cell{display:grid;place-items:center;min-width:46px;height:30px;border-radius:6px;font-weight:700;font-size:12px;font-variant-numeric:tabular-nums}
 .quiz{display:flex;flex-direction:column;gap:8px}
 .quiz .row button[aria-pressed="true"]{background:var(--mauve-bg);border-color:var(--mauve)}
+/* Que faire ? */
+.symchips{display:flex;flex-wrap:wrap;gap:8px}
+.symchips button{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--bg);border-radius:99px;padding:6px 12px 6px 8px;font-size:13px;font-weight:600;color:var(--muted)}
+.symchips button svg{width:18px;height:18px}
+.symchips button i{font-style:normal;font-size:11px;background:var(--card-2);border-radius:99px;padding:0 6px}
+.symchips button[aria-pressed="true"]{background:var(--mauve-bg);border-color:var(--mauve);color:var(--ink)}
+.symchips button[aria-pressed="true"] svg{color:var(--mauve)}
+.conseil{display:flex;flex-direction:column;gap:14px}
+.conseil header{display:flex;gap:12px;align-items:center}
+.conseil .si{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:var(--mauve-bg);color:var(--mauve);flex:none}
+.conseil .si svg{width:24px;height:24px}
+.disp{font-family:var(--f-display);font-weight:400;font-size:1.4rem}
+.cgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:900px){.cgrid{grid-template-columns:1fr}}
+.cgrid section{background:var(--card-2);border-radius:12px;padding:12px 14px}
+.cgrid h4,.alerte b{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700;color:var(--mauve);margin:0 0 6px}
+.cgrid ul,.alerte ul,.dodont ul{margin:0;padding-left:1.05rem;display:grid;gap:6px;font-size:.9rem}
+.alerte{background:var(--bad-bg);border-radius:12px;padding:12px 14px}
+.alerte b{display:block;color:var(--bad)}
+.bases{margin:0;display:grid;gap:10px}
+.bases dt{font-weight:700} .bases dd{margin:2px 0 0;color:var(--muted);font-size:.9rem}
+/* En parler */
+.tabou{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.tabou{grid-template-columns:1fr}}
+.tb{background:linear-gradient(140deg,var(--mauve-bg),var(--card));border-radius:var(--r);padding:14px 16px;display:grid;gap:4px}
+.tb .num{font-family:var(--f-display);font-size:1.8rem;line-height:1;color:var(--mauve)}
+.qui{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:760px){.qui{grid-template-columns:1fr}}
+.qui button{text-align:left;display:grid;gap:3px;border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:12px 14px}
+.qui button[aria-pressed="true"]{border-color:var(--mauve);background:var(--mauve-bg)}
+.seg2{display:flex;gap:6px;flex-wrap:wrap}
+.seg2 button{border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:7px 12px;font-size:13px;font-weight:600}
+.seg2 button[aria-pressed="true"]{border-color:var(--mauve);background:var(--mauve-bg)}
+.opts{display:grid;gap:6px}
+p.f{font-size:12px;font-weight:600;color:var(--muted);margin:0 0 6px}
+.steps{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+.steps li{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start}
+.steps .n{width:28px;height:28px;border-radius:50%;background:var(--mauve-bg);color:var(--mauve);display:grid;place-items:center;font-weight:700}
+.dodont{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:520px){.dodont{grid-template-columns:1fr}}
+.ok-t{color:var(--ok)!important} .bad-t{color:var(--bad)!important}
 .fiche{white-space:pre-wrap;font-size:13px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;max-height:340px;overflow:auto}
 </style>
 </head>
@@ -111,10 +152,10 @@ function demo(){let seed=11;const r=()=>{seed=(seed*16807)%2147483647;return (se
 let D=store.get()||demo(); const save=()=>store.set(D);
 
 /* ---------- Navigation ---------- */
-const TABS=[['auto','Mon auto-évaluation'],['collectif','Enquête collective'],['amenagements','Côté entreprise'],['comprendre','Comprendre']];
+const TABS=[['auto','Mon auto-évaluation'],['conseils','Que faire ?'],['parler','En parler'],['collectif','Enquête collective'],['amenagements','Côté entreprise'],['comprendre','Comprendre']];
 function route(){const h=(location.hash||'#auto').slice(1);const cur=TABS.some(t=>t[0]===h)?h:'auto';
   $('#tabs').innerHTML=TABS.map(([k,l])=>`<a href="#${k}" ${k===cur?'aria-current="page"':''}>${l}</a>`).join('');
-  ({auto:vAuto,collectif:vCollectif,amenagements:vAmen,comprendre:vComprendre})[cur]();}
+  ({auto:vAuto,conseils:vConseils,parler:vParler,collectif:vCollectif,amenagements:vAmen,comprendre:vComprendre})[cur]();}
 window.addEventListener('hashchange',()=>{route();scrollTo(0,0);});
 const intro=(e,t,p,ref)=>`<div class="intro"><div><p class="eyebrow">${e}</p><h2>${t}</h2><p class="muted">${p}</p></div>${ref?`<div class="ref">${ref}</div>`:''}</div>`;
 
@@ -147,6 +188,7 @@ function vAuto(){
       return `<div class="res ${prio?'prio':''}"><div class="gauge" role="img" aria-label="Score ${r.score} sur 6, ${prio?'prioritaire':'à discuter'}"><svg viewBox="0 0 60 60"><circle class="trk" cx="30" cy="30" r="24"/><circle class="val" cx="30" cy="30" r="24" stroke-dasharray="${d} ${C}"/></svg><span class="n">${r.score}<small>/6</small></span><span class="lab">${prio?'Prioritaire':'À discuter'}</span></div>
       <div><div class="cross"><b>${esc(r.symptome)}</b><span class="x" aria-hidden="true">×</span><span class="ctr">${esc(r.contrainte)}</span></div><ul class="chips">${r.pistes.map(p=>`<li>${esc(p)}</li>`).join('')}</ul></div></div>`;}).join('')+'</div>'
       :'<p class="muted">Pas de croisement marqué avec votre poste. Si les symptômes vous gênent, parlez-en quand même : à votre médecin, ou au service de santé au travail.</p>'}
+    <div class="row" style="margin-top:12px"><a class="btn" href="#conseils">Mes conseils pour ces symptômes</a><a class="btn ghost" href="#parler">Préparer ma prise de parole</a></div>
     <details style="margin-top:10px"><summary style="cursor:pointer;font-weight:700">Ma fiche pour la visite</summary><div class="fiche" id="fiche" tabindex="0" style="margin-top:8px">${esc(fiche(R))}</div><button class="btn sm" id="cp" style="margin-top:8px">Copier la fiche</button></details>
     <div class="secret" style="margin-top:12px"><b>Vous pouvez demander à voir le médecin ou l'infirmier·e du travail à tout moment</b>, sans passer par votre employeur (art. R4624-34 du Code du travail). Ils sont tenus au secret médical.</div>
     <div class="card" style="margin-top:12px;box-shadow:none"><h3>Aider l'entreprise à agir, sans vous identifier</h3><p class="muted small">Vos réponses (symptômes et contraintes, sans âge ni nom) peuvent rejoindre l'enquête collective. L'entreprise ne voit que des résultats regroupés, à partir de ${SEUIL} réponses.</p>
@@ -205,6 +247,166 @@ function vAmen(){
     <li><b>Repérer :</b> enquête collective anonyme (onglet précédent) et retours du service de santé au travail.</li>
     <li><b>Intégrer au DUERP :</b> traiter la chaleur, les tenues, l'accès aux sanitaires et les horaires comme des facteurs de risque à part entière, par unité de travail.</li>
     <li><b>Aménager :</b> mesures collectives d'abord, puis aménagements individuels proposés par le médecin du travail.</li></ol></div>`;
+}
+
+
+/* ---------- Que faire ? Conseils par symptôme ----------
+   Repères : HAS, CNGOF / GEMVi (recommandations 2021 sur la prise en charge de la ménopause), NICE NG23 (2024).
+   Chaque fiche : au quotidien · au travail · ce qui se discute avec un médecin · quand consulter (alerte). */
+const CONSEILS={
+ S1:{ico:'M12 3c2 3 5 5 5 9a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-5 1-7.5z',
+  quot:["S'habiller en couches faciles à retirer, en fibres naturelles (coton, lin) ou techniques respirantes.","Garder de l'eau fraîche à portée de main ; un petit ventilateur ou un brumisateur dans le sac.","Repérer ses déclencheurs : boissons chaudes, alcool, plats épicés, caféine, stress, pièces surchauffées.","Arrêter le tabac : il augmente la fréquence des bouffées.","Pendant une bouffée : respiration lente et profonde, 6 respirations par minute, jusqu'à ce qu'elle passe."],
+  trav:["Un poste près d'une fenêtre ou d'une aération, loin des sources de chaleur.","Une tenue de travail en matière respirante, une tenue de rechange.","Pouvoir sortir quelques minutes au frais sans avoir à se justifier."],
+  med:["Le traitement hormonal de la ménopause est le plus efficace sur les bouffées. Il se discute au cas par cas, selon les antécédents.","Il existe des traitements non hormonaux, si le traitement hormonal n'est pas possible ou pas souhaité.","Les thérapies cognitivo-comportementales réduisent la gêne ressentie (recommandation NICE 2024)."],
+  alerte:["Sueurs nocturnes accompagnées de fièvre, de perte de poids inexpliquée ou de toux persistante : consulter, ce n'est peut-être pas la ménopause."]},
+ S2:{ico:'M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z',
+  quot:["Une chambre fraîche (autour de 18 °C), des draps légers, un pyjama en coton, un verre d'eau sur la table de nuit.","Des horaires de coucher et de lever réguliers, même le week-end.","Pas de café ni de thé après midi ; l'alcool facilite l'endormissement mais fragmente le sommeil.","Une activité physique dans la journée, idéalement à la lumière du jour.","Écrans éteints une heure avant le coucher ; un rituel calme (lecture, respiration)."],
+  trav:["Si possible, éviter les postes de nuit ou les rotations rapides pendant les périodes difficiles.","Placer les tâches exigeantes au moment de la journée où l'on se sent le plus en forme.","Travail de nuit : une courte sieste avant le poste, une exposition à la lumière vive en début de poste, des lunettes sombres sur le trajet du retour."],
+  med:["La thérapie cognitivo-comportementale de l'insomnie (TCC-I) est le traitement de référence de l'insomnie chronique.","Si les sueurs nocturnes réveillent, traiter les bouffées de chaleur améliore souvent le sommeil.","Les somnifères ne sont pas une solution au long cours : à discuter avec le médecin."],
+  alerte:["Ronflements forts, pauses respiratoires constatées par l'entourage, somnolence au volant ou au poste : consulter (apnées du sommeil, plus fréquentes après la ménopause).","Somnolence sur un poste de sécurité (conduite, machines) : en parler au médecin du travail."]},
+ S3:{ico:'M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z',
+  quot:["Ces troubles sont fréquents et le plus souvent transitoires ; ils s'améliorent avec le sommeil.","Des aide-mémoire simples : listes, agenda partagé, alarmes, notes au même endroit.","Une seule tâche à la fois ; noter où l'on s'est arrêté avant une interruption.","Activité physique, lecture, apprentissages : ce qui entraîne l'attention aide aussi."],
+  trav:["Check-lists pour les tâches critiques ou de sécurité.","Un espace calme ou des plages sans interruption pour les tâches qui demandent de la concentration.","Des consignes écrites plutôt qu'orales quand c'est possible."],
+  med:["Parler de l'ensemble des symptômes : sommeil, humeur et bouffées jouent souvent sur la concentration.","Faire vérifier ce qui peut aggraver : anémie, thyroïde, carence, médicaments, dépression."],
+  alerte:["Oublis qui s'aggravent, qui inquiètent l'entourage ou qui gênent la vie quotidienne : consulter."]},
+ S4:{ico:'M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z',
+  quot:["Bouger : 30 minutes d'activité physique la plupart des jours améliorent l'humeur et le sommeil.","Des temps de récupération : cohérence cardiaque (3 fois par jour, 5 minutes), relaxation, marche.","En parler à une personne de confiance ; savoir que ces variations sont liées aux hormones aide à ne pas se juger.","Réduire l'alcool, qui aggrave l'anxiété et le sommeil."],
+  trav:["Signaler une surcharge plutôt que de la porter seule ; demander des priorités claires.","Pouvoir s'isoler quelques minutes après une situation tendue avec le public.","Une rotation des tâches les plus exposées émotionnellement, si c'est possible."],
+  med:["Les thérapies cognitivo-comportementales sont efficaces sur l'humeur et l'anxiété liées à la ménopause.","Le traitement hormonal peut améliorer l'humeur chez certaines femmes ; un antidépresseur se discute en cas de dépression."],
+  alerte:["Tristesse ou perte d'intérêt presque tous les jours depuis plus de deux semaines : consulter.","Idées noires ou envie de mourir : appeler le 3114 (prévention du suicide, 24 h/24, gratuit) ou le 15 en urgence."]},
+ S5:{ico:'M6 4l4 4-2 2 6 6 2-2 4 4M4 14l6 6',
+  quot:["Rester active : marche rapide, vélo, natation, et du renforcement musculaire deux fois par semaine.","Les activités « en charge » (marche, montée d'escaliers, renforcement) protègent aussi les os.","Étirements doux le matin et après une longue position.","Calcium (produits laitiers, eaux minérales calciques) et vitamine D : la ménopause accélère la perte osseuse."],
+  trav:["Aides à la manutention, alternance des postures, micro-pauses actives.","Réglage du poste de travail : siège, hauteur du plan, écran.","Signaler les douleurs tôt : un aménagement précoce évite qu'un trouble musculosquelettique s'installe."],
+  med:["Faire le point sur le risque d'ostéoporose (antécédent de fracture, fracture de hanche chez un parent, minceur, tabac, corticoïdes) : une ostéodensitométrie peut être indiquée.","Des séances de kinésithérapie peuvent être prescrites."],
+  alerte:["Articulation gonflée, chaude, raideur le matin de plus de 30 minutes : consulter (rhumatisme inflammatoire).","Douleur après une chute minime : faire vérifier l'absence de fracture."]},
+ S6:{ico:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM8 10h.01M16 10h.01M8.5 15.5c2-1.3 5-1.3 7 0',
+  quot:["Boire régulièrement, ne pas sauter de repas, garder des horaires de sommeil réguliers.","Tenir un carnet des maux de tête (date, durée, contexte, cycle) : il aide à repérer les déclencheurs et à en parler au médecin.","Limiter alcool et excès de caféine ; attention à l'abus d'antalgiques, qui entretient les maux de tête."],
+  trav:["Pauses écran régulières, réglage de la luminosité, éclairage sans reflets.","Un endroit calme et sombre pour se poser quelques minutes en cas de crise."],
+  med:["Les migraines liées aux règles peuvent se modifier en périménopause : un traitement de crise ou de fond se discute.","Signaler les migraines avant d'envisager un traitement hormonal : elles orientent le choix."],
+  alerte:["Maux de tête brutaux et très intenses, « le pire de ma vie », avec troubles de la parole, de la vue ou de la force : appeler le 15.","Un nouveau type de maux de tête après 50 ans : consulter."]},
+ S7:{ico:'M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z',
+  quot:["Ne pas réduire ses boissons (risque de déshydratation et d'infection) : mieux vaut les répartir dans la journée.","Limiter café, thé, alcool et boissons gazeuses, qui irritent la vessie.","Rééduquer le périnée : une sage-femme ou un·e kinésithérapeute peut l'apprendre ; des exercices réguliers réduisent fuites et urgences.","Éviter de pousser pour uriner et de se retenir trop longtemps."],
+  trav:["Pouvoir aller aux toilettes à la demande, avec un remplacement organisé sur les postes qui ne peuvent pas être quittés.","Des sanitaires propres et accessibles, y compris sur les chantiers et en itinérance."],
+  med:["La sécheresse des muqueuses intimes et urinaires (syndrome génito-urinaire de la ménopause) est fréquente et se traite, souvent avec un traitement local.","Les fuites urinaires ne sont pas une fatalité : bilan et rééducation prise en charge sur prescription."],
+  alerte:["Brûlures en urinant, fièvre, douleurs du bas du dos ou sang dans les urines : consulter rapidement."]},
+ S8:{ico:'M4 12h4l2-5 4 10 2-5h4',
+  quot:["Noter les dates et l'abondance des saignements sur un calendrier ou une application : précieux pour la consultation.","Prévoir protections de rechange, sous-vêtement et vêtement de rechange au travail.","Une alimentation riche en fer (viande, poisson, légumineuses, épinards) si les saignements sont abondants."],
+  trav:["Accès facilité aux sanitaires, une poubelle dans chaque cabine, une tenue de rechange possible.","Une tenue de travail de couleur foncée, si l'uniforme est imposé."],
+  med:["Des saignements abondants en périménopause se traitent : traitement hormonal, stérilet hormonal, autres options.","Un bilan sanguin vérifie l'absence d'anémie."],
+  alerte:["Saignement après 12 mois sans règles, même léger : consulter sans attendre.","Saignements très abondants (protection changée toutes les heures plusieurs heures de suite, caillots), après les rapports, ou essoufflement et fatigue intense : consulter rapidement."]},
+ S9:{ico:'M3 12h4l3-8 4 16 3-8h4',
+  quot:["Limiter caféine, boissons énergisantes, alcool et tabac.","Pendant une crise : s'asseoir, respirer lentement, noter l'heure, la durée et ce que l'on faisait.","Une activité physique régulière améliore la tolérance à l'effort et au stress."],
+  trav:["Sur un poste de sécurité ou en hauteur, signaler les palpitations au médecin du travail.","Pouvoir s'arrêter et s'asseoir en cas de malaise."],
+  med:["Les palpitations sont fréquentes à la ménopause, mais un avis médical est indispensable : électrocardiogramme, bilan de la thyroïde, recherche d'anémie.","Après la ménopause, le risque cardiovasculaire augmente : c'est le moment de faire contrôler tension, cholestérol et glycémie."],
+  alerte:["Palpitations avec douleur dans la poitrine, essoufflement, malaise ou perte de connaissance : appeler le 15."]}
+};
+const BASES=[
+ ['Bouger','30 minutes d\'activité physique la plupart des jours, et du renforcement musculaire deux fois par semaine : sommeil, humeur, os, cœur et poids en profitent.'],
+ ['Manger équilibré','Calcium, vitamine D, protéines, fibres ; limiter le sel, le sucre et les produits ultra-transformés. Le métabolisme ralentit : la prise de poids n\'est pas une fatalité, mais elle demande d\'ajuster.'],
+ ['Réduire tabac et alcool','Ils aggravent les bouffées, le sommeil, la perte osseuse et le risque cardiovasculaire.'],
+ ['Faire le point','Tension, cholestérol, glycémie, dépistages (sein, col de l\'utérus, côlon) : la ménopause est un bon moment pour un bilan avec son médecin.']
+];
+const AUTRES=[
+ ['Sécheresse intime, inconfort pendant les rapports','Très fréquent, rarement évoqué. Des hydratants et lubrifiants intimes aident ; un traitement local se discute avec le médecin ou la sage-femme.'],
+ ['Baisse du désir','Fréquente et multifactorielle (fatigue, sécheresse, humeur, couple). Elle peut s\'aborder en consultation, sans gêne.'],
+ ['Peau, cheveux, ongles','Peau plus sèche, cheveux plus fins : hydratation, protection solaire, alimentation variée.'],
+ ['Prise de poids autour de la taille','Liée aux hormones et au ralentissement du métabolisme ; l\'activité physique et le renforcement musculaire sont les leviers les plus efficaces.']
+];
+let filtreSym=null; // null = automatique (symptômes déclarés dans l'auto-évaluation)
+const icoSym=k=>`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${CONSEILS[k].ico}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+function vConseils(){
+  const declares=Object.keys(MATRICE).filter(k=>(A.s[k]||0)>0).sort((a,b)=>(A.s[b]||0)-(A.s[a]||0));
+  const actifs=filtreSym||(declares.length?declares:['S1']);
+  app.innerHTML=`${intro('Pour chaque salariée','Mes symptômes : que faire ?',"Pour chaque symptôme, des gestes simples au quotidien, des pistes au travail, ce qui peut se discuter avec un médecin, et les signes qui doivent faire consulter. Les conseils s'appuient sur les recommandations françaises et européennes.",'<b>Sources :</b> HAS ; CNGOF et GEMVi, recommandations pour la pratique clinique sur la ménopause (2021) ; NICE NG23 (2024). Ces conseils ne remplacent pas un avis médical.')}
+  <div class="card"><div class="row" style="margin-bottom:10px"><h3>Choisir les symptômes</h3><span class="sp"></span>${declares.length?`<span class="muted small">Pré-sélection : vos réponses à l'auto-évaluation</span>`:`<a class="small" href="#auto">Faire mon auto-évaluation</a>`}</div>
+    <div class="symchips">${Object.entries(MATRICE).map(([k,m])=>`<button data-fs="${k}" aria-pressed="${actifs.includes(k)}">${icoSym(k)}<span>${esc(m.label)}</span>${A.s[k]?`<i class="num">${A.s[k]}</i>`:''}</button>`).join('')}</div></div>
+  ${actifs.map(k=>{const c=CONSEILS[k],m=MATRICE[k];return `<article class="card conseil"><header><span class="si">${icoSym(k)}</span><div><p class="eyebrow">${A.s[k]?`Déclaré : ${LV[A.s[k]].toLowerCase()}`:'Symptôme'}</p><h3 class="disp">${esc(m.label)}</h3></div></header>
+    <div class="cgrid">
+      <section><h4>Au quotidien</h4><ul>${c.quot.map(t=>`<li>${t}</li>`).join('')}</ul></section>
+      <section><h4>Au travail</h4><ul>${c.trav.map(t=>`<li>${t}</li>`).join('')}</ul></section>
+      <section><h4>À discuter avec un médecin</h4><ul>${c.med.map(t=>`<li>${t}</li>`).join('')}</ul></section>
+    </div>
+    <div class="alerte"><b>Consultez sans attendre si</b><ul>${c.alerte.map(t=>`<li>${t}</li>`).join('')}</ul></div></article>`;}).join('')}
+  <div class="grid g2">
+    <div class="card"><h3 style="margin-bottom:8px">Les bases, quels que soient les symptômes</h3><dl class="bases">${BASES.map(([t,d])=>`<dt>${t}</dt><dd>${d}</dd>`).join('')}</dl></div>
+    <div class="card"><h3 style="margin-bottom:4px">D'autres symptômes, dont on parle peu</h3><p class="muted small" style="margin-bottom:8px">Ils ne sont pas liés au poste de travail, mais comptent dans la qualité de vie : ils méritent d'être abordés en consultation.</p><dl class="bases">${AUTRES.map(([t,d])=>`<dt>${t}</dt><dd>${d}</dd>`).join('')}</dl></div>
+  </div>
+  <div class="secret"><b>Traitement hormonal de la ménopause :</b> il est le plus efficace sur les bouffées de chaleur et les sueurs. Selon les recommandations françaises de 2021, il se discute au cas par cas, à la dose minimale efficace, avec une réévaluation au moins une fois par an. Il ne convient pas à toutes (antécédent de cancer du sein, de thrombose, d'accident cardiovasculaire…). C'est une décision à prendre avec votre médecin, votre gynécologue ou votre sage-femme.</div>
+  <div class="row"><a class="btn ghost" href="#auto">Mon auto-évaluation</a><span class="sp"></span><a class="btn" href="#parler">Préparer ma prise de parole</a></div>`;
+  app.querySelectorAll('[data-fs]').forEach(b=>b.onclick=()=>{const k=b.dataset.fs;let s=[...actifs];s.includes(k)?s=s.filter(x=>x!==k):s.push(k);filtreSym=s.length?Object.keys(MATRICE).filter(x=>s.includes(x)):null;keep(vConseils);});
+}
+
+/* ---------- En parler : briser le tabou ----------
+   Rien n'est enregistré : les textes sont générés à l'écran, à copier. */
+const PARLER={qui:'medecin',niv:'neutre',imp:[],qs:[],dem:[]};
+const IMPACTS=['Mon sommeil','Ma concentration au travail','Mon humeur, mes relations','Ma vie de couple, ma vie intime','Mes activités, mon sport','Ma confiance en moi'];
+const QUESTIONS=['Mes symptômes sont-ils liés à la ménopause ?','Un traitement hormonal est-il possible pour moi ?','Quelles solutions non hormonales existent ?','Faut-il faire un bilan (sang, os, cœur) ?','Mes dépistages sont-ils à jour ?','Que faire pour mon sommeil ?','Que faire pour les fuites urinaires ou la sécheresse ?','Puis-je être orientée (gynécologue, sage-femme, kinésithérapeute, psychologue) ?'];
+const DEMANDES=['Pouvoir sortir quelques minutes au frais ou aux toilettes sans me justifier','Un poste près d\'une fenêtre ou d\'une aération','Un ventilateur individuel','Une tenue de travail plus respirante, une tenue de rechange','Moins de postes de nuit ou d\'horaires décalés pendant quelque temps','Des plages de travail sans interruption','Plus de souplesse dans mes horaires'];
+const QUI={
+ medecin:{l:'Mon médecin, ma gynécologue, ma sage-femme',d:'Pour comprendre mes symptômes et parler des traitements.'},
+ sst:{l:'Le service de santé au travail',d:'Pour adapter mon poste, en toute confidentialité.'},
+ manager:{l:'Mon ou ma manager, les RH',d:'Pour demander un aménagement concret, en choisissant ce que je dis.'}
+};
+function texteParler(){
+  const sy=Object.entries(MATRICE).filter(([k])=>(A.s[k]||0)>0).map(([k,m])=>`${m.label.toLowerCase()} (${LV[A.s[k]].toLowerCase()})`);
+  const P=PARLER, L=[];
+  if(P.qui==='medecin'){
+    L.push('Bonjour docteur,','',"Je viens parce que je pense être en périménopause ou en ménopause, et certains symptômes me gênent.");
+    L.push(sy.length?`Ce que je ressens : ${sy.join(', ')}.`:'Ce que je ressens : [à compléter].');
+    if(P.imp.length) L.push(`Cela retentit sur : ${P.imp.map(x=>x.toLowerCase()).join(', ')}.`);
+    L.push('Mes dernières règles : [date]. Mes traitements actuels : [à compléter].');
+    if(P.qs.length){L.push('','Mes questions :');P.qs.forEach(q=>L.push(`- ${q}`));}
+  } else if(P.qui==='sst'){
+    L.push('Bonjour,','',"Je souhaite rencontrer le médecin ou l'infirmier·e du travail (visite à ma demande, art. R4624-34 du Code du travail).");
+    L.push("Des symptômes liés à la ménopause sont aggravés par certaines conditions de mon poste, et j'aimerais en parler pour envisager des aménagements.");
+    if(sy.length) L.push(`Symptômes : ${sy.join(', ')}.`);
+    const ct=A.c.map(c=>CONTRAINTES[c].toLowerCase()); if(ct.length) L.push(`Contraintes de mon poste : ${ct.join(', ')}.`);
+    if(P.dem.length){L.push('','Ce qui m\'aiderait :');P.dem.forEach(d=>L.push(`- ${d}`));}
+    L.push('','Merci de me proposer un rendez-vous.');
+  } else {
+    L.push('Bonjour,','');
+    L.push(P.niv==='neutre'
+      ? "Je traverse une période où un problème de santé, sans gravité mais gênant, rend certaines situations de travail plus difficiles. Je ne souhaite pas entrer dans le détail médical, mais j'aimerais qu'on cherche ensemble quelques ajustements simples."
+      : "Je traverse la ménopause, une étape normale, mais certains symptômes rendent quelques situations de travail plus difficiles en ce moment. J'aimerais qu'on cherche ensemble quelques ajustements simples.");
+    if(P.dem.length){L.push('','Ce qui m\'aiderait concrètement :');P.dem.forEach(d=>L.push(`- ${d}`));}
+    L.push('',"Si besoin, le service de santé au travail peut confirmer l'aménagement, sans donner d'information médicale.",'','Pourrions-nous en parler lors d\'un court échange ?');
+  }
+  return L.join('\n');
+}
+function vParler(){
+  const P=PARLER, multi=(arr,list,key)=>`<div class="opts">${list.map((t,i)=>`<label class="check"><input type="checkbox" data-${key}="${i}" ${arr.includes(t)?'checked':''}> ${esc(t)}</label>`).join('')}</div>`;
+  app.innerHTML=`${intro('Pour chaque salariée · rien n\'est enregistré','En parler, enfin',"La ménopause concerne la moitié de la population active à un moment de sa vie, et pourtant on en parle peu, au cabinet médical comme au travail. Les symptômes sont souvent minimisés, par l'entourage et par les femmes elles-mêmes. Cet espace aide à préparer ce que vous voulez dire, à qui, et jusqu'où.",'<b>Vos droits :</b> visite à votre demande auprès du médecin du travail (art. R4624-34). Secret médical : rien n\'est transmis à l\'employeur sans votre accord. Vous choisissez ce que vous dites, et à qui.')}
+  <div class="tabou">
+    ${[['C\'est normal d\'en parler','La ménopause est une étape de la vie, pas une faiblesse. Ses symptômes sont réels, fréquents, et ils se soignent.'],['Vous n\'êtes pas obligée de tout dire','À votre manager, vous pouvez parler d\'un « souci de santé temporaire » sans nommer la ménopause.'],['Vous ne devez pas « tenir » seule','Beaucoup de femmes attendent d\'être épuisées pour consulter. Les solutions existent : les demander n\'est pas exagérer.']].map(([t,d],i)=>`<div class="tb"><span class="num">${i+1}</span><b>${t}</b><p class="small">${d}</p></div>`).join('')}
+  </div>
+  <div class="card grid"><h3>1. À qui voulez-vous en parler ?</h3>
+    <div class="qui">${Object.entries(QUI).map(([k,q])=>`<button data-qui="${k}" aria-pressed="${P.qui===k}"><b>${q.l}</b><span class="small muted">${q.d}</span></button>`).join('')}</div></div>
+  <div class="grid g2" style="align-items:start">
+    <div class="card grid" style="align-content:start"><h3>2. Ce que je veux dire</h3>
+      ${P.qui==='manager'?`<div><p class="f">Ce que je dis de ma situation</p><div class="seg2">${[['neutre','Un souci de santé, sans détail'],['nomme','Je nomme la ménopause']].map(([k,l])=>`<button data-niv="${k}" aria-pressed="${P.niv===k}">${l}</button>`).join('')}</div></div>`:''}
+      ${P.qui==='medecin'?`<div><p class="f">Ce que cela change dans ma vie</p>${multi(P.imp,IMPACTS,'imp')}</div><div><p class="f">Mes questions</p>${multi(P.qs,QUESTIONS,'qs')}</div>`
+        :`<div><p class="f">Ce qui m'aiderait au travail</p>${multi(P.dem,DEMANDES,'dem')}</div>`}
+      ${Object.values(A.s).some(v=>v>0)?'<p class="small muted">Vos symptômes déclarés dans l\'auto-évaluation sont repris automatiquement.</p>':'<p class="small muted">Astuce : remplissez d\'abord <a href="#auto">l\'auto-évaluation</a>, vos symptômes seront repris dans le texte.</p>'}
+    </div>
+    <div class="card grid" style="align-content:start"><div class="row"><h3>3. Mon texte</h3><span class="sp"></span><button class="btn sm" id="cpp">Copier</button></div>
+      <div class="fiche" id="txtp" tabindex="0">${esc(texteParler())}</div>
+      <p class="small muted">À adapter avec vos mots : c'est un point de départ, à lire, à envoyer ou à garder sous les yeux pendant l'échange.</p></div>
+  </div>
+  <div class="grid g2">
+    <div class="card"><h3 style="margin-bottom:8px">Pendant l'échange</h3><ol class="steps">
+      <li><span class="n">1</span><div><b>Commencez par les faits</b> : ce qui vous gêne, depuis quand, combien de fois.</div></li>
+      <li><span class="n">2</span><div><b>Dites l'impact</b> : « je dors 4 heures », « je dois sortir de réunion », plutôt que « ça va à peu près ».</div></li>
+      <li><span class="n">3</span><div><b>Demandez quelque chose de précis</b> : un examen, un traitement, un aménagement.</div></li>
+      <li><span class="n">4</span><div><b>Si l'on minimise</b> (« c'est normal à votre âge »), reformulez : « c'est peut-être normal, mais c'est gênant : quelles solutions existent ? ». Un second avis est toujours possible.</div></li></ol></div>
+    <div class="card"><h3 style="margin-bottom:8px">Pour les managers : si une collaboratrice vous en parle</h3>
+      <div class="dodont"><div><p class="eyebrow ok-t">À faire</p><ul><li>Écouter, remercier pour la confiance.</li><li>Demander ce qui l'aiderait, concrètement.</li><li>Respecter la confidentialité.</li><li>Proposer le service de santé au travail.</li><li>Faire un point quelques semaines plus tard.</li></ul></div>
+      <div><p class="eyebrow bad-t">À éviter</p><ul><li>Les plaisanteries, même bienveillantes.</li><li>Demander des détails médicaux.</li><li>Conclure sur ses capacités ou sa carrière.</li><li>En parler à l'équipe sans son accord.</li><li>Promettre sans suivre.</li></ul></div></div></div>
+  </div>`;
+  app.querySelectorAll('[data-qui]').forEach(b=>b.onclick=()=>{P.qui=b.dataset.qui;keep(vParler);});
+  app.querySelectorAll('[data-niv]').forEach(b=>b.onclick=()=>{P.niv=b.dataset.niv;keep(vParler);});
+  [['imp',IMPACTS],['qs',QUESTIONS],['dem',DEMANDES]].forEach(([key,list])=>app.querySelectorAll(`[data-${key}]`).forEach(c=>c.onchange=()=>{const t=list[+c.dataset[key]];P[key]=c.checked?[...P[key],t]:P[key].filter(x=>x!==t);keep(vParler);}));
+  const cp=$('#cpp'); cp.onclick=()=>{const t=texteParler();const sel=()=>{const r=document.createRange();r.selectNodeContents($('#txtp'));const s=getSelection();s.removeAllRanges();s.addRange(r);cp.textContent='Texte sélectionné';};
+    try{navigator.clipboard.writeText(t).then(()=>{cp.textContent='Copié';setTimeout(()=>cp.textContent='Copier',1500)},sel)}catch(e){sel()}};
 }
 
 /* ---------- 4. Comprendre ---------- */

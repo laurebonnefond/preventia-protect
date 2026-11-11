@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Risque chimique — PréventIA Protect</title>
+<link rel="icon" href="../../../assets/img/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display:ital@0;1&display=swap">
+<style>
+/* PréventIA Protect · Risques spécifiques · Risque chimique
+   Charte Protect (navy / teal) + accent magenta du module « Risque chimique » */
+:root{
+  --navy:oklch(24% .06 258); --teal:oklch(52% .1 182); --c:oklch(52% .18 350); --c-l:oklch(80% .1 350); --c-bg:oklch(96% .025 350);
+  --bg:oklch(98.2% .004 250); --card:#fff; --card-2:oklch(96% .008 250); --line:oklch(91% .01 250);
+  --ink:oklch(25% .03 258); --muted:oklch(50% .02 258);
+  --ok:oklch(52% .13 150); --ok-bg:oklch(94% .05 150); --warn:oklch(55% .14 70); --warn-bg:oklch(95% .07 90);
+  --bad:oklch(53% .19 25); --bad-bg:oklch(95% .035 25); --crit:oklch(45% .2 25); --info:oklch(50% .12 255); --info-bg:oklch(95% .03 255); --na-bg:oklch(95% .005 258);
+  --f-display:"DM Serif Display",Georgia,serif; --f-body:"DM Sans",system-ui,sans-serif;
+  --r:16px; --shadow:0 1px 2px rgb(15 30 60/.06),0 10px 26px -14px rgb(15 30 60/.22);
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:oklch(17% .025 258); --card:oklch(22% .03 258); --card-2:oklch(27% .035 258); --line:oklch(33% .03 258);
+  --ink:oklch(93% .01 250); --muted:oklch(72% .02 250); --c:oklch(72% .14 350); --c-bg:oklch(28% .06 350);
+  --ok:oklch(74% .13 150); --ok-bg:oklch(30% .06 150); --warn:oklch(82% .13 85); --warn-bg:oklch(32% .06 90);
+  --bad:oklch(72% .15 25); --bad-bg:oklch(30% .07 25); --crit:oklch(78% .16 25); --info:oklch(75% .1 255); --info-bg:oklch(28% .05 255); --na-bg:oklch(25% .02 258);
+  --shadow:none; color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14.5px;line-height:1.55}
+h1,h2,h3,h4{margin:0;line-height:1.2;text-wrap:balance}
+p{margin:0}
+a{color:var(--teal)}
+button,input,select,textarea{font:inherit;color:inherit}
+small{display:block;color:var(--muted);font-size:12px}
+.muted{color:var(--muted)} .small{font-size:12.5px}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:max(18px,env(safe-area-inset-left,0px))}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+/* ── Hero ── */
+.hero{position:relative;overflow:hidden;color:#fff;background:
+  radial-gradient(55% 90% at 92% 0%, oklch(52% .18 350/.55), transparent 62%),
+  radial-gradient(40% 80% at 0% 100%, oklch(52% .1 182/.45), transparent 65%), var(--navy)}
+.hero::after{content:"";position:absolute;inset:0;background-image:radial-gradient(rgb(255 255 255/.08) 1px,transparent 1px);background-size:22px 22px;mask-image:linear-gradient(#000,transparent 85%);pointer-events:none}
+.hero .wrap{position:relative;z-index:1;padding-block:18px 30px;display:flex;flex-direction:column;gap:18px}
+.crumb{display:flex;gap:10px;align-items:center;font-size:13px;color:rgb(255 255 255/.7);flex-wrap:wrap}
+.crumb a{color:rgb(255 255 255/.88);text-decoration:none;padding:6px 11px;border-radius:99px;background:rgb(255 255 255/.08);border:1px solid rgb(255 255 255/.14)}
+.hero h1{font-family:var(--f-display);font-weight:400;font-size:clamp(2rem,5vw,3.2rem)}
+.hero h1 em{color:oklch(84% .09 350)}
+.hero .sub{max-width:70ch;color:rgb(255 255 255/.8);font-size:1.02rem}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{background:rgb(255 255 255/.08);border:1px solid rgb(255 255 255/.14);border-radius:14px;padding:12px 14px;backdrop-filter:blur(6px)}
+.kpi b{display:block;font-size:1.7rem;font-weight:700;line-height:1}
+.kpi span{font-size:12.5px;color:rgb(255 255 255/.75)}
+.kpi.bad b{color:oklch(78% .14 25)} .kpi.warn b{color:oklch(85% .13 85)}
+
+/* ── Barre d'onglets ── */
+.toolbar{position:sticky;top:0;z-index:30;background:color-mix(in oklch,var(--bg) 88%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.toolbar .wrap{display:flex;gap:12px;align-items:center;justify-content:space-between;padding-block:10px;flex-wrap:wrap}
+.tabs{display:flex;gap:4px;background:var(--card-2);padding:4px;border-radius:12px;overflow-x:auto}
+.tabs button{border:0;background:none;padding:8px 14px;border-radius:9px;font-weight:600;cursor:pointer;white-space:nowrap;color:var(--muted)}
+.tabs button[aria-selected=true]{background:var(--card);color:var(--c);box-shadow:var(--shadow)}
+.tabs .n{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--c-bg);color:var(--c);font-size:11px;margin-right:6px}
+#ia-bar{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;padding:6px 12px;border-radius:99px;background:var(--card-2);color:var(--muted)}
+#ia-bar.on{background:var(--c-bg);color:var(--c)}
+.switch{position:relative;width:36px;height:20px;flex:none}
+.switch input{opacity:0;position:absolute;inset:0;margin:0;cursor:pointer;z-index:1}
+.switch span{position:absolute;inset:0;border-radius:99px;background:var(--line);transition:.2s}
+.switch span::after{content:"";position:absolute;width:16px;height:16px;left:2px;top:2px;border-radius:50%;background:#fff;transition:.2s}
+.switch input:checked+span{background:var(--c)} .switch input:checked+span::after{left:18px}
+.menu{position:relative}
+.menu summary{list-style:none;cursor:pointer}
+.menu summary::-webkit-details-marker{display:none}
+.menu .pop{position:absolute;right:0;top:calc(100% + 6px);background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px;min-width:250px;display:grid;z-index:40}
+.menu .pop button,.menu .pop label{border:0;background:none;text-align:left;padding:9px 12px;border-radius:8px;cursor:pointer;font-size:13.5px}
+.menu .pop button:hover,.menu .pop label:hover{background:var(--card-2)}
+
+/* ── Boutons, pastilles ── */
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);padding:9px 14px;border-radius:11px;font-weight:600;font-size:13.5px;cursor:pointer;text-decoration:none;color:var(--ink)}
+.btn:hover{border-color:var(--c)}
+.btn.primary{background:var(--c);border-color:var(--c);color:#fff}
+.btn.sm{padding:6px 10px;font-size:12.5px;border-radius:9px}
+.ico{border:0;background:none;cursor:pointer;font-size:15px;padding:5px;border-radius:7px}
+.ico:hover{background:var(--card-2)}
+.pill,.badge{display:inline-block;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.pill.xs{font-size:10.5px;padding:1px 7px}
+.ok{--k:var(--ok);--kb:var(--ok-bg)} .warn{--k:var(--warn);--kb:var(--warn-bg)} .bad,.crit{--k:var(--bad);--kb:var(--bad-bg)} .info{--k:var(--info);--kb:var(--info-bg)} .na{--k:var(--muted);--kb:var(--na-bg)}
+.pill,.badge{color:var(--k);background:var(--kb)}
+.crit.badge,td.crit{background:var(--crit);color:#fff}
+.tag{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:6px;margin:3px 4px 0 0}
+.tag.bad{background:var(--bad-bg);color:var(--bad)} .tag.ia{background:var(--info-bg);color:var(--info)}
+
+/* ── Cartes, tableaux ── */
+main{padding-block:22px 64px}
+.panel{display:flex;flex-direction:column;gap:18px}
+.panel[hidden]{display:none}
+.card{background:var(--card);border-radius:var(--r);padding:20px;box-shadow:var(--shadow);border:1px solid var(--line)}
+.card-h{display:flex;gap:14px;align-items:flex-start;margin-bottom:14px}
+.card-h h3{font-size:1.08rem}
+.step{flex:none;width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:var(--c-bg);color:var(--c);font-weight:700}
+.panel-h{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.panel-h h2{font-family:var(--f-display);font-weight:400;font-size:1.6rem}
+.filters{display:flex;gap:8px;flex-wrap:wrap}
+.filters input,.filters select{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 11px;min-width:150px}
+.table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--line);background:var(--card)}
+table{border-collapse:collapse;width:100%}
+table.inv th{font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);text-align:left;padding:10px 12px;background:var(--card-2);white-space:nowrap}
+table.inv td{padding:10px 12px;border-top:1px solid var(--line);vertical-align:top}
+table.inv tr:hover td{background:color-mix(in oklch,var(--c-bg) 40%,transparent)}
+.num{text-align:right;white-space:nowrap}
+.acts{white-space:nowrap}
+.lien-prod{border:0;background:none;padding:0;cursor:pointer;text-align:left;color:var(--ink)}
+.lien-prod:hover b{color:var(--c);text-decoration:underline}
+.pictos{display:flex;gap:2px;flex-wrap:wrap}
+img.picto{display:block;flex:none}
+.hs{display:flex;gap:3px;flex-wrap:wrap;max-width:260px}
+.h{font-size:11px;font-weight:700;padding:1px 6px;border-radius:5px;background:var(--card-2);cursor:help}
+.h.S{background:var(--bad-bg);color:var(--bad)} .h.P{background:var(--warn-bg);color:var(--warn)} .h.E{background:var(--ok-bg);color:var(--ok)}
+.cd{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px;font-weight:700;color:#fff}
+.cd1{background:oklch(65% .1 150)} .cd2{background:oklch(70% .13 110)} .cd3{background:oklch(72% .15 75)} .cd4{background:oklch(62% .17 45)} .cd5{background:oklch(52% .2 25)}
+.vide{text-align:center;padding:48px 20px;background:var(--card);border:2px dashed var(--line);border-radius:var(--r);display:grid;gap:10px;justify-items:center}
+.vide-ic{font-size:44px}
+.vide p{max-width:60ch;color:var(--muted)}
+details.methode{margin-top:14px;background:var(--card-2);border-radius:12px;padding:12px 14px;font-size:13px}
+details.methode summary{cursor:pointer;font-weight:600}
+details.methode .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0}
+@media (max-width:760px){details.methode .grid2{grid-template-columns:1fr}}
+.avis{display:flex;gap:12px;align-items:flex-start;background:var(--info-bg);border-left:4px solid var(--info);border-radius:12px;padding:12px 16px;font-size:13.5px}
+.avis b{color:var(--info)}
+.cmr-card{border-left:4px solid var(--bad)}
+.cmr-list{margin:0;padding-left:18px;display:grid;gap:6px}
+ol.plan{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.plan-prod{border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:grid;gap:8px}
+.plan-prod>header{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+ol.plan li{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:center;padding:7px 10px;border-radius:10px;background:var(--card-2);font-size:13.5px}
+.plans{display:grid;gap:10px}
+.niv{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px;font-weight:700;color:#fff;font-size:12px}
+.niv.nS{background:oklch(50% .16 150)} .niv.nT{background:oklch(52% .12 230)} .niv.nO{background:oklch(60% .14 70)} .niv.nP{background:oklch(55% .15 320)}
+.legend-stop{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:12.5px;color:var(--muted)}
+.legend-stop>span{display:flex;gap:6px;align-items:center}
+
+/* Stockage */
+.inc-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.inc-list li{display:flex;gap:12px;align-items:flex-start;padding:10px 14px;border-radius:12px;background:var(--kb);font-size:13.5px}
+.okmsg{color:var(--ok);font-weight:600}
+.lieu{margin-top:8px}
+.lieu h4{margin:6px 0 10px}
+.groupes{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.grp{border-radius:12px;border:1px solid var(--line);border-top:4px solid var(--g);padding:10px 12px;background:var(--card)}
+.grp-h{font-weight:700;color:var(--g);margin-bottom:6px}
+.grp ul{list-style:none;margin:0 0 8px;padding:0;display:grid;gap:4px;font-size:13px}
+.grp li{display:flex;align-items:center;gap:3px}
+.grp p{font-size:12px;color:var(--muted)}
+table.matrix{width:auto;font-size:12px}
+table.matrix th{padding:6px 8px;text-align:left;font-weight:600;background:var(--card-2);white-space:nowrap;max-width:220px;overflow:hidden;text-overflow:ellipsis}
+table.matrix thead th{text-align:center}
+table.matrix td{width:44px;height:34px;text-align:center;font-weight:700;border:2px solid var(--card);background:var(--kb);color:var(--k);cursor:help}
+table.matrix td.diag{background:var(--card-2)}
+.mi{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:6px;background:var(--c-bg);color:var(--c);font-size:11px;margin-right:4px}
+.regles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.regle{border-radius:12px;padding:12px;background:var(--card-2);font-size:12.5px}
+.regle b{display:block;font-size:13.5px;margin-bottom:4px}
+.regle .badge{margin:6px 0 4px}
+.affiche{display:grid;grid-template-columns:200px 1fr;gap:16px;align-items:center;margin-top:14px}
+.affiche img{width:100%;border-radius:10px;border:1px solid var(--line)}
+@media (max-width:640px){.affiche{grid-template-columns:1fr}}
+
+/* Fiches */
+.fiches-layout{display:grid;grid-template-columns:240px minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:860px){.fiches-layout{grid-template-columns:1fr}}
+.fiches-nav{display:grid;gap:4px;position:sticky;top:70px}
+.fiches-nav button{display:flex;gap:8px;align-items:center;border:1px solid transparent;background:none;padding:8px 10px;border-radius:10px;cursor:pointer;text-align:left;font-size:13.5px}
+.fiches-nav button.on{background:var(--card);border-color:var(--line);box-shadow:var(--shadow);font-weight:700;color:var(--c)}
+.fiche{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);border:1px solid var(--line);overflow:hidden}
+.fiche-h{display:flex;gap:16px;justify-content:space-between;align-items:center;padding:18px 22px;background:var(--card-2);border-bottom:4px solid var(--muted);flex-wrap:wrap}
+.fiche-h.danger{border-bottom-color:var(--bad)} .fiche-h.attention{border-bottom-color:var(--warn)}
+.fiche-h h2{font-family:var(--f-display);font-weight:400;font-size:1.8rem}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--c)}
+.mol{color:var(--muted)}
+.fiche-pictos{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.mention{margin-left:8px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:6px 12px;border-radius:8px;background:var(--ink);color:var(--card)}
+.fiche-h.danger .mention{background:var(--bad);color:#fff}
+.bandeau-cmr{background:var(--bad);color:#fff;padding:8px 22px;font-weight:600;font-size:13px}
+.fiche-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+@media (max-width:760px){.fiche-grid{grid-template-columns:1fr}}
+.bloc{padding:16px 22px;border-bottom:1px solid var(--line)}
+.fiche-grid .bloc:nth-child(odd){border-right:1px solid var(--line)}
+.bloc h4{font-size:.95rem;margin-bottom:8px}
+.bloc ul{margin:0;padding-left:18px;display:grid;gap:4px;font-size:13.5px}
+.bloc ul.hlist{list-style:none;padding:0}
+.bloc ul.epi{list-style:none;padding:0}
+.bloc .alerte{margin-top:8px;padding:6px 10px;border-radius:8px;background:var(--bad-bg);color:var(--bad);font-weight:600;font-size:13px}
+.urgence{padding:16px 22px;background:color-mix(in oklch,var(--bad-bg) 55%,var(--card))}
+.urgence h4{margin-bottom:10px}
+.urg-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:760px){.urg-grid{grid-template-columns:1fr}}
+.urg-grid>div{background:var(--card);border-radius:10px;padding:10px 12px;font-size:13px}
+.urg-grid b{display:block;margin-bottom:3px}
+.numeros{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 6px}
+.numeros span{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:5px 10px;font-size:13px}
+.numeros b{color:var(--bad);font-size:15px;margin-right:4px}
+.pdetails summary{cursor:pointer;font-weight:600}
+.pdetails ul{margin-top:8px}
+.fiche-f{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 22px;font-size:11.5px;color:var(--muted);background:var(--card-2)}
+.fiche-acts{display:flex;gap:8px;justify-content:flex-end;padding:12px 22px}
+
+/* ── Fenêtres ── */
+dialog{border:0;border-radius:20px;padding:0;background:var(--card);color:var(--ink);box-shadow:0 30px 80px -20px rgb(0 0 0/.45);width:min(860px,96vw);max-height:92vh}
+dialog::backdrop{background:rgb(15 23 42/.55);backdrop-filter:blur(3px)}
+.dlg-h{display:flex;justify-content:space-between;align-items:center;padding:16px 22px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--card);z-index:2}
+.dlg-h h3{font-family:var(--f-display);font-weight:400;font-size:1.4rem}
+.dlg-b{padding:18px 22px;overflow:auto;max-height:calc(92vh - 140px)}
+.dlg-f{display:flex;justify-content:flex-end;gap:8px;padding:12px 22px;border-top:1px solid var(--line);background:var(--card);position:sticky;bottom:0}
+#ajout{width:min(720px,96vw)}
+.choix{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px}
+@media (max-width:560px){.choix{grid-template-columns:1fr}}
+.choix>*{display:flex;gap:12px;align-items:flex-start;text-align:left;border:1px solid var(--line);background:var(--card);border-radius:14px;padding:14px;cursor:pointer;font-size:13px}
+.choix>*:hover{border-color:var(--c);background:var(--c-bg)}
+.choix .ci{font-size:26px;line-height:1}
+.choix b{display:block;font-size:14px;margin-bottom:2px}
+.choix .off{opacity:.55}
+.need-ia.off::after{content:"Mode IA requis";display:block;font-size:11px;font-weight:700;color:var(--warn);margin-top:4px}
+#dropzone{border:2px dashed var(--line);border-radius:14px;padding:14px;text-align:center;color:var(--muted);font-size:13px;margin-top:12px;transition:.2s}
+#dropzone.over{border-color:var(--c);background:var(--c-bg);color:var(--c)}
+.statut{margin-top:12px;font-size:13.5px;min-height:20px}
+.err{color:var(--bad);font-weight:600}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--c-bg);border-top-color:var(--c);border-radius:50%;animation:sp 1s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.fieldrow{display:flex;gap:8px}
+.fieldrow input{flex:1;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--card)}
+fieldset{border:0;padding:0;margin:0 0 22px;scroll-margin-top:110px}
+legend{font-family:var(--f-display);font-size:1.2rem;margin-bottom:10px;padding:0}
+.fgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px}
+@media (max-width:620px){.fgrid{grid-template-columns:1fr}}
+.fgrid .span2{grid-column:1/-1}
+.fgrid label{display:grid;gap:4px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.fgrid input,.fgrid select,.fgrid textarea,.codes input{border:1px solid var(--line);border-radius:9px;padding:8px 10px;background:var(--card);color:var(--ink);font-weight:400;font-size:14px;width:100%}
+.fgrid textarea{resize:vertical;font-size:13px}
+.fgrid textarea::placeholder{color:color-mix(in oklch,var(--muted) 75%,transparent)}
+.inline{display:flex;gap:6px}
+.inline select{width:90px;flex:none}
+.ed-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;position:sticky;top:-18px;background:var(--card);padding:6px 0;z-index:1}
+.ed-nav a{font-size:12.5px;font-weight:600;padding:5px 11px;border-radius:99px;background:var(--card-2);text-decoration:none;color:var(--ink)}
+.ia-banner{display:flex;gap:10px;padding:12px 14px;border-radius:12px;background:var(--info-bg);margin-bottom:14px;font-size:13px}
+.ia-banner.low{background:var(--warn-bg)}
+.fds-box{margin-top:12px;padding:12px 14px;border-radius:12px;background:var(--card-2);display:grid;gap:10px}
+.liens-fds{display:flex;gap:6px;flex-wrap:wrap}
+.liens-fds a{font-size:12.5px;padding:5px 10px;border-radius:8px;background:var(--card);border:1px solid var(--line);text-decoration:none;color:var(--ink)}
+.subst ul{margin:4px 0 0;padding-left:18px;font-weight:400;color:var(--ink)}
+.picto-pick{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 14px}
+.pp{display:grid;justify-items:center;gap:2px;border:2px solid var(--line);background:var(--card);border-radius:12px;padding:6px 6px 4px;cursor:pointer;font-size:10.5px;width:76px;opacity:.45;filter:grayscale(.6);transition:.15s}
+.pp.on{opacity:1;filter:none;border-color:var(--c);background:var(--c-bg)}
+.codes{margin-top:14px;display:grid;gap:6px}
+.chips{display:flex;gap:5px;flex-wrap:wrap}
+.chip{display:inline-flex;gap:5px;align-items:center;font-size:12px;padding:3px 4px 3px 9px;border-radius:8px;background:var(--card-2)}
+.chip.S{background:var(--bad-bg)} .chip.P{background:var(--warn-bg)} .chip.E{background:var(--ok-bg)}
+.chip button{border:0;background:none;cursor:pointer;font-size:15px;line-height:1;padding:0 4px;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:9999;background:var(--navy);color:#fff;padding:10px 16px;border-radius:12px;font-weight:600;font-size:13px;box-shadow:0 10px 30px -10px rgb(0 0 0/.4)}
+.toast.ok{background:oklch(45% .12 150)} .toast.bad{background:oklch(48% .18 25)}
+#print-zone{display:none}
+
+/* ── Impression ── */
+@media print{
+  @page{size:A4;margin:12mm}
+  body{background:#fff;color:#000;font-size:11.5px}
+  body.printing>*:not(#print-zone){display:none!important}
+  body.printing #print-zone{display:block}
+  .hero,.toolbar,.no-print,.pv-bandeau,.fiche-acts{display:none!important}
+  .card,.fiche{box-shadow:none;break-inside:avoid-page}
+  #print-zone .fiche{break-after:page;border:1px solid #999}
+  #print-zone .fiche:last-child{break-after:auto}
+  .print-title{font-family:var(--f-display);font-weight:400;font-size:20px;margin-bottom:12px}
+  .table-wrap{overflow:visible}
+  .urgence,.bandeau-cmr,.mention,.pill,.badge,.cd,.niv,td,.tag,.h{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <nav class="crumb" aria-label="Fil d'Ariane"><a href="../../../index.html">← PréventIA Protect</a><span>Risques spécifiques</span><span aria-hidden="true">›</span><span>Risque chimique</span></nav>
+    <div style="display:grid;gap:10px">
+      <h1>Risque chimique : <em>inventorier, évaluer, protéger</em></h1>
+      <p class="sub">Inventaire des produits avec lecture IA des FDS, hiérarchisation du risque (inspirée de la méthode INRS de Seirich), compatibilités de stockage et fiche synthétique par produit avec EPI, EPC et conduite à tenir.</p>
+    </div>
+    <div class="kpis" id="kpis"></div>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="wrap">
+    <div class="tabs" role="tablist">
+      <button data-tab="inventaire" role="tab"><span class="n">1</span>Inventaire</button>
+      <button data-tab="evaluation" role="tab"><span class="n">2</span>Évaluation</button>
+      <button data-tab="stockage" role="tab"><span class="n">3</span>Stockage</button>
+      <button data-tab="fiches" role="tab"><span class="n">4</span>Fiches produits</button>
+    </div>
+    <div class="row">
+      <label id="ia-bar" title="Quand l'IA est activée, les FDS, photos ou noms de produits sont envoyés à l'IA (via Make.com). Aucune donnée personnelle ne doit y figurer.">
+        <span class="switch"><input type="checkbox" id="ia-toggle"><span></span></span><span id="ia-etat">IA désactivée</span>
+      </label>
+      <details class="menu"><summary class="btn sm">⋯ Données</summary>
+        <div class="pop">
+          <button data-act="csv">⬇ Exporter l'inventaire (CSV / Excel)</button>
+          <button data-act="json">💾 Sauvegarder (fichier JSON)</button>
+          <label>📂 Restaurer une sauvegarde<input type="file" id="import-json" accept="application/json,.json" hidden></label>
+          <button data-act="demo">🧪 Ajouter les produits d'exemple</button>
+          <button data-act="vider">🗑 Tout effacer</button>
+        </div>
+      </details>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <!-- 1. INVENTAIRE -->
+  <section class="panel" id="tab-inventaire">
+    <div class="panel-h">
+      <h2>Inventaire des produits</h2>
+      <button class="btn primary" data-act="ajouter">＋ Ajouter un produit</button>
+    </div>
+    <div class="filters">
+      <input id="f-q" type="search" placeholder="Rechercher (nom, substance, CAS…)">
+      <select id="f-lieu"><option value="">Tous les lieux</option></select>
+      <select id="f-type">
+        <option value="">Tous les produits</option>
+        <option value="cmr">CMR uniquement</option>
+        <option value="fds">FDS à demander / vérifier</option>
+        <option value="prio">Priorité forte</option>
+      </select>
+    </div>
+    <div id="inv-liste"></div>
+  </section>
+
+  <!-- 2. ÉVALUATION -->
+  <section class="panel" id="tab-evaluation" hidden>
+    <div class="panel-h">
+      <h2>Évaluation du risque chimique</h2>
+      <button class="btn" data-act="imprimer-eval">🖨 Imprimer la synthèse</button>
+    </div>
+    <div class="avis"><span>🩺</span><p><b>Première approche, pas un avis d'expert.</b> Ces résultats aident à hiérarchiser et à préparer le DUERP. Toute conclusion sur l'exposition des salariés (CMR, VLEP, suivi médical, métrologie) doit être validée par le <b>médecin du travail</b> et, si besoin, par le <b>toxicologue</b> ou l'IPRP du service de prévention et de santé au travail.</p></div>
+    <div id="eval-zone" class="panel"></div>
+  </section>
+
+  <!-- 3. STOCKAGE -->
+  <section class="panel" id="tab-stockage" hidden>
+    <div class="panel-h">
+      <h2>Stockage & compatibilités</h2>
+      <div class="row"><select id="s-lieu" class="btn"></select><button class="btn" data-act="imprimer-stock">🖨 Imprimer</button></div>
+    </div>
+    <div id="stock-zone" class="panel"></div>
+    <section class="card">
+      <div class="card-h"><span class="step">4</span><div><h3>Règles de stockage à afficher</h3><p class="muted">Rappels issus de l'affiche du module · en cas de doute, la rubrique 7 et 10 de la FDS font foi</p></div></div>
+      <div class="regles">
+        <div class="regle"><b>🧪 Acides</b>HCl, H₂SO₄, HNO₃<br><span class="badge bad">INT</span><br>Séparer des bases, oxydants, cyanures, sulfures, eau de Javel</div>
+        <div class="regle"><b>🧪 Bases</b>Soude, potasse, ammoniaque<br><span class="badge bad">INT</span><br>Séparer des acides, de l'aluminium, des sels d'ammonium</div>
+        <div class="regle"><b>🔥 Oxydants</b>H₂O₂, HNO₃, NaClO<br><span class="badge bad">INT</span><br>Séparer des matières organiques, réducteurs, acides</div>
+        <div class="regle"><b>🔥 Inflammables</b>Éthanol, acétone, solvants<br><span class="badge bad">INT</span><br>Séparer des oxydants et des sources de chaleur</div>
+        <div class="regle"><b>☠️ Toxiques</b>Pesticides, cyanures, CMR<br><span class="badge bad">INT</span><br>Séparer des aliments, oxydants, acides · sous clé</div>
+        <div class="regle"><b>🧯 Gaz sous pression</b>O₂, N₂, CO₂, H₂<br><span class="badge warn">PR</span><br>Debout, arrimés, à l'écart des sources de chaleur</div>
+      </div>
+      <div class="affiche">
+        <a href="R%C3%A8gles_de_stockage_des_produits_chimiques.png" target="_blank" rel="noopener"><img src="R%C3%A8gles_de_stockage_des_produits_chimiques.png" alt="Affiche : règles de stockage des produits chimiques" loading="lazy"></a>
+        <div class="small"><p><b>Bonnes pratiques</b> : emballage d'origine étiqueté · pas de stockage au-dessus des yeux ni sous les éviers · allées dégagées · contrôle régulier des emballages et des dates.</p>
+          <p style="margin-top:6px"><b>Locaux</b> : ventilation adaptée · rétentions ≥ 110 % du plus grand contenant · à l'écart des sources d'ignition · signalisation · extincteurs · douche et lave-œil si risque de projection.</p>
+          <p style="margin-top:6px"><a href="R%C3%A8gles_de_stockage_des_produits_chimiques.png" download>⬇ Télécharger l'affiche à imprimer</a></p></div>
+      </div>
+    </section>
+  </section>
+
+  <!-- 4. FICHES -->
+  <section class="panel" id="tab-fiches" hidden>
+    <div class="panel-h">
+      <h2>Fiches synthétiques produits</h2>
+      <button class="btn" data-act="imprimer-fiches">🖨 Imprimer toutes les fiches</button>
+    </div>
+    <p class="muted">Une page par produit, à afficher au poste ou dans le local de stockage : identité, dangers, EPI, EPC, stockage et conduite à tenir en cas d'exposition accidentelle.</p>
+    <div id="fiches-zone"></div>
+  </section>
+</main>
+
+<!-- Fenêtre : ajouter un produit -->
+<dialog id="ajout">
+  <div class="dlg-h"><h3>Ajouter un produit</h3><button class="ico" data-act="fermer" aria-label="Fermer">✕</button></div>
+  <div class="dlg-b">
+    <div class="fieldrow"><input id="ajout-nom" placeholder="Nom du produit (facultatif si vous déposez une FDS)"></div>
+    <div class="choix">
+      <label class="need-ia"><span class="ci">📄</span><span><b>Analyser la FDS (PDF)</b>L'IA lit la FDS et remplit dangers, mentions H/P, VLEP, EPI et premiers secours.<input type="file" accept="application/pdf" data-ia="pdf" hidden></span></label>
+      <label class="need-ia"><span class="ci">📷</span><span><b>Photo de l'étiquette</b>Pictogrammes, mentions et nom lus sur l'étiquette CLP ou une page de FDS.<input type="file" accept="image/*" capture="environment" data-ia="photo" hidden></span></label>
+      <button class="need-ia" data-act="ia-nom"><span class="ci">🔎</span><span><b>Rechercher par nom</b>L'IA propose les données connues pour ce produit. Fiabilité moindre : à vérifier sur la FDS.</span></button>
+      <button data-act="manuel"><span class="ci">✍️</span><span><b>Saisie manuelle</b>Remplir la fiche vous-même (sans IA). Liens pour retrouver la FDS fournis.</span></button>
+    </div>
+    <div id="dropzone">…ou glissez-déposez ici une FDS (PDF) ou une photo</div>
+    <div id="ajout-statut" class="statut"></div>
+    <p class="small muted" style="margin-top:10px">🔒 Seul le contenu de la FDS ou de la photo est envoyé à l'IA. N'y laissez aucune donnée personnelle. La FDS du fournisseur reste la référence.</p>
+  </div>
+</dialog>
+
+<!-- Fenêtre : éditeur de produit -->
+<dialog id="editeur">
+  <div class="dlg-h"><h3 id="ed-titre">Produit</h3><button class="ico" data-act="fermer" aria-label="Fermer">✕</button></div>
+  <div class="dlg-b" id="ed-corps"></div>
+  <div class="dlg-f"><button class="btn" data-act="fermer">Annuler</button><button class="btn primary" data-act="enregistrer">Enregistrer</button></div>
+</dialog>
+
+<datalist id="dl-h"></datalist>
+<datalist id="dl-p"></datalist>
+<datalist id="dl-lieux"></datalist>
+<div id="print-zone"></div>
+
+<script src="../../../core/avertissement-prototype.js" defer></script>
+<script src="../../../core/preventia-ia.js"></script>
+<script src="chim-pictos.js"></script>
+<script src="chim-data.js"></script>
+<script src="chim-app.js"></script>
+</body>
+</html>

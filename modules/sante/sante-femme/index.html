@@ -54,14 +54,13 @@ main{padding-block:40px 64px;display:flex;flex-direction:column;gap:22px}
 .res{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:16px;align-items:center;background:linear-gradient(110deg,var(--rose-bg),var(--card) 55%);border:1px solid color-mix(in oklch,var(--rose) 20%,var(--line));border-radius:18px;padding:18px 22px}
 @media (max-width:640px){.res{grid-template-columns:auto 1fr}.res .btn{grid-column:1/-1;justify-self:start}}
 .res .ic{width:44px;height:44px;border-radius:12px;--c:var(--rose);box-shadow:none}
-.hero-art{position:absolute;right:max(20px,env(safe-area-inset-right,0px));top:26px;width:min(30vw,330px);aspect-ratio:1;max-width:100%;z-index:1;pointer-events:none}
-.hero-art svg{width:100%;height:100%;display:block;filter:drop-shadow(0 24px 40px rgb(0 0 0/.35))}
-.hero-art .float{animation:flotte 6s ease-in-out infinite}
-@keyframes flotte{50%{transform:translateY(-6px)}}
-.hero h1,.hero .sub{position:relative;z-index:2}
-@media (max-width:900px){.hero-art{width:150px;top:64px;opacity:.9}}
-@media (max-width:600px){.hero-art{display:none}}
-@media (prefers-reduced-motion:reduce){.hero-art .float{animation:none}}
+.hero{--art:min(36vw,440px)}
+.hero-art{position:absolute;right:max(12px,env(safe-area-inset-right,0px));top:50%;transform:translateY(-54%);width:var(--art);aspect-ratio:1;z-index:1;pointer-events:none}
+.hero-art img{width:100%;height:100%;display:block;object-fit:cover;-webkit-mask-image:radial-gradient(circle at 50% 50%,#000 58%,transparent 71%);mask-image:radial-gradient(circle at 50% 50%,#000 58%,transparent 71%)}
+/* Le texte ne passe jamais sous l'image : sa largeur est réduite de celle de l'image */
+.hero-txt,.hero .trust{position:relative;z-index:2;max-width:calc(100% - var(--art) - 16px)}
+@media (max-width:760px){.hero{--art:150px}.hero-art{top:56px;transform:none}.hero-txt,.hero .trust{max-width:none}.hero h1{padding-right:calc(var(--art) - 8px)}}
+@media (max-width:480px){.hero{--art:118px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -71,39 +70,9 @@ main{padding-block:40px 64px;display:flex;flex-direction:column;gap:22px}
 </svg>
 <header class="hero">
   <div class="wrap">
-  <div class="hero-art" aria-hidden="true">
-    <svg viewBox="0 0 320 320">
-      <defs>
-        <radialGradient id="sf-fond" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="oklch(72% .13 0)"/><stop offset="1" stop-color="oklch(42% .13 320)"/></radialGradient>
-        <linearGradient id="sf-cheveux" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="oklch(32% .07 330)"/><stop offset="1" stop-color="oklch(24% .06 300)"/></linearGradient>
-        <linearGradient id="sf-buste" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="oklch(96% .03 0)"/><stop offset="1" stop-color="oklch(88% .05 340)"/></linearGradient>
-        <clipPath id="sf-rond"><circle cx="160" cy="160" r="148"/></clipPath>
-      </defs>
-      <circle cx="160" cy="160" r="148" fill="url(#sf-fond)"/>
-      <g clip-path="url(#sf-rond)">
-        <circle cx="160" cy="160" r="112" fill="none" stroke="rgb(255 255 255/.16)" stroke-width="1.5"/>
-        <path d="M108 154 Q100 76 160 70 Q220 76 212 154 L222 238 Q160 262 98 238 Z" fill="url(#sf-cheveux)"/>
-        <path d="M76 330 Q80 238 160 228 Q240 238 244 330 Z" fill="url(#sf-buste)"/>
-        <rect x="147" y="168" width="26" height="62" rx="12" fill="oklch(82% .06 50)"/>
-        <ellipse cx="160" cy="136" rx="38" ry="46" fill="oklch(86% .06 55)"/>
-        <path d="M121 132 Q126 88 164 88 Q201 92 200 134 Q184 108 158 108 Q136 110 121 132 Z" fill="url(#sf-cheveux)"/>
-        <g class="float">
-          <path d="M160 288 C147 270 141 256 149 246 C155 239 165 239 171 246 C179 256 173 270 160 288 Z" fill="none" stroke="oklch(58% .18 0)" stroke-width="7" stroke-linejoin="round"/>
-          <path d="M160 288 L146 310 M160 288 L175 308" stroke="oklch(58% .18 0)" stroke-width="7" stroke-linecap="round"/>
-        </g>
-      </g>
-      <g fill="none" stroke="oklch(90% .06 0)" stroke-width="2" stroke-linecap="round">
-        <path d="M44 214 Q30 190 40 166"/><path d="M40 190 Q28 186 24 176 Q36 176 40 186"/><path d="M38 206 Q50 200 56 190 Q44 192 38 204"/>
-        <path d="M280 104 Q294 128 286 152"/><path d="M286 128 Q298 130 302 140 Q290 140 286 130"/>
-      </g>
-      <g fill="oklch(92% .05 0)">
-        <circle cx="258" cy="62" r="4"/><circle cx="276" cy="80" r="2.5"/><circle cx="58" cy="94" r="3"/><circle cx="290" cy="214" r="3.5"/>
-      </g>
-      <path d="M250 246 l4 10 l10 4 l-10 4 l-4 10 l-4 -10 l-10 -4 l10 -4 z" fill="rgb(255 255 255/.85)"/>
-    </svg>
-  </div>
+  <div class="hero-art"><img src="img/hero-sante-femme.webp" alt="" width="760" height="760" fetchpriority="high"></div>
     <nav class="crumb" aria-label="Fil d'Ariane"><a href="../../../index.html">← PréventIA Protect</a><span>Santé</span><span aria-hidden="true">›</span><span>Santé de la femme</span></nav>
-    <div style="display:flex;flex-direction:column;gap:14px">
+    <div class="hero-txt" style="display:flex;flex-direction:column;gap:14px">
       <h1>Des étapes de vie qui se jouent <em>aussi au travail</em></h1>
       <p class="sub">Suivre le dépistage du cancer du sein et animer Octobre rose. Accompagner la ménopause en adaptant les postes. Des outils pour l'infirmier·e, l'entreprise et chaque salariée.</p>
     </div>

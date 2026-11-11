@@ -17,9 +17,25 @@
 .lv button{border:1px solid var(--line);background:var(--bg);border-radius:7px;width:34px;height:32px;font-weight:700;font-size:13px}
 .lv button[aria-pressed="true"]{background:var(--mauve);border-color:var(--mauve);color:var(--on-accent)}
 .legend{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
-.res{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;padding:12px 0;border-bottom:1px solid var(--line)}
-.res:last-child{border-bottom:0}
-.res ul{margin:4px 0 0;padding-left:1.1rem;color:var(--muted);font-size:13.5px}
+.res-list{display:grid;gap:12px;margin-top:10px}
+.res{--lv:var(--warn);--lv-bg:var(--warn-bg);display:grid;grid-template-columns:76px minmax(0,1fr);gap:16px;align-items:center;padding:14px 18px 14px 14px;border-radius:16px;background:var(--card);box-shadow:0 1px 2px rgb(15 30 60/.06),0 6px 18px -8px rgb(15 30 60/.14);position:relative;overflow:hidden}
+.res.prio{--lv:var(--bad);--lv-bg:var(--bad-bg)}
+.res::before{content:"";position:absolute;inset:0 auto 0 0;width:90px;background:linear-gradient(90deg,var(--lv-bg),transparent)}
+.gauge{position:relative;display:grid;justify-items:center;gap:4px}
+.gauge svg{width:60px;height:60px;transform:rotate(-90deg)}
+.gauge .trk{fill:none;stroke:color-mix(in oklch,var(--lv) 18%,transparent);stroke-width:6}
+.gauge .val{fill:none;stroke:var(--lv);stroke-width:6;stroke-linecap:round}
+.gauge .n{position:absolute;top:0;left:50%;transform:translateX(-50%);width:60px;height:60px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;color:var(--lv);font-variant-numeric:tabular-nums}
+.gauge .n small{font-size:10px;font-weight:600;color:var(--muted);margin:5px 0 0 1px}
+.gauge .lab{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--lv);white-space:nowrap}
+.res .cross{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;font-size:14.5px}
+.res .cross b{font-weight:700}
+.res .x{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:var(--card-2);color:var(--muted);font-size:12px;font-weight:700;flex:none}
+.res .ctr{color:var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0;padding:0;list-style:none}
+.chips li{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;padding:5px 10px 5px 8px;border-radius:99px;background:var(--mauve-bg);color:var(--ink)}
+.chips li::before{content:"";width:14px;height:14px;border-radius:50%;background:var(--mauve) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 12.5 4 4 8-9'/%3E%3C/svg%3E") center/9px no-repeat;flex:none}
+@media (max-width:560px){.res{grid-template-columns:64px minmax(0,1fr);gap:12px;padding:12px}.res::before{width:76px}}
 .mx td,.mx th{text-align:center} .mx td:first-child,.mx th:first-child{text-align:left}
 .cell{display:grid;place-items:center;min-width:46px;height:30px;border-radius:6px;font-weight:700;font-size:12px;font-variant-numeric:tabular-nums}
 .quiz{display:flex;flex-direction:column;gap:8px}
@@ -127,7 +143,9 @@ function vAuto(){
     <h3 style="margin-bottom:4px">3. Ce qui ressort</h3>
     ${!any?'<p class="muted">Renseignez au moins un symptôme pour voir les résultats.</p>':`
     ${R.orientationMedicale?'<div class="alert" style="margin-block:8px"><b>Avis médical conseillé.</b> Des palpitations fréquentes ou des saignements très abondants justifient de consulter votre médecin traitant ou votre gynécologue, indépendamment du travail.</div>':''}
-    ${R.resultats.length?R.resultats.map(r=>`<div class="res"><span class="pill ${r.niveau==='prioritaire'?'bad':'warn'}">${r.niveau==='prioritaire'?'Prioritaire':'À discuter'}</span><div><b>${esc(r.symptome)}</b> × ${esc(r.contrainte)} <span class="muted small">(score ${r.score})</span><ul>${r.pistes.map(p=>`<li>${esc(p)}</li>`).join('')}</ul></div></div>`).join('')
+    ${R.resultats.length?'<div class="res-list">'+R.resultats.map(r=>{const prio=r.niveau==='prioritaire', C=2*Math.PI*24, d=Math.min(r.score,6)/6*C;
+      return `<div class="res ${prio?'prio':''}"><div class="gauge" role="img" aria-label="Score ${r.score} sur 6, ${prio?'prioritaire':'à discuter'}"><svg viewBox="0 0 60 60"><circle class="trk" cx="30" cy="30" r="24"/><circle class="val" cx="30" cy="30" r="24" stroke-dasharray="${d} ${C}"/></svg><span class="n">${r.score}<small>/6</small></span><span class="lab">${prio?'Prioritaire':'À discuter'}</span></div>
+      <div><div class="cross"><b>${esc(r.symptome)}</b><span class="x" aria-hidden="true">×</span><span class="ctr">${esc(r.contrainte)}</span></div><ul class="chips">${r.pistes.map(p=>`<li>${esc(p)}</li>`).join('')}</ul></div></div>`;}).join('')+'</div>'
       :'<p class="muted">Pas de croisement marqué avec votre poste. Si les symptômes vous gênent, parlez-en quand même : à votre médecin, ou au service de santé au travail.</p>'}
     <details style="margin-top:10px"><summary style="cursor:pointer;font-weight:700">Ma fiche pour la visite</summary><div class="fiche" id="fiche" tabindex="0" style="margin-top:8px">${esc(fiche(R))}</div><button class="btn sm" id="cp" style="margin-top:8px">Copier la fiche</button></details>
     <div class="secret" style="margin-top:12px"><b>Vous pouvez demander à voir le médecin ou l'infirmier·e du travail à tout moment</b>, sans passer par votre employeur (art. R4624-34 du Code du travail). Ils sont tenus au secret médical.</div>

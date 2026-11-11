@@ -18,6 +18,8 @@
   --ink:oklch(23% .03 258); --muted:oklch(50% .02 258);
   --ok:oklch(64% .15 150); --warn:oklch(78% .15 85); --urg:oklch(68% .17 50); --bad:oklch(60% .2 27);
   --shadow:0 1px 2px rgb(12 30 60/.05),0 18px 40px -20px rgb(12 30 60/.25);
+  --elev:0 1px 2px rgb(12 30 60/.06),0 6px 16px -4px rgb(12 30 60/.07),0 22px 44px -24px rgb(12 30 60/.2);
+  --elev-hover:0 2px 4px rgb(12 30 60/.06),0 14px 28px -8px rgb(12 30 60/.13),0 34px 60px -28px rgb(12 30 60/.3);
 }
 html{scroll-behavior:smooth}
 body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;overflow-x:hidden}
@@ -143,27 +145,34 @@ section{padding:80px 0}
 .filters button.on{background:var(--navy);border-color:var(--navy);color:#fff}
 .filters button span{opacity:.6;margin-left:4px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px}
-.card{position:relative;background:#fff;border:1px solid var(--line);border-radius:20px;padding:24px;text-decoration:none;display:flex;flex-direction:column;transition:transform .3s,box-shadow .3s,border-color .3s;overflow:hidden}
-.card::before{content:'';position:absolute;inset:0 0 auto;height:4px;background:var(--a)}
-.card:hover{transform:translateY(-5px);box-shadow:var(--shadow);border-color:color-mix(in oklch,var(--a) 40%,var(--line))}
-.card .top{display:flex;align-items:center;gap:12px;margin-bottom:12px}
-.card .ic{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;font-size:22px;background:color-mix(in oklch,var(--a) 12%,#fff)}
+.card{position:relative;background:#fff;border:0;border-radius:20px;padding:24px;text-decoration:none;display:flex;flex-direction:column;transition:transform .3s,box-shadow .3s;overflow:hidden;box-shadow:var(--elev)}
+.card:hover{transform:translateY(-5px);box-shadow:var(--elev-hover)}
+.card .top{display:flex;align-items:center;gap:14px;margin-bottom:14px;padding-right:84px}
+.card .ic,.persona .e{position:relative;width:50px;height:50px;border-radius:15px;display:grid;place-items:center;font-size:22px;flex:none;color:#fff;
+  background:linear-gradient(145deg,color-mix(in oklch,var(--a) 70%,white),var(--a) 55%,color-mix(in oklch,var(--a) 80%,black));
+  box-shadow:inset 0 1px 0 rgb(255 255 255/.4),inset 0 -2px 6px rgb(0 0 0/.12),0 10px 18px -10px var(--a)}
+.card .ic::after,.persona .e::after{content:'';position:absolute;inset:3px 3px 50%;border-radius:12px 12px 7px 7px;background:linear-gradient(rgb(255 255 255/.22),transparent);pointer-events:none}
+.card .ic svg,.persona .e svg{position:relative;z-index:1}
 .card h3{font-size:17px;line-height:1.25}
 .card .dom{font-size:11.5px;font-weight:600;color:var(--a)}
 .card p{font-size:13.5px;color:var(--muted);margin-bottom:12px}
 .card ul{list-style:none;font-size:12.5px;color:var(--muted);display:grid;gap:4px;margin-bottom:16px}
-.card li::before{content:'✓';color:var(--teal);font-weight:700;margin-right:7px}
+.card li{display:grid;grid-template-columns:16px 1fr;gap:6px;align-items:start}
+.card li::before{content:'';width:14px;height:14px;margin-top:2px;border-radius:50%;background:color-mix(in oklch,var(--a) 14%,#fff) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23334' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 12.5 4 4 8-9'/%3E%3C/svg%3E") center/9px no-repeat}
 .card .go{margin-top:auto;font-size:13px;font-weight:600;color:var(--a)}
-.card .st{position:absolute;top:18px;right:18px;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px}
+.card .st{position:absolute;top:20px;right:20px;font-size:10.5px;font-weight:700;padding:4px 10px 4px 9px;border-radius:20px;display:inline-flex;align-items:center;gap:5px;letter-spacing:.02em}
+.card .st::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.8}
 .st.proto{background:oklch(95% .05 150);color:oklch(42% .12 150)}
-.st.new{background:var(--orange);color:#fff}
+.st.new{background:oklch(95% .05 55);color:oklch(52% .16 45)}
 .st.plan{background:oklch(96% .06 90);color:oklch(48% .12 75)}
 .card.hide{display:none}
 
 /* ---------- POUR QUI ---------- */
 .personas{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:30px}
-.persona{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px}
-.persona .e{font-size:28px}
+.persona{background:#fff;border:0;border-radius:20px;padding:24px 20px;box-shadow:var(--elev);transition:transform .3s,box-shadow .3s}
+.persona:hover{transform:translateY(-4px);box-shadow:var(--elev-hover)}
+.persona .e{margin:0 auto}
+.persona:nth-child(1){--a:oklch(52% .17 258)}.persona:nth-child(2){--a:oklch(58% .17 15)}.persona:nth-child(3){--a:oklch(52% .1 182)}.persona:nth-child(4){--a:oklch(50% .2 295)}
 .persona h4{margin:8px 0 6px;font-size:15px}
 .persona p{font-size:13px;color:var(--muted)}
 
@@ -303,10 +312,10 @@ footer a{color:var(--teal);text-decoration:none}
   <div class="kicker">Pour qui ?</div>
   <h2 class="h2">Pensé pour ceux qui font la prévention</h2>
   <div class="personas">
-    <div class="persona fade"><div class="e">🦺</div><h4>Préventeur · HSE</h4><p>DUERP, PAPRIPACT, VGP, coactivité : le pilotage quotidien.</p></div>
-    <div class="persona fade"><div class="e">🩺</div><h4>Infirmière d’entreprise</h4><p>Registre des soins, trousses et DAE, couverture SST, actions santé.</p></div>
-    <div class="persona fade"><div class="e">👩‍⚕️</div><h4>Médecin du travail · SPSTI</h4><p>Une vision partagée des risques et des expositions de l’entreprise.</p></div>
-    <div class="persona fade"><div class="e">📈</div><h4>Direction · RH · RSE</h4><p>Indicateurs TF/TG, conformité ICPE, reporting RSE exportable.</p></div>
+    <div class="persona fade"><div class="e" data-p="epi"></div><h4>Préventeur · HSE</h4><p>DUERP, PAPRIPACT, VGP, coactivité : le pilotage quotidien.</p></div>
+    <div class="persona fade"><div class="e" data-p="inf"></div><h4>Infirmière d’entreprise</h4><p>Registre des soins, trousses et DAE, couverture SST, actions santé.</p></div>
+    <div class="persona fade"><div class="e" data-p="med"></div><h4>Médecin du travail · SPSTI</h4><p>Une vision partagée des risques et des expositions de l’entreprise.</p></div>
+    <div class="persona fade"><div class="e" data-p="atmp"></div><h4>Direction · RH · RSE</h4><p>Indicateurs TF/TG, conformité ICPE, reporting RSE exportable.</p></div>
   </div>
 </div></section>
 
@@ -419,27 +428,8 @@ const MODULES = [
 const ST = { proto:['proto','Prototype'], new:['new','Nouveau'], plan:['plan','À venir'] };
 document.getElementById('nbMod').textContent = MODULES.length;
 
-/* ---------- 2. Cartes + filtres ---------- */
-const grid = document.getElementById('grid');
-grid.innerHTML = MODULES.map(m => {
-  const D = DOMAINS[m.dom];
-  return `<a class="card fade" data-dom="${m.dom}" href="${m.href}" style="--a:${D.color}">
-    <span class="st ${ST[m.st][0]}">${ST[m.st][1]}</span>
-    <div class="top"><div class="ic">${m.ic}</div><div><h3>${m.t}</h3><div class="dom">${D.label}</div></div></div>
-    <p>${m.p}</p><ul>${m.f.map(x=>`<li>${x}</li>`).join('')}</ul><span class="go">Ouvrir le module →</span></a>`;
-}).join('');
-const filters = document.getElementById('filters');
-filters.innerHTML = `<button class="on" data-f="">Tous <span>${MODULES.length}</span></button>` +
-  Object.entries(DOMAINS).map(([k,D]) => `<button data-f="${k}">${D.label} <span>${MODULES.filter(m=>m.dom===k).length}</span></button>`).join('');
-filters.onclick = e => {
-  const b = e.target.closest('button'); if (!b) return;
-  filters.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
-  grid.querySelectorAll('.card').forEach(c => c.classList.toggle('hide', !!b.dataset.f && c.dataset.dom !== b.dataset.f));
-};
-
-/* ---------- 3. Carte écosystème (moniteur central + modules en couronne) ----------
-   Pictogrammes au trait (grille 24 × 24) : une seule famille graphique pour toute la couronne.
-   Pour un nouveau module : ajouter son id ici, sinon l'emoji du module est utilisé. */
+/* ---------- Pictogrammes (cartes, couronne, publics) ----------
+   Grille 24 × 24, une seule famille graphique. Pour un nouveau module : ajouter son id ici, sinon son emoji est utilisé. */
 const PICTOS = {
   atmp:  '<path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/><path d="M15 8h4v4"/>',
   duerp: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="m9 15 2 2 4-4"/>',
@@ -454,8 +444,37 @@ const PICTOS = {
   coact: '<circle cx="9" cy="7" r="3.5"/><path d="M2 21v-1.5A4.5 4.5 0 0 1 6.5 15h5a4.5 4.5 0 0 1 4.5 4.5V21"/><path d="M16 3.5a3.5 3.5 0 0 1 0 7M22 21v-1.5a4.5 4.5 0 0 0-3-4.2"/>',
   env:   '<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10z"/><path d="M2 21c0-3 1.9-5.4 5.1-6.4"/>',
   chim:  '<path d="M9 3h6M10 3v6L4.6 18.4A2 2 0 0 0 6.3 21.5h11.4a2 2 0 0 0 1.7-3.1L14 9V3"/><path d="M7.5 15h9"/>',
-  radon: '<circle cx="12" cy="12" r="1.7"/><path d="M10.40 9.23L7.25 3.77A9.5 9.5 0 0 1 16.75 3.77L13.60 9.23A3.2 3.2 0 0 0 10.40 9.23ZM15.20 12.00L21.50 12.00A9.5 9.5 0 0 1 16.75 20.23L13.60 14.77A3.2 3.2 0 0 0 15.20 12.00ZM10.40 14.77L7.25 20.23A9.5 9.5 0 0 1 2.50 12.00L8.80 12.00A3.2 3.2 0 0 0 10.40 14.77Z"/>'
+  radon: '<circle cx="12" cy="12" r="1.7"/><path d="M10.40 9.23L7.25 3.77A9.5 9.5 0 0 1 16.75 3.77L13.60 9.23A3.2 3.2 0 0 0 10.40 9.23ZM15.20 12.00L21.50 12.00A9.5 9.5 0 0 1 16.75 20.23L13.60 14.77A3.2 3.2 0 0 0 15.20 12.00ZM10.40 14.77L7.25 20.23A9.5 9.5 0 0 1 2.50 12.00L8.80 12.00A3.2 3.2 0 0 0 10.40 14.77Z"/>',
+  med:   '<circle cx="12" cy="7" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/><path d="M12 15v5M9.5 17.5h5"/>'
 };
+/* Pictogramme bicolore : aplat translucide + trait (même tracé). */
+function picto(id, size){
+  const p = PICTOS[id]; if (!p) return '';
+  return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true"><g fill="currentColor" opacity=".26" stroke="none">${p}</g><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${p}</g></svg>`;
+}
+
+/* ---------- 2. Cartes + filtres ---------- */
+document.querySelectorAll('.persona .e[data-p]').forEach(e => e.innerHTML = picto(e.dataset.p, 26));
+const grid = document.getElementById('grid');
+grid.innerHTML = MODULES.map(m => {
+  const D = DOMAINS[m.dom];
+  return `<a class="card fade" data-dom="${m.dom}" href="${m.href}" style="--a:${D.color}">
+    <span class="st ${ST[m.st][0]}">${ST[m.st][1]}</span>
+    <div class="top"><div class="ic">${PICTOS[m.id] ? picto(m.id,26) : m.ic}</div><div><h3>${m.t}</h3><div class="dom">${D.label}</div></div></div>
+    <p>${m.p}</p><ul>${m.f.map(x=>`<li>${x}</li>`).join('')}</ul><span class="go">Ouvrir le module →</span></a>`;
+}).join('');
+const filters = document.getElementById('filters');
+filters.innerHTML = `<button class="on" data-f="">Tous <span>${MODULES.length}</span></button>` +
+  Object.entries(DOMAINS).map(([k,D]) => `<button data-f="${k}">${D.label} <span>${MODULES.filter(m=>m.dom===k).length}</span></button>`).join('');
+filters.onclick = e => {
+  const b = e.target.closest('button'); if (!b) return;
+  filters.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+  grid.querySelectorAll('.card').forEach(c => c.classList.toggle('hide', !!b.dataset.f && c.dataset.dom !== b.dataset.f));
+};
+
+/* ---------- 3. Carte écosystème (moniteur central + modules en couronne) ----------
+   Pictogrammes au trait (grille 24 × 24) : une seule famille graphique pour toute la couronne.
+   Pour un nouveau module : ajouter son id ici, sinon l'emoji du module est utilisé. */
 (function hub(){
   const svg = document.getElementById('hub'), cx = 490, cy = 300, rx = 400, ry = 245, n = MODULES.length;
   const defs = Object.entries(DOMAINS).map(([k,D]) =>
@@ -472,7 +491,7 @@ const PICTOS = {
     const dx = x-ex, dy = y-ey, L = Math.hypot(dx,dy);   // le rayon s'arrête au bord du halo
     s += `<line class="spoke" style="--c:${c}" x1="${ex}" y1="${ey}" x2="${x-dx/L*44}" y2="${y-dy/L*44}"/>`;
     const picto = PICTOS[m.id]
-      ? `<g transform="translate(${x-13} ${y-13}) scale(1.083)" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${PICTOS[m.id]}</g>`
+      ? `<g transform="translate(${x-13} ${y-13}) scale(1.083)" color="#fff"><g fill="currentColor" opacity=".26">${PICTOS[m.id]}</g><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${PICTOS[m.id]}</g></g>`
       : `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central" style="font-size:24px">${m.ic}</text>`;
     return `<a href="${m.href}" class="node" style="--c:${c}"><title>${m.t}</title>
       <circle class="halo" cx="${x}" cy="${y}" r="40"/>

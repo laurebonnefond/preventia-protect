@@ -92,6 +92,10 @@ body.app .back,body.app .pp-top .pill{display:none}
 @media (max-width:700px){.partage{grid-template-columns:1fr}}
 .qrbox{background:#fff;padding:10px;border-radius:12px;border:1px solid var(--line);width:max-content}
 .lien{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--card-2);padding:4px 8px;border-radius:6px;word-break:break-all}
+/* Jeu Super Maria (hébergé sur PréventIA-LaB, affiché dans un cadre) */
+.jeu-cadre{position:relative;width:100%;aspect-ratio:860/600;max-height:78vh;border-radius:var(--r);overflow:hidden;background:#1b0b18;box-shadow:var(--shadow)}
+.jeu-cadre iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+@media (max-width:700px){.jeu-cadre{aspect-ratio:auto;height:78vh}}
 #affichette{display:none}
 @media print{body.print-aff>*:not(#affichette){display:none!important}body.print-aff #affichette{display:block}}
 #affichette{font-family:var(--f-body,system-ui);text-align:center;padding:30px}
@@ -172,15 +176,15 @@ const bars=(rows,tot)=>rows.map(r=>`<div class="hbar"><span>${esc(r.l)}</span><s
    Seules les rubriques personnelles sont visibles ; rien ne quitte le téléphone. */
 const APP=new URLSearchParams(location.search).has('app')||matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 const LIEN_APP=new URL('seinprev.html?app=1#connaitre',location.href).href;
-const TABS=APP?[['connaitre','Connaître mes seins'],['parcours','Mon dépistage']]
-  :[['bord','Tableau de bord'],['actions','Actions Octobre rose'],['enquete','Enquête anonyme'],['suivi','Suivi infirmier'],['parcours','Mon parcours'],['connaitre','Connaître mes seins']];
+const TABS=APP?[['connaitre','Connaître mes seins'],['parcours','Mon dépistage'],['jeu','Super Maria']]
+  :[['bord','Tableau de bord'],['actions','Actions Octobre rose'],['enquete','Enquête anonyme'],['suivi','Suivi infirmier'],['parcours','Mon parcours'],['connaitre','Connaître mes seins'],['jeu','Jeu Super Maria']];
 if(APP){document.body.classList.add('app');document.title='Mes seins';
   if('serviceWorker' in navigator)navigator.serviceWorker.register('sw-seinprev.js').catch(()=>{});}
 let installPrompt=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;if(APP)route();});
 function route(){const h=(location.hash||'#'+TABS[0][0]).slice(1);const cur=TABS.some(t=>t[0]===h)?h:TABS[0][0];
   $('#tabs').innerHTML=TABS.map(([k,l])=>`<a href="#${k}" ${k===cur?'aria-current="page"':''}>${l}</a>`).join('');
-  ({bord:vBord,actions:vActions,enquete:vEnquete,suivi:vSuivi,parcours:vParcours,connaitre:vConnaitre})[cur]();}
+  ({bord:vBord,actions:vActions,enquete:vEnquete,suivi:vSuivi,parcours:vParcours,connaitre:vConnaitre,jeu:vJeu})[cur]();}
 window.addEventListener('hashchange',()=>{route();scrollTo(0,0);});
 const intro=(e,t,p,ref)=>`<div class="intro"><div><p class="eyebrow">${e}</p><h2>${t}</h2><p class="muted">${p}</p></div>${ref?`<div class="ref">${ref}</div>`:''}</div>`;
 const demoBar=()=>S.demo?`<div class="demo"><span><b>Données d'exemple fictives.</b> Explorez l'outil, puis démarrez votre propre suivi.</span><span class="sp"></span><button class="btn sm" id="newS">Démarrer un suivi vierge</button></div>`:'';
@@ -225,7 +229,7 @@ function vBord(){
 /* ---------- 2. Actions ---------- */
 function vActions(){
   const L=[...S.actions].sort((a,b)=>b.date.localeCompare(a.date));
-  app.innerHTML=`${demoBar()}${intro('Campagne','Actions Octobre rose',"Consignez chaque action de sensibilisation : elles alimentent le bilan de la campagne et le programme de prévention.",'<b>Idée :</b> les jeux Super Maria, Pink Man et Prévent\'Invaders de PréventIA-LaB fonctionnent bien sur un stand.')}
+  app.innerHTML=`${demoBar()}${intro('Campagne','Actions Octobre rose',"Consignez chaque action de sensibilisation : elles alimentent le bilan de la campagne et le programme de prévention.",'<b>Idée :</b> le <a href="#jeu">jeu Super Maria</a> fonctionne très bien sur un stand, ou sur le téléphone des salariées grâce à son QR code.')}
   <div class="grid g2" style="align-items:start">
     <form class="card grid" id="fa"><h3>Nouvelle action</h3>
       <div class="grid g2"><label class="f">Date<input class="i" type="date" name="date" required value="${new Date().toISOString().slice(0,10)}"></label>
@@ -524,6 +528,25 @@ const ETAPES=[
  {t:'L\'autre côté, puis noter',ill:null,p:['Recommencez de l\'autre côté. Vous pouvez aussi palper debout sous la douche : les doigts savonnés glissent mieux.','Notez le résultat dans votre journal : c\'est la comparaison d\'un mois sur l\'autre qui permet de repérer un changement.']}
 ];
 
+/* ---------- Jeu Super Maria ----------
+   Le jeu vit dans PréventIA-LaB (une seule version à maintenir, statistiques de parties conservées).
+   Ici : affichage dans un cadre, mode plein écran pour un stand, QR code pour le téléphone. */
+const JEU_URL='https://laurebonnefond.github.io/PreventIA-LaB/jeux/super-maria/index.html';
+function vJeu(){
+  app.innerHTML=`${intro(APP?'Apprendre en s\'amusant':'Octobre rose · stand et sensibilisation','Super Maria',"Un jeu de plateforme rétro : Maria attrape les gestes qui protègent (dépistage, activité physique…) et esquive les facteurs de risque évitables. Les chiffres viennent de l'INCa et de Santé publique France.",
+    '<b>Commandes :</b> flèches ou espace au clavier ; sur téléphone, toucher l\'écran pour sauter.')}
+  <div class="jeu-cadre"><iframe src="${JEU_URL}" title="Jeu Super Maria — Octobre rose" allow="fullscreen; autoplay" loading="lazy"></iframe></div>
+  <div class="row" style="margin-top:12px"><a class="btn" href="${JEU_URL}" target="_blank" rel="noopener">⛶ Jouer en plein écran</a>
+    ${APP?'':'<button class="btn ghost" id="qrJeuBtn">QR code pour jouer sur son téléphone</button>'}<span class="sp"></span><a class="btn ghost" href="#connaitre">Apprendre le geste d\'auto-observation</a></div>
+  ${APP?'':`<div class="card" id="qrJeuCard" hidden><div class="partage"><div class="qrbox" id="qrJeu"></div><div class="grid" style="gap:8px">
+    <h3>Faire jouer les salariées sur leur téléphone</h3><p class="small">Affichez ce QR code sur le stand ou dans une salle de pause. Le jeu s'ouvre directement, sans installation ni compte.</p>
+    <p class="small">Lien : <span class="lien">${JEU_URL}</span></p>
+    <p class="small muted">Pensez à consigner l'animation dans « Actions Octobre rose » pour le bilan de la campagne.</p></div></div></div>`}`;
+  const b=$('#qrJeuBtn');
+  if(b)b.onclick=async()=>{const c=$('#qrJeuCard');c.hidden=!c.hidden;if(!c.hidden&&!$('#qrJeu').innerHTML){
+    qrLib||=new Promise((ok,ko)=>{const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';sc.onload=ok;sc.onerror=ko;document.head.appendChild(sc);});
+    try{await qrLib;new QRCode($('#qrJeu'),{text:JEU_URL,width:170,height:170});}catch(_){$('#qrJeu').textContent='QR code indisponible';}}};
+}
 /* Bandeau « Installer sur mon téléphone » (mode application) */
 function blocInstall(){
   if(!APP||matchMedia('(display-mode: standalone)').matches||navigator.standalone)return '';

@@ -57,6 +57,20 @@
 .obs ul,.ul{margin:8px 0 0;padding-left:1.1rem;display:grid;gap:6px;font-size:.92rem}
 .obs .card{border:0} .obs .o-ok{background:var(--ok-bg)} .obs .o-warn{background:var(--warn-bg)} .obs .o-bad{background:var(--bad-bg)}
 .obs .o-ok .eyebrow{color:var(--ok)} .obs .o-bad .eyebrow{color:var(--bad)} .obs h3{margin-top:2px}
+/* Illustrations des affiches Octobre rose du SPSTI 23/87 */
+.gestes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+@media (max-width:760px){.gestes{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.gestes figure,.signes figure{margin:0;display:grid;justify-items:center;gap:8px;text-align:center}
+.gestes img{width:100%;max-width:170px;height:auto;aspect-ratio:1;object-fit:contain}
+.gestes .n{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--rose);color:#fff;font-weight:700;font-size:13px}
+.gestes figcaption{font-size:.88rem} .gestes figcaption b{display:block}
+.signes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+@media (max-width:760px){.signes{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.signes img{width:96px;height:96px;object-fit:contain}
+.signes figcaption{font-size:.85rem;font-weight:600}
+.credit{font-size:11.5px;color:var(--muted);margin-top:10px}
+.duo-img{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:#fff;border-radius:14px;padding:8px}
+.duo-img img{width:100%;height:auto;display:block}
 .carte{width:100%;max-width:380px;height:auto;display:block;margin-inline:auto}
 .carte .zn{fill:var(--card-2);stroke:var(--card);stroke-width:2;cursor:pointer;transition:fill .15s}
 .carte .zn:hover{fill:var(--rose-bg)} .carte .zn.on{fill:var(--rose)}
@@ -397,7 +411,8 @@ const torse=(x,bras)=>{
 };
 /* Illustrations raster (img/auto-*.webp) : prioritaires sur les schémas SVG ci-dessous */
 const IMG={miroir:'Trois positions devant le miroir : bras le long du corps, bras levés, mains sur les hanches',allongee:'Allongée sur le dos, coussin sous l\'épaule, bras derrière la tête, palpation de l\'aisselle',doigts:'Trois doigts à plat sur le sein, petits mouvements circulaires',pressions:'Trois niveaux de pression : légère, moyenne, profonde jusqu\'aux côtes',zone:'Zone à examiner : de la clavicule au sillon sous les seins, du sternum à l\'aisselle',parcours:'Parcours en bandes verticales, ou en spirale'};
-const illHtml=k=>IMG[k]?`<div class="illbox photo"><img src="img/auto-${k}.webp" alt="${IMG[k]}" width="960" height="720" loading="lazy"></div>`:`<div class="illbox">${ILL[k]}</div>`;
+const IMG_SPSTI={aisselle:[['aisselle','Palpation de l\'aisselle par petits cercles'],['clavicule','Palpation du creux au-dessus de la clavicule']]};
+const illHtml=k=>IMG_SPSTI[k]?`<div class="duo-img">${IMG_SPSTI[k].map(([f,alt])=>`<img src="img/spsti-palp-${f}.webp" alt="${alt}" width="360" height="360" loading="lazy">`).join('')}</div>`:IMG[k]?`<div class="illbox photo"><img src="img/auto-${k}.webp" alt="${IMG[k]}" width="960" height="720" loading="lazy"></div>`:`<div class="illbox">${ILL[k]}</div>`;
 const ILL={
  miroir:`<svg viewBox="0 0 330 140" class="ill" role="img" aria-label="Trois positions devant le miroir"><g>${torse(55,'bas')}${torse(165,'haut')}${torse(275,'hanches')}</g>
    <g class="lab"><text x="55" y="132">Bras le long du corps</text><text x="165" y="132">Bras levés</text><text x="275" y="132">Mains sur les hanches</text></g></svg>`,
@@ -454,6 +469,20 @@ function carte(sel,ro){
 
 let sub='quand', step=0, draft=null;
 const SUBS=[['quand','Quand'],['comment','Comment, pas à pas'],['observer','Quoi observer'],['journal','Mon journal'],['gardefous','Garde-fous']];
+/* Illustrations reprises des affiches Octobre rose du SPSTI 23/87 (img/spsti-*.webp) */
+const CREDIT_SPSTI='<p class="credit">Illustrations : affiches Octobre rose du SPSTI 23/87 (Creuse · Haute-Vienne).</p>';
+const GESTES_SPSTI=`<div class="card"><p class="eyebrow">Une fois par mois</p><h3 class="disp" style="margin-bottom:12px">L'essentiel en 4 gestes</h3><div class="gestes">${[
+  ['nuque','Une main derrière la nuque','Le sein s\'étale sur le thorax et se palpe mieux.'],
+  ['doigts','Trois doigts à plat','Avec la pulpe des doigts de l\'autre main, petits cercles doux sur tout le sein, mamelon compris.'],
+  ['aisselle','L\'aisselle','Petits mouvements circulaires dans le creux de l\'aisselle.'],
+  ['clavicule','Le creux de la clavicule','Au-dessus et au-dessous de la clavicule, à la recherche d\'une grosseur.']
+ ].map(([f,t,d],i)=>`<figure><img src="img/spsti-palp-${f}.webp" alt="${t}" width="360" height="360" loading="lazy"><span class="n">${i+1}</span><figcaption><b>${t}</b>${d}</figcaption></figure>`).join('')}</div>
+ <p class="muted small" style="margin-top:12px">Le pas à pas détaillé ci-dessous complète ces gestes : observation au miroir, trois pressions, parcours complet.</p>${CREDIT_SPSTI}</div>`;
+const SIGNES_SPSTI=`<div class="card"><p class="eyebrow">À connaître</p><h3 class="disp" style="margin-bottom:4px">Les signes possibles du cancer du sein</h3>
+ <p class="muted small" style="margin-bottom:14px">Les signes les plus fréquents à surveiller. Chaque sein est unique : c'est un changement par rapport à d'habitude qui doit amener à consulter.</p><div class="signes">${[
+  ['masse','Une boule ou une masse nouvelle'],['forme','Un changement de forme ou de taille'],['fossettes','Une fossette, un creux, un pli vers l\'intérieur'],['rougeurs','Une rougeur'],
+  ['peau','Une peau épaissie, « peau d\'orange »'],['ganglions','Une grosseur dans l\'aisselle (ganglion)'],['ecoulement','Un écoulement du mamelon'],['mamelon','Un mamelon ou une aréole qui change']
+ ].map(([f,t])=>`<figure><img src="img/spsti-signe-${f}.webp" alt="" width="240" height="240" loading="lazy"><figcaption>${t}</figcaption></figure>`).join('')}</div>${CREDIT_SPSTI}</div>`;
 const ETAPES=[
  {t:'Choisir le bon moment',ill:null,p:['Une fois par mois, environ une semaine après le début des règles : les seins sont moins tendus et moins granuleux.','Sans règles (ménopause, contraception continue, grossesse) : une date fixe, par exemple le 1er du mois.','Prévoyez 10 minutes au calme. Le but n\'est pas de « chercher un cancer », mais de connaître vos seins pour repérer ce qui change.']},
  {t:'Observer devant le miroir',ill:'miroir',p:['Torse nu, bien éclairée, dans trois positions : bras le long du corps, bras levés au-dessus de la tête, puis mains appuyées sur les hanches en contractant les muscles de la poitrine.','Comparez avec votre aspect habituel : forme, taille, peau, mamelons. Une légère différence entre les deux seins est fréquente et normale si elle est ancienne.']},
@@ -485,14 +514,14 @@ function vConnaitre(){
         <div><span class="dot"></span><b>De ${DEP.AGE_MIN} à ${DEP.AGE_MAX} ans</b><p class="small">Mammographie de dépistage tous les 2 ans, prise en charge à 100 %.</p></div>
         <div><span class="dot alt"></span><b>Risque élevé</b><p class="small">Antécédent, mutation, radiothérapie du thorax : suivi personnalisé (voir « Mon parcours »).</p></div>
        </div></div></div>`,
-   comment:()=>{const E=ETAPES[step];return `<div class="card stepper">
+   comment:()=>{const E=ETAPES[step];return `${GESTES_SPSTI}<div class="card stepper">
        <div class="row"><span class="eyebrow num">Étape ${step+1} / ${ETAPES.length}</span><span class="sp"></span><span class="muted small">≈ 10 minutes en tout</span></div>
        <div class="prog" aria-hidden="true">${ETAPES.map((_,i)=>`<i class="${i<=step?'on':''}"></i>`).join('')}</div>
        <div class="st ${E.ill?'':'noill'}">${E.ill?illHtml(E.ill):''}<div class="grid" style="gap:8px;align-content:start"><h3 class="disp">${E.t}</h3>${E.p.map(p=>`<p>${p}</p>`).join('')}</div></div>
        <div class="row"><button class="btn ghost" id="sPrev" ${step?'':'disabled'}>Étape précédente</button><span class="sp"></span>
          ${step<ETAPES.length-1?'<button class="btn" id="sNext">Étape suivante</button>':'<button class="btn" id="sJour">Noter le résultat</button>'}</div></div>
      <details class="card"><summary><b>Voir toutes les étapes sur une page</b></summary><ol class="steps" style="margin-top:12px">${ETAPES.map((e,i)=>`<li><span class="n">${i+1}</span><div><b>${e.t}.</b> ${e.p.join(' ')}</div></li>`).join('')}</ol></details>`;},
-   observer:()=>`<div class="grid g3 obs">
+   observer:()=>`${SIGNES_SPSTI}<div class="grid g3 obs">
      <div class="card o-ok"><p class="eyebrow">Souvent normal</p><h3>Ce que l'on sent sans s'inquiéter</h3><ul>
        <li>Une texture granuleuse ou bosselée, la même des deux côtés.</li><li>Une crête ferme en bas du sein (sillon sous-mammaire) et les côtes.</li>
        <li>Des seins gonflés, tendus ou sensibles avant les règles.</li><li>Une différence de taille ancienne entre les deux seins.</li>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Enquête anonyme — PréventIA Protect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap">
+<link rel="stylesheet" href="femme.css">
+<style>
+/* Page de réponse des salariées (lien ou QR code d'une campagne) — mobile d'abord, une question par écran */
+:root{--acc:var(--endo)}
+body{min-height:100dvh;display:flex;flex-direction:column}
+.top{background:var(--navy);color:#fff;padding:14px max(16px,env(safe-area-inset-left,0px))}
+.top .in{max-width:640px;margin:0 auto;display:flex;gap:10px;align-items:center}
+.top small{display:block;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;opacity:.65}
+.top b{font-family:var(--f-display);font-weight:400;font-size:18px}
+.lock{margin-left:auto;font-size:11px;padding:4px 10px;border-radius:99px;background:rgb(255 255 255/.12);white-space:nowrap}
+#q{flex:1;width:100%;max-width:640px;margin:0 auto;padding:22px max(16px,env(safe-area-inset-left,0px)) 40px;display:flex;flex-direction:column;gap:18px}
+.kq{font-family:var(--f-display);font-size:1.55rem;line-height:1.25}
+.kopts{display:grid;gap:10px}
+.kopts button{border:1.5px solid var(--line);background:var(--card);border-radius:14px;padding:15px 16px;font-size:1.02rem;font-weight:600;text-align:left;display:flex;gap:12px;align-items:center}
+.kopts button[aria-pressed="true"]{border-color:var(--endo);background:var(--endo-bg)}
+.kopts .v{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--card-2);font-weight:700;flex:none}
+.kopts button[aria-pressed="true"] .v{background:var(--endo);color:#fff}
+.kprog{height:6px;background:var(--card-2);border-radius:99px;overflow:hidden}
+.kprog i{display:block;height:100%;background:var(--endo);transition:width .25s}
+.nav{display:flex;gap:10px;justify-content:space-between;margin-top:auto}
+.big{font-size:1.05rem;padding:13px 20px}
+.recap{display:grid;gap:6px;font-size:13.5px}
+.recap div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line);padding-bottom:4px}
+.center{text-align:center;display:grid;gap:12px;justify-items:center}
+.ok-ic{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:var(--ok-bg);color:var(--ok);font-size:30px}
+</style>
+</head>
+<body>
+<header class="top"><div class="in"><div><small>PréventIA Protect · Santé au travail</small><b id="titre">Enquête anonyme</b></div><span class="lock">🔒 Anonyme</span></div></header>
+<main id="q"><p class="muted">Chargement…</p></main>
+
+<script src="enquetes.js"></script>
+<script src="endo-data.js"></script>
+<script>
+(function () {
+  const $ = s => document.querySelector(s), Q = $('#q');
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]));
+  const code = (new URLSearchParams(location.search).get('c') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const DEJA = 'pp_enq_fait_' + code;
+  let camp, Qn, i = -1, R = {};
+
+  const ecran = html => { Q.innerHTML = html; scrollTo(0, 0); };
+  const erreur = msg => ecran(`<div class="center" style="margin-top:30px"><h2>Enquête indisponible</h2><p class="muted">${esc(msg)}</p></div>`);
+
+  function get(cle) { const [a, b] = cle.split('.'); return b ? R[a]?.[b] : R[a]; }
+  function set(cle, v) { const [a, b] = cle.split('.'); if (b) { R[a] ||= {}; R[a][b] = v; } else R[a] = v; }
+
+  function accueil() {
+    const qn = Qn;
+    ecran(`<p class="eyebrow">${esc(camp.entreprise || 'Votre entreprise')}</p>
+      <h1 class="kq">${esc(qn.titre)}</h1>
+      <p>${esc(qn.intro)}</p>
+      <div class="secret"><b>Votre anonymat est protégé.</b> Ni votre nom, ni votre adresse e-mail, ni l'heure de réponse ne sont enregistrés. Personne ne peut lire une réponse isolée : les résultats ne sont visibles que regroupés, à partir de ${ENQ.CONFIG.seuil} réponses.</div>
+      <div class="note">Cette enquête n'est <b>pas un dépistage</b> et ne cherche <b>pas de lien de cause avec le travail</b>. Elle aide l'entreprise à adapter l'organisation. Pour votre situation personnelle, parlez-en à votre médecin, à votre gynécologue ou au service de santé au travail.</div>
+      ${localStorage.getItem(DEJA) ? '<p class="muted small">Vous avez déjà répondu depuis cet appareil. Merci ! Vous pouvez fermer cette page.</p>' : ''}
+      <div class="nav"><span></span><button class="btn big" id="go">Commencer</button></div>`);
+    $('#go').onclick = filtre;
+  }
+  function filtre() {
+    ecran(`<div class="kprog"><i style="width:2%"></i></div><h2 class="kq">${esc(Qn.filtre)}</h2>
+      <div class="kopts"><button data-f="oui"><span class="v">✓</span>Oui</button><button data-f="non"><span class="v">✕</span>Non</button></div>`);
+    Q.querySelectorAll('[data-f]').forEach(b => b.onclick = () => b.dataset.f === 'oui' ? (i = 0, question()) :
+      ecran(`<div class="center" style="margin-top:30px"><div class="ok-ic">✓</div><h2>Merci</h2><p class="muted">Cette enquête concerne les personnes qui ont des règles. Aucune réponse n'a été enregistrée.</p></div>`));
+  }
+  function question() {
+    const q = Qn.questions[i], n = Qn.questions.length, v = get(q.cle);
+    let opts;
+    if (q.type === 'niveau') opts = ENDO.NIVEAUX.map((l, k) => `<button data-v="${k}" aria-pressed="${v === k}"><span class="v">${k}</span>${esc(l.slice(4))}</button>`).join('');
+    else if (q.type === 'choix') opts = q.options.map(([k, l]) => `<button data-v="${esc(k)}" aria-pressed="${v === k}">${esc(l)}</button>`).join('');
+    else opts = q.options.map(([k, l]) => `<button data-m="${esc(k)}" aria-pressed="${(v || []).includes(k)}"><span class="v">${(v || []).includes(k) ? '✓' : ''}</span>${esc(l)}</button>`).join('');
+    ecran(`<div class="kprog"><i style="width:${Math.round((i + 1) / (n + 1) * 100)}%"></i></div>
+      <p class="muted small">Question ${i + 1} sur ${n}${q.aide ? ' · ' + esc(q.aide) : ''}</p>
+      <h2 class="kq">${esc(q.label)}</h2><div class="kopts">${opts}</div>
+      <div class="nav"><button class="btn ghost" id="prev">← Retour</button><button class="btn" id="next" ${q.type === 'multi' || v !== undefined ? '' : 'disabled'}>${q.type === 'multi' ? 'Continuer' : 'Suivant'}</button></div>`);
+    Q.querySelectorAll('[data-v]').forEach(b => b.onclick = () => { set(q.cle, q.type === 'niveau' ? +b.dataset.v : b.dataset.v); suivant(); });
+    Q.querySelectorAll('[data-m]').forEach(b => b.onclick = () => {
+      const cur = new Set(get(q.cle) || []); cur.has(b.dataset.m) ? cur.delete(b.dataset.m) : cur.add(b.dataset.m);
+      set(q.cle, [...cur]); question();
+    });
+    $('#prev').onclick = () => { if (i > 0) { i--; question(); } else filtre(); };
+    $('#next').onclick = suivant;
+  }
+  function suivant() {
+    const q = Qn.questions[i]; if (q.type === 'multi' && !get(q.cle)) set(q.cle, []);
+    if (++i < Qn.questions.length) question(); else recap();
+  }
+  function recap() {
+    const rs = ENDO.calculerScores(R.s, R.c);
+    ecran(`<div class="kprog"><i style="width:100%"></i></div><h2 class="kq">Avant d'envoyer</h2>
+      <div class="card recap">${Object.entries(ENDO.MATRICE).map(([k, m]) => `<div><span>${esc(m.court)}</span><b>${R.s?.[k] ?? 0}/3</b></div>`).join('')}
+        <div><span>Contraintes du poste</span><b>${(R.c || []).length}</b></div></div>
+      ${rs.orientationMedicale ? '<div class="alert"><b>Un avis médical est conseillé.</b> Des règles très douloureuses ou des douleurs pelviennes fréquentes ne sont pas « normales » : parlez-en à votre médecin traitant ou à un gynécologue, indépendamment de cette enquête.</div>' : ''}
+      <label class="check"><input type="checkbox" id="ok"> J'accepte que ces réponses, sans nom ni date, rejoignent les résultats regroupés de l'entreprise.</label>
+      <div class="nav"><button class="btn ghost" id="prev">← Modifier</button><button class="btn big" id="send" disabled>Envoyer</button></div><p id="st" class="small"></p>`);
+    $('#ok').onchange = e => $('#send').disabled = !e.target.checked;
+    $('#prev').onclick = () => { i = Qn.questions.length - 1; question(); };
+    $('#send').onclick = async () => {
+      $('#send').disabled = true; $('#st').textContent = 'Envoi…';
+      try {
+        await ENQ.repondre(code, { ...R, v: 1 });
+        try { localStorage.setItem(DEJA, '1'); } catch (_) {}
+        ecran(`<div class="center" style="margin-top:20px"><div class="ok-ic">✓</div><h2>Merci, votre réponse est enregistrée</h2>
+          <p class="muted">Elle a été ajoutée anonymement. Vous pouvez fermer cette page.</p>
+          <div class="secret" style="text-align:left">Vous pouvez demander à voir le <b>médecin ou l'infirmier·e du travail</b> à tout moment, sans passer par votre employeur. Ils sont tenus au secret médical.</div>
+          <a class="btn ghost" href="endoprev.html#auto">Faire mon auto-évaluation personnelle (rien n'est envoyé)</a></div>`);
+      } catch (e) { $('#st').innerHTML = `<span style="color:var(--bad)">⚠ ${esc(e.message)}</span>`; $('#send').disabled = false; }
+    };
+  }
+
+  (async function demarrer() {
+    if (!code) return erreur("Ce lien est incomplet. Demandez le lien ou le QR code à la personne qui organise l'enquête.");
+    try { camp = await ENQ.info(code); } catch (e) { return erreur(e.message); }
+    if (!camp) return erreur("Ce lien ne correspond à aucune enquête.");
+    if (!camp.ouverte) return erreur("Cette enquête est terminée. Merci de votre intérêt.");
+    Qn = ENQ.QUESTIONNAIRES[camp.outil];
+    if (!Qn) return erreur("Questionnaire indisponible.");
+    $('#titre').textContent = Qn.titre;
+    document.title = Qn.titre + ' — enquête anonyme';
+    accueil();
+  })();
+})();
+</script>
+</body>
+</html>

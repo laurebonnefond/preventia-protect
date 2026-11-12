@@ -29,7 +29,7 @@
 .trust svg{width:16px;height:16px;color:oklch(82% .1 0)}
 
 main{padding-block:40px 64px;display:flex;flex-direction:column;gap:22px}
-.duo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-top:-72px;position:relative;z-index:2}
+.duo{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;margin-top:-72px;position:relative;z-index:2}
 @media (max-width:860px){.duo{grid-template-columns:1fr;margin-top:-56px}}
 .tool{position:relative;background:var(--card);border:0;border-radius:22px;padding:26px;box-shadow:0 1px 2px rgb(15 30 60/.06),0 8px 20px -6px rgb(15 30 60/.10),0 30px 60px -28px rgb(15 30 60/.35);text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:14px;min-width:0;overflow:hidden;transition:transform .25s,box-shadow .25s}
 .tool:hover{transform:translateY(-4px);box-shadow:0 2px 4px rgb(15 30 60/.06),0 16px 32px -10px rgb(15 30 60/.16),0 40px 70px -30px rgb(15 30 60/.42)}
@@ -75,7 +75,7 @@ main{padding-block:40px 64px;display:flex;flex-direction:column;gap:22px}
     <nav class="crumb" aria-label="Fil d'Ariane"><a href="../../../index.html">← PréventIA Protect</a><span>Santé</span><span aria-hidden="true">›</span><span>Santé de la femme</span></nav>
     <div class="hero-txt" style="display:flex;flex-direction:column;gap:14px">
       <h1>Des étapes de vie qui se jouent <em>aussi au travail</em></h1>
-      <p class="sub">Suivre le dépistage du cancer du sein et animer Octobre rose. Accompagner la ménopause en adaptant les postes. Des outils pour l'infirmier·e, l'entreprise et chaque salariée.</p>
+      <p class="sub">Suivre le dépistage du cancer du sein et animer Octobre rose. Lever le tabou des règles douloureuses et de l'endométriose. Accompagner la ménopause en adaptant les postes. Des outils pour l'infirmier·e, l'entreprise et chaque salariée.</p>
     </div>
     <div class="trust">
       <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Enquêtes anonymes</span>
@@ -115,6 +115,18 @@ main{padding-block:40px 64px;display:flex;flex-direction:column;gap:22px}
       </ul>
       <div class="who"><span class="chip">Salariées</span><span class="chip">Infirmier·e</span><span class="chip">Employeur</span></div>
       <span class="go">Ouvrir MénoPrév <svg><use href="#arrow"/></svg></span>
+    </a>
+    <a class="tool" href="endoprev.html" style="--c:var(--endo)">
+      <div class="top"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor" opacity=".32"><path d="M12 21c-4-3-7-6.5-7-10a7 7 0 0 1 14 0c0 3.5-3 7-7 10z"/></g><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c-4-3-7-6.5-7-10a7 7 0 0 1 14 0c0 3.5-3 7-7 10z"/><path d="M9 11h6M12 8v6"/></g></svg></span>
+        <div><p class="eyebrow">Règles douloureuses · endométriose</p><h2>EndoPrév</h2></div></div>
+      <p>Lever le tabou des règles invalidantes, de l'endométriose et de l'adénomyose : aménager le poste, connaître ses droits et mesurer les besoins de l'entreprise.</p>
+      <ul class="feats">
+        <li><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="m8 12.5 2.8 2.8L16.5 9"/></g></svg></span><div><b>Auto-évaluation</b><span class="d">8 symptômes × 8 contraintes de poste, fiche pour la visite</span></div></li>
+        <li><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/></g></svg></span><div><b>Droits et démarches</b><span class="d">Médecin du travail, ALD 31, RQTH, SEEPH, maintien dans l'emploi</span></div></li>
+        <li><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h2v2h-2zM18 18h2v2h-2zM14 18h2M18 14h2"/></g></svg></span><div><b>Enquête anonyme par lien ou QR code</b><span class="d">Ou import Microsoft / Google Forms, résultats à partir de 5 réponses</span></div></li>
+      </ul>
+      <div class="who"><span class="chip">Salariées</span><span class="chip">Infirmier·e</span><span class="chip">RH et CSE</span></div>
+      <span class="go">Ouvrir EndoPrév <svg><use href="#arrow"/></svg></span>
     </a>
   </div>
   <div class="res"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor" opacity=".32"><rect x="2" y="7" width="20" height="12" rx="5"/></g><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="12" rx="5"/><path d="M7 11v4M5 13h4"/><circle cx="16" cy="12" r="1.1" fill="currentColor"/><circle cx="18" cy="14.5" r="1.1" fill="currentColor"/><path d="M9 7l1-2.5h4L15 7"/></g></svg></span>

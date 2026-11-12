@@ -2,6 +2,7 @@
 :root{
   --navy:oklch(24% .06 258); --teal:oklch(52% .1 182); --teal-l:oklch(72% .13 182); --orange:oklch(70% .17 50);
   --rose:oklch(56% .17 0); --rose-l:oklch(72% .13 0); --rose-bg:oklch(95.5% .03 0); --mauve:oklch(50% .13 320); --mauve-bg:oklch(95.5% .03 320);
+  --endo:oklch(50% .15 285); --endo-bg:oklch(95.5% .03 285);
   --bg:oklch(98.2% .004 250); --card:#fff; --card-2:oklch(95.5% .008 250); --line:oklch(91% .01 250);
   --ink:oklch(25% .03 258); --muted:oklch(50% .02 258); --on-accent:#fff;
   --ok:oklch(52% .13 150); --ok-bg:oklch(94% .05 150); --warn:oklch(58% .14 70); --warn-bg:oklch(95% .07 90);
@@ -12,13 +13,13 @@
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:oklch(17% .025 258); --card:oklch(22% .03 258); --card-2:oklch(27% .035 258); --line:oklch(33% .03 258);
   --ink:oklch(93% .01 250); --muted:oklch(72% .02 250); --teal:oklch(72% .12 182); --on-accent:oklch(17% .025 258);
-  --rose:oklch(74% .13 0); --rose-bg:oklch(28% .06 0); --mauve:oklch(74% .11 320); --mauve-bg:oklch(28% .05 320);
+  --rose:oklch(74% .13 0); --rose-bg:oklch(28% .06 0); --mauve:oklch(74% .11 320); --mauve-bg:oklch(28% .05 320); --endo:oklch(74% .12 285); --endo-bg:oklch(28% .05 285);
   --ok:oklch(74% .13 150); --ok-bg:oklch(30% .06 150); --warn:oklch(82% .13 85); --warn-bg:oklch(32% .06 90);
   --bad:oklch(72% .15 25); --bad-bg:oklch(30% .07 25); --na-bg:oklch(25% .02 258); --shadow:none; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:oklch(17% .025 258); --card:oklch(22% .03 258); --card-2:oklch(27% .035 258); --line:oklch(33% .03 258);
   --ink:oklch(93% .01 250); --muted:oklch(72% .02 250); --teal:oklch(72% .12 182); --on-accent:oklch(17% .025 258);
-  --rose:oklch(74% .13 0); --rose-bg:oklch(28% .06 0); --mauve:oklch(74% .11 320); --mauve-bg:oklch(28% .05 320);
+  --rose:oklch(74% .13 0); --rose-bg:oklch(28% .06 0); --mauve:oklch(74% .11 320); --mauve-bg:oklch(28% .05 320); --endo:oklch(74% .12 285); --endo-bg:oklch(28% .05 285);
   --ok:oklch(74% .13 150); --ok-bg:oklch(30% .06 150); --warn:oklch(82% .13 85); --warn-bg:oklch(32% .06 90);
   --bad:oklch(72% .15 25); --bad-bg:oklch(30% .07 25); --na-bg:oklch(25% .02 258); --shadow:none; color-scheme:dark}
 *{box-sizing:border-box}

@@ -8,6 +8,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap">
 <link rel="stylesheet" href="femme.css">
+<link rel="manifest" href="seinprev.webmanifest">
+<meta name="theme-color" content="#b8336a">
+<link rel="apple-touch-icon" href="img/app-sein-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mes seins">
 <style>
 /* SeinPrév · suivi du dépistage du cancer du sein et campagne Octobre rose
    Layout : bandeau Protect + onglets ; tableau de bord en tête, puis actions, enquête anonyme, suivi infirmier, parcours salariée */
@@ -79,6 +84,20 @@
 .hist li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:start;padding-block:10px;border-bottom:1px dashed var(--line)}
 details summary{cursor:pointer}
 p.f,legend.f{font-size:12px;font-weight:600;color:var(--muted);margin:0 0 4px}
+/* Mode application (téléphone de la salariée) et partage par QR code */
+body.app .back,body.app .pp-top .pill{display:none}
+.install{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:var(--rose-bg);border-radius:var(--r);padding:12px 16px}
+.install img{width:44px;height:44px;border-radius:11px}
+.partage{display:grid;grid-template-columns:auto minmax(0,1fr);gap:20px;align-items:center}
+@media (max-width:700px){.partage{grid-template-columns:1fr}}
+.qrbox{background:#fff;padding:10px;border-radius:12px;border:1px solid var(--line);width:max-content}
+.lien{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--card-2);padding:4px 8px;border-radius:6px;word-break:break-all}
+#affichette{display:none}
+@media print{body.print-aff>*:not(#affichette){display:none!important}body.print-aff #affichette{display:block}}
+#affichette{font-family:var(--f-body,system-ui);text-align:center;padding:30px}
+#affichette h1{font-family:var(--f-display);font-weight:400;font-size:34px;margin:0 0 8px;color:#a3245a}
+#affichette .qr{display:inline-block;margin:20px 0}
+#affichette ol{text-align:left;display:inline-block;font-size:16px;line-height:1.7}
 </style>
 </head>
 <body>
@@ -149,8 +168,17 @@ const count=(arr,key,opts)=>opts.map(o=>({l:o,n:arr.filter(r=>Array.isArray(r[ke
 const bars=(rows,tot)=>rows.map(r=>`<div class="hbar"><span>${esc(r.l)}</span><span class="t"><i style="width:${tot?r.n/tot*100:0}%"></i></span><b>${tot?Math.round(r.n/tot*100):0} %</b></div>`).join('');
 
 /* ---------- Navigation ---------- */
-const TABS=[['bord','Tableau de bord'],['actions','Actions Octobre rose'],['enquete','Enquête anonyme'],['suivi','Suivi infirmier'],['parcours','Mon parcours'],['connaitre','Connaître mes seins']];
-function route(){const h=(location.hash||'#bord').slice(1);const cur=TABS.some(t=>t[0]===h)?h:'bord';
+/* Mode application : ouvert depuis le lien ou le QR code donné à la salariée (?app=1), ou depuis l'icône installée.
+   Seules les rubriques personnelles sont visibles ; rien ne quitte le téléphone. */
+const APP=new URLSearchParams(location.search).has('app')||matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+const LIEN_APP=new URL('seinprev.html?app=1#connaitre',location.href).href;
+const TABS=APP?[['connaitre','Connaître mes seins'],['parcours','Mon dépistage']]
+  :[['bord','Tableau de bord'],['actions','Actions Octobre rose'],['enquete','Enquête anonyme'],['suivi','Suivi infirmier'],['parcours','Mon parcours'],['connaitre','Connaître mes seins']];
+if(APP){document.body.classList.add('app');document.title='Mes seins';
+  if('serviceWorker' in navigator)navigator.serviceWorker.register('sw-seinprev.js').catch(()=>{});}
+let installPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;if(APP)route();});
+function route(){const h=(location.hash||'#'+TABS[0][0]).slice(1);const cur=TABS.some(t=>t[0]===h)?h:TABS[0][0];
   $('#tabs').innerHTML=TABS.map(([k,l])=>`<a href="#${k}" ${k===cur?'aria-current="page"':''}>${l}</a>`).join('');
   ({bord:vBord,actions:vActions,enquete:vEnquete,suivi:vSuivi,parcours:vParcours,connaitre:vConnaitre})[cur]();}
 window.addEventListener('hashchange',()=>{route();scrollTo(0,0);});
@@ -496,6 +524,51 @@ const ETAPES=[
  {t:'L\'autre côté, puis noter',ill:null,p:['Recommencez de l\'autre côté. Vous pouvez aussi palper debout sous la douche : les doigts savonnés glissent mieux.','Notez le résultat dans votre journal : c\'est la comparaison d\'un mois sur l\'autre qui permet de repérer un changement.']}
 ];
 
+/* Bandeau « Installer sur mon téléphone » (mode application) */
+function blocInstall(){
+  if(!APP||matchMedia('(display-mode: standalone)').matches||navigator.standalone)return '';
+  const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  return `<div class="install"><img src="img/app-sein-192.png" alt=""><div style="flex:1;min-width:200px"><b>Gardez ce guide sur votre téléphone</b><br><span class="small">${installPrompt?'Une icône « Mes seins » sera ajoutée à votre écran d\'accueil. Elle fonctionne même sans réseau.'
+    :ios?'Dans Safari, touchez <b>Partager</b> <span aria-hidden="true">⬆️</span> puis <b>« Sur l\'écran d\'accueil »</b>.':'Dans le menu du navigateur <b>⋮</b>, choisissez <b>« Installer l\'application »</b> ou <b>« Ajouter à l\'écran d\'accueil »</b>.'}</span></div>
+    ${installPrompt?'<button class="btn" id="instBtn">Installer</button>':''}</div>`;
+}
+/* Bloc « Proposer aux salariées » (côté infirmier·e) */
+function blocPartage(){
+  if(APP)return '';
+  return `<details class="card" id="partage"><summary><b>📱 Proposer ce guide aux salariées, sur leur propre téléphone</b></summary>
+    <div class="partage" style="margin-top:14px"><div class="qrbox" id="qrApp" aria-label="QR code"></div>
+    <div class="grid" style="gap:8px"><p>Chaque salariée scanne le QR code ou ouvre le lien, puis installe l'application <b>« Mes seins »</b> sur son écran d'accueil. Elle y retrouve le guide, son rappel mensuel et son journal.</p>
+      <div class="secret small">Le journal reste <b>uniquement sur son téléphone</b> : rien n'est transmis à l'infirmier·e ni à l'employeur. Elle ne voit pas les rubriques réservées au service (tableau de bord, enquête, suivi).</div>
+      <div class="small">Lien : <span class="lien">${esc(LIEN_APP)}</span></div>
+      <div class="row"><button class="btn sm" id="cpLien">Copier le lien</button><button class="btn sm ghost" id="cpMsg">Copier un message d'invitation</button><button class="btn sm ghost" id="prAff">Imprimer une affichette</button></div></div></div></details>`;
+}
+const MSG_APP=()=>`Bonjour,
+
+Dans le cadre d'Octobre rose, le service de santé au travail vous propose un petit guide pour apprendre à connaître vos seins : quand et comment s'observer, quels changements doivent amener à consulter, un rappel mensuel et un journal personnel.
+
+Ouvrez ce lien sur votre téléphone, puis ajoutez-le à votre écran d'accueil :
+${LIEN_APP}
+
+Votre journal reste uniquement sur votre téléphone : personne d'autre n'y a accès.
+Ce guide ne remplace pas le dépistage (examen clinique dès 25 ans, mammographie tous les 2 ans de 50 à 74 ans).
+
+Le service de santé au travail reste à votre écoute.`;
+let qrLib=null;
+async function dessinerQR(el,taille){qrLib||=new Promise((ok,ko)=>{const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';sc.onload=ok;sc.onerror=ko;document.head.appendChild(sc);});
+  try{await qrLib;el.innerHTML='';new QRCode(el,{text:LIEN_APP,width:taille,height:taille,correctLevel:QRCode.CorrectLevel.M});}catch(_){el.textContent='QR code indisponible (connexion ?)';}}
+function bindPartage(){
+  const inst=$('#instBtn');if(inst)inst.onclick=async()=>{installPrompt.prompt();await installPrompt.userChoice.catch(()=>{});installPrompt=null;route();};
+  const d=$('#partage');if(!d)return;
+  d.addEventListener('toggle',()=>{if(d.open&&!$('#qrApp').innerHTML)dessinerQR($('#qrApp'),170);});
+  const cp=(b,t,l)=>{try{navigator.clipboard.writeText(t).then(()=>{b.textContent='Copié ✓';setTimeout(()=>b.textContent=l,1500);});}catch(_){}};
+  $('#cpLien').onclick=e=>cp(e.target,LIEN_APP,'Copier le lien');
+  $('#cpMsg').onclick=e=>cp(e.target,MSG_APP(),'Copier un message d\'invitation');
+  $('#prAff').onclick=async()=>{let a=$('#affichette');if(!a){a=document.createElement('div');a.id='affichette';document.body.appendChild(a);}
+    a.innerHTML=`<h1>Octobre rose · Connaître mes seins</h1><p style="font-size:18px">Un guide gratuit sur votre téléphone, pour apprendre à observer vos seins et repérer un changement.</p>
+      <div class="qr" id="qrAff"></div><ol><li>Scannez le QR code avec l'appareil photo</li><li>Ajoutez la page à l'écran d'accueil</li><li>Programmez votre rappel mensuel</li></ol>
+      <p style="font-size:14px;color:#555;margin-top:18px">🔒 Votre journal reste sur votre téléphone : personne d'autre n'y a accès.<br>Ce guide ne remplace pas le dépistage. Votre service de santé au travail reste à votre écoute.</p>`;
+    await dessinerQR($('#qrAff'),260);document.body.classList.add('print-aff');setTimeout(()=>{print();document.body.classList.remove('print-aff');},300);};
+}
 function vConnaitre(){
   const nav=`<div class="seg" role="tablist" aria-label="Rubriques">${SUBS.map(([k,l])=>`<button role="tab" aria-selected="${k===sub}" data-sub="${k}">${l}</button>`).join('')}</div>`;
   const P=prochaine();
@@ -585,7 +658,8 @@ function vConnaitre(){
         <li>L'inquiétude est normale pendant l'attente d'un examen : n'hésitez pas à en parler à l'infirmier·e ou au médecin du travail.</li></ul></div>
      </div></div>`
   }[sub]();
-  app.innerHTML=`${intro('Pour chaque salariée · guide et journal personnel','Connaître mes seins',"Quand et comment s'observer, ce qui est normal, ce qui doit faire consulter, et un journal pour comparer d'un mois sur l'autre. Connaître ses seins aide à repérer un changement : ce n'est pas un dépistage à lui seul.",'<b>Sources :</b> Institut national du cancer, Haute Autorité de santé. Cet outil aide à observer, il ne pose pas de diagnostic. En cas de doute, consultez.')}${nav}${body}`;
+  app.innerHTML=`${intro('Pour chaque salariée · guide et journal personnel','Connaître mes seins',"Quand et comment s'observer, ce qui est normal, ce qui doit faire consulter, et un journal pour comparer d'un mois sur l'autre. Connaître ses seins aide à repérer un changement : ce n'est pas un dépistage à lui seul.",'<b>Sources :</b> Institut national du cancer, Haute Autorité de santé. Cet outil aide à observer, il ne pose pas de diagnostic. En cas de doute, consultez.')}${blocInstall()}${blocPartage()}${nav}${body}`;
+  bindPartage();
   app.querySelectorAll('[data-sub]').forEach(b=>b.onclick=()=>{sub=b.dataset.sub;vConnaitre();});
   app.querySelectorAll('[data-ry]').forEach(b=>b.onclick=()=>{M.rythme=b.dataset.ry;saveMoi();vConnaitre();});
   const on=(id,ev,f)=>{const el=$('#'+id);if(el)el[ev]=f;};

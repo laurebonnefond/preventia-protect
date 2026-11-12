@@ -99,7 +99,7 @@ Légende : 🟢 **Nouveau** (version récente, utilisable) · 🟠 **Prototype**
 | **Infirmière d'entreprise** | 🟢 | Registre des passages pseudonymisé, pré-dépistages Visio et Audio, trousses et DAE, couverture SST, actions de prévention, [protocoles d'urgence](modules/sante/infirmiere/protocoles/) | `modules/sante/infirmiere/` |
 | **Suivi AT / MP & indicateurs RH** | 🟢 | TF, TG, IF, turnover, AT par catégorie, MP par tableau, bonhomme des lésions, accidents graves > 30 j, rapport PDF au logo de l'entreprise. Vue anonyme pour direction, RH et CSE | `modules/sante/at-mp/` |
 | **Santé mentale** | 🟢 | Hub de 6 outils (voir ci-dessous) | `modules/sante/sante-mentale/` |
-| **Santé de la femme** | 🟢 | **SeinPrév** : dépistage du cancer du sein et Octobre rose · **MénoPrév** : ménopause et travail, 9 symptômes × 8 contraintes de poste | `modules/sante/sante-femme/` |
+| **Santé de la femme** | 🟢 | **SeinPrév** : dépistage du cancer du sein et Octobre rose · **EndoPrév** : règles douloureuses, endométriose, adénomyose (droits, RQTH, enquête anonyme par lien ou QR code) · **MénoPrév** : ménopause et travail, 9 symptômes × 8 contraintes de poste | `modules/sante/sante-femme/` |
 
 <details>
 <summary><b>Détail du module Santé mentale</b></summary>
@@ -268,7 +268,7 @@ sequenceDiagram
 
 | Niveau | Données | Hébergement prévu |
 |---|---|---|
-| **Non médical** | Inventaires, échéances, registres, enquêtes anonymes, indicateurs collectifs | Supabase, région UE (schéma : `docs/supabase-sante-mentale.sql`) |
+| **Non médical** | Inventaires, échéances, registres, enquêtes anonymes, indicateurs collectifs | Supabase, région UE (schémas : `docs/supabase-sante-mentale.sql`, `docs/supabase-enquetes.sql` — ce dernier est **en service** pour EndoPrév) |
 | **Santé** | Registre infirmier nominatif, suivi individuel, dépistages | Local, ou hébergeur certifié HDS, **jamais dans Supabase** |
 
 ### Clés de stockage principales
@@ -281,7 +281,7 @@ sequenceDiagram
 | `pp_coact_*` | Coactivité (EE, PdP, permis, protocoles) |
 | `pp_env_*` | Environnement (ICPE, contrôles, déchets, RSE) |
 | `pp_rps_v*`, `pp_sm_*` | Santé mentale |
-| `pp_sein_*`, `pp_meno_v*` | Santé de la femme |
+| `pp_sein_*`, `pp_meno_v*`, `pp_endo_campagnes` | Santé de la femme (EndoPrév ne garde localement que la liste des campagnes et leurs codes) |
 | `pp_reg_v*` | Registres |
 | `preventia_chimique_v2` | Risque chimique (reprend automatiquement l'ancienne clé `preventia_chimique_products`) |
 

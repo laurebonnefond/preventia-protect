@@ -521,15 +521,30 @@ const done={contexte:()=>!!S.ctx.entreprise,indicateurs:indFilled,remontees:()=>
 function renderTabs(cur){$('#tabs').innerHTML=TABS.map(([k,l],i)=>`<a href="#${k}" class="${done[k]()?'done':''}" ${k===cur?'aria-current="page"':''}><span class="n">${i+1}</span>${l}</a>`).join('');}
 function route(){const h=(location.hash||'#contexte').slice(1);const cur=TABS.some(t=>t[0]===h)?h:'contexte';renderTabs(cur);({contexte:vContexte,indicateurs:vInd,remontees:vRem,grille:vGrille,avis:vAvis,barometre:vBaro,synthese:vSynth})[cur]();}
 window.addEventListener('hashchange',()=>{route();window.scrollTo(0,0);});
-const demoBar=()=>S.demo?`<div class="demo"><span><b>Données d'exemple fictives.</b> Explorez l'outil, puis démarrez votre propre évaluation.</span><span class="sp"></span><button class="btn sm" id="newEval">Démarrer une évaluation vierge</button></div>`:'';
-function bindDemo(){const b=$('#newEval');if(!b)return;b.onclick=()=>{if(b.dataset.c){S=blank();save();location.hash='contexte';route();}else{b.dataset.c=1;b.textContent='Confirmer : effacer l\'exemple';b.classList.add('danger');}};}
+const demoBar=()=>(S.demo?`<div class="demo"><span><b>Données d'exemple fictives.</b> Explorez l'outil, puis démarrez votre propre évaluation.</span><span class="sp"></span><button class="btn sm" id="newEval">Démarrer une évaluation vierge</button></div>`
+  :`<div class="row small muted" style="flex-wrap:wrap;gap:6px;margin-bottom:12px"><span>💾 Enregistrée automatiquement <b>dans ce navigateur, sur ce poste</b>. Pour la garder à l'abri ou la reprendre ailleurs :</span><span class="sp"></span><button class="btn ghost sm" id="bkSave">Télécharger la sauvegarde</button></div>`)
+  +`<input type="file" id="bkFile" accept=".json,application/json" hidden>`;
+/* Sauvegarde fichier : toute l'évaluation (sans donnée nominative) dans un .json, à ranger sur le réseau du service ou une clé chiffrée */
+function bindBackup(){
+  const sv=$('#bkSave'),op=$('#bkOpen'),fi=$('#bkFile');
+  if(sv)sv.onclick=()=>{const nom=`RPS_${(S.ctx.entreprise||'evaluation').replace(/[^\w-]+/g,'_')}_${new Date().toISOString().slice(0,10)}.json`;
+    const u=URL.createObjectURL(new Blob([JSON.stringify({outil:'preventia-rps',version:1,date:new Date().toISOString(),S},null,1)],{type:'application/json'}));
+    const l=document.createElement('a');l.href=u;l.download=nom;l.click();setTimeout(()=>URL.revokeObjectURL(u),2000);};
+  if(op&&fi)op.onclick=()=>fi.click();
+  if(fi)fi.onchange=async e=>{const f=e.target.files[0];if(!f)return;
+    try{const j=JSON.parse(await f.text());const n=j?.outil==='preventia-rps'?j.S:null;if(!n||!n.ctx)throw 0;
+      if(!S.demo&&!confirm(`Remplacer l'évaluation en cours (${S.ctx.entreprise||'sans nom'}) par « ${n.ctx.entreprise||f.name} » ? Pensez à télécharger d'abord la sauvegarde de l'évaluation en cours.`))return;
+      S=n;S.camps=S.camps||[];save();route();
+    }catch(_){alert('Ce fichier n\'est pas une sauvegarde du Diagnostic RPS.');}e.target.value='';};
+}
+function bindDemo(){bindBackup();const b=$('#newEval');if(!b)return;b.onclick=()=>{if(b.dataset.c){S=blank();save();location.hash='contexte';route();}else{b.dataset.c=1;b.textContent='Confirmer : effacer l\'exemple';b.classList.add('danger');}};}
 const intro=(eyebrow,title,txt,ref)=>`<div class="intro"><div><p class="eyebrow">${eyebrow}</p><h2>${title}</h2><p class="muted">${txt}</p></div>${ref?`<div class="ref">${ref}</div>`:''}</div>`;
 const pill=lv=>lv==null?`<span class="pill lvn">Non évalué</span>`:`<span class="pill ${LEVELS[lv].c}">${LEVELS[lv].l}</span>`;
 
 /* ---------- 1. Contexte ---------- */
 function vContexte(){
   const c=S.ctx;
-  app.innerHTML=`${demoBar()}${intro('Étape 1','Cadre de la démarche',"Une évaluation des RPS se mène en démarche collective : comité de pilotage, information des salariés, consultation du CSE. Le résultat s'intègre au DUERP.",'<b>Références :</b> art. L4121-1 et L4121-2 (obligation de prévention, dont le harcèlement), R4121-1 (DUERP), INRS ED 6349 et ED 6403 (2022) ; kit Anact-Aract « RPS dans le DU » (2017) ; guide DGAFP.')}
+  app.innerHTML=`${demoBar()}<div class="row" style="margin-bottom:12px"><span class="sp"></span><button class="btn ghost sm" id="bkOpen">📂 Reprendre une évaluation enregistrée (.json)</button></div>${intro('Étape 1','Cadre de la démarche',"Une évaluation des RPS se mène en démarche collective : comité de pilotage, information des salariés, consultation du CSE. Le résultat s'intègre au DUERP.",'<b>Références :</b> art. L4121-1 et L4121-2 (obligation de prévention, dont le harcèlement), R4121-1 (DUERP), INRS ED 6349 et ED 6403 (2022) ; kit Anact-Aract « RPS dans le DU » (2017) ; guide DGAFP.')}
   <div class="grid g2">
     <div class="card grid">
       <label class="f">Entreprise<input class="i" data-c="entreprise" value="${esc(c.entreprise)}"></label>
@@ -766,10 +781,81 @@ function vDistance(){
       <div class="small">Code secret des résultats : <code>${esc(c.lecture)}</code> <span class="muted">— à conserver, il n'est pas récupérable</span></div>
       <div class="row" style="flex-wrap:wrap;gap:6px"><button class="btn sm" data-dimp="${i}">Importer les réponses</button><button class="btn sm ghost" data-dcl="${i}">Copier le lien</button><button class="btn sm ghost" data-dmsg="${i}">Copier le message d'invitation</button><button class="btn sm ghost" data-dqr="${i}">QR code</button><button class="btn sm ghost" data-dop="${i}">Fermer / rouvrir</button><button class="btn sm ghost" data-drm="${i}">Retirer</button><span class="small" id="dst-${i}"></span></div>
       <div id="dqr-${i}" hidden style="background:#fff;padding:10px;border-radius:10px;width:max-content"></div></div>`).join('')}
+  </div>
+  <div class="card grid"><div><p class="eyebrow">Plan B · outil de l'entreprise</p><h3>Google Forms ou Microsoft Forms</h3>
+    <p class="muted small">Si l'entreprise préfère son propre outil. Les questions sont numérotées (B01…, C01…) : l'import les reconnaît par ce numéro. Seules l'équipe et les réponses sont reprises ; l'horodatage et toute autre colonne sont ignorés.</p></div>
+    <div class="row" style="flex-wrap:wrap;gap:8px"><select class="i" id="f-k" style="max-width:240px"><option value="baro">Baromètre PréventIA</option><option value="copsoq">COPSOQ</option></select>
+      <button class="btn sm" id="f-gs">Copier le script Google Forms</button><button class="btn sm ghost" id="f-ms">Copier le modèle Microsoft Forms</button>
+      <label class="btn ghost sm" style="cursor:pointer">📂 Importer l'export (CSV ou Excel)<input type="file" id="f-in" accept=".csv,.xlsx,.xls" hidden></label><span id="f-st" class="small"></span></div>
+    <details><summary class="small" style="cursor:pointer;font-weight:700">Mode d'emploi Google Forms (2 minutes)</summary><ol class="small" style="margin:8px 0 0 18px;display:grid;gap:4px">
+      <li>Cliquez sur « Copier le script Google Forms ».</li>
+      <li>Ouvrez <b>script.google.com</b> (connecté·e au compte Google qui doit posséder le formulaire) → « Nouveau projet ».</li>
+      <li>Effacez le contenu, collez le script, cliquez sur ▶ Exécuter et acceptez les autorisations.</li>
+      <li>Le lien à envoyer et le lien de modification s'affichent dans le « Journal d'exécution ». Le formulaire est déjà réglé : pas d'e-mail collecté, pas de connexion imposée.</li>
+      <li>À la fin : dans Forms, onglet Réponses → ⋮ → « Télécharger les réponses (.csv) », puis importez le fichier ici (le .zip se décompresse d'un double-clic).</li></ol></details>
+    <div class="note"><b>Moins protecteur que le lien PréventIA.</b> Dans Forms, le propriétaire du formulaire voit chaque réponse individuelle, avec l'heure, et les données sont hébergées par Google ou Microsoft. Le formulaire doit appartenir au service de santé au travail, pas à la direction ; supprimez les réponses dans Forms une fois importées.</div>
   </div>`;
+}
+/* Questions du plan B, numérotées : B01… (baromètre + 2 questions de santé), C01… (COPSOQ). Valeur = même cotation que le kiosque. */
+function formsQ(k){
+  return k==='copsoq'
+    ? COP_ITEMS.map((it,j)=>({c:'C'+String(j+1).padStart(2,'0'),t:it.t,o:COP_SETS[it.set],val:i=>COP_SETS[it.set].length-1-i}))
+    : [...ITEMS,...HEALTH].map((it,j)=>({c:'B'+String(j+1).padStart(2,'0'),t:it.t,o:[...LIK].reverse(),val:i=>LIK.length-1-i}));
+}
+function scriptGoogle(k){
+  const Q=formsQ(k), eqs=S.ctx.equipes.map(e=>e.n).filter(Boolean), titre=(k==='copsoq'?'Questionnaire COPSOQ':'Baromètre de la qualité de vie au travail')+(S.ctx.entreprise?' — '+S.ctx.entreprise:'');
+  return `// PréventIA Protect · Diagnostic RPS — crée le formulaire Google Forms anonyme (${DIST[k].l}).
+// Coller dans script.google.com > Nouveau projet, puis ▶ Exécuter. Les liens s'affichent dans le Journal d'exécution.
+function creerQuestionnaireRPS() {
+  var Q = ${JSON.stringify(Q.map(q=>[q.c+' · '+q.t,q.o]))};
+  var f = FormApp.create(${JSON.stringify(titre)});
+  f.setDescription(${JSON.stringify(`Questionnaire anonyme, environ ${DIST[k].min} minutes. Répondez selon ce que vous vivez ces derniers mois. Ni votre nom ni votre adresse e-mail ne sont demandés. Les résultats ne sont présentés que par groupe d'au moins ${SEUIL_ANONYMAT} personnes. Vous pouvez laisser une question sans réponse.`)});
+  f.setCollectEmail(false);
+  f.setLimitOneResponsePerUser(false);
+  try { f.setRequireLogin(false); } catch (e) {}
+  f.setAllowResponseEdits(false);
+  f.setShowLinkToRespondAgain(false);
+  f.setProgressBar(true);
+  f.setConfirmationMessage(${JSON.stringify("Merci, vos réponses sont enregistrées. Le médecin et l'infirmier·e du travail restent à votre écoute, dans le respect du secret médical. En cas d'urgence : 15. Idées suicidaires : 3114 (24 h/24).")});
+  ${eqs.length>1?`f.addMultipleChoiceItem().setTitle('Votre équipe').setChoiceValues(${JSON.stringify(eqs)}).setRequired(true);`:''}
+  Q.forEach(function (q) { f.addMultipleChoiceItem().setTitle(q[0]).setChoiceValues(q[1]).setRequired(false); });
+  Logger.log('LIEN À ENVOYER AUX SALARIÉS : ' + f.getPublishedUrl());
+  Logger.log('Lien de modification (pour vous) : ' + f.getEditUrl());
+}`;
+}
+function modeleMS(k){
+  const Q=formsQ(k), eqs=S.ctx.equipes.map(e=>e.n).filter(Boolean);
+  return [`TITRE : ${k==='copsoq'?'Questionnaire COPSOQ':'Baromètre de la qualité de vie au travail'} — anonyme`,'',
+   'PARAMÈTRES INDISPENSABLES',
+   '• « Qui peut répondre » : Tout le monde peut répondre (ou personnes de l\'organisation SANS enregistrer le nom).',
+   '• Ne pas cocher « Une réponse par personne ». Aucune question ouverte, aucune question sur le nom ou l\'âge.','',
+   ...(eqs.length>1?[`Votre équipe (choix unique, obligatoire) : ${eqs.join(' / ')}`,'']:[]),
+   `Toutes les questions suivantes : choix unique, NON obligatoires. Recopiez le numéro (${Q[0].c}…) au début de chaque question.`,'',
+   ...Q.map(q=>`${q.c} · ${q.t}\n   → ${q.o.join(' / ')}`)].join('\n');
+}
+function depuisForms(rows,k){
+  const n=ENQ.norm, Q=formsQ(k); if(!rows.length)return [];
+  const cols=Object.keys(rows[0]), colEq=cols.find(h=>n(h).includes('equipe'));
+  const col=Q.map(q=>cols.find(h=>n(h).startsWith(q.c.toLowerCase()+' ')));
+  if(!col.some(Boolean))throw new Error('Aucune question reconnue : les intitulés doivent commencer par leur numéro (B01, C01…).');
+  const eq1=S.ctx.equipes[0]?.n||'Ensemble';
+  return rows.map(r=>{const v=Q.map((q,j)=>{if(!col[j])return null;const x=n(r[col[j]]);if(!x)return null;const i=q.o.findIndex(o=>n(o)===x);return i<0?null:q.val(i);});
+    if(v.every(x=>x==null))return null;const eq=colEq?String(r[colEq]).trim()||eq1:eq1;
+    return k==='copsoq'?{eq,a:v}:{eq,a:v.slice(0,ITEMS.length),h:v.slice(ITEMS.length)};}).filter(Boolean);
 }
 function bindDistance(){
   const cp=(b,t,l)=>{try{navigator.clipboard.writeText(t).then(()=>{b.textContent='Copié';setTimeout(()=>b.textContent=l,1500)},()=>prompt('Copiez :',t))}catch(e){prompt('Copiez :',t)}};
+  const fk=()=>$('#f-k').value;
+  $('#f-gs').onclick=e=>cp(e.target,scriptGoogle(fk()),'Copier le script Google Forms');
+  $('#f-ms').onclick=e=>cp(e.target,modeleMS(fk()),'Copier le modèle Microsoft Forms');
+  $('#f-in').onchange=async e=>{const f=e.target.files[0];if(!f)return;const st=$('#f-st'),k=fk();st.textContent='Lecture…';
+    try{const rows=depuisForms(await ENQ.lireFichier(f),k);
+      if(rows.length<SEUIL_ANONYMAT)throw new Error(`${rows.length} réponse${rows.length>1?'s':''} exploitable${rows.length>1?'s':''} : import possible à partir de ${SEUIL_ANONYMAT}, pour préserver l'anonymat.`);
+      const src='forms:'+f.name; rows.forEach(r=>r.src=src);
+      for(let i=rows.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[rows[i],rows[j]]=[rows[j],rows[i]];}
+      const avant=S[k].filter(b=>b.src===src).length; S[k]=S[k].filter(b=>b.src!==src).concat(rows); save(); route();
+      setTimeout(()=>{const s2=$('#f-st');if(s2)s2.textContent=`${rows.length} réponses importées dans le ${DIST[k].l}${avant?` (remplace l'import précédent du même fichier)`:''}.`;},30);
+    }catch(err){st.innerHTML=`<span style="color:var(--l3)">⚠ ${esc(err.message)}</span>`;}e.target.value='';};
   const go=$('#d-go');
   if(go)go.onclick=async()=>{const st=$('#d-st'),k=$('#d-k').value,fin=$('#d-fin').value||null;st.textContent='Création…';go.disabled=true;
     try{const r=await ENQ.creer(DIST[k].outil,S.ctx.entreprise,fin);

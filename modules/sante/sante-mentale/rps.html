@@ -186,7 +186,7 @@ details.acteur summary::-webkit-details-marker{display:none}
 <body>
 
 <header class="pp-top gut"><div class="in">
-  <a class="back" href="index.html">← Santé mentale</a>
+  <a class="back" id="back" href="index.html">← Santé mentale</a>
   <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg></div>
   <div><small>PréventIA Protect · Santé</small><h1>Diagnostic RPS</h1></div>
   <span class="sp"></span><span class="pill">Outil de l'infirmier·e en santé au travail</span>
@@ -200,6 +200,9 @@ details.acteur summary::-webkit-details-marker{display:none}
 <script>
 (function(){
 const $=s=>document.querySelector(s), app=$('#app');
+/* Mode autonome : ouvert depuis la page dédiée /diagnostic-rps/ → le retour mène à cette page, pas au menu PréventIA Protect */
+try{if(new URLSearchParams(location.search).has('solo'))sessionStorage.setItem('pp_rps_solo','1');}catch(e){}
+try{if(sessionStorage.getItem('pp_rps_solo')){const b=$('#back');b.href='../../../diagnostic-rps/';b.textContent='← Diagnostic RPS';}}catch(e){}
 const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 /* ---------- Couche de données ----------
    Phase 1 : localStorage, sur ce poste uniquement.
@@ -279,42 +282,8 @@ const SEUIL_ANONYMAT=5;
 
 
 
-// Indicateurs (d'après INRS ED 6012 « Dépister les RPS – des indicateurs pour vous guider »)
-const IND=[
- {k:'abs',g:'Fonctionnement de l\'entreprise',l:'Taux d\'absentéisme',u:'%',thr:5,f:['f1','f4']},
- {k:'arrets_courts',g:'Fonctionnement de l\'entreprise',l:'Arrêts courts (moins de 3 jours)',u:'nb',f:['f1','f4']},
- {k:'turnover',g:'Fonctionnement de l\'entreprise',l:'Taux de rotation du personnel',u:'%',thr:15,f:['f4','f6']},
- {k:'demissions',g:'Fonctionnement de l\'entreprise',l:'Démissions et ruptures conventionnelles',u:'nb',f:['f4','f5']},
- {k:'mobilite',g:'Fonctionnement de l\'entreprise',l:'Demandes de mobilité interne',u:'nb',f:['f4']},
- {k:'hsup',g:'Fonctionnement de l\'entreprise',l:'Heures supplémentaires par salarié et par an',u:'h',thr:220,f:['f1','f7']},
- {k:'conges',g:'Fonctionnement de l\'entreprise',l:'Jours de congés non pris par salarié',u:'j',f:['f1','f7']},
- {k:'postes_vacants',g:'Fonctionnement de l\'entreprise',l:'Postes vacants ou difficiles à pourvoir',u:'nb',f:['f1','f6']},
- {k:'reorg',g:'Fonctionnement de l\'entreprise',l:'Réorganisations, déménagements ou changements d\'outils dans l\'année',u:'nb',thr:2,f:['f6','f1']},
- {k:'entretiens',g:'Fonctionnement de l\'entreprise',l:'Entretiens annuels ou professionnels non réalisés',u:'%',thr:20,f:['f3','f4']},
- {k:'plaintes',g:'Fonctionnement de l\'entreprise',l:'Plaintes et réclamations des clients ou usagers',u:'nb',f:['f2','f5']},
- {k:'isoles',g:'Fonctionnement de l\'entreprise',l:'Postes en travail isolé',u:'nb',f:['f2','f4']},
- {k:'precaires',g:'Fonctionnement de l\'entreprise',l:'Part d\'intérim et de CDD',u:'%',thr:15,f:['f6']},
- {k:'conflits',g:'Fonctionnement de l\'entreprise',l:'Conflits collectifs, grèves, débrayages',u:'nb',thr:1,f:['f4','f6']},
- {k:'sanctions',g:'Fonctionnement de l\'entreprise',l:'Procédures disciplinaires',u:'nb',f:['f4']},
- {k:'at',g:'Santé et sécurité',l:'Accidents du travail avec arrêt',u:'nb',f:['f1']},
- {k:'tf',g:'Santé et sécurité',l:'Taux de fréquence des AT (TF)',u:'',f:['f1'],calc:'AT avec arrêt × 1 000 000 ÷ heures travaillées'},
- {k:'tg',g:'Santé et sécurité',l:'Taux de gravité des AT (TG)',u:'',f:['f1'],calc:'Jours d\'arrêt × 1 000 ÷ heures travaillées'},
- {k:'vad',g:'Santé et sécurité',l:'Visites à la demande du salarié (SPST)',u:'nb',f:['f1','f4']},
- {k:'inf',g:'Santé et sécurité',l:'Passages infirmerie pour stress ou mal-être',u:'nb',f:['f1','f2','f4']},
- {k:'inapt',g:'Santé et sécurité',l:'Inaptitudes et restrictions d\'aptitude',u:'nb',f:['f1']},
- {k:'arrets_longs',g:'Santé et sécurité',l:'Arrêts maladie de plus de 30 jours',u:'nb',f:['f1','f4']},
- {k:'amenag',g:'Santé et sécurité',l:'Demandes d\'aménagement de poste',u:'nb',f:['f1','f3']},
- {k:'violences_ext',g:'Santé et sécurité',l:'Agressions et incivilités du public déclarées',u:'nb',thr:1,f:['f2']},
- {k:'harc',g:'Santé et sécurité',l:'Signalements de harcèlement ou de violences internes',u:'nb',thr:1,crit:1,f:['f4']},
- {k:'psy',g:'Santé et sécurité',l:'Affections psychiques déclarées en AT ou MP',u:'nb',thr:1,crit:1,f:['f1','f4']},
- {k:'grave',g:'Santé et sécurité',l:'Événements graves (tentative de suicide, décompensation au travail)',u:'nb',thr:1,crit:1,f:['f1','f2','f4','f5','f6']}
-];
-
-// Indicateurs suivis PAR ÉQUIPE (comparés à la valeur de l'entreprise)
-const EQ_IND=[
- {k:'abs',l:'Absentéisme',u:'%',taux:1},{k:'turnover',l:'Départs',u:'%',taux:1},{k:'hsup',l:'Heures sup. / salarié',u:'h',taux:1},
- {k:'arrets_courts',l:'Arrêts courts',u:'nb'},{k:'inf',l:'Passages infirmerie (stress, mal-être)',u:'nb'},{k:'violences_ext',l:'Agressions du public',u:'nb'}
-];
+/* Indicateurs entreprise et par équipe : rps-data.js, partagé avec la page RH indicateurs-rps.html */
+const {IND,EQ_IND,IND_SPST}=RPSQ;
 // Signaux individuels AGRÉGÉS (entretiens infirmiers de la période) : des effectifs, jamais de nom
 const INDIV=[
  {k:'vus',l:'Salariés vus en entretien infirmier',base:1},
@@ -419,9 +388,9 @@ function demoCop(r,bias){
     out.push({eq,a});}});
   return out;
 }
-function blank(){return {demo:false,ctx:{entreprise:'',secteur:'',effectif:'',periode:'',equipes:[{n:'Équipe 1',eff:''}],pilotage:'',demande:''},ind:{},rem:[],avis:{},baro:[],copsoq:[],camps:[],grille:{},indEq:{},indiv:{},crit:{}};}
+function blank(){return {demo:false,ctx:{entreprise:'',secteur:'',effectif:'',periode:'',equipes:[{n:'Équipe 1',eff:''}],pilotage:'',demande:''},ind:{},rem:[],avis:{},baro:[],copsoq:[],camps:[],campsInd:[],grille:{},indEq:{},indiv:{},crit:{}};}
 let S=store.get()||demo();
-S.copsoq=S.copsoq||[]; S.camps=S.camps||[]; S.grille=S.grille||{}; S.indEq=S.indEq||{}; S.indiv=S.indiv||{}; S.crit=S.crit||{};
+S.copsoq=S.copsoq||[]; S.camps=S.camps||[]; S.campsInd=S.campsInd||[]; S.grille=S.grille||{}; S.indEq=S.indEq||{}; S.indiv=S.indiv||{}; S.crit=S.crit||{};
 // Migration : avis enregistrés sur 6 familles → 7 (« Horaires » insérée en 2e position, non évaluée)
 Object.values(S.avis).forEach(a=>{if(a.f&&a.f.length===6)a.f.splice(1,0,-1);}); try{store.set(S);}catch(e){}
 const save=()=>store.set(S);
@@ -467,7 +436,9 @@ function compute(eq){
     if(gr&&gr[f.k]!=null) src.grille=gr[f.k];
     const qv=[!b.masked?b.ax[f.k]:null,!cp.masked?cp.ax[f.k]:null].filter(v=>v!=null); if(qv.length) src.baro=qv.reduce((a,c)=>a+c,0)/qv.length;
     if(!eq){const lv=ACTEURS.map(a=>S.avis[a.k]?.f?.[FI(f.k)]).filter(v=>v!=null&&v>=0); if(lv.length) src.avis=lv.reduce((a,c)=>a+c,0)/lv.length/3*100;}
-    if(hasRem){const rr=S.rem.filter(r=>r.f===f.k&&(!eq||r.eq===eq)&&r.st!=='Traité'); src.rem=Math.min(100,rr.reduce((a,r)=>a+[0,1,2,4][r.g],0)*12);}
+    // Recueil au fil de l'eau (par défaut) : une famille sans remontée est « non renseignée », pas « favorable ».
+    // Recueil systématique (S.remSyst) : l'absence de remontée compte comme 0 (rien de signalé).
+    if(hasRem){const rr=S.rem.filter(r=>r.f===f.k&&(!eq||r.eq===eq)&&r.st!=='Traité'); if(rr.length||S.remSyst) src.rem=Math.min(100,rr.reduce((a,r)=>a+[0,1,2,4][r.g],0)*12);}
     if(eq&&b.masked&&cp.masked&&!gr&&src.rem===0) delete src.rem; // pas de faux « 0 » quand seule l'absence de remontée renseigne l'équipe
     if(hasInd){let s=0;IND.forEach(d=>{if(d.f.includes(f.k)){const a=indAlert(d.k);s+=a===2?100:a===1?25:0;}}); src.ind=Math.min(100,s);}
     if(eqInd){let s=0;EQ_IND.forEach(d=>{const I=IND.find(x=>x.k===d.k); if(I.f.includes(f.k)&&eqIndAlert(eq,d.k)) s+=35;}); src.ind=Math.min(100,s);}
@@ -576,6 +547,7 @@ function vInd(){
   const nA=IND.filter(d=>indAlert(d.k)).length, nC=IND.filter(d=>indAlert(d.k)===2).length;
   app.innerHTML=`${demoBar()}${intro('Étape 2','Indicateurs : entreprise, équipes, individuel',"Trois niveaux : les indicateurs de l'entreprise (période et période précédente), leur déclinaison par équipe, et les signaux individuels agrégés de l'infirmerie. Une alerte se déclenche au-delà d'un repère, ou si la hausse dépasse 20 %.",'<b>Sources :</b> INRS ED 6012 « Dépister les RPS, des indicateurs pour vous guider » ; DGAFP, guide méthodologique RPS (indicateurs de fonctionnement, de santé, de vécu). Repères indicatifs, à adapter au secteur.')}
   <div class="card row"><div style="max-width:720px"><h3>Importer depuis le suivi AT / MP</h3><p class="muted small">Calcule le TF, le TG, les AT avec arrêt, l'absentéisme, le turnover, les AT pour agression et les affections psychiques à partir du registre AT/MP et des données RH mensuelles de Protect. Période N : les 12 derniers mois ; N-1 : les 12 mois précédents.</p><p class="small" id="impMsg" role="status"></p></div><span class="sp"></span><button class="btn" id="imp">Importer</button></div>
+  ${vIndRH()}
   <div class="kpis"><div class="kpi"><div class="l">Indicateurs renseignés</div><div class="v">${IND.filter(d=>S.ind[d.k]?.n!==''&&S.ind[d.k]?.n!=null).length}<span class="muted small"> / ${IND.length}</span></div></div>
    <div class="kpi"><div class="l">En alerte</div><div class="v" style="color:var(--l2)">${nA}</div></div>
    <div class="kpi"><div class="l">Alertes critiques</div><div class="v" style="color:var(--l3)">${nC}</div><div class="d">Harcèlement, affection psychique, événement grave</div></div></div>
@@ -603,6 +575,7 @@ function vInd(){
   app.querySelectorAll('[data-eqi]').forEach(el=>el.onchange=()=>{const e=el.dataset.eqi;S.indEq[e]=S.indEq[e]||{};S.indEq[e][el.dataset.k]=el.value;save();const y=scrollY;vInd();scrollTo(0,y);});
   app.querySelectorAll('[data-iv]').forEach(el=>el.onchange=()=>{S.indiv[el.dataset.iv]=el.value;save();const y=scrollY;vInd();scrollTo(0,y);});
   app.querySelectorAll('[data-ind]').forEach(el=>el.onchange=()=>{const k=el.dataset.ind;S.ind[k]=S.ind[k]||{};S.ind[k][el.dataset.p]=el.value;save();vInd();});
+  bindIndRH();
   $('#imp').onclick=()=>{const r=importATMP();if(r.ok){save();vInd();renderTabs('indicateurs');} $('#impMsg').textContent=r.msg;};
   bindDemo();
 }
@@ -638,6 +611,54 @@ function importATMP(){
 
 /* ---------- 3. Remontées ---------- */
 let remFilter='Tous';
+/* ---------- 2 bis. Indicateurs pré-remplis par les RH (lien indicateurs-rps.html) ----------
+   Données déjà agrégées (taux, effectifs) : pas de seuil d'anonymat, lisibles dès le premier envoi.
+   Les indicateurs propres au SPST (IND_SPST : visites à la demande, passages infirmerie) ne sont pas demandés aux RH. */
+const lienRH=c=>new URL(`indicateurs-rps.html?c=${encodeURIComponent(c.code)}&e=${encodeURIComponent(c.eqs.join('|'))}`,location.href).href;
+function vIndRH(){
+  return `<div class="card grid"><div><p class="eyebrow">Pré-remplissage par l'entreprise</p><h3>Envoyer un lien aux RH</h3>
+    <p class="muted small">Les RH saisissent les indicateurs de l'entreprise et par équipe (période N et N-1) sur une page dédiée, sans accès au reste de l'outil. Vous importez ensuite leurs chiffres ici et vous les vérifiez. Les visites à la demande et les passages infirmerie restent de votre ressort.</p></div>
+    ${S.demo?`<div class="note">Démarrez une évaluation vierge pour créer un vrai lien.</div>`:`<div class="row"><button class="btn" id="rh-go">Créer le lien RH</button><span id="rh-st" class="small"></span></div>`}
+    ${S.campsInd.map((c,i)=>`<div style="border-top:1px solid var(--line);padding-top:12px;display:grid;gap:6px">
+      <div class="small muted">Créé le ${new Date(c.creee).toLocaleDateString('fr-FR')}${c.importe?' · dernier import le '+new Date(c.importe).toLocaleDateString('fr-FR'):''}</div>
+      <div class="small">Lien à envoyer : <code style="word-break:break-all">${esc(lienRH(c))}</code></div>
+      <div class="small">Code secret : <code>${esc(c.lecture)}</code></div>
+      <div class="row" style="flex-wrap:wrap;gap:6px"><button class="btn sm" data-rhimp="${i}">Importer les indicateurs</button><button class="btn sm ghost" data-rhcl="${i}">Copier le lien</button><button class="btn sm ghost" data-rhmsg="${i}">Copier le message pour les RH</button><button class="btn sm ghost" data-rhrm="${i}">Retirer</button><span class="small" id="rhst-${i}"></span></div></div>`).join('')}
+  </div>`;
+}
+function bindIndRH(){
+  const cp=(b,t,l)=>{try{navigator.clipboard.writeText(t).then(()=>{b.textContent='Copié';setTimeout(()=>b.textContent=l,1500)},()=>prompt('Copiez :',t))}catch(e){prompt('Copiez :',t)}};
+  const go=$('#rh-go');
+  if(go)go.onclick=async()=>{const st=$('#rh-st');st.textContent='Création…';go.disabled=true;
+    try{const r=await ENQ.creer('rps_ind',S.ctx.entreprise,null);
+      S.campsInd.unshift({code:r.code,lecture:r.code_lecture,eqs:S.ctx.equipes.map(e=>e.n).filter(Boolean),creee:new Date().toISOString()});save();vInd();
+    }catch(e){st.innerHTML=`<span style="color:var(--l3)">⚠ ${esc(e.message)}</span>`;go.disabled=false;}};
+  app.querySelectorAll('[data-rhcl]').forEach(b=>b.onclick=()=>cp(b,lienRH(S.campsInd[+b.dataset.rhcl]),'Copier le lien'));
+  app.querySelectorAll('[data-rhmsg]').forEach(b=>b.onclick=()=>{const c=S.campsInd[+b.dataset.rhmsg];cp(b,`Objet : Démarche de prévention des risques psychosociaux — indicateurs à compléter
+
+Bonjour,
+
+Dans le cadre de la démarche de prévention des risques psychosociaux${S.ctx.entreprise?' de '+S.ctx.entreprise:''}, pouvez-vous compléter les indicateurs de fonctionnement et de santé-sécurité (période en cours et période précédente), pour l'entreprise et, si possible, par équipe :
+${lienRH(c)}
+
+Il s'agit uniquement de chiffres globaux (taux, nombres) : aucune donnée nominative ne doit être saisie. Laissez vide ce que vous ne connaissez pas. Vous pouvez enregistrer un brouillon et revenir plus tard sur le même ordinateur.
+
+Merci de votre aide.`,'Copier le message pour les RH');});
+  app.querySelectorAll('[data-rhrm]').forEach(b=>b.onclick=()=>{if(!confirm('Retirer ce lien de la liste ? Les indicateurs déjà importés restent dans l\'évaluation.'))return;S.campsInd.splice(+b.dataset.rhrm,1);save();vInd();});
+  app.querySelectorAll('[data-rhimp]').forEach(b=>b.onclick=async()=>{const i=+b.dataset.rhimp,c=S.campsInd[i],st=$('#rhst-'+i);st.textContent='Import…';
+    try{const r=await ENQ.resultats(c.lecture);
+      const L=(r.reponses||[]).filter(x=>x&&x.ind).sort((a,b)=>String(b.d||'').localeCompare(String(a.d||'')));
+      if(!L.length){st.textContent='Les RH n\'ont encore rien envoyé.';return;}
+      const x=L[0], num=v=>v!==''&&v!=null&&isFinite(+v)&&+v>=0;
+      const pris=[...IND_SPST];let n=0;
+      if(!confirm(`Importer l'envoi des RH du ${x.d?new Date(x.d).toLocaleDateString('fr-FR'):'(date inconnue)'} ? Les valeurs renseignées par les RH remplaceront celles déjà saisies ici.`)){st.textContent='';return;}
+      IND.forEach(d=>{if(pris.includes(d.k))return;const v=x.ind[d.k];if(!v)return;['n','n1'].forEach(p=>{if(num(v[p])){S.ind[d.k]=S.ind[d.k]||{};S.ind[d.k][p]=String(v[p]);n++;}});});
+      Object.entries(x.eq||{}).forEach(([e,o])=>{if(!S.ctx.equipes.some(q=>q.n===e))return;EQ_IND.forEach(d=>{if(pris.includes(d.k))return;if(num(o?.[d.k])){S.indEq[e]=S.indEq[e]||{};S.indEq[e][d.k]=String(o[d.k]);n++;}});});
+      if(x.periode&&!S.ctx.periode)S.ctx.periode=String(x.periode).slice(0,60);
+      c.importe=new Date().toISOString();save();vInd();renderTabs('indicateurs');
+      const s2=$('#rhst-'+i);if(s2)s2.textContent=`${n} valeurs importées${L.length>1?` (envoi le plus récent sur ${L.length})`:''}. Vérifiez-les.`;
+    }catch(e){st.innerHTML=`<span style="color:var(--l3)">⚠ ${esc(e.message)}</span>`;}});
+}
 function vRem(){
   const eqs=S.ctx.equipes.map(e=>e.n);
   const list=S.rem.filter(r=>remFilter==='Tous'||r.st===remFilter).sort((a,b)=>b.date.localeCompare(a.date));
@@ -645,6 +666,8 @@ function vRem(){
   app.innerHTML=`${demoBar()}${intro('Étape 3','Remontées et signalements',"Consignez les situations rapportées : entretiens infirmiers, CSE, managers, référent·e, RH. Décrivez des faits et un contexte, sans nommer personne.",'<b>Rappel :</b> un signalement de harcèlement oblige l\'employeur à agir (art. L1152-4 et L1153-5) : enquête, mesures de protection, suivi.')}
   <div class="kpis">${GRAV.map(g=>`<div class="kpi"><div class="l">${g.l}</div><div class="v" style="color:var(--l${g.v===3?3:g.v===2?2:1})">${cnt(g.v)}</div><div class="d">non traités</div></div>`).join('')}
     <div class="kpi"><div class="l">Total consigné</div><div class="v">${S.rem.length}</div></div></div>
+  <label class="card row small" style="gap:10px;cursor:pointer"><input type="checkbox" id="remSyst" ${S.remSyst?'checked':''} style="width:18px;height:18px;flex:none">
+    <span><b>Recueil systématique</b> : les remontées ont été recherchées auprès de toutes les sources (entretiens, CSE, managers, RH, référent·es) sur la période. <span class="muted">Si la case est cochée, une famille sans remontée compte comme « rien de signalé » (score 0). Sinon, elle est simplement retirée de cette source dans le calcul, pour ne pas minorer le risque.</span></span></label>
   <div class="grid g2" style="align-items:start">
    <form class="card grid" id="remForm"><h3>Nouvelle remontée</h3>
     <div class="grid g2"><label class="f">Date<input class="i" type="date" name="date" required value="${new Date().toISOString().slice(0,10)}"></label>
@@ -663,6 +686,7 @@ function vRem(){
    </div></div>
   <div class="row"><a class="btn ghost" href="#indicateurs">Retour</a><span class="sp"></span><a class="btn" href="#grille">Étape suivante : grille RPS-DU</a></div>`;
   $('#remForm').onsubmit=e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target));S.rem.push({id:Date.now(),date:d.date,src:d.src,eq:d.eq,f:d.f,g:+d.g,txt:d.txt.trim(),st:'À traiter'});save();vRem();renderTabs('remontees');};
+  $('#remSyst').onchange=e=>{S.remSyst=e.target.checked;save();};
   app.querySelectorAll('[data-rf]').forEach(b=>b.onclick=()=>{remFilter=b.dataset.rf;vRem();});
   app.querySelectorAll('[data-st]').forEach(s=>s.onchange=()=>{S.rem.find(r=>r.id==s.dataset.st).st=s.value;save();});
   app.querySelectorAll('[data-rdel]').forEach(b=>b.onclick=()=>{if(!b.dataset.c){b.dataset.c=1;b.textContent='Confirmer';b.classList.add('danger');return;}S.rem=S.rem.filter(r=>r.id!=b.dataset.rdel);save();vRem();});

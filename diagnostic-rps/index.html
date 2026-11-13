@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Diagnostic RPS — PréventIA Protect</title>
+<meta name="description" content="Outil d'aide au diagnostic des risques psychosociaux pour l'infirmier·e en santé au travail : grille RPS-DU (INRS), questionnaires anonymes, indicateurs, synthèse pour le DUERP. Prototype.">
+<link rel="icon" type="image/png" href="../assets/img/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap">
+<style>
+/* Diagnostic RPS — page d'accueil autonome du module (présentation, mode d'emploi, RGPD, statut prototype, sources).
+   Destinée à être partagée seule : elle ne renvoie pas au reste de PréventIA Protect. L'outil s'ouvre en mode autonome (?solo=1). */
+:root{
+  --navy:oklch(24% .06 258); --teal:oklch(52% .1 182); --teal-bg:oklch(95% .035 182); --orange:oklch(70% .17 50); --orange-bg:oklch(96% .04 70);
+  --bg:oklch(98.2% .004 250); --card:#fff; --card-2:oklch(95.5% .008 250); --line:oklch(91% .01 250);
+  --ink:oklch(25% .03 258); --muted:oklch(50% .02 258); --on-accent:#fff;
+  --f-display:"DM Serif Display", Georgia, serif; --f-body:"DM Sans", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:oklch(17% .025 258); --card:oklch(22% .03 258); --card-2:oklch(27% .035 258); --line:oklch(33% .03 258);
+  --ink:oklch(93% .01 250); --muted:oklch(72% .02 250); --teal:oklch(72% .12 182); --teal-bg:oklch(28% .04 182); --orange-bg:oklch(28% .05 60); --on-accent:oklch(17% .025 258); color-scheme:dark}}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--f-body);background:var(--bg);color:var(--ink);line-height:1.6}
+a{color:var(--teal)}
+.gut{padding-inline:max(18px,env(safe-area-inset-left,0px))}
+.wrap{max-width:1040px;margin:0 auto}
+header.hero{background:var(--navy);color:#fff;padding-block:40px 46px}
+.hero .tag{display:inline-flex;gap:8px;align-items:center;font-size:11px;letter-spacing:1.4px;text-transform:uppercase;opacity:.75}
+.hero h1{font-family:var(--f-display);font-weight:400;font-size:clamp(2rem,4.5vw,3rem);line-height:1.1;margin:10px 0 12px}
+.hero p{max-width:640px;opacity:.85;font-size:1.05rem}
+.proto{display:inline-block;background:var(--orange);color:#1b1206;font-weight:700;font-size:12px;padding:3px 10px;border-radius:99px;letter-spacing:.3px}
+.cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+.btn{display:inline-block;border-radius:10px;padding:12px 20px;font-weight:700;text-decoration:none;background:var(--teal);color:var(--on-accent)}
+.btn.light{background:rgb(255 255 255/.1);color:#fff;border:1px solid rgb(255 255 255/.25)}
+nav.toc{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line)}
+nav.toc .wrap{display:flex;gap:4px;overflow-x:auto;padding-block:6px}
+nav.toc a{white-space:nowrap;text-decoration:none;color:var(--muted);font-size:13.5px;font-weight:600;padding:8px 10px;border-radius:8px}
+nav.toc a:hover{background:var(--card-2);color:var(--ink)}
+main{display:grid;gap:44px;padding-block:36px 70px}
+section{display:grid;gap:14px;scroll-margin-top:60px}
+.eyebrow{font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:var(--teal);font-weight:700}
+h2{font-family:var(--f-display);font-weight:400;font-size:1.75rem;line-height:1.2}
+h3{font-size:1.02rem}
+.muted{color:var(--muted)} .small{font-size:13.5px}
+.grid{display:grid;gap:14px} .g2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))} .g3{grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;display:grid;gap:8px;align-content:start}
+.card ul,.card ol{padding-left:18px;display:grid;gap:4px}
+.note{border-left:3px solid var(--orange);background:var(--orange-bg);padding:12px 16px;border-radius:0 10px 10px 0}
+.secret{border-left:3px solid var(--teal);background:var(--teal-bg);padding:12px 16px;border-radius:0 10px 10px 0}
+.tw{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:14px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--card-2)}
+td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;counter-reset:s}
+.flow div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:13.5px;counter-increment:s}
+.flow div::before{content:counter(s);display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--teal);color:var(--on-accent);font-weight:700;font-size:12px;margin-bottom:6px}
+.flow b{display:block}
+.who{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.who .card{border-top:4px solid var(--teal)} .who .card.e{border-top-color:var(--orange)} .who .card.s{border-top-color:var(--navy)}
+ol.src{padding-left:20px;display:grid;gap:8px;font-size:14px}
+footer{border-top:1px solid var(--line);padding-block:24px;font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<header class="hero gut"><div class="wrap">
+  <span class="tag">PréventIA Protect · Santé au travail <span class="proto">Prototype</span></span>
+  <h1>Diagnostic RPS</h1>
+  <p>Un outil pour l'infirmier·e en santé au travail qui accompagne une entreprise dans l'évaluation des risques psychosociaux : de la grille RPS-DU de l'INRS jusqu'au plan d'actions du document unique, avec des questionnaires anonymes pour les salariés.</p>
+  <div class="cta"><a class="btn" href="../modules/sante/sante-mentale/rps.html?solo=1">Ouvrir l'outil</a><a class="btn light" href="#mode-emploi">Lire le mode d'emploi</a></div>
+</div></header>
+
+<nav class="toc gut" aria-label="Sommaire"><div class="wrap">
+  <a href="#principe">Principe</a><a href="#roles">Qui fait quoi</a><a href="#outils">Les 3 outils</a><a href="#mode-emploi">Mode d'emploi</a><a href="#calcul">Calcul</a><a href="#rgpd">Données et RGPD</a><a href="#prototype">Statut</a><a href="#sources">Sources</a>
+</div></nav>
+
+<main class="gut"><div class="wrap grid" style="gap:44px">
+
+<section id="principe">
+  <p class="eyebrow">Principe</p><h2>Sept étapes, une démarche collective</h2>
+  <p>L'outil suit la démarche recommandée par l'INRS : on évalue le <b>travail et son organisation</b>, pas les personnes. Chaque étape apporte un regard différent ; la synthèse les croise.</p>
+  <div class="flow">
+    <div><b>Contexte</b>Demande, comité de pilotage, unités de travail</div>
+    <div><b>Indicateurs</b>Absentéisme, turnover, AT… (pré-remplis par les RH)</div>
+    <div><b>Remontées</b>Faits décrits sans nom</div>
+    <div><b>Grille RPS-DU</b>26 questions en groupe, par unité de travail</div>
+    <div><b>Avis</b>CSE, RH, médecin du travail, référent·es…</div>
+    <div><b>Questionnaires</b>Anonymes, sur place ou par lien</div>
+    <div><b>Synthèse</b>Cartographie, priorités, actions pour le DUERP</div>
+  </div>
+</section>
+
+<section id="roles">
+  <p class="eyebrow">Organisation recommandée</p><h2>Qui fait quoi</h2>
+  <p>L'outil reste entre les mains du service de santé au travail. L'entreprise et les salariés reçoivent seulement des liens dédiés, qui ne donnent accès à rien d'autre.</p>
+  <div class="who">
+    <div class="card"><h3>Service de santé au travail (infirmier·e)</h3><ul class="small"><li>Ouvre l'outil et garde la sauvegarde de l'évaluation</li><li>Crée les liens et conserve les codes secrets</li><li>Anime la réunion grille RPS-DU</li><li>Recueille les avis, consigne les remontées</li><li>Restitue la synthèse au comité de pilotage et au CSE</li></ul></div>
+    <div class="card e"><h3>Entreprise (direction, RH, CSE)</h3><ul class="small"><li>Porte la démarche : l'évaluation des risques relève de l'employeur</li><li>Les RH remplissent les indicateurs par un lien dédié</li><li>Diffuse le lien du questionnaire aux salariés</li><li>Participe au groupe de travail et décide du plan d'actions</li></ul></div>
+    <div class="card s"><h3>Salariés</h3><ul class="small"><li>Répondent librement et seuls au questionnaire, par lien ou QR code</li><li>Aucun nom, aucune adresse e-mail, aucune heure enregistrés</li><li>Participent au groupe de travail de leur unité</li></ul></div>
+  </div>
+</section>
+
+<section id="outils">
+  <p class="eyebrow">À ne pas confondre</p><h2>Trois outils complémentaires</h2>
+  <div class="tw"><table>
+    <thead><tr><th></th><th>Grille RPS-DU (INRS)</th><th>Baromètre PréventIA</th><th>COPSOQ</th></tr></thead>
+    <tbody>
+      <tr><td><b>Qui répond</b></td><td>Un groupe de travail, par unité de travail</td><td>Chaque salarié, seul</td><td>Chaque salarié, seul</td></tr>
+      <tr><td><b>Ce qu'on mesure</b></td><td>L'organisation du travail, à partir d'exemples concrets</td><td>Le vécu, sur les 7 familles de facteurs</td><td>Le vécu, sur 24 échelles</td></tr>
+      <tr><td><b>Statut</b></td><td>Outil de référence de l'INRS pour le document unique</td><td>Repérage construit pour PréventIA, <b>non validé</b></td><td>Questionnaire validé scientifiquement (version française)</td></tr>
+      <tr><td><b>Durée</b></td><td>1 à 2 h de réunion</td><td>4 minutes</td><td>10 minutes</td></tr>
+      <tr><td><b>Usage conseillé</b></td><td>Le socle : toujours</td><td>Repérage rapide</td><td>Mesure solide et comparable</td></tr>
+    </tbody></table></div>
+  <p class="muted small">Pour les questionnaires, choisissez l'un <b>ou</b> l'autre : les deux auprès des mêmes salariés font doublon.</p>
+</section>
+
+<section id="mode-emploi">
+  <p class="eyebrow">Mode d'emploi</p><h2>Avant, pendant, après</h2>
+  <div class="grid g3">
+    <div class="card"><h3>1. Avant</h3><ol class="small">
+      <li>Cadrer la demande avec la direction et le CSE ; constituer un comité de pilotage.</li>
+      <li>Ouvrir l'outil, cliquer « Démarrer une évaluation vierge ».</li>
+      <li>Étape 1 : renseigner l'entreprise, l'effectif et les <b>unités de travail</b> (avant de créer les liens : ils reprennent cette liste).</li>
+      <li>Étape 2 : créer le <b>lien RH</b> et l'envoyer pour les indicateurs.</li>
+      <li>Informer les salariés de la démarche et de l'anonymat.</li></ol></div>
+    <div class="card"><h3>2. Pendant</h3><ol class="small">
+      <li>Étape 6 : créer le <b>lien du questionnaire</b> (ou le plan B Google Forms), le diffuser avec le QR code et le message fourni.</li>
+      <li>Étape 4 : animer la grille RPS-DU avec chaque groupe de travail.</li>
+      <li>Étapes 3 et 5 : consigner les remontées et recueillir les avis.</li>
+      <li>Importer les indicateurs RH et les réponses (à partir de 5).</li>
+      <li><b>Télécharger la sauvegarde</b> régulièrement.</li></ol></div>
+    <div class="card"><h3>3. Après</h3><ol class="small">
+      <li>Fermer les liens.</li>
+      <li>Étape 7 : lire la synthèse, vérifier l'indice de fiabilité, compléter la gravité et la maîtrise.</li>
+      <li>Restituer au comité de pilotage et au CSE ; l'employeur arrête le plan d'actions.</li>
+      <li>Intégrer les résultats au DUERP ; prévoir le suivi.</li></ol></div>
+  </div>
+  <div class="card"><h3>Remplissage minimal conseillé</h3>
+    <p class="small"><b>La grille RPS-DU</b> (le socle du document unique) <b>et au moins une autre source</b> : questionnaires, avis des acteurs ou indicateurs. Une source seule donne un résultat, mais il repose sur un seul regard. Les avis ne sont pas obligatoires pour le calcul, mais la démarche est collective : deux ou trois avis (CSE, RH, médecin du travail) suffisent à l'enrichir.</p></div>
+</section>
+
+<section id="calcul">
+  <p class="eyebrow">Transparence</p><h2>Comment la synthèse est calculée</h2>
+  <div class="grid g2">
+    <div class="card"><h3>Pondération des sources</h3><p class="small">Grille RPS-DU 30 % · Questionnaires 30 % · Avis 20 % · Remontées 10 % · Indicateurs 10 %.</p>
+      <p class="small"><b>Une source vide est retirée</b> et les autres sont recalculées : un onglet non rempli ne fait pas baisser le score. Il fait baisser l'<b>indice de fiabilité</b>, affiché dans la synthèse.</p></div>
+    <div class="card"><h3>Cas des remontées</h3><p class="small">Par défaut, une famille sans remontée est « non renseignée ». Si vous cochez « recueil systématique » (toutes les sources interrogées), l'absence de remontée compte comme « rien de signalé ».</p>
+      <p class="small">Une remontée grave non traitée, ou un indicateur critique, place la famille concernée au moins au niveau « modéré ».</p></div>
+    <div class="card"><h3>Anonymat dans les résultats</h3><p class="small">Aucun résultat de questionnaire n'est affiché pour un groupe de moins de 5 répondants. Les réponses à distance ne sont lisibles qu'à partir de 5, dans un ordre mélangé.</p></div>
+    <div class="card"><h3>Priorités</h3><p class="small">La criticité croise l'exposition, la gravité et le niveau de maîtrise, selon les critères classants du réseau Anact-Aract, pour hiérarchiser les actions du DUERP.</p></div>
+  </div>
+</section>
+
+<section id="rgpd">
+  <p class="eyebrow">Données personnelles</p><h2>Données et RGPD</h2>
+  <div class="secret small"><b>Principe :</b> aucune donnée nominative n'est demandée, ni aux salariés, ni aux RH. Les résultats ne sont présentés que de façon collective.</div>
+  <div class="tw"><table>
+    <thead><tr><th>Donnée</th><th>Où elle est conservée</th><th>Qui y accède</th></tr></thead>
+    <tbody>
+      <tr><td>L'évaluation (contexte, grille, avis, remontées, synthèse)</td><td>Dans le navigateur de l'infirmier·e (stockage local), et dans le fichier de sauvegarde qu'elle télécharge</td><td>L'infirmier·e uniquement</td></tr>
+      <tr><td>Réponses des salariés par lien</td><td>Base Supabase hébergée dans l'Union européenne. Aucune colonne d'identité, de date ou d'adresse IP</td><td>Personne ne peut relire une réponse isolée. L'infirmier·e les importe avec un code secret, à partir de 5 réponses</td></tr>
+      <tr><td>Indicateurs envoyés par les RH</td><td>Même base, chiffres globaux uniquement</td><td>L'infirmier·e, avec un code secret</td></tr>
+      <tr><td>Plan B Google ou Microsoft Forms</td><td>Chez Google ou Microsoft</td><td>Le propriétaire du formulaire voit chaque réponse : il doit appartenir au service de santé au travail</td></tr>
+    </tbody></table></div>
+  <ul class="small" style="padding-left:18px;display:grid;gap:4px">
+    <li>Pas de cookie, pas de compte, pas de mesure d'audience. Les pages sont servies par GitHub Pages et les polices par Google Fonts, qui reçoivent l'adresse IP du visiteur pour afficher la page.</li>
+    <li>Les données de santé individuelles (dossiers, entretiens) n'entrent <b>jamais</b> dans l'outil : seuls des effectifs agrégés de l'infirmerie peuvent y figurer.</li>
+    <li>Durée de conservation conseillée : fermer les liens à la fin de la démarche ; supprimer les réponses à distance 12 mois après la restitution.</li>
+  </ul>
+  <div class="note small"><b>À compléter par la structure utilisatrice</b> avant tout déploiement : responsable de traitement, coordonnées du délégué à la protection des données (DPO), durée de conservation retenue, inscription au registre des traitements.</div>
+</section>
+
+<section id="prototype">
+  <p class="eyebrow">Statut</p><h2>Un prototype, une aide à la décision</h2>
+  <div class="note">
+    <ul class="small" style="padding-left:18px;display:grid;gap:4px">
+      <li><b>Prototype en cours d'évaluation</b>, développé par une infirmière en santé au travail. Il n'a fait l'objet d'aucune validation institutionnelle.</li>
+      <li>Il <b>ne remplace ni</b> l'évaluation des risques qui incombe à l'employeur (art. L4121-1 et suivants du Code du travail), <b>ni</b> l'avis du médecin du travail, <b>ni</b> une expertise en psychologie du travail.</li>
+      <li><b>Baromètre PréventIA</b> : outil de repérage non validé scientifiquement.</li>
+      <li><b>COPSOQ</b> : la structure et la cotation suivent la version française validée, mais les libellés sont <b>provisoires</b>. Ils doivent être remplacés par les libellés officiels avant toute diffusion de résultats, dans le respect de la licence du réseau COPSOQ.</li>
+      <li>Les seuils d'alerte des indicateurs sont des repères indicatifs, à adapter au secteur.</li>
+    </ul></div>
+</section>
+
+<section id="sources">
+  <p class="eyebrow">Références</p><h2>Sources</h2>
+  <ol class="src">
+    <li>INRS, <i>Évaluer les facteurs de risques psychosociaux : l'outil RPS-DU</i>, ED 6403 (grille d'évaluation par unité de travail, 7 familles de facteurs). <a href="https://www.inrs.fr/media.html?refINRS=ED+6403">inrs.fr</a></li>
+    <li>INRS, <i>Risques psychosociaux. Comment agir en prévention ?</i>, ED 6349 (démarche, conditions de réussite). <a href="https://www.inrs.fr/media.html?refINRS=ED+6349">inrs.fr</a></li>
+    <li>INRS, <i>Dépister les risques psychosociaux. Des indicateurs pour vous guider</i>, ED 6012 (indicateurs de fonctionnement et de santé-sécurité). <a href="https://www.inrs.fr/media.html?refINRS=ED+6012">inrs.fr</a></li>
+    <li>Collège d'expertise sur le suivi des risques psychosociaux au travail (présidé par M. Gollac), <i>Mesurer les facteurs psychosociaux de risque au travail pour les maîtriser</i>, rapport au ministre du Travail, avril 2011 (6 axes de facteurs). <a href="https://www.vie-publique.fr/sites/default/files/rapport/pdf/114000201.pdf">vie-publique.fr</a></li>
+    <li>Dupret E., Bocéréan C., Teherani M., Feltrin M., Pejtersen J. H., « Le COPSOQ : un nouveau questionnaire français d'évaluation des risques psychosociaux », <i>Santé Publique</i>, 2012 (validation française). <a href="https://hal.archives-ouvertes.fr/halshs-01249992">HAL</a></li>
+    <li>INRS, fiche FRPS 36, <i>COPSOQ</i>, Références en santé au travail n° 168, décembre 2021 (versions françaises, conditions d'utilisation). <a href="https://inrs.fr/dam/inrs/CataloguePapier/DMT/TI-FRPS-36.pdf">inrs.fr</a></li>
+    <li>Réseau international COPSOQ, licence et lignes directrices d'utilisation. <a href="https://copsoq-network.org/guidelines">copsoq-network.org</a></li>
+    <li>Réseau Anact-Aract, kit « Les risques psychosociaux dans le document unique », 2017 (critères classants : exposition, gravité, maîtrise).</li>
+    <li>Dares, enquête Conditions de travail et risques psychosociaux 2024-2025 (repères nationaux affichés à titre indicatif).</li>
+    <li>Code du travail : art. L4121-1 et L4121-2 (obligation de prévention), R4121-1 (document unique), L1152-4 et L1153-5 (harcèlement).</li>
+  </ol>
+</section>
+
+</div></main>
+
+<footer class="gut"><div class="wrap">Diagnostic RPS · PréventIA Protect — prototype réalisé par Laure Bonnefond, infirmière en santé au travail. Aide à la décision, ne se substitue pas à l'avis du médecin du travail.</div></footer>
+</body>
+</html>

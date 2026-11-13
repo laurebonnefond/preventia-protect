@@ -16,7 +16,7 @@ create table if not exists public.enq_campagnes (
   id            uuid primary key default gen_random_uuid(),
   code          text not null unique,          -- public : dans le lien envoyé aux salariées
   code_lecture  text not null unique,          -- secret : réservé à l'infirmier·e
-  outil         text not null check (outil in ('endoprev','menoprev','seinprev','rps_baro','rps_copsoq')),
+  outil         text not null check (outil in ('endoprev','menoprev','seinprev','rps_baro','rps_copsoq','rps_ind')),
   entreprise    text check (char_length(entreprise) <= 120),
   ouverte       boolean not null default true,
   seuil         int not null default 5 check (seuil >= 5),
@@ -45,7 +45,7 @@ returns table(code text, code_lecture text)
 language plpgsql security definer set search_path = public as $$
 declare c text; l text;
 begin
-  if p_outil not in ('endoprev','menoprev','seinprev','rps_baro','rps_copsoq') then raise exception 'outil inconnu'; end if;
+  if p_outil not in ('endoprev','menoprev','seinprev','rps_baro','rps_copsoq','rps_ind') then raise exception 'outil inconnu'; end if;
   c := upper(substr(replace(gen_random_uuid()::text,'-',''), 1, 8));
   l := replace(gen_random_uuid()::text,'-','') || substr(replace(gen_random_uuid()::text,'-',''),1,8);
   insert into enq_campagnes(code, code_lecture, outil, entreprise, fin)
@@ -103,3 +103,9 @@ revoke all on function public.enq_creer(text,text,date), public.enq_info(text), 
   public.enq_resultats(text), public.enq_ouvrir(text,boolean) from public;
 grant execute on function public.enq_creer(text,text,date), public.enq_info(text), public.enq_repondre(text,jsonb),
   public.enq_resultats(text), public.enq_ouvrir(text,boolean) to anon, authenticated;
+
+-- 5. Diagnostic RPS — indicateurs RH (outil 'rps_ind') : chiffres déjà agrégés, lisibles dès 1 envoi
+alter table public.enq_campagnes drop constraint if exists enq_campagnes_seuil_check;
+alter table public.enq_campagnes add constraint enq_campagnes_seuil_check
+  check (seuil >= 5 or (outil = 'rps_ind' and seuil >= 1));
+-- enq_creer insère seuil = 1 pour 'rps_ind', 5 sinon (migration Supabase « enq_rps_indicateurs_rh »).

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Indicateurs RH — démarche RPS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap">
+<style>
+/* PréventIA Protect · Diagnostic RPS — page de pré-remplissage des indicateurs par les RH de l'entreprise.
+   Ouverte par un lien envoyé par l'infirmier·e ; n'accède à rien d'autre. Indicateurs : rps-data.js (mêmes que l'outil). */
+:root{
+  --navy:oklch(24% .06 258); --teal:oklch(52% .1 182); --orange:oklch(70% .17 50);
+  --bg:oklch(98.2% .004 250); --card:#fff; --card-2:oklch(95.5% .008 250); --line:oklch(91% .01 250);
+  --ink:oklch(25% .03 258); --muted:oklch(50% .02 258); --on-accent:#fff; --bad:oklch(55% .2 25); --ok:oklch(52% .13 150); --ok-bg:oklch(94% .05 150);
+  --f-display:"DM Serif Display", Georgia, serif; --f-body:"DM Sans", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:oklch(17% .025 258); --card:oklch(22% .03 258); --card-2:oklch(27% .035 258); --line:oklch(33% .03 258);
+  --ink:oklch(93% .01 250); --muted:oklch(72% .02 250); --teal:oklch(72% .12 182); --on-accent:oklch(17% .025 258); --ok-bg:oklch(30% .06 150); color-scheme:dark}}
+*{box-sizing:border-box;margin:0}
+body{font-family:var(--f-body);background:var(--bg);color:var(--ink);line-height:1.5}
+button,input{font:inherit;color:inherit}
+.top{background:var(--navy);color:#fff;padding:14px max(16px,env(safe-area-inset-left,0px))}
+.top .in{max-width:960px;margin:0 auto;display:flex;gap:10px;align-items:center}
+.top small{display:block;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;opacity:.65}
+.top b{font-family:var(--f-display);font-weight:400;font-size:18px}
+main{max-width:960px;margin:0 auto;padding:22px max(16px,env(safe-area-inset-left,0px)) 60px;display:grid;gap:16px}
+h1,h2{font-family:var(--f-display);font-weight:400;line-height:1.25} h1{font-size:1.7rem} h2{font-size:1.25rem}
+.eyebrow{font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:var(--teal);font-weight:700}
+.muted{color:var(--muted)} .small{font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:grid;gap:10px}
+.secret{border-left:3px solid var(--teal);background:var(--card);padding:10px 14px;border-radius:0 10px 10px 0;font-size:14px}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+input.i{padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);width:100px}
+.btn{border:0;border-radius:10px;padding:11px 20px;font-weight:700;background:var(--teal);color:var(--on-accent);cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.center{text-align:center;display:grid;gap:12px;justify-items:center;margin-top:30px}
+.ok-ic{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:var(--ok-bg);color:var(--ok);font-size:30px}
+</style>
+</head>
+<body>
+<header class="top"><div class="in"><div><small>PréventIA Protect · Santé au travail</small><b>Indicateurs de la démarche RPS</b></div></div></header>
+<main id="m"><p class="muted">Chargement…</p></main>
+
+<script src="rps-data.js"></script>
+<script src="../sante-femme/enquetes.js"></script>
+<script>
+(function () {
+  const $ = s => document.querySelector(s), M = $('#m');
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]));
+  const P = new URLSearchParams(location.search);
+  const code = (P.get('c') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const EQS = (P.get('e') || '').split('|').map(s => s.trim()).filter(Boolean).slice(0, 20);
+  const { IND, EQ_IND, IND_SPST } = RPSQ;
+  const LI = IND.filter(d => !IND_SPST.includes(d.k)), LE = EQ_IND.filter(d => !IND_SPST.includes(d.k));
+  const BROUILLON = 'pp_rps_ind_' + code;
+  let D = { periode: '', ind: {}, eq: {} };
+  try { D = { ...D, ...JSON.parse(localStorage.getItem(BROUILLON)) }; } catch (_) {}
+  const garder = () => { try { localStorage.setItem(BROUILLON, JSON.stringify(D)); } catch (_) {} };
+  const erreur = msg => M.innerHTML = `<div class="center"><h2>Page indisponible</h2><p class="muted">${esc(msg)}</p></div>`;
+
+  function page(camp) {
+    const groupes = [...new Set(LI.map(d => d.g))];
+    const u = d => d.u === '%' ? '%' : d.u === 'h' ? 'h' : d.u === 'j' ? 'jours' : d.u === 'nb' ? 'nombre' : '';
+    M.innerHTML = `<div><p class="eyebrow">${esc(camp.entreprise || 'Votre entreprise')}</p><h1>Indicateurs de fonctionnement et de santé-sécurité</h1>
+      <p class="muted">Ces chiffres aident le service de santé au travail à repérer les facteurs de risques psychosociaux. Remplissez ce que vous connaissez, laissez vide le reste.</p></div>
+      <div class="secret"><b>Uniquement des chiffres globaux</b> (taux, nombres) : ne saisissez aucun nom ni aucune information sur un salarié identifiable. Votre brouillon est gardé sur cet ordinateur jusqu'à l'envoi.</div>
+      <div class="card"><label class="small"><b>Période concernée</b> (ex. : « 2025-2026 » ou « oct. 2025 – sept. 2026 »)<br><input class="i" id="per" style="width:280px;margin-top:4px" maxlength="60" value="${esc(D.periode)}"></label>
+        <p class="muted small">N = période concernée · N-1 = la période précédente, de même durée.</p></div>
+      ${groupes.map(g => `<div class="card"><h2>${esc(g)}</h2><div class="tw"><table><thead><tr><th>Indicateur</th><th>Période N</th><th>N-1</th><th>Unité</th></tr></thead><tbody>
+        ${LI.filter(d => d.g === g).map(d => `<tr><td>${esc(d.l)}${d.calc ? `<div class="muted small">${esc(d.calc)}</div>` : ''}</td>
+          ${['n', 'n1'].map(p => `<td><input class="i" type="number" min="0" step="any" data-k="${d.k}" data-p="${p}" value="${esc(D.ind[d.k]?.[p])}" aria-label="${esc(d.l)} ${p === 'n' ? 'période N' : 'N-1'}"></td>`).join('')}
+          <td class="muted small">${u(d)}</td></tr>`).join('')}</tbody></table></div></div>`).join('')}
+      ${EQS.length > 1 ? `<div class="card"><h2>Par équipe <span class="muted small">(période N, si vous l'avez)</span></h2><div class="tw"><table><thead><tr><th>Équipe</th>${LE.map(d => `<th>${esc(d.l)} (${d.u === 'nb' ? 'nombre' : d.u})</th>`).join('')}</tr></thead><tbody>
+        ${EQS.map(e => `<tr><td><b>${esc(e)}</b></td>${LE.map(d => `<td><input class="i" type="number" min="0" step="any" data-e="${esc(e)}" data-k="${d.k}" value="${esc(D.eq[e]?.[d.k])}" aria-label="${esc(d.l)} ${esc(e)}"></td>`).join('')}</tr>`).join('')}</tbody></table></div></div>` : ''}
+      <div class="card"><div class="row"><button class="btn" id="send">Envoyer au service de santé au travail</button><span class="small muted" id="st">Brouillon enregistré sur cet ordinateur.</span></div>
+        <p class="muted small">Vous pouvez renvoyer plus tard une version corrigée : c'est le dernier envoi qui sera pris en compte.</p></div>`;
+    $('#per').oninput = e => { D.periode = e.target.value; garder(); };
+    M.querySelectorAll('[data-p]').forEach(el => el.oninput = () => { const k = el.dataset.k; D.ind[k] ||= {}; D.ind[k][el.dataset.p] = el.value; garder(); });
+    M.querySelectorAll('[data-e]').forEach(el => el.oninput = () => { const e = el.dataset.e; D.eq[e] ||= {}; D.eq[e][el.dataset.k] = el.value; garder(); });
+    $('#send').onclick = envoyer;
+  }
+
+  async function envoyer() {
+    const st = $('#st'), b = $('#send');
+    const propre = o => Object.fromEntries(Object.entries(o || {}).filter(([, v]) => v !== '' && v != null && isFinite(+v)).map(([k, v]) => [k, +v]));
+    const ind = {}; LI.forEach(d => { const v = propre(D.ind[d.k]); if (Object.keys(v).length) ind[d.k] = v; });
+    const eq = {}; EQS.forEach(e => { const v = propre(D.eq[e]); if (Object.keys(v).length) eq[e] = v; });
+    if (!Object.keys(ind).length && !Object.keys(eq).length) { st.innerHTML = '<span style="color:var(--bad)">Aucune valeur saisie.</span>'; return; }
+    const rep = { periode: String(D.periode || '').slice(0, 60), ind, eq, d: new Date().toISOString().slice(0, 10), v: 1 };
+    if (JSON.stringify(rep).length > 3500) { st.innerHTML = '<span style="color:var(--bad)">Trop de données pour un envoi : réduisez le détail par équipe.</span>'; return; }
+    b.disabled = true; st.textContent = 'Envoi…';
+    try {
+      await ENQ.repondre(code, rep);
+      M.innerHTML = `<div class="center"><div class="ok-ic">✓</div><h2>Merci, les indicateurs sont transmis</h2>
+        <p class="muted">Le service de santé au travail les importera dans la démarche. Vous pouvez fermer cette page, ou revenir corriger et renvoyer : votre brouillon reste sur cet ordinateur.</p>
+        <button class="btn ghost" id="back">Revenir au formulaire</button></div>`;
+      $('#back').onclick = () => page(camp);
+    } catch (e) { st.innerHTML = `<span style="color:var(--bad)">⚠ ${esc(e.message)}</span>`; b.disabled = false; }
+  }
+
+  let camp;
+  (async function demarrer() {
+    if (!code) return erreur("Ce lien est incomplet. Demandez-le au service de santé au travail.");
+    try { camp = await ENQ.info(code); } catch (e) { return erreur(e.message); }
+    if (!camp) return erreur("Ce lien ne correspond à aucune démarche.");
+    if (camp.outil !== 'rps_ind') return erreur("Ce lien ne correspond pas à un formulaire d'indicateurs.");
+    if (!camp.ouverte) return erreur("Ce formulaire est fermé. Contactez le service de santé au travail.");
+    page(camp);
+  })();
+})();
+</script>
+</body>
+</html>

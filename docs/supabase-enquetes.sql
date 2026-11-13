@@ -1,6 +1,6 @@
 -- ════════════════════════════════════════════════════════════════════
 -- PréventIA Protect — Enquêtes collectives anonymes (Supabase, région UE)
--- Utilisé par : EndoPrév (puis MénoPrév, SeinPrév…)
+-- Utilisé par : EndoPrév, Diagnostic RPS (baromètre et COPSOQ à distance), puis MénoPrév, SeinPrév…
 --
 -- Principe « boîte aux lettres » :
 --   • la salariée DÉPOSE une réponse avec le code public de la campagne (lien / QR) ;
@@ -16,7 +16,7 @@ create table if not exists public.enq_campagnes (
   id            uuid primary key default gen_random_uuid(),
   code          text not null unique,          -- public : dans le lien envoyé aux salariées
   code_lecture  text not null unique,          -- secret : réservé à l'infirmier·e
-  outil         text not null check (outil in ('endoprev','menoprev','seinprev')),
+  outil         text not null check (outil in ('endoprev','menoprev','seinprev','rps_baro','rps_copsoq')),
   entreprise    text check (char_length(entreprise) <= 120),
   ouverte       boolean not null default true,
   seuil         int not null default 5 check (seuil >= 5),
@@ -45,7 +45,7 @@ returns table(code text, code_lecture text)
 language plpgsql security definer set search_path = public as $$
 declare c text; l text;
 begin
-  if p_outil not in ('endoprev','menoprev','seinprev') then raise exception 'outil inconnu'; end if;
+  if p_outil not in ('endoprev','menoprev','seinprev','rps_baro','rps_copsoq') then raise exception 'outil inconnu'; end if;
   c := upper(substr(replace(gen_random_uuid()::text,'-',''), 1, 8));
   l := replace(gen_random_uuid()::text,'-','') || substr(replace(gen_random_uuid()::text,'-',''),1,8);
   insert into enq_campagnes(code, code_lecture, outil, entreprise, fin)

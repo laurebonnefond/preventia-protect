@@ -96,7 +96,23 @@ body.app .back,body.app .pp-top .pill{display:none}
 .jeu-cadre{position:relative;width:100%;aspect-ratio:860/600;max-height:78vh;border-radius:var(--r);overflow:hidden;background:#1b0b18;box-shadow:var(--shadow)}
 .jeu-cadre iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 @media (max-width:700px){.jeu-cadre{aspect-ratio:auto;height:78vh}}
-#affichette{display:none}
+/* Score familial, passeport, documents imprimables */
+.eis{background:var(--card-2);border-radius:12px;padding:10px 12px;display:grid;gap:2px}
+.erow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;font-size:12.5px;padding-block:5px;border-top:1px dashed var(--line)}
+.cnt{display:inline-flex;align-items:center;gap:6px}
+.cnt button,.tgl{border:1px solid var(--line);background:var(--card);border-radius:8px;min-width:30px;height:30px;font-weight:700}
+.tgl{padding-inline:10px} .tgl[aria-pressed="true"]{border-color:var(--rose);background:var(--rose-bg);color:var(--rose)}
+.cnt button[disabled]{opacity:.35}
+.orient .ul{margin-top:2px}
+#affichette,#impr{display:none}
+@media print{body.print-doc>*:not(#impr){display:none!important}body.print-doc #impr{display:block}body.print-doc::before{display:none}}
+#impr{font-family:var(--f-body,system-ui);color:#111;font-size:12.5px;line-height:1.5;padding:8px 4px}
+#impr h1{font-family:var(--f-display);font-weight:400;font-size:24px;color:#a3245a;margin:0}
+#impr h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:#a3245a;margin:16px 0 6px;border-bottom:1px solid #e5c7d3;padding-bottom:3px}
+#impr .sous,#impr .pied{color:#555;font-size:11.5px} #impr .pied{margin-top:16px;border-top:1px solid #ddd;padding-top:8px}
+#impr table{margin-bottom:8px} #impr th,#impr td{border:1px solid #ccc;padding:5px 7px;vertical-align:top;color:#111}
+#impr ul{margin:4px 0 8px;padding-left:1.1rem}
+#impr .lignes{height:96px;background:repeating-linear-gradient(#fff 0 23px,#bbb 23px 24px)}
 @media print{body.print-aff>*:not(#affichette){display:none!important}body.print-aff #affichette{display:block}}
 #affichette{font-family:var(--f-body,system-ui);text-align:center;padding:30px}
 #affichette h1{font-family:var(--f-display);font-weight:400;font-size:34px;margin:0 0 8px;color:#a3245a}
@@ -122,8 +138,10 @@ const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&g
 const fmt=d=>d?new Date(d+'T00:00').toLocaleDateString('fr-FR'):'–';
 
 /* ---------- Repères de dépistage (France) ----------
-   Bornes du dépistage organisé : la HAS réévalue l'élargissement des âges.
-   Modifier ces constantes suffit à mettre l'outil à jour. */
+   Bornes du dépistage organisé : la HAS réévalue en 2026 l'ouverture à 45-49 ans et à 75-79 ans (note de cadrage de février 2026,
+   recommandation attendue fin 2026). Tant qu'aucun texte ne change le programme, on garde 50-74 ans.
+   Modifier ces constantes suffit à mettre l'outil à jour.
+   Depuis janvier 2024, les invitations et relances sont envoyées par l'Assurance maladie (compte ameli ou courrier). */
 const DEP={AGE_MIN:50, AGE_MAX:74, INTERVALLE_MOIS:24, EXAMEN_CLINIQUE_DES:25};
 
 /* ---------- Couche de données ----------
@@ -176,15 +194,15 @@ const bars=(rows,tot)=>rows.map(r=>`<div class="hbar"><span>${esc(r.l)}</span><s
    Seules les rubriques personnelles sont visibles ; rien ne quitte le téléphone. */
 const APP=new URLSearchParams(location.search).has('app')||matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 const LIEN_APP=new URL('seinprev.html?app=1#connaitre',location.href).href;
-const TABS=APP?[['connaitre','Connaître mes seins'],['parcours','Mon dépistage'],['jeu','Super Maria']]
-  :[['bord','Tableau de bord'],['actions','Actions Octobre rose'],['enquete','Enquête anonyme'],['suivi','Suivi infirmier'],['parcours','Mon parcours'],['connaitre','Connaître mes seins'],['jeu','Jeu Super Maria']];
+const TABS=APP?[['connaitre','Connaître mes seins'],['parcours','Mon dépistage'],['travail','Sein & travail'],['jeu','Super Maria']]
+  :[['bord','Tableau de bord'],['actions','Actions Octobre rose'],['enquete','Enquête anonyme'],['suivi','Suivi infirmier'],['travail','Sein & travail'],['parcours','Mon parcours'],['connaitre','Connaître mes seins'],['jeu','Jeu Super Maria']];
 if(APP){document.body.classList.add('app');document.title='Mes seins';
   if('serviceWorker' in navigator)navigator.serviceWorker.register('sw-seinprev.js').catch(()=>{});}
 let installPrompt=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;if(APP)route();});
 function route(){const h=(location.hash||'#'+TABS[0][0]).slice(1);const cur=TABS.some(t=>t[0]===h)?h:TABS[0][0];
   $('#tabs').innerHTML=TABS.map(([k,l])=>`<a href="#${k}" ${k===cur?'aria-current="page"':''}>${l}</a>`).join('');
-  ({bord:vBord,actions:vActions,enquete:vEnquete,suivi:vSuivi,parcours:vParcours,connaitre:vConnaitre,jeu:vJeu})[cur]();}
+  ({bord:vBord,actions:vActions,enquete:vEnquete,suivi:vSuivi,parcours:vParcours,connaitre:vConnaitre,travail:vTravail,jeu:vJeu})[cur]();}
 window.addEventListener('hashchange',()=>{route();scrollTo(0,0);});
 const intro=(e,t,p,ref)=>`<div class="intro"><div><p class="eyebrow">${e}</p><h2>${t}</h2><p class="muted">${p}</p></div>${ref?`<div class="ref">${ref}</div>`:''}</div>`;
 const demoBar=()=>S.demo?`<div class="demo"><span><b>Données d'exemple fictives.</b> Explorez l'outil, puis démarrez votre propre suivi.</span><span class="sp"></span><button class="btn sm" id="newS">Démarrer un suivi vierge</button></div>`:'';
@@ -201,7 +219,7 @@ function vBord(){
   const LEV={'Manque de temps, horaires de travail':'Autoriser une absence rémunérée pour la mammographie ou aménager les horaires le jour de l\'examen.',
     'Peur du résultat':'Proposer une intervention du CRCDC ou de la Ligue et des témoignages : un cancer dépisté tôt se soigne mieux.',
     'Peur que l\'examen fasse mal':'Expliquer le déroulé de la mammographie : quelques secondes de compression par sein, examen rapide.',
-    'Pas reçu ou perdu l\'invitation':`Rappeler que l'invitation peut être redemandée au ${S.cfg.crcdc||'CRCDC de la région'} ou que le médecin peut prescrire l'examen.`,
+    'Pas reçu ou perdu l\'invitation':"Rappeler que l'invitation est envoyée par l'Assurance maladie : elle se retrouve dans le compte ameli, la caisse peut la rééditer et le médecin peut prescrire l'examen.",
     'Oubli':'Proposer un rappel dans l\'agenda (onglet Mon parcours) et une relance lors d\'Octobre rose.',
     'Je ne me sens pas concernée':'Rappeler que 8 cancers du sein sur 10 surviennent après 50 ans, même sans antécédent familial.',
     'Distance, transport':'Recenser les centres de radiologie agréés proches du site et les créneaux du samedi.'};
@@ -211,7 +229,9 @@ function vBord(){
     <div class="kpi"><div class="l">${DEP.AGE_MIN}-${DEP.AGE_MAX} ans à jour</div><div class="v" style="color:var(--${!masked&&cible.length&&ajour/cible.length>=.7?'ok':'rose'})">${masked||!cible.length?'–':Math.round(ajour/cible.length*100)+' %'}</div><div class="d">${masked?`Masqué sous ${SEUIL} réponses`:`Mammographie de moins de 2 ans · objectif européen 70 %`}</div></div>
     <div class="kpi"><div class="l">Actions menées</div><div class="v">${S.actions.length}</div><div class="d">${part} participations</div></div>
     <div class="kpi"><div class="l">Suivi infirmier</div><div class="v">${S.suivi.length}</div><div class="d"><span style="color:var(--bad)">${nBad} en retard</span> · ${nWarn} à prévoir</div></div>
+    <a class="kpi" href="#travail" style="text-decoration:none;color:inherit"><div class="l">Engagements employeur</div><div class="v">${(S.cfg.eng||[]).length}<span class="muted" style="font-size:15px"> / ${ENG.length}</span></div><div class="d">Absence pour l'examen, retour après cancer…</div></a>
   </div>
+  <div class="card row"><div><h3>Bilan de campagne</h3><p class="muted small">Document collectif et anonyme pour la direction, le CSE ou la CSSCT : actions, freins, engagements.</p></div><span class="sp"></span><button class="btn" id="bilan">Imprimer le bilan</button></div>
   <div class="grid g2">
     <div class="card"><h3 style="margin-bottom:8px">Freins au dépistage</h3>${masked?`<p class="muted">Résultats masqués sous ${SEUIL} réponses.</p>`:bars(fr,E.length)}</div>
     <div class="card"><h3 style="margin-bottom:8px">Ce que les salariées souhaitent</h3>${masked?`<p class="muted">Résultats masqués sous ${SEUIL} réponses.</p>`:bars(count(E,'souhaits',SOUHAITS).sort((a,b)=>b.n-a.n),E.length)}</div>
@@ -223,6 +243,7 @@ function vBord(){
     <label class="f">Centre de coordination des dépistages (CRCDC)<input class="i" data-cfg="crcdc" value="${esc(S.cfg.crcdc)}" placeholder="Nom et téléphone du CRCDC"></label>
   </div>`;
   app.querySelectorAll('[data-cfg]').forEach(el=>el.onchange=()=>{S.cfg[el.dataset.cfg]=el.value;save();vBord();});
+  $('#bilan').onclick=()=>imprimer(bilanCampagne());
   bindDemo();
 }
 
@@ -284,7 +305,7 @@ function kiosk(){
   const fin=()=>{S.enquete.push({age:A.age,mammo:A.mammo,invit:A.invit,freins:A.freins||[],souhaits:A.souhaits||[]});save();
     const cible=A.age==='50 à 74 ans', ajour=A.mammo===MAMMO[0];
     K.innerHTML=`<div class="in"><h2>Merci.</h2>
-      ${cible&&!ajour?`<div class="card"><b>Vous avez entre ${DEP.AGE_MIN} et ${DEP.AGE_MAX} ans</b><p>Le dépistage organisé vous est proposé tous les 2 ans, pris en charge à 100 %. Si vous n'avez plus votre invitation, votre médecin peut prescrire l'examen.</p></div>`:''}
+      ${cible&&!ajour?`<div class="card"><b>Vous avez entre ${DEP.AGE_MIN} et ${DEP.AGE_MAX} ans</b><p>Le dépistage organisé vous est proposé tous les 2 ans, pris en charge à 100 %. Si vous n'avez plus votre invitation, elle est dans votre compte ameli, ou votre médecin peut prescrire l'examen.</p></div>`:''}
       <p class="muted">Un changement dans un sein (boule, peau qui se rétracte, écoulement du mamelon) justifie de consulter sans attendre, quel que soit l'âge.</p>
       <button class="btn" id="knext" style="justify-self:start">Personne suivante</button></div>`;$('#knext').onclick=home;};
   home();
@@ -315,34 +336,69 @@ function vSuivi(){
   bindDemo();
 }
 
-/* ---------- 5. Mon parcours (salariée, rien n'est enregistré) ---------- */
-const P={age:52,perso:null,mutation:null,famille:null,radio:null,last:''};
+/* ---------- 5. Mon parcours (salariée, rien n'est enregistré) ----------
+   Trois niveaux de risque (HAS, 2014) : moyen, élevé, très élevé.
+   Score familial d'Eisinger, cotation diffusée par la HAS et l'INCa : à partir de 3, une consultation d'oncogénétique est indiquée.
+   Les cas se cotent par branche (maternelle ou paternelle) ; on retient la branche la plus élevée, sans additionner les deux. */
+const EIS=[['mut','Mutation BRCA1 ou BRCA2 identifiée dans cette branche',5,1],['f30','Cancer du sein chez une femme avant 30 ans',4],['f39','Cancer du sein chez une femme entre 30 et 39 ans',3],
+  ['f49','Cancer du sein chez une femme entre 40 et 49 ans',2],['f70','Cancer du sein chez une femme entre 50 et 70 ans',1],['h','Cancer du sein chez un homme',4],['ov','Cancer de l\'ovaire avant 70 ans',4]];
+const P={age:52,signe:null,perso:null,lesion:null,radio:null,mutation:null,famille:null,last:'',br:{m:{},p:{}}};
+const eisBranche=b=>EIS.reduce((s,[k,,pts])=>s+pts*(P.br[b][k]||0),0);
+const eisinger=()=>P.famille==='oui'?Math.max(eisBranche('m'),eisBranche('p')):0;
 function orientation(){
-  const risque=P.perso==='oui'||P.mutation==='oui'||P.radio==='oui', fam=P.famille==='oui', a=+P.age;
-  if(risque) return {c:'o-rose',t:'Un suivi spécialisé vous concerne',p:"Avec un antécédent personnel de cancer du sein, une mutation génétique connue ou une radiothérapie du thorax, le dépistage organisé n'est pas adapté. Votre médecin ou votre gynécologue définit un suivi personnalisé, parfois dès un âge jeune."};
-  if(fam) return {c:'o-warn',t:'Parlez de vos antécédents familiaux à votre médecin',p:"Selon le nombre de cas, leur âge et le lien de parenté, il peut proposer un suivi plus précoce ou une consultation d'oncogénétique. En attendant, les repères ci-dessous restent valables."};
+  const a=+P.age, e=eisinger();
+  if(P.signe==='oui') return {c:'o-bad',niv:'Consultation',t:'Un changement se fait examiner : ce n\'est plus du dépistage',
+    p:"Le dépistage s'adresse aux femmes qui n'ont aucun signe. Avec une boule, un écoulement, une modification de la peau ou du mamelon, prenez rendez-vous dans les jours qui viennent avec votre médecin, votre gynécologue ou une sage-femme. C'est vrai à tout âge, et même si votre dernière mammographie était normale."};
+  if(P.mutation==='oui') return {c:'o-rose',niv:'Risque très élevé',ry:'spe',t:'Un suivi coordonné par l\'oncogénétique',
+    p:"Avec une prédisposition génétique identifiée chez vous (BRCA1, BRCA2 ou autre), le suivi est fixé par une équipe d'oncogénétique.",
+    pts:['Examen clinique des seins deux fois par an, dès 20 ans.','IRM et mammographie chaque année, le plus souvent à partir de 30 ans.','Le dépistage organisé ne vous concerne pas : votre suivi est plus rapproché.']};
+  if(P.perso==='oui') return {c:'o-rose',niv:'Risque élevé',ry:'spe',t:'Une surveillance après cancer du sein',
+    p:"Après un cancer du sein ou un carcinome canalaire in situ, la surveillance est organisée par l'équipe qui vous a soignée et votre médecin.",
+    pts:['Examen clinique tous les 6 mois pendant 2 ans, puis chaque année.','Mammographie chaque année, parfois complétée par une échographie.','Au travail : la visite de pré-reprise prépare votre retour (onglet « Sein & travail »).']};
+  if(P.radio==='oui') return {c:'o-rose',niv:'Risque élevé',ry:'spe',t:'Une surveillance après irradiation du thorax',
+    p:"Après une radiothérapie du thorax à forte dose (par exemple pour un lymphome de Hodgkin), un suivi spécifique est recommandé.",
+    pts:['Examen clinique chaque année, à partir de 8 ans après la fin de l\'irradiation.','IRM chaque année à partir de 8 ans après l\'irradiation, au plus tôt à 30 ans, avec une mammographie.','Parlez-en à votre médecin si ce suivi n\'est pas en place.']};
+  if(P.lesion==='oui') return {c:'o-rose',niv:'Risque élevé',ry:'spe',t:'Une mammographie chaque année pendant 10 ans',
+    p:"Après une hyperplasie atypique (canalaire ou lobulaire) ou un carcinome lobulaire in situ trouvés sur un prélèvement, la HAS recommande un suivi rapproché.",
+    pts:['Mammographie chaque année pendant 10 ans, parfois avec une échographie.','Ensuite, selon votre âge : retour au dépistage organisé ou mammographie tous les 2 ans jusqu\'à 50 ans.']};
+  if(P.famille==='oui'&&e>=3) return {c:'o-warn',niv:e>=5?'À évaluer en priorité':'À évaluer',ry:'spe',t:'Une consultation d\'oncogénétique est indiquée',
+    p:`Votre score familial est de <b class="num">${e}</b>. À partir de 3, la HAS recommande un avis d'oncogénétique${e>=5?' ; à 5 ou plus, l\'indication est excellente':''}. C'est cette consultation qui précise votre niveau de risque et votre suivi.`,
+    pts:['Demandez l\'orientation à votre médecin traitant, votre gynécologue ou une sage-femme.','Préparez les informations utiles : qui a été malade, à quel âge, de quel côté de la famille.','Ce score oriente, il ne dit pas que vous aurez un cancer. En attendant, les repères de votre âge restent valables.']};
+  if(P.famille==='oui'&&!e) return {c:'o-warn',niv:'À compléter',t:'Indiquez les cas de votre famille',p:"Notez ci-contre les cas de chaque côté de la famille pour calculer le score familial."};
   if(!a) return null;
-  if(a<DEP.EXAMEN_CLINIQUE_DES) return {c:'o-ok',t:'Pas de dépistage à votre âge',p:"Connaître ses seins suffit : si vous remarquez un changement, consultez."};
-  if(a<DEP.AGE_MIN) return {c:'o-ok',t:'Un examen clinique des seins chaque année',p:`Dès ${DEP.EXAMEN_CLINIQUE_DES} ans, la palpation des seins par un médecin, un·e gynécologue ou une sage-femme est recommandée une fois par an. La mammographie de dépistage commence à ${DEP.AGE_MIN} ans, sauf facteur de risque.`};
-  if(a<=DEP.AGE_MAX) return {c:'o-rose',t:'Le dépistage organisé, tous les 2 ans',p:`Entre ${DEP.AGE_MIN} et ${DEP.AGE_MAX} ans, vous recevez une invitation tous les 2 ans pour une mammographie et un examen clinique, pris en charge à 100 % sans avance de frais. Sans invitation, votre médecin peut prescrire l'examen.`};
-  return {c:'o-warn',t:'Parlez-en à votre médecin',p:`Après ${DEP.AGE_MAX} ans, le dépistage organisé s'arrête. Votre médecin décide avec vous de la poursuite d'un suivi.`};
+  const fam=P.famille==='oui'?` Votre score familial est de ${e} : en dessous de 3, les repères de votre âge s'appliquent. Signalez à votre médecin tout nouveau cas dans la famille.`:'';
+  if(a<DEP.EXAMEN_CLINIQUE_DES) return {c:'o-ok',niv:'Risque moyen',t:'Pas de dépistage à votre âge',p:"Connaître ses seins suffit : si vous remarquez un changement, consultez."+fam};
+  if(a<DEP.AGE_MIN) return {c:'o-ok',niv:'Risque moyen',ry:'clin',t:'Un examen clinique des seins chaque année',p:`Dès ${DEP.EXAMEN_CLINIQUE_DES} ans, la palpation des seins par un médecin, un·e gynécologue ou une sage-femme est recommandée une fois par an. La mammographie de dépistage commence à ${DEP.AGE_MIN} ans, sauf facteur de risque.`+fam};
+  if(a<=DEP.AGE_MAX) return {c:'o-rose',niv:'Risque moyen',ry:'do',t:'Le dépistage organisé, tous les 2 ans',p:`Entre ${DEP.AGE_MIN} et ${DEP.AGE_MAX} ans, l'Assurance maladie vous invite tous les 2 ans à une mammographie avec examen clinique, pris en charge à 100 % sans avance de frais.`+fam,
+    pts:['Invitation introuvable ? Elle est dans votre compte ameli, ou votre caisse peut la rééditer. Votre médecin peut aussi prescrire l\'examen.','La liste des radiologues agréés est sur jefaismondepistage.cancer.fr.','Une mammographie jugée normale est relue par un second radiologue : le résultat définitif arrive ensuite par courrier.']};
+  return {c:'o-warn',niv:'Risque moyen',t:'Parlez-en à votre médecin',p:`Après ${DEP.AGE_MAX} ans, les invitations s'arrêtent, mais le suivi peut continuer : votre médecin décide avec vous, selon votre santé.`+fam};
 }
-function ics(date){
-  const d=date.toISOString().slice(0,10).replace(/-/g,'');
-  return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//PreventIA Protect//SeinPrev//FR','BEGIN:VEVENT',`UID:seinprev-${Date.now()}@preventia`,`DTSTAMP:${new Date().toISOString().replace(/[-:]/g,'').slice(0,15)}Z`,
-   `DTSTART;VALUE=DATE:${d}`,'SUMMARY:Penser à mon dépistage du cancer du sein','DESCRIPTION:Prendre rendez-vous pour la mammographie ou l\'examen clinique.','END:VEVENT','END:VCALENDAR'].join('\r\n');
-}
+const icsEvt=(date,titre,desc)=>['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//PreventIA Protect//SeinPrev//FR','BEGIN:VEVENT',`UID:seinprev-${Date.now()}@preventia`,`DTSTAMP:${new Date().toISOString().replace(/[-:]/g,'').slice(0,15)}Z`,
+   `DTSTART;VALUE=DATE:${iso(date).replace(/-/g,'')}`,`SUMMARY:${titre}`,`DESCRIPTION:${desc}`,'END:VEVENT','END:VCALENDAR'].join('\r\n');
+const icsHref=(date,titre,desc)=>`data:text/calendar;charset=utf-8,${encodeURIComponent(icsEvt(date,titre,desc))}`;
 function vParcours(){
   const o=orientation(); const yn=(k,t)=>`<div class="qrow"><span>${t}</span><div class="yn">${['oui','non'].map(v=>`<button data-k="${k}" data-v="${v}" aria-pressed="${P[k]===v}">${v==='oui'?'Oui':'Non'}</button>`).join('')}</div></div>`;
   const next=P.last?addMonths(P.last,+P.age>=DEP.AGE_MIN&&+P.age<=DEP.AGE_MAX?DEP.INTERVALLE_MOIS:12):null;
-  app.innerHTML=`${intro('Pour chaque salariée · rien n\'est enregistré','Mon parcours de dépistage',"Quelques questions pour savoir quel dépistage vous concerne. Les réponses restent sur cet écran et disparaissent quand vous quittez la page.",'<b>Sources :</b> Haute Autorité de santé, Institut national du cancer. Cet outil oriente, il ne remplace pas l\'avis de votre médecin.')}
+  const branche=(b,l)=>`<div class="eis"><p class="f">${l} <b class="num" style="float:right">${eisBranche(b)}</b></p>${EIS.map(([k,t,pts,uniq])=>{const n=P.br[b][k]||0;
+    return `<div class="erow"><span>${t} <span class="muted num">(${pts})</span></span>${uniq?`<button class="tgl" data-eb="${b}" data-ek="${k}" data-ed="${n?-1:1}" aria-pressed="${!!n}">${n?'Oui':'Non'}</button>`
+      :`<span class="cnt"><button data-eb="${b}" data-ek="${k}" data-ed="-1" aria-label="Retirer un cas" ${n?'':'disabled'}>−</button><b class="num">${n}</b><button data-eb="${b}" data-ek="${k}" data-ed="1" aria-label="Ajouter un cas">+</button></span>`}</div>`;}).join('')}</div>`;
+  app.innerHTML=`${intro('Pour chaque salariée · rien n\'est enregistré','Mon parcours de dépistage',"Quelques questions pour savoir quel suivi vous concerne : dépistage organisé, examen clinique annuel ou suivi spécialisé. Les réponses restent sur cet écran et disparaissent quand vous quittez la page.",'<b>Sources :</b> Haute Autorité de santé (femmes à haut risque, 2014), Institut national du cancer. Cet outil oriente, il ne remplace pas l\'avis de votre médecin.')}
   <div class="grid g2" style="align-items:start">
     <div class="card"><label class="f" style="margin-bottom:6px">Votre âge<input class="i num" type="number" min="18" max="100" id="age" value="${esc(P.age)}"></label>
-      ${yn('perso','Avez-vous déjà eu un cancer du sein ?')}${yn('mutation','Une mutation génétique (BRCA ou autre) est-elle connue chez vous ou dans votre famille ?')}
-      ${yn('famille','Votre mère, sœur ou fille a-t-elle eu un cancer du sein ?')}${yn('radio','Avez-vous reçu une radiothérapie du thorax avant 30 ans ?')}</div>
-    <div class="grid">${o?`<div class="orient ${o.c}"><p class="eyebrow">Ce qui vous concerne</p><h3>${o.t}</h3><p>${o.p}</p></div>`:''}
+      ${yn('signe','Avez-vous remarqué un changement récent dans un sein (boule, écoulement, peau, mamelon) ?')}
+      ${yn('perso','Avez-vous déjà eu un cancer du sein ou un carcinome in situ ?')}
+      ${yn('mutation','Une mutation génétique (BRCA1, BRCA2 ou autre) a-t-elle été identifiée chez vous ?')}
+      ${yn('radio','Avez-vous reçu une radiothérapie du thorax à forte dose (par exemple pour un lymphome de Hodgkin) ?')}
+      ${yn('lesion','Un prélèvement a-t-il montré une hyperplasie atypique ou un carcinome lobulaire in situ ?')}
+      ${yn('famille','Y a-t-il eu des cancers du sein ou de l\'ovaire dans votre famille ?')}
+      ${P.famille==='oui'?`<div style="margin-top:12px"><p class="eyebrow">Score familial d'Eisinger</p><p class="small muted" style="margin:2px 0 10px">Notez chaque personne touchée, de chaque côté de la famille. Les deux côtés ne s'additionnent pas : on retient le plus élevé.</p>
+        <div class="grid g2">${branche('m','Côté de votre mère')}${branche('p','Côté de votre père')}</div>
+        <p class="small" style="margin-top:8px">Score retenu : <b class="num">${eisinger()}</b> · 1 ou 2 : utilité faible d'un avis d'oncogénétique · 3 ou 4 : avis indiqué · 5 ou plus : excellente indication.</p></div>`:''}</div>
+    <div class="grid">${o?`<div class="orient ${o.c}"><p class="eyebrow">Ce qui vous concerne · ${o.niv}</p><h3>${o.t}</h3><p>${o.p}</p>${o.pts?`<ul class="ul">${o.pts.map(x=>`<li>${x}</li>`).join('')}</ul>`:''}
+        ${o.ry?`<button class="btn sm" id="versPass" data-ry="${o.ry}" style="justify-self:start;margin-top:6px">Suivre mes échéances dans mon passeport sein</button>`:''}</div>`:''}
       <div class="card grid"><h3>Me faire un rappel</h3><label class="f">Date de mon dernier examen<input class="i" type="date" id="last" value="${esc(P.last)}"></label>
-        ${next?`<p>Prochain examen à prévoir vers le <b>${next.toLocaleDateString('fr-FR')}</b>.</p><a class="btn" style="justify-self:start" download="rappel-depistage.ics" href="data:text/calendar;charset=utf-8,${encodeURIComponent(ics(next))}">Ajouter le rappel à mon agenda</a>`:'<p class="muted small">Indiquez la date pour calculer la prochaine échéance.</p>'}</div></div>
+        ${next?`<p>Prochain examen à prévoir vers le <b>${next.toLocaleDateString('fr-FR')}</b>.</p><a class="btn" style="justify-self:start" download="rappel-depistage.ics" href="${icsHref(next,'Penser à mon dépistage du cancer du sein','Prendre rendez-vous pour la mammographie ou l\'examen clinique.')}">Ajouter le rappel à mon agenda</a>`:'<p class="muted small">Indiquez la date pour calculer la prochaine échéance.</p>'}</div>
+      <div class="note"><b>Âges du dépistage :</b> la HAS réévalue en 2026 l'ouverture du dépistage organisé dès 45 ans et jusqu'à 79 ans. Tant que rien n'est décidé, les repères restent ${DEP.AGE_MIN}-${DEP.AGE_MAX} ans.</div></div>
   </div>
   <div class="grid g2">
     <div class="card"><h3 style="margin-bottom:8px">Consultez sans attendre si vous remarquez</h3><ol class="steps">
@@ -352,25 +408,26 @@ function vParcours(){
       <li><span class="n">4</span><div>Un changement de forme ou de taille d'un sein.</div></li></ol>
       <p class="muted small" style="margin-top:8px">L'autopalpation seule n'est pas une méthode de dépistage. Connaître ses seins aide à repérer un changement, en complément des examens.</p>
       <a class="btn ghost sm" href="#connaitre" style="margin-top:10px;display:inline-block;text-decoration:none">Apprendre le geste et tenir mon journal</a></div>
-    <div class="card"><h3 style="margin-bottom:8px">Travail et dépistage</h3><ul style="margin:0;padding-left:1.1rem;display:grid;gap:6px">
-      <li><b>Travail de nuit :</b> classé « cancérogène probable » (groupe 2A) par le CIRC en 2019. Le suivi en santé au travail en tient compte.</li>
-      <li><b>S'absenter pour l'examen :</b> renseignez-vous auprès des RH. Beaucoup d'entreprises facilitent l'absence pendant Octobre rose.</li>
-      <li><b>Après un cancer :</b> la visite de pré-reprise avec le médecin du travail prépare un retour adapté (aménagement, temps partiel thérapeutique).</li>
-      <li><b>Secret médical :</b> l'infirmier·e et le médecin du travail ne transmettent rien à l'employeur sans votre accord.</li></ul></div>
+    <div class="card"><h3 style="margin-bottom:8px">Ce qui dépend de nous</h3><p class="small muted" style="margin-bottom:8px">Environ un tiers des cancers du sein sont liés à des facteurs sur lesquels on peut agir (CIRC, 2018). La plupart des autres ne s'expliquent par aucun comportement : personne n'est « responsable » de son cancer.</p>
+      ${[['Alcool',15],['Surpoids, obésité',8],['Tabac',4],['Alimentation pauvre en fibres',4],['Activité physique insuffisante',3]].map(([l,n])=>`<div class="hbar"><span>${l}</span><span class="t"><i style="width:${n/15*100}%"></i></span><b>${n} %</b></div>`).join('')}
+      <p class="small" style="margin-top:8px">Part des cancers du sein attribuable à chaque facteur, en France. <a href="#travail">Travail de nuit, expositions, retour au travail : voir « Sein & travail »</a>.</p></div>
   </div>`;
   $('#age').onchange=e=>{P.age=e.target.value;vParcours();};
   $('#last').onchange=e=>{P.last=e.target.value;vParcours();};
   app.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{P[b.dataset.k]=b.dataset.v;vParcours();});
+  app.querySelectorAll('[data-eb]').forEach(b=>b.onclick=()=>{const B=P.br[b.dataset.eb],k=b.dataset.ek;B[k]=Math.max(0,Math.min(9,(B[k]||0)+ +b.dataset.ed));vParcours();});
+  const vp=$('#versPass');if(vp)vp.onclick=()=>{M.suivi=vp.dataset.ry;saveMoi();sub='passeport';location.hash='#connaitre';};
 }
 
-/* ---------- 5. Connaître mes seins : guide d'auto-examen et journal personnel ----------
+/* ---------- 5 bis. Connaître mes seins : guide d'auto-examen, journal et passeport personnels ----------
    Repères : INCa et HAS. L'autopalpation n'est pas une méthode de dépistage : elle aide à connaître ses seins
    pour repérer un changement, en complément de l'examen clinique (dès 25 ans) et de la mammographie (50-74 ans).
    Le journal est une donnée de santé personnelle : il reste dans ce navigateur, sur une clé distincte,
    jamais dans le suivi infirmier ni dans Supabase. */
 const KEY_MOI='pp_sein_moi_v1';
 const moiStore={get(){try{return JSON.parse(localStorage.getItem(KEY_MOI))}catch(e){return null}},set(v){try{localStorage.setItem(KEY_MOI,JSON.stringify(v))}catch(e){}},del(){try{localStorage.removeItem(KEY_MOI)}catch(e){}}};
-let M=moiStore.get()||{consent:false,rythme:'regles',regles:'',jour:1,journal:[]};
+const MOI0=()=>({consent:false,rythme:'regles',regles:'',jour:1,journal:[],suivi:'',examens:[]});
+let M={...MOI0(),...(moiStore.get()||{})};
 const saveMoi=()=>{if(M.consent)moiStore.set(M);};
 const iso=d=>{const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10);};
 const addDays=(d,n)=>{const x=new Date(d+'T00:00');x.setDate(x.getDate()+n);return x;};
@@ -499,8 +556,107 @@ function carte(sel,ro){
   return `<svg viewBox="0 0 340 186" class="carte${ro?' ro':''}" role="group" aria-label="Carte des seins, vue dans le miroir">${sein('G',96)}${sein('D',244)}<path d="M170 30v120" class="dash"/></svg>`;
 }
 
+/* ---------- Passeport sein : carnet personnel des examens ----------
+   But : qu'aucun contrôle ne se perde (contrôle rapproché d'une image « à surveiller », examens complémentaires demandés,
+   résultat jamais reçu) et que la salariée arrive en consultation avec ses dates et ses observations.
+   Même stockage que le journal : ce navigateur uniquement, après accord. Rien dans le suivi infirmier ni dans Supabase. */
+const EX_TYPES=[['clin','Examen clinique des seins'],['mammo_do','Mammographie du dépistage organisé'],['mammo','Mammographie ou échographie prescrite'],['irm','IRM mammaire'],['prel','Prélèvement (biopsie, ponction)']];
+const EX_RES=[['normal','Normal ou bénin (ACR 1 ou 2)','ok'],['acr3','À contrôler dans quelques mois (ACR 3)','warn'],['compl','Examens complémentaires demandés (ACR 0, 4 ou 5)','bad'],['attente','En attente du résultat','na'],['nsp','Je ne sais pas','na']];
+const DENS=[['','Non précisée'],['A','A · sein graisseux'],['B','B · peu dense'],['C','C · dense'],['D','D · très dense']];
+const RYTHMES={clin:['Examen clinique chaque année (25 à 49 ans)',12,['clin']],do:['Dépistage organisé tous les 2 ans (50 à 74 ans)',24,['mammo_do','mammo']],spe:['Suivi spécialisé : rythme fixé par mon médecin',12,['clin','mammo','mammo_do','irm']]};
+const exL=(T,k)=>(T.find(t=>t[0]===k)||['',k])[1];
+const jours=d=>Math.round((new Date(d+'T00:00')-new Date(iso(new Date())+'T00:00'))/864e5);
+let dex=null;
+function alertesPasseport(){
+  const X=[...(M.examens||[])].sort((a,b)=>b.date.localeCompare(a.date)), A=[];
+  X.forEach(e=>{
+    if(e.fait) return;
+    if(e.res==='compl') A.push({c:'bad',id:e.id,t:'Examens complémentaires demandés',p:`Après l'examen du ${fmt(e.date)}, un complément a été demandé (échographie, clichés, prélèvement). S'il n'est pas encore fait ou programmé, appelez le cabinet de radiologie ou votre médecin cette semaine.`});
+    if(e.res==='acr3'){
+      if(!e.controle) A.push({c:'warn',id:e.id,t:'Date du contrôle à noter',p:`L'examen du ${fmt(e.date)} demande un contrôle rapproché. Recopiez la date indiquée par le radiologue pour ne pas la manquer.`});
+      else{const j=jours(e.controle);A.push({c:j<0?'bad':j<=30?'warn':'ok',id:e.id,ics:e.controle,t:j<0?`Contrôle en retard de ${-j} jour${j<-1?'s':''}`:`Contrôle à faire vers le ${fmt(e.controle)}`,
+        p:j<0?'Ce contrôle sert à vérifier que l\'image n\'a pas changé. Prenez rendez-vous maintenant, même avec du retard.':'Une image classée ACR 3 est bénigne dans plus de 97 cas sur 100 : le contrôle sert à le confirmer. Prenez rendez-vous à l\'avance.'});}
+    }
+    if(e.res==='attente'&&jours(e.date)<-21) A.push({c:'warn',id:e.id,ok:'Résultat reçu',t:'Résultat toujours en attente',p:`Plus de 3 semaines depuis l'examen du ${fmt(e.date)}. Sans nouvelles, appelez le cabinet de radiologie : « pas de nouvelles » ne veut pas dire « tout va bien ».`});
+  });
+  const R=RYTHMES[M.suivi];
+  /* Tant qu'un contrôle, un complément ou un résultat est en cours, c'est lui qui fixe la suite : pas d'échéance de routine affichée */
+  const enCours=X.some(e=>!e.fait&&['compl','acr3','attente'].includes(e.res));
+  if(R&&!enCours){const last=X.find(e=>R[2].includes(e.type));
+    if(!last) A.push({c:'warn',t:'Aucun examen noté',p:'Ajoutez la date de votre dernier examen pour calculer la prochaine échéance. Si vous n\'en avez jamais fait, c\'est le moment d\'en parler à votre médecin.'});
+    else{const d=addMonths(last.date,R[1]), j=Math.round((d-new Date())/864e5);
+      A.push({c:j<0?'bad':j<=60?'warn':'ok',ics:iso(d),t:j<0?`Examen de suivi en retard (prévu vers le ${d.toLocaleDateString('fr-FR')})`:`Prochain examen vers le ${d.toLocaleDateString('fr-FR')}`,
+        p:M.suivi==='spe'?'Repère annuel par défaut : suivez le rythme fixé par votre médecin.':M.suivi==='do'?'Votre invitation arrive dans votre compte ameli ou par courrier. Sans invitation, votre médecin peut prescrire l\'examen.':'À faire par votre médecin, votre gynécologue ou une sage-femme.'});}}
+  return A.sort((a,b)=>({bad:0,warn:1,ok:2})[a.c]-({bad:0,warn:1,ok:2})[b.c]);
+}
+const consentBox=()=>M.consent?'':`<div class="secret"><b>Vos notes restent sur cet appareil.</b> Elles ne sont envoyées à personne, ni à l'infirmier·e ni à l'employeur. Utilisez votre téléphone personnel, jamais un poste partagé.
+  <label class="check" style="margin-top:8px"><input type="checkbox" id="consent"> J'accepte que mon journal et mon passeport soient enregistrés dans ce navigateur.</label></div>`;
+function vuePasseport(){
+  M.examens||=[]; if(!dex) dex={date:iso(new Date()),type:'mammo_do',res:'normal',dens:'',controle:'',note:''};
+  const X=[...M.examens].sort((a,b)=>b.date.localeCompare(a.date)), A=alertesPasseport();
+  const imag=dex.type!=='clin', dense=X.find(e=>['mammo','mammo_do'].includes(e.type)&&e.dens);
+  return `${consentBox()}
+  <div class="card grid"><div class="row"><h3>Mon rythme de suivi</h3><span class="sp"></span><a class="btn ghost sm" href="#parcours">Je ne sais pas : faire « Mon parcours »</a></div>
+    <div class="seg sm">${Object.entries(RYTHMES).map(([k,[l]])=>`<button data-suivi="${k}" aria-selected="${M.suivi===k}">${l}</button>`).join('')}</div>
+    ${A.length?`<div class="grid" style="gap:8px">${A.map(a=>`<div class="orient ${a.c==='ok'?'o-ok':a.c==='warn'?'o-warn':'o-bad'}" style="padding:12px 14px"><b>${a.t}</b><p class="small">${a.p}</p>
+      <div class="row">${a.ics&&a.c!=='bad'?`<a class="btn sm" download="rappel-sein.ics" href="${icsHref(a.ics,'Mon examen de suivi des seins','Prendre rendez-vous. Apporter mes anciens clichés et mon passeport sein.')}">Ajouter à mon agenda</a>`:''}${a.id&&a.c!=='ok'?`<button class="btn ghost sm" data-fait="${a.id}">${a.ok||"C'est fait"}</button>`:''}</div></div>`).join('')}</div>`
+      :'<p class="muted small">Choisissez votre rythme pour voir vos échéances.</p>'}</div>
+  <div class="grid g2" style="align-items:start">
+    <form class="card grid" id="fx"><h3>Noter un examen</h3>
+      <div class="grid g2"><label class="f">Date<input class="i" type="date" id="xd" value="${esc(dex.date)}" max="${iso(new Date())}" required></label>
+      <label class="f">Examen<select class="i" id="xt">${EX_TYPES.map(([k,l])=>`<option value="${k}" ${dex.type===k?'selected':''}>${l}</option>`).join('')}</select></label></div>
+      <label class="f">Résultat, tel qu'il est écrit sur le compte rendu<select class="i" id="xr">${EX_RES.map(([k,l])=>`<option value="${k}" ${dex.res===k?'selected':''}>${imag?l:l.replace(/ \(ACR[^)]*\)/,'')}</option>`).join('')}</select></label>
+      ${dex.res==='acr3'?`<label class="f">Date du contrôle indiquée par le radiologue<input class="i" type="date" id="xc" value="${esc(dex.controle)}"></label>`:''}
+      ${['mammo','mammo_do'].includes(dex.type)?`<label class="f">Densité des seins, si elle est précisée<select class="i" id="xn">${DENS.map(([k,l])=>`<option value="${k}" ${dex.dens===k?'selected':''}>${l}</option>`).join('')}</select></label>`:''}
+      <label class="f">Lieu, professionnel, remarque (facultatif)<input class="i" id="xo" value="${esc(dex.note)}"></label>
+      <button class="btn" ${M.consent?'':'disabled'} style="justify-self:start">Ajouter à mon passeport</button></form>
+    <div class="card"><div class="row" style="margin-bottom:8px"><h3>Mes examens</h3><span class="sp"></span>${X.length||M.journal.length?'<button class="btn ghost sm" id="fiche">Imprimer ma fiche de consultation</button>':''}</div>
+      ${X.length?`<ol class="hist">${X.map(e=>{const r=EX_RES.find(x=>x[0]===e.res);return `<li><span class="pill ${r[2]}">${r[1].replace(/ \(.*/,'').replace(' dans quelques mois','')}</span><div><b class="num">${fmt(e.date)}</b> · ${exL(EX_TYPES,e.type)}
+        ${e.dens?`<span class="small"> · densité ${e.dens}</span>`:''}${e.controle?`<p class="small">Contrôle prévu le <b class="num">${fmt(e.controle)}</b>${e.fait?' · fait':''}</p>`:''}${e.note?`<p class="small muted">${esc(e.note)}</p>`:''}</div>
+        <button class="btn ghost sm" data-delx="${e.id}" aria-label="Supprimer">✕</button></li>`;}).join('')}</ol>`:'<p class="muted">Aucun examen noté.</p>'}
+      ${dense&&/[CD]/.test(dense.dens)?`<div class="note" style="margin-top:10px"><b>Seins denses (type ${dense.dens}).</b> C'est fréquent et normal, surtout avant la ménopause. La mammographie y est un peu moins lisible : le radiologue peut la compléter par une échographie. La densité seule ne change pas le rythme du dépistage (HAS), mais elle est une raison de plus de consulter si un changement apparaît entre deux mammographies.</div>`:''}</div>
+  </div>
+  <details class="card"><summary><b>Comprendre mon compte rendu : la classification ACR</b></summary>
+    <p class="small muted" style="margin:10px 0">Le radiologue classe chaque sein de 0 à 5. Ce chiffre dit quoi faire ensuite : ce n'est pas un « stade » de cancer.</p>
+    <div class="tw"><table><thead><tr><th>Classement</th><th>Ce que cela veut dire</th><th>La suite</th></tr></thead><tbody>
+      <tr><td><b>ACR 0</b></td><td>Classement d'attente : l'image doit être précisée.</td><td>Examens complémentaires (clichés, échographie), à faire sans tarder.</td></tr>
+      <tr><td><b>ACR 1</b></td><td>Mammographie normale.</td><td>Suivi habituel.</td></tr>
+      <tr><td><b>ACR 2</b></td><td>Anomalie bénigne (kyste, calcifications banales…).</td><td>Suivi habituel, pas de surveillance particulière.</td></tr>
+      <tr><td><b>ACR 3</b></td><td>Anomalie très probablement bénigne.</td><td>Contrôle rapproché, à la date fixée par le radiologue (souvent 4 à 6 mois). Ne pas le laisser passer.</td></tr>
+      <tr><td><b>ACR 4</b></td><td>Anomalie indéterminée ou suspecte.</td><td>Prélèvement pour analyse. Beaucoup se révèlent bénignes.</td></tr>
+      <tr><td><b>ACR 5</b></td><td>Anomalie évocatrice d'un cancer.</td><td>Prélèvement et consultation rapide.</td></tr></tbody></table></div>
+    <p class="small" style="margin-top:10px"><b>Entre deux mammographies normales, restez attentive.</b> Certains cancers apparaissent dans l'intervalle : un changement se fait examiner sans attendre la prochaine invitation.</p></details>`;
+}
+/* Fiche à apporter en consultation : observations récentes et examens, sans rien transmettre */
+function ficheConsultation(){
+  const J=[...M.journal].sort((a,b)=>b.date.localeCompare(a.date)).filter(e=>e.res!=='rien').slice(0,6), X=[...(M.examens||[])].sort((a,b)=>b.date.localeCompare(a.date));
+  return `<h1>Mes seins · fiche pour ma consultation</h1><p class="sous">Préparée le ${new Date().toLocaleDateString('fr-FR')} avec SeinPrév. Document personnel : je choisis à qui je le montre.</p>
+  <h2>Ce que j'ai remarqué</h2>${J.length?`<table><tr><th>Date</th><th>Où</th><th>Quoi</th><th>Note</th></tr>${J.map(e=>`<tr><td>${fmt(e.date)}</td><td>${(e.zones||[]).map(zoneL).join(' ; ')||'–'}</td><td>${SIGNES.filter(s=>(e.signes||[]).includes(s.k)).map(s=>s.l).join(' ; ')||exL(RESULTATS.map(r=>[r.k,r.l]),e.res)}</td><td>${esc(e.note||'')}</td></tr>`).join('')}</table>`:'<p>Aucun changement noté dans mon journal.</p>'}
+  <h2>Mes examens</h2>${X.length?`<table><tr><th>Date</th><th>Examen</th><th>Résultat</th><th>Densité</th><th>Contrôle prévu</th><th>Remarque</th></tr>${X.map(e=>`<tr><td>${fmt(e.date)}</td><td>${exL(EX_TYPES,e.type)}</td><td>${exL(EX_RES,e.res)}</td><td>${e.dens||'–'}</td><td>${e.controle?fmt(e.controle):'–'}</td><td>${esc(e.note||'')}</td></tr>`).join('')}</table>`:'<p>Aucun examen noté.</p>'}
+  <h2>Mon suivi</h2><p>${RYTHMES[M.suivi]?RYTHMES[M.suivi][0]:'Rythme non renseigné'}${M.rythme==='regles'&&M.regles?` · Dernières règles notées : ${fmt(M.regles)}`:''}</p>
+  <h2>Mes questions</h2><div class="lignes"></div>
+  <p class="pied">Penser à apporter : anciens clichés et comptes rendus, ordonnance ou invitation, carte Vitale.</p>`;
+}
+function bindPasseport(){
+  const on=(id,ev,f)=>{const el=$('#'+id);if(el)el[ev]=f;};
+  app.querySelectorAll('[data-suivi]').forEach(b=>b.onclick=()=>{M.suivi=b.dataset.suivi;saveMoi();vConnaitre();});
+  on('xd','onchange',e=>{dex.date=e.target.value;});
+  on('xt','onchange',e=>{dex.type=e.target.value;if(dex.type==='clin')dex.dens='';vConnaitre();});
+  on('xr','onchange',e=>{dex.res=e.target.value;if(dex.res!=='acr3')dex.controle='';vConnaitre();});
+  on('xc','onchange',e=>{dex.controle=e.target.value;});
+  on('xn','onchange',e=>{dex.dens=e.target.value;});
+  on('xo','oninput',e=>{dex.note=e.target.value;});
+  on('fx','onsubmit',e=>{e.preventDefault();if(!M.consent||!dex.date)return;M.examens.push({id:Date.now(),...dex});saveMoi();dex=null;vConnaitre();});
+  app.querySelectorAll('[data-fait]').forEach(b=>b.onclick=()=>{const x=M.examens.find(e=>e.id===+b.dataset.fait);if(x){x.fait=true;saveMoi();vConnaitre();}});
+  app.querySelectorAll('[data-delx]').forEach(b=>b.onclick=()=>{M.examens=M.examens.filter(e=>e.id!==+b.dataset.delx);saveMoi();vConnaitre();});
+  on('fiche','onclick',()=>imprimer(ficheConsultation()));
+}
+/* Impression d'un document (fiche de consultation, bilan de campagne, préparation du retour au travail) */
+function imprimer(html){let a=$('#impr');if(!a){a=document.createElement('div');a.id='impr';document.body.appendChild(a);}
+  a.innerHTML=html;document.body.classList.add('print-doc');setTimeout(()=>{print();setTimeout(()=>document.body.classList.remove('print-doc'),400);},200);}
+
 let sub='quand', step=0, draft=null;
-const SUBS=[['quand','Quand'],['comment','Comment, pas à pas'],['observer','Quoi observer'],['journal','Mon journal'],['gardefous','Garde-fous']];
+const SUBS=[['quand','Quand'],['comment','Comment, pas à pas'],['observer','Quoi observer'],['journal','Mon journal'],['passeport','Mon passeport sein'],['gardefous','Garde-fous']];
 /* Illustrations reprises des affiches Octobre rose du SPSTI 23/87 (img/spsti-*.webp) */
 const CREDIT_SPSTI='<p class="credit">Illustrations : affiches Octobre rose du SPSTI 23/87 (Creuse · Haute-Vienne).</p>';
 const GESTES_SPSTI=`<div class="card"><p class="eyebrow">Une fois par mois</p><h3 class="disp" style="margin-bottom:12px">L'essentiel en 4 gestes</h3><div class="gestes">${[
@@ -547,6 +703,139 @@ function vJeu(){
     qrLib||=new Promise((ok,ko)=>{const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';sc.onload=ok;sc.onerror=ko;document.head.appendChild(sc);});
     try{await qrLib;new QRCode($('#qrJeu'),{text:JEU_URL,width:170,height:170});}catch(_){$('#qrJeu').textContent='QR code indisponible';}}};
 }
+/* ---------- 6. Sein & travail ----------
+   Le volet santé au travail : expositions professionnelles à repérer, retour au travail après un cancer du sein,
+   engagements collectifs de l'employeur. Aucune donnée individuelle n'est enregistrée ici :
+   la préparation du retour reste à l'écran, les engagements sont une donnée d'entreprise. */
+const SEQ=[['fatigue','Fatigue qui dure'],['bras','Bras ou épaule limités, lymphœdème du côté opéré'],['douleur','Douleurs des articulations ou des muscles'],['chaleur','Bouffées de chaleur, sueurs'],
+  ['cognitif','Concentration, mémoire'],['neuro','Fourmillements, mains ou pieds moins sensibles'],['peau','Peau fragile sur la zone traitée'],['moral','Anxiété, peur de la récidive, image de soi'],['soins','Rendez-vous de suivi et soins fréquents']];
+const CTR=[['charges','Port de charges, manutention'],['gestes','Gestes répétitifs ou bras en l\'air'],['debout','Station debout prolongée, marche'],['chaud','Ambiance chaude, tenue couvrante'],['nuit','Horaires de nuit, postés ou longs'],
+  ['vigil','Conduite, machines, poste de sécurité'],['mental','Charge mentale, délais, interruptions'],['public','Contact avec le public'],['fin','Gestes fins, outils vibrants, froid'],['route','Déplacements, trajets longs']];
+/* Pour chaque difficulté : une piste de base, puis des pistes liées aux contraintes du poste */
+const PISTES={
+ fatigue:{b:'Reprise progressive en temps partiel thérapeutique, avec une montée en charge par paliers. La fatigue après cancer dure : près d\'une personne sur deux en souffre encore 5 ans après le diagnostic (enquête VICAN5).',
+   x:[[['nuit','route'],'Horaires de jour stables pendant la reprise, télétravail partiel si le poste s\'y prête, limitation des déplacements.'],[['debout','charges'],'Pauses supplémentaires, siège à disposition, alternance des tâches physiques et sédentaires.'],[['vigil'],'Avis du médecin du travail avant de reprendre la conduite ou un poste de sécurité ; réintégration par étapes.']]},
+ bras:{b:'L\'activité physique adaptée et progressive est bénéfique, y compris en cas de lymphœdème : il ne s\'agit pas d\'immobiliser le bras, mais de doser l\'effort.',
+   x:[[['charges','gestes'],'Aides à la manutention, limitation temporaire des charges et du travail bras en l\'air du côté opéré, rotation des tâches.'],[['chaud'],'Si un manchon de compression est porté : tenue compatible, pauses au frais.'],[['fin'],'Outils plus légers ou à manche plus gros, plan de travail à bonne hauteur.']]},
+ douleur:{b:'Fréquentes sous hormonothérapie, elles s\'améliorent souvent avec le mouvement : échauffement, étirements, activité physique adaptée.',
+   x:[[['debout','charges','gestes'],'Alternance assis-debout, siège et plan de travail réglables, rotation des tâches.'],[['fin'],'Pauses courtes et fréquentes pour les mains, outils adaptés.']]},
+ chaleur:{b:'Liées à l\'hormonothérapie ou à une ménopause provoquée par les traitements. Les aménagements sont ceux de MénoPrév.',
+   x:[[['chaud','public','nuit'],'Accès à l\'eau et à un point frais, ventilateur individuel, tenue respirante, possibilité de s\'isoler quelques minutes. <a href="menoprev.html">Ouvrir MénoPrév</a>.']]},
+ cognitif:{b:'Les troubles de l\'attention et de la mémoire après chimiothérapie sont réels et le plus souvent transitoires. Les nommer évite les malentendus avec l\'équipe.',
+   x:[[['mental','public'],'Consignes écrites, une tâche à la fois, moins d\'interruptions, objectifs ajustés pendant la reprise.'],[['vigil'],'Avis du médecin du travail sur les tâches de sécurité ; reprise en binôme au début.']]},
+ neuro:{b:'Séquelles possibles de certaines chimiothérapies, qui peuvent gêner la préhension ou l\'équilibre.',
+   x:[[['fin'],'Outils à manche épais ou antivibratiles, gants contre le froid, limitation des tâches de précision prolongées.'],[['debout','vigil','charges'],'Chaussures adaptées, vigilance sur les travaux en hauteur et les sols glissants, évaluation avant la reprise de la conduite.']]},
+ peau:{b:'Pendant et après la radiothérapie, la peau de la zone traitée reste sensible plusieurs mois.',
+   x:[[['chaud','charges','gestes'],'Tenue de travail souple, pas de frottement ni de sangle (harnais, sac) sur la zone traitée, protection solaire en extérieur.']]},
+ moral:{b:'Entretien avec l\'infirmier·e ou le médecin du travail, psychologue, associations de patientes. La salariée décide seule de ce qu\'elle dit, ou non, à son équipe : cela se prépare avec elle.',x:[[['mental','public'],'Reprise sans objectif de rattrapage, point régulier avec un interlocuteur de confiance.']]},
+ soins:{b:'En affection de longue durée, la salariée a droit à des autorisations d\'absence pour ses traitements (art. L1226-5 du Code du travail). Prévoir la souplesse d\'horaires dès la reprise.',x:[]}
+};
+const DISPO=[
+ ['Pendant l\'arrêt','Rendez-vous de liaison','Arrêt d\'au moins 30 jours. Échange facultatif entre la salariée et l\'employeur, proposé par l\'un ou l\'autre, avec le service de santé au travail associé. Ce n\'est pas un rendez-vous médical : il sert à garder le lien et à informer sur les aides. La salariée peut le refuser.','L1226-1-3'],
+ ['Pendant l\'arrêt','Visite de pré-reprise','Arrêt de plus de 30 jours. Demandée par la salariée, son médecin traitant, le médecin-conseil ou le médecin du travail. C\'est le rendez-vous clé : il laisse le temps de préparer les aménagements. Plus elle est faite tôt, plus elle est utile.','R4624-29'],
+ ['Pendant l\'arrêt','Essai encadré','Tester son poste, ou un autre, pendant l\'arrêt et sans perdre ses indemnités : jusqu\'à 14 jours ouvrables, renouvelables une fois. À demander à l\'Assurance maladie, avec l\'accord du médecin du travail.','CSS D323-6'],
+ ['À la reprise','Temps partiel thérapeutique','Prescrit par le médecin traitant, avec l\'accord de l\'employeur et de l\'Assurance maladie. Le médecin du travail peut y ajouter des aménagements de poste.','CSS L323-3'],
+ ['À la reprise','Visite de reprise','Obligatoire après un arrêt maladie d\'au moins 60 jours, dans les 8 jours qui suivent la reprise. Le médecin du travail y propose les aménagements nécessaires.','R4624-31'],
+ ['Dans la durée','Suivi et maintien en emploi','Visite à la demande à tout moment, cellule de prévention de la désinsertion professionnelle du service, reconnaissance de la qualité de travailleur handicapé (RQTH) et aides de l\'Agefiph, convention de rééducation professionnelle en entreprise si un changement de poste se dessine.','R4624-34 · L4622-8-1']
+];
+const ENG=[['abs','Absence autorisée et rémunérée pour la mammographie de dépistage','Aucune règle générale ne l\'impose dans le secteur privé : accord, usage ou décision de l\'employeur.'],
+ ['creneaux','Créneaux repérés dans un centre de radiologie agréé proche du site','Liste des radiologues agréés sur jefaismondepistage.cancer.fr.'],
+ ['info','Information deux fois par an, équipes de nuit et sites isolés compris','Octobre rose et un rappel au printemps : l\'invitation arrive toute l\'année.'],
+ ['app','Guide « Mes seins » proposé à toutes les salariées','QR code et affichette dans l\'onglet « Connaître mes seins ».'],
+ ['duerp','Travail de nuit évalué dans le DUERP, avec l\'impact selon le sexe','L\'évaluation des risques tient compte de l\'impact différencié de l\'exposition selon le sexe (art. L4121-3).'],
+ ['retour','Procédure écrite de retour après un arrêt long','Rendez-vous de liaison proposé, visite de pré-reprise encouragée, interlocuteur désigné.'],
+ ['managers','Encadrants sensibilisés à l\'accueil d\'une collègue pendant et après un cancer','Ce qui se dit, ce qui ne se demande pas, comment répartir la charge sans mettre à l\'écart.'],
+ ['charte','Charte « Cancer et emploi » de l\'Institut national du cancer signée ou à l\'étude','11 engagements pour mieux accompagner les salariés touchés par un cancer.'],
+ ['vie','Événements d\'entreprise avec alternatives sans alcool, activité physique facilitée','L\'alcool est le premier facteur évitable de cancer du sein.'],
+ ['bilan','Bilan annuel anonyme présenté au CSE ou à la CSSCT','À imprimer depuis le tableau de bord.']];
+let wsub=null; const RT={seq:new Set(),ctr:new Set()};
+function pistesRetour(){
+  return SEQ.filter(([k])=>RT.seq.has(k)).map(([k,l])=>({l,b:PISTES[k].b,x:PISTES[k].x.filter(([c])=>c.some(v=>RT.ctr.has(v))).map(x=>x[1])}));
+}
+function vTravail(){
+  const SW=APP?[['retour','Après un cancer : mon retour au travail'],['expo','Mon travail et mes seins']]:[['expo','Expositions professionnelles'],['retour','Retour au travail après un cancer'],['employeur','Engagements de l\'employeur']];
+  if(!SW.some(s=>s[0]===wsub)) wsub=SW[0][0];
+  const nav=`<div class="seg" role="tablist" aria-label="Rubriques">${SW.map(([k,l])=>`<button role="tab" aria-selected="${k===wsub}" data-w="${k}">${l}</button>`).join('')}</div>`;
+  const eng=S.cfg.eng||[];
+  const chk=(set,arr,d)=>arr.map(([k,l])=>`<label class="check"><input type="checkbox" data-${d}="${k}" ${set.has(k)?'checked':''}> ${l}</label>`).join('');
+  const Pi=pistesRetour();
+  const body={
+   expo:()=>`<div class="grid g2" style="align-items:start">
+     <div class="card"><p class="eyebrow">Le facteur professionnel le mieux documenté</p><h3 class="disp" style="margin-bottom:8px">Travail de nuit</h3><ul class="ul">
+       <li>Classé <b>cancérogène probable</b> (groupe 2A) par le CIRC en 2019 ; l'Anses conclut dès 2016 à un effet probable sur le cancer du sein. L'hypothèse principale est la perturbation de l'horloge biologique.</li>
+       <li>Le sur-risque concerne surtout les expositions <b>longues et fréquentes</b>. Pour une salariée donnée, il reste modéré et ne permet jamais de dire qu'un cancer « vient » du travail de nuit.</li>
+       <li><b>Pas de dépistage particulier :</b> les repères sont les mêmes que pour toutes les femmes. Raison de plus pour ne manquer ni l'examen clinique annuel ni la mammographie.</li>
+       ${APP?'<li>Votre suivi en santé au travail est adapté au travail de nuit. Si votre santé le demande, le médecin du travail peut proposer un poste de jour.</li>'
+        :`<li><b>Suivi :</b> suivi individuel adapté, visite avant l'affectation puis au moins tous les 3 ans (art. L3122-11, R4624-17 et suivants). Passage sur un poste de jour si l'état de santé constaté par le médecin du travail l'exige (art. L3122-14).</li>
+       <li><b>Traçabilité :</b> noter au dossier les années de nuit et le nombre de nuits par an. C'est ce qui manque le plus quand la question de l'origine professionnelle se pose.</li>
+       <li><b>Réparation :</b> aucun tableau de maladie professionnelle ne vise le cancer du sein. La reconnaissance reste possible hors tableau, devant le comité régional (CRRMP), si l'incapacité prévisible atteint 25 %. Deux jugements de 2026 (Marseille, Bayonne) ont reconnu l'origine professionnelle ; une expertise de l'Anses est attendue.</li>`}</ul></div>
+     <div class="grid" style="align-content:start">
+      <div class="card"><h3 style="margin-bottom:8px">Rayonnements ionisants</h3><ul class="ul">
+        <li>Cancérogène <b>avéré</b> pour le sein (CIRC, groupe 1), surtout quand l'exposition a lieu jeune.</li>
+        <li>Soignantes en radiologie ou au bloc, personnel navigant, industrie : suivi dosimétrique et suivi individuel renforcé.</li>
+        ${APP?'':'<li>Le cancer du sein ne figure pas au tableau n° 6 du régime général : même voie hors tableau que pour le travail de nuit. Conserver l\'historique dosimétrique.</li>'}</ul></div>
+      <div class="card"><h3 style="margin-bottom:8px">Produits chimiques</h3><ul class="ul">
+        <li><b>Oxyde d'éthylène</b> (stérilisation) : cancérogène avéré, avec des indications limitées pour le sein.</li>
+        <li><b>Perturbateurs endocriniens</b> : des soupçons, des preuves encore incomplètes. On applique la démarche habituelle : repérer, substituer, réduire l'exposition.</li>
+        ${APP?'':'<li>À traiter avec l\'<a href="../../risques/chimique/index.html">évaluation du risque chimique</a>, la toxicologue et le médecin du travail.</li>'}</ul></div>
+      <div class="note"><b>À garder en proportion.</b> L'âge, les antécédents et les facteurs hormonaux pèsent bien plus que le travail. L'objectif ici est de tracer les expositions et d'agir sur ce qui peut l'être, pas d'inquiéter.</div>
+     </div></div>`,
+   retour:()=>`<div class="card"><h3 style="margin-bottom:4px">Les étapes, dans l'ordre</h3><p class="small muted" style="margin-bottom:12px">Deux ans après le diagnostic, une femme sur cinq n'a pas repris le travail (cohorte CANTO). Ce qui aide le plus : anticiper, et reprendre progressivement.</p>
+       <div class="tl">${DISPO.map(([q,t,p,ref],i)=>`<div><span class="dot${i>2?' alt':''}"></span><span class="eyebrow">${q}</span><br><b>${t}</b><p class="small">${p} <span class="muted">(${ref})</span></p></div>`).join('')}</div></div>
+     <div class="card grid"><div><h3>Préparer la visite de pré-reprise</h3><p class="small muted">Cochez ce qui vous gêne encore et ce que demande votre poste. Rien n'est enregistré. ${APP?'Vous pouvez imprimer le résultat pour le médecin du travail.':'À remplir avec la salariée, ou par elle seule sur son téléphone.'}</p></div>
+       <div class="grid g2" style="align-items:start"><fieldset class="sig"><legend class="f">Ce qui gêne encore</legend>${chk(RT.seq,SEQ,'seq')}</fieldset>
+         <fieldset class="sig"><legend class="f">Ce que demande le poste</legend>${chk(RT.ctr,CTR,'ctr')}</fieldset></div>
+       ${Pi.length?`<div class="grid" style="gap:10px"><p class="eyebrow">Pistes à discuter avec le médecin du travail</p>${Pi.map(p=>`<div class="orient o-rose" style="padding:12px 14px"><b>${p.l}</b><p class="small">${p.b}</p>${p.x.length?`<ul class="ul">${p.x.map(x=>`<li>${x}</li>`).join('')}</ul>`:''}</div>`).join('')}
+         <div class="row"><button class="btn" id="impRetour">Imprimer ma préparation</button><span class="muted small">Seul le médecin du travail propose les aménagements à l'employeur, sans jamais donner le diagnostic.</span></div></div>`
+        :'<p class="muted small">Cochez au moins une difficulté pour voir les pistes.</p>'}</div>
+     <div class="secret"><b>Ce que l'employeur sait.</b> L'avis du médecin du travail porte sur le poste et ses aménagements, jamais sur la maladie. La salariée n'a pas à donner son diagnostic à son employeur ni à ses collègues.</div>`,
+   employeur:()=>`<div class="grid g2" style="align-items:start">
+     <div class="card grid"><div class="row"><h3>Dix engagements collectifs</h3><span class="sp"></span><span class="pill ${eng.length>=7?'ok':eng.length>=4?'warn':'na'} num">${eng.length} / ${ENG.length}</span></div>
+       <p class="small muted">À proposer à la direction et au CSE. Ce sont des mesures d'entreprise : aucune ne concerne une salariée en particulier.</p>
+       ${ENG.map(([k,l,d])=>`<label class="check"><input type="checkbox" data-eng="${k}" ${eng.includes(k)?'checked':''}><span><b>${l}</b><br><span class="small muted">${d}</span></span></label>`).join('')}</div>
+     <div class="grid" style="align-content:start">
+      <div class="card grid"><h3>Repérage collectif</h3>
+        <label class="f">Salariées en travail de nuit ou posté de nuit<input class="i num" type="number" min="0" data-cfgw="nuit" value="${esc(S.cfg.nuit??'')}" style="max-width:140px"></label>
+        <label class="f">Salariées exposées aux rayonnements ionisants<input class="i num" type="number" min="0" data-cfgw="ri" value="${esc(S.cfg.ri??'')}" style="max-width:140px"></label>
+        <p class="small muted">Effectifs seulement, sans nom : ils servent à dimensionner l'information et figurent dans le bilan de campagne.</p></div>
+      <div class="card"><h3 style="margin-bottom:8px">Pourquoi l'entreprise a intérêt à agir</h3><ul class="ul">
+        <li>Moins d'une femme invitée sur deux fait sa mammographie de dépistage, pour un objectif européen de 70 %.</li>
+        <li>Quand le manque de temps ressort de l'enquête, une heure d'absence autorisée suffit souvent à lever l'obstacle.</li>
+        <li>Un retour préparé évite des mois d'arrêt supplémentaires et la perte d'une compétence.</li></ul></div>
+     </div></div>`
+  }[wsub]();
+  app.innerHTML=`${S.demo&&!APP?demoBar():''}${intro(APP?'Pour chaque salariée · rien n\'est enregistré':'Santé au travail','Sein & travail',APP?"Ce que le travail change, ou non, pour la santé de vos seins, et comment préparer un retour après un cancer.":"Le lien entre le poste et la santé du sein : expositions à tracer, retour au travail à préparer, mesures collectives à proposer à l'employeur.",
+    '<b>Sources :</b> CIRC, Anses, Institut national du cancer, Code du travail. Repères d\'aide à l\'échange : l\'avis sur le poste appartient au médecin du travail.')}${nav}${body}`;
+  app.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{wsub=b.dataset.w;vTravail();});
+  app.querySelectorAll('[data-seq]').forEach(c=>c.onchange=()=>{c.checked?RT.seq.add(c.dataset.seq):RT.seq.delete(c.dataset.seq);vTravail();});
+  app.querySelectorAll('[data-ctr]').forEach(c=>c.onchange=()=>{c.checked?RT.ctr.add(c.dataset.ctr):RT.ctr.delete(c.dataset.ctr);vTravail();});
+  app.querySelectorAll('[data-eng]').forEach(c=>c.onchange=()=>{const E=new Set(S.cfg.eng||[]);c.checked?E.add(c.dataset.eng):E.delete(c.dataset.eng);S.cfg.eng=[...E];save();vTravail();});
+  app.querySelectorAll('[data-cfgw]').forEach(el=>el.onchange=()=>{S.cfg[el.dataset.cfgw]=el.value;save();});
+  const ir=$('#impRetour');if(ir)ir.onclick=()=>imprimer(`<h1>Préparer ma visite de pré-reprise</h1><p class="sous">Document personnel, préparé le ${new Date().toLocaleDateString('fr-FR')} avec SeinPrév. À remettre au médecin du travail si je le souhaite, pas à l'employeur.</p>
+    <h2>Ce qui me gêne encore</h2><p>${SEQ.filter(s=>RT.seq.has(s[0])).map(s=>s[1]).join(' · ')}</p><h2>Ce que demande mon poste</h2><p>${CTR.filter(s=>RT.ctr.has(s[0])).map(s=>s[1]).join(' · ')||'Non renseigné'}</p>
+    <h2>Pistes à discuter</h2>${Pi.map(p=>`<p><b>${p.l}.</b> ${p.b}</p>${p.x.length?`<ul>${p.x.map(x=>`<li>${x.replace(/<a[^>]*>.*?<\/a>\.?/,'')}</li>`).join('')}</ul>`:''}`).join('')}
+    <h2>Mes questions</h2><div class="lignes"></div><p class="pied">Visite de pré-reprise : possible dès 30 jours d'arrêt, à ma demande, auprès de mon service de prévention et de santé au travail.</p>`);
+  bindDemo();
+}
+/* Bilan de campagne : document collectif et anonyme pour la direction, le CSE ou la CSSCT */
+function bilanCampagne(){
+  const E=S.enquete, masked=E.length<SEUIL, cible=E.filter(r=>r.age==='50 à 74 ans'), ajour=cible.filter(r=>r.mammo===MAMMO[0]).length;
+  const fr=count(E,'freins',FREINS).filter(f=>f.n&&f.l!=='Aucun frein').sort((a,b)=>b.n-a.n).slice(0,5), so=count(E,'souhaits',SOUHAITS).filter(f=>f.n).sort((a,b)=>b.n-a.n);
+  const A=[...S.actions].sort((a,b)=>a.date.localeCompare(b.date)), part=A.reduce((s,a)=>s+(+a.participants||0),0), eng=S.cfg.eng||[], st=S.suivi.map(statut);
+  const pc=(n,t)=>t?Math.round(n/t*100)+' %':'–';
+  return `<h1>Dépistage du cancer du sein · bilan de campagne</h1><p class="sous">${esc(S.cfg.entreprise||'Entreprise')} · édité le ${new Date().toLocaleDateString('fr-FR')} · document collectif et anonyme${S.demo?' · DONNÉES D\'EXEMPLE':''}</p>
+  <h2>En chiffres</h2><table><tr><th>Effectif féminin</th><th>Actions menées</th><th>Participations</th><th>Réponses à l'enquête</th><th>${DEP.AGE_MIN}-${DEP.AGE_MAX} ans à jour de mammographie</th></tr>
+    <tr><td>${esc(S.cfg.effectifF||'–')}</td><td>${A.length}</td><td>${part}</td><td>${E.length}${+S.cfg.effectifF?` (${pc(E.length,+S.cfg.effectifF)})`:''}</td><td>${masked||cible.length<SEUIL?`Masqué (moins de ${SEUIL} réponses)`:pc(ajour,cible.length)+' · objectif européen 70 %'}</td></tr></table>
+  <h2>Actions</h2>${A.length?`<table><tr><th>Date</th><th>Action</th><th>Intervenants</th><th>Participants</th></tr>${A.map(a=>`<tr><td>${fmt(a.date)}</td><td>${esc(a.type)}</td><td>${esc(a.intervenants||'')}</td><td>${esc(a.participants||'–')}</td></tr>`).join('')}</table>`:'<p>Aucune action consignée.</p>'}
+  <h2>Freins et attentes exprimés</h2>${masked?`<p>Résultats masqués : moins de ${SEUIL} réponses.</p>`:`<table><tr><th>Freins les plus cités</th><th>Part des répondantes</th></tr>${fr.map(f=>`<tr><td>${esc(f.l)}</td><td>${pc(f.n,E.length)}</td></tr>`).join('')}</table>
+    <table><tr><th>Ce qui aiderait</th><th>Part des répondantes</th></tr>${so.map(f=>`<tr><td>${esc(f.l)}</td><td>${pc(f.n,E.length)}</td></tr>`).join('')}</table>`}
+  <h2>Engagements de l'employeur (${eng.length} / ${ENG.length})</h2><table>${ENG.map(([k,l])=>`<tr><td style="width:28px">${eng.includes(k)?'☑':'☐'}</td><td>${l}</td></tr>`).join('')}</table>
+  <h2>Expositions à tracer</h2><p>Salariées en travail de nuit : ${esc(S.cfg.nuit||'non renseigné')} · exposées aux rayonnements ionisants : ${esc(S.cfg.ri||'non renseigné')}.</p>
+  <h2>Suivi infirmier des échéances</h2><p>${S.suivi.length>=SEUIL?`${S.suivi.length} salariées volontaires suivies : ${st.filter(s=>s.c==='ok').length} à jour, ${st.filter(s=>s.c==='warn').length} à prévoir, ${st.filter(s=>s.c==='bad').length} en retard.`:`Non détaillé : moins de ${SEUIL} salariées suivies.`} Aucune donnée individuelle n'est communiquée à l'employeur.</p>
+  <h2>Propositions pour l'année suivante</h2><div class="lignes"></div>
+  <p class="pied">Méthode : enquête anonyme sur tablette, sans nom ni horodatage ; résultats présentés à partir de ${SEUIL} réponses. Repères : dépistage organisé de ${DEP.AGE_MIN} à ${DEP.AGE_MAX} ans tous les 2 ans (Assurance maladie, INCa) ; bornes d'âge en cours de réévaluation par la HAS.</p>`;
+}
+
 /* Bandeau « Installer sur mon téléphone » (mode application) */
 function blocInstall(){
   if(!APP||matchMedia('(display-mode: standalone)').matches||navigator.standalone)return '';
@@ -560,19 +849,19 @@ function blocPartage(){
   if(APP)return '';
   return `<details class="card" id="partage"><summary><b>📱 Proposer ce guide aux salariées, sur leur propre téléphone</b></summary>
     <div class="partage" style="margin-top:14px"><div class="qrbox" id="qrApp" aria-label="QR code"></div>
-    <div class="grid" style="gap:8px"><p>Chaque salariée scanne le QR code ou ouvre le lien, puis installe l'application <b>« Mes seins »</b> sur son écran d'accueil. Elle y retrouve le guide, son rappel mensuel et son journal.</p>
+    <div class="grid" style="gap:8px"><p>Chaque salariée scanne le QR code ou ouvre le lien, puis installe l'application <b>« Mes seins »</b> sur son écran d'accueil. Elle y retrouve le guide, son rappel mensuel, son journal et son passeport sein (examens, contrôles à ne pas manquer).</p>
       <div class="secret small">Le journal reste <b>uniquement sur son téléphone</b> : rien n'est transmis à l'infirmier·e ni à l'employeur. Elle ne voit pas les rubriques réservées au service (tableau de bord, enquête, suivi).</div>
       <div class="small">Lien : <span class="lien">${esc(LIEN_APP)}</span></div>
       <div class="row"><button class="btn sm" id="cpLien">Copier le lien</button><button class="btn sm ghost" id="cpMsg">Copier un message d'invitation</button><button class="btn sm ghost" id="prAff">Imprimer une affichette</button></div></div></div></details>`;
 }
 const MSG_APP=()=>`Bonjour,
 
-Dans le cadre d'Octobre rose, le service de santé au travail vous propose un petit guide pour apprendre à connaître vos seins : quand et comment s'observer, quels changements doivent amener à consulter, un rappel mensuel et un journal personnel.
+Dans le cadre d'Octobre rose, le service de santé au travail vous propose un petit guide pour apprendre à connaître vos seins : quand et comment s'observer, quels changements doivent amener à consulter, un rappel mensuel, un journal personnel et un carnet de vos examens.
 
 Ouvrez ce lien sur votre téléphone, puis ajoutez-le à votre écran d'accueil :
 ${LIEN_APP}
 
-Votre journal reste uniquement sur votre téléphone : personne d'autre n'y a accès.
+Votre journal et votre carnet restent uniquement sur votre téléphone : personne d'autre n'y a accès.
 Ce guide ne remplace pas le dépistage (examen clinique dès 25 ans, mammographie tous les 2 ans de 50 à 74 ans).
 
 Le service de santé au travail reste à votre écoute.`;
@@ -639,8 +928,7 @@ function vConnaitre(){
    journal:()=>{const J=[...M.journal].sort((a,b)=>b.date.localeCompare(a.date));
      if(!draft) draft={date:iso(new Date()),res:'rien',zones:[],signes:[],note:''};
      const prev=J.find(e=>e.date<draft.date); const c=conduite(draft,prev);
-     return `${M.consent?'':`<div class="secret"><b>Votre journal reste sur cet appareil.</b> Il n'est envoyé à personne, ni à l'infirmier·e ni à l'employeur. Utilisez votre téléphone personnel, jamais un poste partagé.
-         <label class="check" style="margin-top:8px"><input type="checkbox" id="consent"> J'accepte que mon journal soit enregistré dans ce navigateur.</label></div>`}
+     return `${consentBox()}
      <div class="grid g2" style="align-items:start">
       <form class="card grid" id="fj"><h3>Nouvelle observation</h3>
         <label class="f">Date<input class="i" type="date" id="jd" value="${esc(draft.date)}" max="${iso(new Date())}"></label>
@@ -657,8 +945,9 @@ function vConnaitre(){
         ${J.length?`<ol class="hist">${J.map((e,i)=>{const cc=conduite(e,J[i+1]);const R=RESULTATS.find(r=>r.k===e.res);return `<li><span class="pill ${R.c}">${R.l}</span><div><b class="num">${fmt(e.date)}</b>${(e.zones||[]).length?`<span class="small"> · ${e.zones.map(zoneL).join(' · ')}</span>`:''}
           ${e.note?`<p class="small muted">${esc(e.note)}</p>`:''}${e.res!=='rien'?`<p class="small"><b>${cc.t}.</b></p>`:''}</div><button class="btn ghost sm" data-delj="${e.id}" aria-label="Supprimer">✕</button></li>`;}).join('')}</ol>`
           :'<p class="muted">Aucune observation enregistrée.</p>'}
-        ${M.consent?`<div class="row" style="margin-top:12px"><span class="sp"></span><button class="btn ghost sm" id="wipe">Effacer tout mon journal</button></div>`:''}</div>
+        ${M.consent?`<div class="row" style="margin-top:12px"><span class="sp"></span><button class="btn ghost sm" id="wipe">Effacer mon journal et mon passeport</button></div>`:''}</div>
      </div>`;},
+   passeport:vuePasseport,
    gardefous:()=>`<div class="grid g2">
      <div class="card"><h3 style="margin-bottom:8px">Les règles à garder en tête</h3><ol class="steps">
        <li><span class="n">1</span><div><b>L'auto-examen ne remplace rien.</b> Ni l'examen clinique annuel dès ${DEP.EXAMEN_CLINIQUE_DES} ans, ni la mammographie de ${DEP.AGE_MIN} à ${DEP.AGE_MAX} ans. Un auto-examen normal ne permet pas de repousser une mammographie.</div></li>
@@ -681,8 +970,8 @@ function vConnaitre(){
         <li>L'inquiétude est normale pendant l'attente d'un examen : n'hésitez pas à en parler à l'infirmier·e ou au médecin du travail.</li></ul></div>
      </div></div>`
   }[sub]();
-  app.innerHTML=`${intro('Pour chaque salariée · guide et journal personnel','Connaître mes seins',"Quand et comment s'observer, ce qui est normal, ce qui doit faire consulter, et un journal pour comparer d'un mois sur l'autre. Connaître ses seins aide à repérer un changement : ce n'est pas un dépistage à lui seul.",'<b>Sources :</b> Institut national du cancer, Haute Autorité de santé. Cet outil aide à observer, il ne pose pas de diagnostic. En cas de doute, consultez.')}${blocInstall()}${blocPartage()}${nav}${body}`;
-  bindPartage();
+  app.innerHTML=`${intro('Pour chaque salariée · guide et journal personnel','Connaître mes seins',"Quand et comment s'observer, ce qui est normal, ce qui doit faire consulter, un journal pour comparer d'un mois sur l'autre et un passeport pour ne manquer aucun examen. Connaître ses seins aide à repérer un changement : ce n'est pas un dépistage à lui seul.",'<b>Sources :</b> Institut national du cancer, Haute Autorité de santé. Cet outil aide à observer, il ne pose pas de diagnostic. En cas de doute, consultez.')}${blocInstall()}${blocPartage()}${nav}${body}`;
+  bindPartage(); bindPasseport();
   app.querySelectorAll('[data-sub]').forEach(b=>b.onclick=()=>{sub=b.dataset.sub;vConnaitre();});
   app.querySelectorAll('[data-ry]').forEach(b=>b.onclick=()=>{M.rythme=b.dataset.ry;saveMoi();vConnaitre();});
   const on=(id,ev,f)=>{const el=$('#'+id);if(el)el[ev]=f;};
@@ -699,7 +988,7 @@ function vConnaitre(){
   app.querySelectorAll('[data-sig]').forEach(c=>c.onchange=()=>{const k=c.dataset.sig,i=draft.signes.indexOf(k);c.checked?(i<0&&draft.signes.push(k)):(i>=0&&draft.signes.splice(i,1));vConnaitre();});
   on('fj','onsubmit',e=>{e.preventDefault();if(!M.consent)return;M.journal.push({id:Date.now(),...draft,zones:[...draft.zones],signes:[...draft.signes]});saveMoi();draft=null;vConnaitre();});
   app.querySelectorAll('[data-delj]').forEach(b=>b.onclick=()=>{M.journal=M.journal.filter(e=>e.id!==+b.dataset.delj);saveMoi();vConnaitre();});
-  on('wipe','onclick',function(){if(this.dataset.c){moiStore.del();M={consent:false,rythme:'regles',regles:'',jour:1,journal:[]};draft=null;vConnaitre();}else{this.dataset.c=1;this.textContent='Confirmer : tout effacer';this.classList.add('danger');}});
+  on('wipe','onclick',function(){if(this.dataset.c){moiStore.del();M=MOI0();draft=null;dex=null;vConnaitre();}else{this.dataset.c=1;this.textContent='Confirmer : effacer journal et passeport';this.classList.add('danger');}});
 }
 
 route();

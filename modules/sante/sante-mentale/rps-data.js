@@ -41,46 +41,52 @@ const HEALTH=[
 ];
 const LIK=['Jamais','Parfois','Souvent','Toujours'];
 
-// COPSOQ — version courte française V3 : 46 items, 24 échelles, 6 domaines (Dupret, Bocéréan et al., Santé Publique 2012 ; fiche INRS FRPS 36).
-// ⚠ LIBELLÉS DE TRAVAIL : la structure, les échelles de réponse et la cotation suivent la version validée, mais les formulations
-// ci-dessous doivent être remplacées par les libellés officiels (annexe 2 de l'article, disponible sur copsoq-network.org) avant tout usage.
-// Passer COPSOQ_OFFICIEL à true une fois les libellés vérifiés.
-const COPSOQ_OFFICIEL=false;
-// Modalités listées de la plus haute à la plus basse : valeur = (nb modalités - 1) - rang. Score d'échelle = moyenne ramenée sur 0-100.
+// COPSOQ — version courte française V3 : 46 items, 24 échelles, 6 domaines.
+// Source : Dupret É., Bocéréan C., Teherani M., Feltrin M., « Le COPSOQ : un nouveau questionnaire français d'évaluation
+// des risques psychosociaux », Santé Publique 2012, 24(3) : 189-207 — annexe 2 (liste des items), schéma 3 (domaines).
+// Le COPSOQ français est « libre de droit » (même article, p. 202). Libellés et modalités repris MOT POUR MOT : ne pas les modifier.
+// Cotation (p. 192) : modalités codées 0 à 4 ; score d'échelle = somme des items ramenée sur 0-100,
+// non calculé si un item de l'échelle manque. Dans le questionnaire, les items sont présentés dans un ordre aléatoire.
+// ⚠ Les réponses sont enregistrées PAR POSITION dans COP_ITEMS : ne pas changer l'ordre des échelles ni des items.
+const COPSOQ_OFFICIEL=true;
+const COPSOQ_SOURCE="Dupret É., Bocéréan C., Teherani M., Feltrin M. Le COPSOQ : un nouveau questionnaire français d'évaluation des risques psychosociaux. Santé Publique 2012 ; 24(3) : 189-207.";
+// Modalités listées de la plus haute à la plus basse : valeur = (nb modalités - 1) - rang.
 const COP_SETS={
- freq:['Toujours','Souvent','Parfois','Rarement','Jamais ou presque'],
- mesure:['Dans une très grande mesure','Dans une grande mesure','Dans une certaine mesure','Dans une faible mesure','Dans une très faible mesure'],
- abs:['Tout le temps','Une bonne partie du temps','Une partie du temps','Une petite partie du temps','Jamais'],
- fam:['Oui, certainement','Oui, dans une certaine mesure','Oui, mais très peu','Non, pas du tout'],
- sante:['Excellente','Très bonne','Bonne','Passable','Mauvaise'],
- satis:['Très satisfait·e','Satisfait·e','Insatisfait·e','Très insatisfait·e']
+ freq:['Toujours','Souvent','Parfois','Rarement','Presque jamais/Jamais'],
+ mesure:['Dans une très grande mesure','Dans une grande mesure','Plus ou moins','Dans une faible mesure','Dans une très faible mesure'],
+ abs:['Tout le temps','Très souvent','Parfois','Très peu souvent','Jamais'],
+ fam:['Oui, certainement','Oui, jusqu\'à un certain point','Oui, mais juste un peu','Non, pas du tout'],
+ sante:['Excellente/Très bonne','Bonne','Assez bonne','Plutôt mauvaise','Mauvaise'],
+ satis:['Très satisfait(e)','Satisfait(e)','Insatisfait(e)','Très insatisfait(e)']
 };
 // risk : true = un score élevé est défavorable. f = facteur Gollac alimenté (null = indicateur de santé / vécu).
+// ref : moyenne française (0-100) et écart-type, COPSOQ v2, 3 166 salariés d'une entreprise de l'aéronautique, 2010
+//       (tableau I de l'article). Repère indicatif, pas une norme. Absent pour les 3 échelles ajoutées en v3.
 const COP=[
- {k:'charge',l:'Charge de travail',dom:'Contraintes quantitatives',set:'freq',risk:1,f:'f1',items:[{t:"Êtes-vous en retard dans votre travail ?"},{t:"Avez-vous suffisamment de temps pour accomplir toutes vos tâches ?",rev:1}]},
- {k:'rythme',l:'Rythme de travail',dom:'Contraintes quantitatives',set:'freq',risk:1,f:'f1',items:[{t:"Devez-vous travailler très vite ?"},{t:"Travaillez-vous à un rythme élevé tout au long de la journée ?"}]},
- {k:'cognitif',l:'Exigences cognitives',dom:'Contraintes quantitatives',set:'freq',risk:1,f:'f1',items:[{t:"Votre travail exige-t-il que vous restiez constamment attentif·ve ?"},{t:"Votre travail exige-t-il de vous souvenir de beaucoup de choses ?"}]},
- {k:'emotion',l:'Exigences émotionnelles',dom:'Santé et bien-être',set:'freq',risk:1,f:'f2',items:[{t:"Votre travail vous place-t-il dans des situations émotionnellement perturbantes ?"},{t:"Votre travail est-il éprouvant sur le plan émotionnel ?"}]},
- {k:'confiance_col',l:'Confiance entre collègues',dom:'Relations horizontales',set:'mesure',f:'f4',items:[{t:"Les collègues coopèrent-ils bien entre eux ?"},{t:"Les collègues se font-ils confiance les uns aux autres ?"}]},
- {k:'soutien_col',l:'Soutien des collègues',dom:'Relations horizontales',set:'freq',f:'f4',items:[{t:"Vos collègues sont-ils à l'écoute de vos problèmes au travail ?"},{t:"Recevez-vous de l'aide et du soutien de vos collègues ?"}]},
- {k:'marge',l:'Marge de manœuvre',dom:'Autonomie',set:'mesure',f:'f3',items:[{t:"Avez-vous une influence importante sur les décisions qui concernent votre travail ?"},{t:"Avez-vous une influence sur la quantité de travail qui vous est confiée ?"}]},
- {k:'developpement',l:'Possibilités de développement',dom:'Autonomie',set:'mesure',f:'f3',items:[{t:"Votre travail vous permet-il de prendre des initiatives ?"},{t:"Votre travail vous permet-il d'apprendre de nouvelles choses ?"}]},
- {k:'previsibilite',l:'Prévisibilité',dom:'Organisation et leadership',set:'mesure',f:'f6',items:[{t:"Êtes-vous informé·e suffisamment à l'avance des décisions importantes, des changements ou des projets ?"},{t:"Recevez-vous toutes les informations dont vous avez besoin pour bien faire votre travail ?"}]},
- {k:'reconnaissance',l:'Reconnaissance',dom:'Organisation et leadership',set:'mesure',f:'f4',items:[{t:"Votre travail est-il reconnu et apprécié par la direction ?"},{t:"Êtes-vous traité·e équitablement dans votre travail ?"}]},
- {k:'equite',l:'Équité',dom:'Organisation et leadership',set:'mesure',f:'f4',items:[{t:"Les conflits sont-ils résolus de façon équitable ?"},{t:"Le travail est-il réparti équitablement ?"}]},
- {k:'clarte',l:'Clarté des rôles',dom:'Organisation et leadership',set:'mesure',f:'f5',items:[{t:"Votre travail a-t-il des objectifs clairs ?"},{t:"Savez-vous exactement ce que l'on attend de vous au travail ?"}]},
- {k:'conflit_roles',l:'Conflits de rôles',dom:'Organisation et leadership',set:'mesure',risk:1,f:'f5',items:[{t:"Vous impose-t-on des exigences contradictoires au travail ?"},{t:"Devez-vous parfois faire des choses qui devraient être faites autrement ?"}]},
- {k:'leadership',l:'Qualité du leadership',dom:'Organisation et leadership',set:'mesure',f:'f4',items:[{t:"Votre supérieur·e accorde-t-il·elle une grande importance au bien-être au travail des salariés ?"},{t:"Votre supérieur·e est-il·elle compétent·e pour planifier le travail ?"}]},
- {k:'soutien_sup',l:'Soutien du supérieur',dom:'Organisation et leadership',set:'freq',f:'f4',items:[{t:"Votre supérieur·e est-il·elle à l'écoute de vos problèmes au travail ?"},{t:"Recevez-vous de l'aide et du soutien de votre supérieur·e ?"}]},
- {k:'confiance_dir',l:'Confiance salariés / direction',dom:'Organisation et leadership',set:'mesure',f:'f4',items:[{t:"La direction fait-elle confiance aux salariés pour bien faire leur travail ?"},{t:"Pouvez-vous faire confiance aux informations qui viennent de la direction ?"}]},
- {k:'sante',l:'Santé auto-évaluée',dom:'Santé et bien-être',set:'sante',f:null,items:[{t:"De manière générale, diriez-vous que votre santé est :"}]},
- {k:'stress',l:'Stress',dom:'Santé et bien-être',set:'abs',risk:1,f:null,items:[{t:"Au cours des 4 dernières semaines, à quelle fréquence vous êtes-vous senti·e stressé·e ?"},{t:"Au cours des 4 dernières semaines, à quelle fréquence vous êtes-vous senti·e irritable ?"}]},
- {k:'epuisement',l:'Épuisement',dom:'Santé et bien-être',set:'abs',risk:1,f:null,items:[{t:"Au cours des 4 dernières semaines, à quelle fréquence vous êtes-vous senti·e physiquement épuisé·e ?"},{t:"Au cours des 4 dernières semaines, à quelle fréquence vous êtes-vous senti·e émotionnellement épuisé·e ?"}]},
- {k:'famille',l:'Conflit travail / vie privée',dom:'Santé et bien-être',set:'fam',risk:1,f:'f7',items:[{t:"Sentez-vous que votre travail vous prend tellement d'énergie que cela a des répercussions négatives sur votre vie privée ?"},{t:"Sentez-vous que votre travail vous prend tellement de temps que cela a des répercussions négatives sur votre vie privée ?"}]},
- {k:'insecurite',l:'Insécurité de l\'emploi',dom:'Santé et bien-être',set:'mesure',risk:1,f:'f6',items:[{t:"Êtes-vous inquiet·e de perdre votre emploi ?"},{t:"Êtes-vous inquiet·e d'être muté·e contre votre volonté ?"}]},
- {k:'sens',l:'Sens du travail',dom:'Vécu professionnel',set:'mesure',f:'f5',items:[{t:"Votre travail a-t-il du sens pour vous ?"},{t:"Avez-vous le sentiment que le travail que vous faites est important ?"}]},
- {k:'engagement',l:'Engagement dans l\'entreprise',dom:'Vécu professionnel',set:'mesure',f:null,items:[{t:"Recommanderiez-vous à un·e ami·e de postuler dans votre entreprise ?"},{t:"Avez-vous le sentiment que votre entreprise a une grande importance pour vous ?"}]},
- {k:'satisfaction',l:'Satisfaction au travail',dom:'Vécu professionnel',set:'satis',f:null,items:[{t:"Dans l'ensemble, êtes-vous satisfait·e de votre travail ?"}]}
+ {k:'charge',l:'Charge de travail',dom:'Contraintes quantitatives',set:'freq',risk:1,f:'f1',ref:[46,21],items:[{t:"Prenez-vous du retard dans votre travail ?"},{t:"Disposez-vous d'un temps suffisant pour accomplir vos tâches professionnelles ?",rev:1}]},
+ {k:'rythme',l:'Rythme de travail',dom:'Contraintes quantitatives',set:'freq',risk:1,f:'f1',ref:[65,19],items:[{t:"Est-il nécessaire de maintenir un rythme soutenu au travail ?"},{t:"Travaillez-vous à une cadence élevée tout au long de la journée ?"}]},
+ {k:'cognitif',l:'Exigences cognitives',dom:'Contraintes quantitatives',set:'freq',risk:1,f:'f1',items:[{t:"Durant votre travail, devez-vous avoir l'œil sur beaucoup de choses ?"},{t:"Votre travail exige-t-il que vous vous souveniez de beaucoup de choses ?"}]},
+ {k:'emotion',l:'Exigences émotionnelles',dom:'Santé et bien-être',set:'freq',risk:1,f:'f2',ref:[37,20],items:[{t:"Votre travail vous place-t-il dans des situations déstabilisantes sur le plan émotionnel ?"},{t:"Votre travail est-il éprouvant sur le plan émotionnel ?"}]},
+ {k:'confiance_col',l:'Confiance entre les collègues',dom:'Relations horizontales',set:'mesure',f:'f4',ref:[69,17],items:[{t:"Y a-t-il une bonne coopération entre les collègues au travail ?"},{t:"Dans l'ensemble, les salariés se font-ils confiance entre eux ?"}]},
+ {k:'soutien_col',l:'Soutien social de la part des collègues',dom:'Relations horizontales',set:'freq',f:'f4',ref:[61,20],items:[{t:"À quelle fréquence vos collègues se montrent-ils à l'écoute de vos problèmes au travail ?"},{t:"À quelle fréquence recevez-vous de l'aide et du soutien de vos collègues ?"}]},
+ {k:'marge',l:'Marge de manœuvre',dom:'Autonomie',set:'mesure',f:'f3',ref:[52,19],items:[{t:"Avez-vous une grande marge de manœuvre dans votre travail ?"},{t:"Pouvez-vous intervenir sur la quantité de travail qui vous est attribuée ?"}]},
+ {k:'developpement',l:'Possibilités d\'épanouissement',dom:'Autonomie',set:'mesure',f:'f3',ref:[64,19],items:[{t:"Votre travail nécessite-t-il que vous preniez des initiatives ?"},{t:"Votre travail vous donne-t-il la possibilité d'apprendre des choses nouvelles ?"}]},
+ {k:'previsibilite',l:'Prévisibilité',dom:'Organisation et leadership',set:'mesure',f:'f6',ref:[54,20],items:[{t:"Au travail, êtes-vous informé(e) suffisamment à l'avance au sujet par exemple de décisions importantes, de changements ou de projets futurs ?"},{t:"Recevez-vous toutes les informations dont vous avez besoin pour bien faire votre travail ?"}]},
+ {k:'reconnaissance',l:'Reconnaissance',dom:'Organisation et leadership',set:'mesure',f:'f4',ref:[64,20],items:[{t:"Votre travail est-il reconnu et apprécié par le management ?"},{t:"Êtes-vous traité(e) équitablement au travail ?"}]},
+ {k:'equite',l:'Équité',dom:'Organisation et leadership',set:'mesure',f:'f4',ref:[64,20],items:[{t:"Les conflits sont-ils résolus de manière équitable ?"},{t:"Le travail est-il réparti équitablement ?"}]},
+ {k:'clarte',l:'Clarté des rôles',dom:'Organisation et leadership',set:'mesure',f:'f5',ref:[71,17],items:[{t:"Votre travail a-t-il des objectifs clairs ?"},{t:"Savez-vous exactement ce que l'on attend de vous au travail ?"}]},
+ {k:'conflit_roles',l:'Conflit de rôles',dom:'Organisation et leadership',set:'mesure',risk:1,f:'f5',items:[{t:"Au travail, êtes-vous soumis(e) à des demandes contradictoires ?"},{t:"Devez-vous parfois faire des choses qui auraient dû être faites autrement ?"}]},
+ {k:'leadership',l:'Qualité de leadership du supérieur hiérarchique',dom:'Organisation et leadership',set:'mesure',f:'f4',ref:[61,21],items:[{t:"Dans quelle mesure diriez-vous que votre supérieur(e) hiérarchique accorde une grande priorité à la satisfaction au travail ?"},{t:"Dans quelle mesure diriez-vous que votre supérieur(e) hiérarchique est compétent(e) dans la planification du travail ?"}]},
+ {k:'soutien_sup',l:'Soutien social de la part du supérieur hiérarchique',dom:'Organisation et leadership',set:'freq',f:'f4',ref:[64,23],items:[{t:"À quelle fréquence votre supérieur(e) hiérarchique est-il(elle) disposé(e) à vous écouter au sujet de vos problèmes au travail ?"},{t:"À quelle fréquence recevez-vous de l'aide et du soutien de votre supérieur(e) hiérarchique ?"}]},
+ {k:'confiance_dir',l:'Confiance entre les salariés et le management',dom:'Organisation et leadership',set:'mesure',f:'f4',ref:[66,21],items:[{t:"Le management fait-il confiance aux salariés quant à leur capacité à bien faire leur travail ?"},{t:"Pouvez-vous faire confiance aux informations venant du management ?"}]},
+ {k:'sante',l:'Santé auto-évaluée',dom:'Santé et bien-être',set:'sante',f:null,items:[{t:"En général, diriez-vous que votre santé est :"}]},
+ {k:'stress',l:'Stress',dom:'Santé et bien-être',set:'abs',risk:1,f:null,ref:[39,19],items:[{t:"À quelle fréquence avez-vous été stressé(e) ?"},{t:"À quelle fréquence avez-vous été irritable ?"}]},
+ {k:'epuisement',l:'Épuisement',dom:'Santé et bien-être',set:'abs',risk:1,f:null,ref:[38,21],items:[{t:"À quelle fréquence vous êtes-vous senti(e) à bout de force ?"},{t:"À quelle fréquence avez-vous été émotionnellement épuisé(e) ?"}]},
+ {k:'famille',l:'Conflit famille/travail',dom:'Santé et bien-être',set:'fam',risk:1,f:'f7',ref:[42,29],items:[{t:"Sentez-vous que votre travail vous prend tellement d'énergie que cela a un impact négatif sur votre vie privée ?"},{t:"Sentez-vous que votre travail vous prend tellement de temps que cela a un impact négatif sur votre vie privée ?"}]},
+ {k:'insecurite',l:'Insécurité professionnelle',dom:'Santé et bien-être',set:'mesure',risk:1,f:'f6',items:[{t:"Êtes-vous inquiet(ète) à l'idée de perdre votre emploi ?"},{t:"Craignez-vous d'être muté(e) à un autre poste de travail contre votre volonté ?"}]},
+ {k:'sens',l:'Sens du travail',dom:'Vécu professionnel',set:'mesure',f:'f5',ref:[71,18],items:[{t:"Votre travail a-t-il du sens pour vous ?"},{t:"Avez-vous le sentiment que le travail que vous faites est important ?"}]},
+ {k:'engagement',l:'Engagement dans l\'entreprise',dom:'Vécu professionnel',set:'mesure',f:null,ref:[65,19],items:[{t:"Recommanderiez-vous à un ami proche de postuler sur un emploi dans votre entreprise ?"},{t:"Pensez-vous que votre entreprise est d'une grande importance pour vous ?"}]},
+ {k:'satisfaction',l:'Satisfaction au travail',dom:'Vécu professionnel',set:'satis',f:null,ref:[64,19],items:[{t:"À quel point êtes-vous satisfait(e) de votre travail dans son ensemble, en prenant en considération tous les aspects ?"}]}
 ];
 const COP_ITEMS=COP.flatMap(s=>s.items.map(it=>({...it,s:s.k,set:s.set})));
 // Indicateurs (d'après INRS ED 6012 « Dépister les RPS – des indicateurs pour vous guider »)
@@ -122,5 +128,5 @@ const EQ_IND=[
 // Indicateurs propres au service de santé au travail : non demandés aux RH (page indicateurs-rps.html)
 const IND_SPST=['vad','inf'];
 
-return {ITEMS,HEALTH,LIK,COPSOQ_OFFICIEL,COP_SETS,COP,COP_ITEMS,IND,EQ_IND,IND_SPST};
+return {ITEMS,HEALTH,LIK,COPSOQ_OFFICIEL,COPSOQ_SOURCE,COP_SETS,COP,COP_ITEMS,IND,EQ_IND,IND_SPST};
 })();

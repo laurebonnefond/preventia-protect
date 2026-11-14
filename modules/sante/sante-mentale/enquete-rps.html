@@ -70,7 +70,9 @@ h1,h2{font-family:var(--f-display);font-weight:400;line-height:1.25}
     rps_baro: { k: 'baro', titre: 'Baromètre de la qualité de vie au travail', duree: 4, Q: [...ITEMS, ...HEALTH].map(x => ({ t: x.t, opts: [...LIK].reverse() })) },
     rps_copsoq: { k: 'copsoq', titre: 'Questionnaire COPSOQ', duree: 10, Q: COP_ITEMS.map(it => ({ t: it.t, opts: COP_SETS[it.set] })) }
   };
-  let camp, T, eq = null, i = 0, a = [];
+  let camp, T, eq = null, i = 0, a = [], ord = [];
+  // COPSOQ : ordre aléatoire des questions (comme dans l'original) ; les réponses restent rangées à leur position d'origine
+  const melanger = () => { ord = T.Q.map((_, j) => j); if (T.k === 'copsoq') for (let j = ord.length - 1; j > 0; j--) { const r = Math.floor(Math.random() * (j + 1)); [ord[j], ord[r]] = [ord[r], ord[j]]; } };
 
   const ecran = html => { Q.innerHTML = html; scrollTo(0, 0); };
   const erreur = msg => ecran(`<div class="center" style="margin-top:30px"><h2>Questionnaire indisponible</h2><p class="muted">${esc(msg)}</p></div>`);
@@ -94,14 +96,14 @@ h1,h2{font-family:var(--f-display);font-weight:400;line-height:1.25}
     $('#prev').onclick = accueil;
   }
   function question() {
-    const it = T.Q[i], len = it.opts.length - 1, v = a[i];
+    const it = T.Q[ord[i]], len = it.opts.length - 1, v = a[ord[i]];
     ecran(`<div class="kprog"><i style="width:${Math.round(i / T.Q.length * 100)}%"></i></div>
       <p class="muted small">Question ${i + 1} sur ${T.Q.length}</p>
       <h2 class="kq">${esc(it.t)}</h2>
       <div class="kopts">${it.opts.map((l, r) => `<button data-v="${len - r}" aria-pressed="${v === len - r}">${esc(l)}</button>`).join('')}</div>
       <button class="skip" data-v="">Je préfère ne pas répondre</button>
       <div class="nav"><button class="btn ghost" id="prev">← Retour</button><span></span></div>`);
-    Q.querySelectorAll('[data-v]').forEach(b => b.onclick = () => { a[i] = b.dataset.v === '' ? null : +b.dataset.v; ++i < T.Q.length ? question() : envoi(); });
+    Q.querySelectorAll('[data-v]').forEach(b => b.onclick = () => { a[ord[i]] = b.dataset.v === '' ? null : +b.dataset.v; ++i < T.Q.length ? question() : envoi(); });
     $('#prev').onclick = () => { if (i > 0) { i--; question(); } else EQS.length > 1 ? equipe() : accueil(); };
   }
   function envoi() {
@@ -134,6 +136,7 @@ h1,h2{font-family:var(--f-display);font-weight:400;line-height:1.25}
     if (!camp.ouverte) return erreur("Ce questionnaire est terminé. Merci de votre intérêt.");
     T = TYPES[camp.outil];
     if (!T) return erreur("Ce lien ne correspond pas à un questionnaire sur les conditions de travail.");
+    melanger();
     $('#titre').textContent = T.titre;
     document.title = T.titre + ' — anonyme';
     accueil();

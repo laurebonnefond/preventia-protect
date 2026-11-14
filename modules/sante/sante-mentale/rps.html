@@ -231,7 +231,7 @@ const FI=k=>F.findIndex(x=>x.k===k);
 const vide=()=>F.map(()=>-1);
 
 /* Questionnaires (baromètre PréventIA, COPSOQ) : rps-data.js, partagé avec la page de réponse à distance enquete-rps.html */
-const {ITEMS,HEALTH,LIK,COPSOQ_OFFICIEL,COP_SETS,COP,COP_ITEMS}=RPSQ;
+const {ITEMS,HEALTH,LIK,COPSOQ_OFFICIEL,COPSOQ_SOURCE,COP_SETS,COP,COP_ITEMS}=RPSQ;
 
 /* Grille RPS-DU (INRS ED 6403, version octobre 2022) : 26 questions, évaluation COLLECTIVE par unité de travail.
    Réponse 0..3 = Jamais/Non · Parfois/Plutôt non · Souvent/Plutôt oui · Toujours/Oui.
@@ -741,10 +741,13 @@ function vAvis(){
 /* ---------- 5. Questionnaires anonymes ---------- */
 function copScores(eq){
   const R=S.copsoq.filter(b=>!eq||b.eq===eq); if(R.length<SEUIL_ANONYMAT)return {n:R.length,masked:true};
+  // Cotation de l'article (p. 192) : pour chaque personne, score d'échelle = somme des items ramenée sur 0-100,
+  // non calculé si un item de l'échelle manque ; le score de l'équipe est la moyenne des personnes.
   const sc={}; let idx=0;
   COP.forEach(s=>{const len=COP_SETS[s.set].length-1; let sum=0,c=0;
-    s.items.forEach((it,j)=>{const i=idx+j; R.forEach(b=>{const v=b.a[i]; if(v==null)return; let x=v/len; if(it.rev)x=1-x; sum+=x; c++;});});
-    idx+=s.items.length; sc[s.k]=c?sum/c*100:null;});
+    R.forEach(b=>{const v=s.items.map((it,j)=>{const x=b.a[idx+j]; return x==null?null:(it.rev?len-x:x);});
+      if(v.some(x=>x==null))return; sum+=v.reduce((a,x)=>a+x,0)/(len*v.length)*100; c++;});
+    idx+=s.items.length; sc[s.k]=c?sum/c:null;});
   const ax={}; F.forEach(f=>{const v=COP.filter(s=>s.f===f.k&&sc[s.k]!=null).map(s=>s.risk?sc[s.k]:100-sc[s.k]); ax[f.k]=v.length?v.reduce((a,b)=>a+b,0)/v.length:null;});
   return {n:R.length,masked:false,sc,ax};
 }
@@ -757,7 +760,7 @@ function vBaro(){
   <div class="grid g2">
     <div class="card grid" style="align-content:start"><div><p class="eyebrow">Repérage · 4 min</p><h3>Baromètre PréventIA</h3><p class="muted small">${ITEMS.length} affirmations sur les 7 familles de facteurs, 2 questions de santé perçue.</p></div>
       <div class="row"><span class="num"><b>${S.baro.length}</b> réponses · <span class="muted">${part(S.baro.length)}</span></span><span class="sp"></span><button class="btn" data-k="baro">Lancer la saisie</button></div></div>
-    <div class="card grid" style="align-content:start"><div><p class="eyebrow">Échelle reconnue · 10 min</p><h3>COPSOQ, version courte</h3><p class="muted small">${COP_ITEMS.length} questions, ${COP.length} échelles, 6 domaines. Scores de 0 à 100.</p></div>
+    <div class="card grid" style="align-content:start"><div><p class="eyebrow">Échelle reconnue · 10 min</p><h3>COPSOQ, version courte</h3><p class="muted small">Version française V3 (Dupret, Bocéréan et al., <i>Santé Publique</i> 2012), libre de droit. ${COP_ITEMS.length} questions, ${COP.length} échelles, 6 domaines. Scores de 0 à 100.</p></div>
       <div class="row"><span class="num"><b>${S.copsoq.length}</b> réponses · <span class="muted">${part(S.copsoq.length)}</span></span><span class="sp"></span><button class="btn" data-k="copsoq">Lancer la saisie</button></div></div>
   </div>
   ${vDistance()}
@@ -770,9 +773,9 @@ function vBaro(){
      return `<tr><td><b>${esc(e.n)}</b></td><td class="num">${s.n}${e.eff&&!e.all?` <span class="muted small">/ ${e.eff}</span>`:''}</td>${s.masked?`<td colspan="${F.length}"><span class="muted small">Moins de ${SEUIL_ANONYMAT} réponses : résultats masqués pour préserver l'anonymat.</span></td>`:F.map(f=>{const v=s.ax[f.k];return `<td><div class="cell ${LEVELS[levelOf(v)].c}">${Math.round(v)}</div></td>`;}).join('')}</tr>`;}).join('')}
   </tbody></table></div></div>
   <div class="card"><h3 style="margin-bottom:4px">COPSOQ par échelle</h3><p class="muted small" style="margin-bottom:10px">Score de 0 à 100 sur le concept mesuré. La couleur indique s'il est favorable (vert) ou défavorable (rouge) selon le sens de l'échelle. Les seuils sont indicatifs : le COPSOQ compare normalement à une population de référence.</p>
-   <div class="tw"><table><thead><tr><th>Échelle</th><th>Domaine</th>${[{n:'Entreprise',all:1},...eqs].map(e=>{const s=copScores(e.all?null:e.n);return `<th style="text-align:center">${esc(e.n)}<br><span class="num" style="text-transform:none">n = ${s.n}</span></th>`;}).join('')}</tr></thead><tbody>
-   ${COP.map(s=>`<tr><td>${s.l}${s.risk?' <span class="muted small">(↑ défavorable)</span>':''}</td><td class="small muted">${s.dom}</td>${[{all:1},...eqs].map(e=>{const r=copScores(e.all?null:e.n);if(r.masked)return `<td><div class="cell lvn">–</div></td>`;const v=r.sc[s.k];return `<td><div class="cell ${LEVELS[levelOf(copRisk(s)(v))].c}">${Math.round(v)}</div></td>`;}).join('')}</tr>`).join('')}
-   </tbody></table></div><p class="muted small" style="margin-top:8px">« – » : moins de ${SEUIL_ANONYMAT} réponses, résultats masqués.</p></div>
+   <div class="tw"><table><thead><tr><th>Échelle</th><th>Domaine</th><th title="Moyenne (écart-type) de l'étude de validation française : 3 166 salariés d'une entreprise de l'aéronautique, 2010. Repère indicatif, pas une norme.">Repère FR ⓘ</th>${[{n:'Entreprise',all:1},...eqs].map(e=>{const s=copScores(e.all?null:e.n);return `<th style="text-align:center">${esc(e.n)}<br><span class="num" style="text-transform:none">n = ${s.n}</span></th>`;}).join('')}</tr></thead><tbody>
+   ${COP.map(s=>`<tr><td>${s.l}${s.risk?' <span class="muted small">(↑ défavorable)</span>':''}</td><td class="small muted">${s.dom}</td><td class="num small muted">${s.ref?`${s.ref[0]} <span style="opacity:.7">(${s.ref[1]})</span>`:'–'}</td>${[{all:1},...eqs].map(e=>{const r=copScores(e.all?null:e.n);if(r.masked)return `<td><div class="cell lvn">–</div></td>`;const v=r.sc[s.k];return `<td><div class="cell ${LEVELS[levelOf(copRisk(s)(v))].c}">${Math.round(v)}</div></td>`;}).join('')}</tr>`).join('')}
+   </tbody></table></div><p class="muted small" style="margin-top:8px">« – » : moins de ${SEUIL_ANONYMAT} réponses, résultats masqués. <b>Repère FR</b> : moyenne (écart-type) de l'étude de validation, 3 166 salariés d'une grande entreprise de l'aéronautique (65 % de cadres) — à lire comme un ordre de grandeur, pas comme une norme. Source : ${COPSOQ_SOURCE}</p></div>
   ${!g.masked?`<details class="card acteur"><summary><h3>Détail des affirmations du baromètre</h3></summary><div class="tw" style="margin-top:10px"><table><thead><tr><th>Affirmation</th><th>Facteur</th><th>« Souvent » ou « toujours »</th><th>Repère national</th></tr></thead><tbody>
     ${ITEMS.map((it,i)=>{const vals=S.baro.map(b=>b.a[i]).filter(v=>v!=null);if(!vals.length)return `<tr><td>${it.t}</td><td class="small muted">${F.find(f=>f.k===it.f).s}</td><td class="muted small">pas encore de réponse</td><td></td></tr>`;const p=vals.filter(v=>v>=2).length/vals.length*100;const risk=it.inv?100-p:p;const d=DARES[i];
       return `<tr><td>${it.t}${it.inv?' <span class="muted small">(item positif)</span>':''}</td><td class="small muted">${F.find(f=>f.k===it.f).s}</td><td class="num"><span class="pill ${LEVELS[levelOf(risk)].c}">${Math.round(p)} %</span></td><td class="small">${d?`<span title="${esc(d.l)}"><b class="num">${d.v} %</b> <span class="muted">Dares 2024</span>${p>d.v*1.25?' <span class="pill lv2">au-dessus</span>':''}</span>`:''}</td></tr>`;}).join('')}
@@ -923,21 +926,23 @@ function kiosk(kind){
     ? COP_ITEMS.map(it=>({t:it.t,opts:COP_SETS[it.set]}))
     : [...ITEMS,...HEALTH].map(x=>({t:x.t,opts:[...LIK].reverse()}));
   const titre=kind==='copsoq'?'Questionnaire COPSOQ':'Baromètre de la qualité de vie au travail', duree=kind==='copsoq'?'10':'4';
-  let eq=null,i=0,a=[];
+  let eq=null,i=0,a=[],ord=[];
+  // COPSOQ : questions présentées dans un ordre aléatoire (comme dans l'original), réponses rangées à leur position d'origine
+  const melanger=()=>{ord=Q.map((_,j)=>j);if(kind==='copsoq')for(let j=ord.length-1;j>0;j--){const r=Math.floor(Math.random()*(j+1));[ord[j],ord[r]]=[ord[r],ord[j]];}};
   const close=()=>{K.hidden=true;document.body.style.overflow='';route();};
-  const home=()=>{eq=null;i=0;a=[];K.innerHTML=`<div class="in"><div class="row"><span class="eyebrow">${titre}</span><span class="sp"></span><button class="btn ghost sm" id="kx">Fermer la saisie</button></div>
+  const home=()=>{eq=null;i=0;a=[];melanger();K.innerHTML=`<div class="in"><div class="row"><span class="eyebrow">${titre}</span><span class="sp"></span><button class="btn ghost sm" id="kx">Fermer la saisie</button></div>
     <h2>Comment se passe votre travail ?</h2>
     <p>${Q.length} questions, environ ${duree} minutes. Répondez selon ce que vous vivez <b>ces derniers mois</b>.</p>
     <div class="secret">Vos réponses sont anonymes : ni votre nom ni l'heure de réponse ne sont enregistrés. Les résultats ne sont présentés que par groupe d'au moins ${SEUIL_ANONYMAT} personnes.</div>
     <h3>Dans quelle équipe travaillez-vous ?</h3><div class="kopts">${S.ctx.equipes.map((e,j)=>`<button data-e="${j}">${esc(e.n)}</button>`).join('')}</div></div>`;
     $('#kx').onclick=close; K.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>{eq=S.ctx.equipes[+b.dataset.e].n;q();});};
-  const q=()=>{const it=Q[i],len=it.opts.length-1;
+  const q=()=>{const it=Q[ord[i]],len=it.opts.length-1;
     K.innerHTML=`<div class="in"><div class="row"><span class="eyebrow num">${i+1} / ${Q.length}</span><span class="sp"></span>${i>0?'<button class="btn ghost sm" id="kb">Question précédente</button>':''}</div>
     <div class="kprog"><i style="width:${i/Q.length*100}%"></i></div>
     <p class="kq">${it.t}</p><div class="kopts">${it.opts.map((l,r)=>`<button data-v="${len-r}">${l}</button>`).join('')}</div>
     <button class="btn ghost sm" data-v="" style="justify-self:start">Je préfère ne pas répondre</button></div>`;
     const b=$('#kb'); if(b) b.onclick=()=>{i--;q();};
-    K.querySelectorAll('[data-v]').forEach(btn=>btn.onclick=()=>{a[i]=btn.dataset.v===''?null:+btn.dataset.v; i++; i<Q.length?q():fin();});
+    K.querySelectorAll('[data-v]').forEach(btn=>btn.onclick=()=>{a[ord[i]]=btn.dataset.v===''?null:+btn.dataset.v; i++; i<Q.length?q():fin();});
     K.scrollTo(0,0);};
   const fin=()=>{
     if(kind==='copsoq') S.copsoq.push({eq,a:Q.map((_,j)=>a[j]??null)});

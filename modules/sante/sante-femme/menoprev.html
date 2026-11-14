@@ -147,6 +147,15 @@ p.f{font-size:12px;font-weight:600;color:var(--muted);margin:0 0 6px}
 table.lieux th{font-size:11px;font-weight:600;color:var(--muted);vertical-align:bottom} table.lieux td{text-align:center} table.lieux td:first-child{text-align:left;font-size:13px}
 table.lieux input{width:18px;height:18px}
 @media print{.tabs,.no-print,.pp-top .back{display:none}}
+/* Journal croisé, métier */
+label.f{display:grid;gap:4px;font-size:12px;font-weight:600;color:var(--muted)}
+.obs{display:grid;gap:4px;border-left:4px solid var(--bad);background:var(--card-2);border-radius:0 12px 12px 0;padding:10px 12px}
+.obs.moins{border-color:var(--ok)}
+.duo{display:grid;grid-template-columns:34px 1fr 30px;gap:4px 8px;align-items:center;font-size:12px;color:var(--muted)}
+.duo .t{height:10px;background:var(--card);border-radius:99px;overflow:hidden} .duo .t i{display:block;height:100%;background:var(--mauve);border-radius:99px} .duo .t i.s{background:var(--muted);opacity:.5}
+.duo b{color:var(--ink);font-variant-numeric:tabular-nums}
+.dot{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px;font-weight:700;font-size:12px;background:var(--card-2)}
+.dot.n2{background:var(--warn-bg)} .dot.n3,.dot.n4{background:var(--bad-bg);color:var(--bad)}
 </style>
 </head>
 <body>
@@ -161,6 +170,7 @@ table.lieux input{width:18px;height:18px}
 
 <script src="enquetes.js"></script>
 <script src="meno-data.js"></script>
+<script src="meno-metiers.js"></script>
 
 
 <script>
@@ -182,21 +192,21 @@ const VIGIL=`<div class="vigil"><span>⚠️</span><p><b>Ni diagnostic, ni avis 
    Enquête collective : seulement via un lien de campagne (Supabase UE, anonyme, ≥ 5 réponses) ou un import Forms. */
 const PKEY='pp_meno_perso';
 const perso={get(){try{return JSON.parse(localStorage.getItem(PKEY))}catch(_){return null}},set(v){try{localStorage.setItem(PKEY,JSON.stringify(v))}catch(_){}},del(){try{localStorage.removeItem(PKEY)}catch(_){}}};
-const vide=()=>({evals:[],journal:[],prog:{debut:null,faits:{}},carte:{corps:{},lieux:{}}});
+const vide=()=>({evals:[],journal:[],prog:{debut:null,faits:{}},carte:{corps:{},lieux:{}},jx:{suivis:['M1','M3','M7'],jours:[],demo:false},metier:''});
 let P=perso.get(); const MEM=vide();
 const S=()=>P||MEM, saveP=()=>{if(P)perso.set(P);};
-if(P){P={...vide(),...P};P.carte={corps:{},lieux:{},...P.carte};P.prog={debut:null,faits:{},...P.prog};}
+if(P){P={...vide(),...P};P.carte={corps:{},lieux:{},...P.carte};P.prog={debut:null,faits:{},...P.prog};P.jx={...vide().jx,...P.jx};}
 const derniere=()=>S().evals.at(-1)||null;
 
 /* Auto-évaluation en cours (s : 0-4 ou null = « je préfère ne pas répondre ») */
-const A={s:{},c:derniere()?.c?[...derniere().c]:[],t:{},saved:false};
+const A={s:{},c:derniere()?.c?[...derniere().c]:[],t:{},saved:false,metier:S().metier||'',pre:false};
 
 /* ════════ NAVIGATION ════════ */
-const TABS=[['auto','Mon auto-évaluation'],['suivi','Mon suivi'],['programme','Programme TCC'],['carte','Cartographie'],['conseils','Que faire ?'],['parler','En parler'],['collectif','Enquête collective'],['amenagements','Côté entreprise'],['visite','Visite mi-carrière'],['comprendre','Comprendre']];
+const TABS=[['auto','Mon auto-évaluation'],['suivi','Mon suivi'],['journal','Mon journal'],['programme','Programme TCC'],['carte','Cartographie'],['conseils','Que faire ?'],['parler','En parler'],['collectif','Enquête collective'],['amenagements','Côté entreprise'],['visite','Visite mi-carrière'],['comprendre','Comprendre']];
 let stopRespi=()=>{};
 function route(){stopRespi();const h=(location.hash||'#auto').slice(1);const cur=TABS.some(t=>t[0]===h)?h:'auto';
-  $('#tabs').innerHTML=TABS.map(([k,l],i)=>`${i===6?'<span class="tsep" aria-hidden="true"></span>':''}<a href="#${k}" ${k===cur?'aria-current="page"':''}>${l}</a>`).join('');
-  ({auto:vAuto,suivi:vSuivi,programme:vProgramme,carte:vCarte,conseils:vConseils,parler:vParler,collectif:vCollectif,amenagements:vAmen,visite:vVisite,comprendre:vComprendre})[cur]();}
+  $('#tabs').innerHTML=TABS.map(([k,l],i)=>`${i===7?'<span class="tsep" aria-hidden="true"></span>':''}<a href="#${k}" ${k===cur?'aria-current="page"':''}>${l}</a>`).join('');
+  ({auto:vAuto,suivi:vSuivi,journal:vJournal,programme:vProgramme,carte:vCarte,conseils:vConseils,parler:vParler,collectif:vCollectif,amenagements:vAmen,visite:vVisite,comprendre:vComprendre})[cur]();}
 window.addEventListener('hashchange',()=>{route();scrollTo(0,0);});
 
 /* ════════ Composants ════════ */
@@ -232,7 +242,9 @@ function fiche(R){
   if(A.t.gene!=null)L.push(`- Gêne au travail ces 7 derniers jours : ${A.t.gene}/10`);
   if(A.t.abs)L.push(`- Absences ces 3 derniers mois : ${TRAVAIL.abs.options.find(o=>o[0]===A.t.abs)[1].toLowerCase()}`);
   L.push('','CONTRAINTES DU POSTE',...(A.c.length?A.c.map(c=>'- '+CONTRAINTES[c]):['- Aucune cochée']));
+  if(A.metier) L.splice(2,0,`Métier : ${A.metier}`);
   const rc=resumeCarte(); if(rc) L.push('','CARTOGRAPHIE',rc);
+  const ob=S().jx.demo?[]:analyses().slice(0,4); if(ob.length) L.push('',`CONSTATS DE MON JOURNAL (${S().jx.jours.length} jours notés ; observations, pas des preuves)`,...ob.map(o=>'- '+phraseObs(o)));
   L.push('','POINTS À ABORDER');
   if(R.resultats.length) R.resultats.forEach(r=>L.push(`- [${r.niveau.toUpperCase()}] ${r.symptome} × ${r.contrainte} (score ${r.score}/8) — pistes : ${r.pistes.join(', ')}`)); else L.push('- Aucun croisement significatif.');
   if(R.orientationMedicale) L.push('','À SIGNALER : symptômes marqués justifiant un avis médical (médecin traitant, gynécologue ou sage-femme).');
@@ -252,6 +264,9 @@ function vAuto(){
       ${cpl.map(([k,m])=>ligneItem(k,m)).join('')}</div>
     <div class="grid" style="align-content:start">
       <div class="card grid" style="align-content:start"><h3>2. Mon poste de travail</h3>
+        <label class="f">Mon métier (facultatif) : pré-coche les contraintes habituelles<input class="i" id="met" list="metl" value="${esc(A.metier)}" placeholder="Tapez pour chercher : aide-soignant, caissier…" autocomplete="off"></label>
+        <datalist id="metl">${(MENO.METIERS||[]).map(m=>`<option value="${esc(m[0])}">`).join('')}</datalist>
+        ${A.pre?'<p class="small muted">Contraintes pré-cochées pour ce métier : décochez ou ajoutez selon votre poste réel.</p>':''}
         ${Object.entries(CONTRAINTES).map(([k,l])=>`<label class="check"><input type="checkbox" data-c="${k}" ${A.c.includes(k)?'checked':''}> ${esc(l)}</label>`).join('')}</div>
       <div class="card grid" style="align-content:start"><h3>3. Mon travail en ce moment</h3>
         <div><p class="f">${esc(TRAVAIL.was.label)}</p>${echelle('was',A.t.was,TRAVAIL.was)}</div>
@@ -282,11 +297,12 @@ function vAuto(){
   </div>`;
   app.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{A.s[b.dataset.s]=b.dataset.v==='nr'?null:+b.dataset.v;A.saved=false;keep(vAuto);});
   app.querySelectorAll('[data-c]').forEach(c=>c.onchange=()=>{A.c=[...app.querySelectorAll('[data-c]:checked')].map(x=>x.dataset.c);A.saved=false;keep(vAuto);});
+  $('#met').onchange=e=>{const v=e.target.value.trim(),m=(MENO.METIERS||[]).find(x=>x[0].toLowerCase()===v.toLowerCase());A.metier=m?m[0]:v;A.pre=!!m;if(m)A.c=[...m[1]].map(d=>'C'+d);S().metier=A.metier;saveP();A.saved=false;keep(vAuto);};
   app.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{A.t[b.dataset.t]=+b.dataset.v;A.saved=false;keep(vAuto);});
   app.querySelectorAll('[data-abs]').forEach(b=>b.onclick=()=>{A.t.abs=b.dataset.abs;A.saved=false;keep(vAuto);});
   const cp=$('#cp'); if(cp) cp.onclick=()=>copier(cp,fiche(R),'Copier la fiche');
   const sv=$('#save'); if(sv) sv.onclick=()=>{if(!P){if(!confirm('Activer « Mon suivi » ? Vos évaluations seront gardées dans ce navigateur uniquement, jamais envoyées. Vous pourrez tout effacer à tout moment.'))return;P={...MEM};}
-    P.evals.push({d:new Date().toISOString(),s:{...A.s},c:[...A.c],t:{...A.t},ss:R.sous});saveP();A.saved=true;keep(vAuto);};
+    P.evals.push({d:new Date().toISOString(),s:{...A.s},c:[...A.c],t:{...A.t},ss:R.sous});P.metier=A.metier;saveP();A.saved=true;keep(vAuto);};
 }
 
 /* ════════ 2. MON SUIVI (J0 · J90 · J180) ════════ */
@@ -302,10 +318,10 @@ function vSuivi(){
   <div class="kpis">
     <div class="kpi"><div class="l">Évaluations</div><div class="v">${E.length}</div><div class="d">${E.length?'depuis le '+fr(E[0].d):'aucune pour l\'instant'}</div></div>
     <div class="kpi"><div class="l">Prochain point conseillé</div><div class="v" style="font-size:20px;${retard?'color:var(--bad)':''}">${prochaine?fr(prochaine):'maintenant'}</div><div class="d">${retard?'c\'est le moment !':'tous les 3 mois'}</div></div>
-    <div class="kpi"><div class="l">Journal des bouffées</div><div class="v">${S().journal.length}</div><div class="d">jours notés</div></div>
+    <div class="kpi"><div class="l">Mon journal</div><div class="v">${S().jx.demo?0:S().jx.jours.length}</div><div class="d">journées notées</div></div>
     <div class="kpi"><div class="l">Programme TCC</div><div class="v">${Object.values(S().prog.faits).filter(Boolean).length}/4</div><div class="d">semaines terminées</div></div>
   </div>
-  <div class="row"><a class="btn" href="#auto">${E.length?'Faire mon point du jour':'Faire ma première évaluation (J0)'}</a><a class="btn ghost" href="#programme">Mon programme</a></div>
+  <div class="row"><a class="btn" href="#auto">${E.length?'Faire mon point du jour':'Faire ma première évaluation (J0)'}</a><a class="btn ghost" href="#journal">Mon journal du jour</a><a class="btn ghost" href="#programme">Mon programme</a></div>
   ${E.length?`<div class="grid g2">
     <div class="card"><h3 style="margin-bottom:6px">Mes symptômes</h3><p class="small muted" style="margin-bottom:6px">Sous-scores sur 16 : plus c'est bas, mieux c'est.</p>${courbe(E.map(e=>fr(e.d).slice(0,5)),[{l:'Physiques',c:'var(--mauve)',pts:E.map(e=>e.ss?.soma?.v??null)},{l:'Psychiques',c:'var(--teal)',pts:E.map(e=>e.ss?.psy?.v??null)}],16)}</div>
     <div class="card"><h3 style="margin-bottom:6px">Mon travail</h3><p class="small muted" style="margin-bottom:6px">Sur 10 : capacité (plus c'est haut, mieux c'est) et gêne (plus c'est bas, mieux c'est).</p>${courbe(E.map(e=>fr(e.d).slice(0,5)),[{l:'Capacité de travail',c:'var(--ok)',pts:E.map(e=>e.t?.was??null)},{l:'Gêne au travail',c:'var(--orange)',pts:E.map(e=>e.t?.gene??null)}],10)}</div>
@@ -428,6 +444,77 @@ function vCarte(){
   app.querySelectorAll('[data-z]').forEach(z=>{z.onclick=()=>cyc(z.dataset.z);z.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();cyc(z.dataset.z);}};});
   app.querySelectorAll('[data-l]').forEach(c=>c.onchange=()=>{const k=c.dataset.l,s=new Set(C.lieux[k]||[]);c.checked?s.add(c.dataset.g):s.delete(c.dataset.g);C.lieux[k]=[...s];saveP();keep(vCarte);});
   $('#cpc').onclick=e=>copier(e.target,resumeCarte(),'Copier');
+}
+
+
+/* ════════ MON JOURNAL CROISÉ : symptômes × journées de travail ════════
+   Chaque soir : le type de journée, les conditions de travail, 1 à 3 symptômes suivis.
+   L'appli compare les jours « avec » et « sans » chaque condition (au moins 3 jours de chaque côté).
+   Pour le sommeil, on regarde la journée de la veille (la nuit suit la journée).
+   Ce sont des observations personnelles, pas des preuves : tout reste sur l'appareil. */
+const TYPES={repos:'Repos',jour:'Journée classique',matin:'Poste du matin',soir:'Poste du soir',nuit:'Poste de nuit',tt:'Télétravail'};
+const COND={chaud:'Chaleur au poste',epi:'Tenue ou EPI couvrant',charge:'Forte charge, pression',public:'Contact public difficile',pauses:'Peu de pauses possibles',port:'Port de charges, postures',bruit:'Bruit, interruptions'};
+const JMIN=3, JECART=0.7;
+const jour1=d=>{const x=new Date(d+'T12:00:00');x.setDate(x.getDate()-1);return x.toISOString().slice(0,10);};
+function analyses(){
+  const jx=S().jx, par=Object.fromEntries(jx.jours.map(e=>[e.d,e])), out=[];
+  const facteurs=[...Object.entries(TYPES).map(([k,l])=>({l,test:e=>e.ty===k})),...Object.entries(COND).map(([k,l])=>({l,test:e=>(e.co||[]).includes(k)}))];
+  const moy=a=>a.reduce((x,y)=>x+y,0)/a.length;
+  for(const k of jx.suivis){const veille=k==='M3';
+    for(const f of facteurs){const av=[],sa=[];
+      for(const e of jx.jours){const v=e.s?.[k]; if(v==null) continue; const ref=veille?par[jour1(e.d)]:e; if(!ref) continue; (f.test(ref)?av:sa).push(v);}
+      if(av.length<JMIN||sa.length<JMIN) continue;
+      const d=moy(av)-moy(sa); if(Math.abs(d)<JECART) continue;
+      out.push({k,l:f.l,veille,ma:moy(av),ms:moy(sa),na:av.length,ns:sa.length,d});}}
+  return out.sort((a,b)=>Math.abs(b.d)-Math.abs(a.d)).slice(0,6);
+}
+const phraseObs=o=>`${ITEMS[o.k].court} : gêne ${o.d>0?'plus forte':'plus faible'} ${o.veille?'la nuit qui suit une journée':'les jours'} « ${o.l} » (${o.ma.toFixed(1).replace('.',',')} contre ${o.ms.toFixed(1).replace('.',',')} sur 4 ; ${o.na} et ${o.ns} jours)`;
+function demoJournal(){let seed=5;const r=()=>{seed=(seed*16807)%2147483647;return (seed-1)/2147483646;};
+  const out=[],cyc=['matin','matin','soir','soir','nuit','repos','repos'];
+  for(let i=27;i>=0;i--){const x=new Date();x.setDate(x.getDate()-i);const d=x.toISOString().slice(0,10),ty=cyc[(27-i)%7],co=[];
+    if(ty!=='repos'){if(r()<.45)co.push('chaud');if(r()<.4)co.push('charge');if(r()<.3)co.push('pauses');}
+    const prev=out.at(-1), c=v=>Math.max(0,Math.min(4,Math.round(v)));
+    out.push({d,ty,co,s:{M1:c(1.2+(co.includes('chaud')?1.6:0)+(r()-.5)*1.2),M3:c(1.1+(prev&&['soir','nuit'].includes(prev.ty)?1.7:0)+(r()-.5)*1.2),M7:c(1.3+(co.includes('charge')?1.1:0)+(ty==='nuit'?.8:0)+(r()-.5)*1.2)}});}
+  return out;}
+const JD={d:new Date().toISOString().slice(0,10),ty:null,co:[],s:{}};
+function vJournal(){
+  const jx=S().jx, J=jx.jours, obs=analyses(), ex=J.find(e=>e.d===JD.d);
+  const der=J.slice(-14).reverse();
+  app.innerHTML=`${intro('Pour chaque salariée · rien n\'est envoyé','Mon journal : mes symptômes selon mes journées de travail',"Une minute chaque soir : le type de journée, ce qui l'a marquée, et un à trois symptômes que vous choisissez de suivre. Après une quinzaine de jours, MénoPrév vous montre ce qui semble aggraver ou soulager vos symptômes. De quoi demander un aménagement précis, avec vos propres constats.",'<b>À savoir :</b> ce sont des observations sur vos journées, pas des preuves de cause à effet. Il faut au moins '+JMIN+' jours « avec » et '+JMIN+' jours « sans » une condition pour qu\'elle soit comparée. Pour le sommeil, c\'est la journée de la veille qui est regardée.')}
+  ${jx.demo?`<div class="demo"><span><b>Exemple fictif de 28 jours.</b></span><span class="sp"></span><button class="btn sm" id="jx-clr">Effacer l'exemple</button></div>`:''}
+  <div class="grid g2" style="align-items:start">
+    <div class="card grid" style="align-content:start"><h3>Ma journée</h3>
+      <label class="f">Date<input class="i" type="date" id="jx-d" value="${JD.d}" max="${new Date().toISOString().slice(0,10)}" style="max-width:180px"></label>
+      <div><p class="f">Type de journée</p><div class="seg2">${Object.entries(TYPES).map(([k,l])=>`<button data-ty="${k}" aria-pressed="${JD.ty===k}">${l}</button>`).join('')}</div></div>
+      <div><p class="f">Ce qui a marqué la journée (plusieurs choix possibles)</p><div class="seg2">${Object.entries(COND).map(([k,l])=>`<button data-co="${k}" aria-pressed="${JD.co.includes(k)}">${l}</button>`).join('')}</div></div>
+      <div><p class="f">Mes symptômes aujourd'hui (0 aucun · 4 très sévère)${jx.suivis.includes('M3')?' — pour le sommeil : la nuit dernière':''}</p>
+        ${jx.suivis.map(k=>`<div class="sym"><span>${esc(ITEMS[k].court)}</span><div class="lv">${[0,1,2,3,4].map(i=>`<button data-js="${k}" data-v="${i}" aria-pressed="${JD.s[k]===i}">${i}</button>`).join('')}</div></div>`).join('')}</div>
+      <div class="row"><button class="btn" id="jx-add">${ex?'Mettre à jour ce jour':'Enregistrer ma journée'}</button>${!P?'<span class="small muted">Pour garder votre journal, <a href="#suivi">activez votre suivi</a>.</span>':''}</div>
+      <details><summary style="cursor:pointer;font-weight:600;font-size:13px">Choisir les symptômes suivis (3 au maximum)</summary><div class="seg2" style="margin-top:8px">${Object.entries(ITEMS).map(([k,m])=>`<button data-sv="${k}" aria-pressed="${jx.suivis.includes(k)}">${esc(m.court)}</button>`).join('')}</div></details>
+    </div>
+    <div class="card grid" style="align-content:start"><div class="row"><h3>Ce que montre mon journal</h3><span class="sp"></span><span class="pill">${J.length} jour${J.length>1?'s':''}</span></div>
+      ${obs.length?obs.map(o=>`<div class="obs ${o.d>0?'plus':'moins'}"><b>${esc(ITEMS[o.k].court)}</b> <span class="small">${o.d>0?'plus marqué':'moins marqué'} ${o.veille?'la nuit qui suit une journée':'les jours'} « ${esc(o.l)} »</span>
+        <div class="duo"><span>avec</span><span class="t"><i style="width:${o.ma/4*100}%"></i></span><b>${o.ma.toFixed(1).replace('.',',')}</b><span>sans</span><span class="t"><i class="s" style="width:${o.ms/4*100}%"></i></span><b>${o.ms.toFixed(1).replace('.',',')}</b></div>
+        <span class="small muted">${o.na} jours avec, ${o.ns} jours sans</span></div>`).join('')
+        :`<p class="muted">${J.length<8?'Notez encore quelques journées : les premières tendances apparaissent en général après une à deux semaines.':'Pas de différence nette pour l\'instant entre vos journées. Continuez, ou changez les symptômes suivis.'}</p>`}
+      ${obs.length?`<div class="row"><button class="btn sm" id="jx-cp">Copier mes constats</button><a class="btn sm ghost" href="#parler">Préparer ma demande d'aménagement</a></div><p class="small muted">Ces constats sont repris dans votre fiche pour la visite. Si une condition de travail revient souvent, parlez-en au médecin ou à l'infirmier·e du travail.</p>`:''}
+      ${!J.length?'<button class="btn ghost sm" id="jx-demo" style="width:max-content">Voir un exemple (28 jours fictifs)</button>':''}
+    </div>
+  </div>
+  ${der.length?`<div class="card"><h3 style="margin-bottom:8px">Mes dernières journées</h3><div class="tw"><table><thead><tr><th>Date</th><th>Journée</th><th>Conditions</th>${jx.suivis.map(k=>`<th>${esc(ITEMS[k].court)}</th>`).join('')}<th></th></tr></thead><tbody>
+    ${der.map(e=>`<tr><td>${fr(e.d)}</td><td>${esc(TYPES[e.ty]||'–')}</td><td class="small">${(e.co||[]).map(c=>esc(COND[c])).join(', ')||'–'}</td>${jx.suivis.map(k=>`<td><span class="dot n${e.s?.[k]??'x'}">${e.s?.[k]??'–'}</span></td>`).join('')}<td><button class="btn sm ghost" data-jrm="${e.d}">Supprimer</button></td></tr>`).join('')}</tbody></table></div></div>`:''}`;
+  $('#jx-d').onchange=e=>{JD.d=e.target.value;const o=J.find(x=>x.d===JD.d);JD.ty=o?.ty||null;JD.co=[...(o?.co||[])];JD.s={...(o?.s||{})};keep(vJournal);};
+  app.querySelectorAll('[data-ty]').forEach(b=>b.onclick=()=>{JD.ty=b.dataset.ty;keep(vJournal);});
+  app.querySelectorAll('[data-co]').forEach(b=>b.onclick=()=>{const k=b.dataset.co;JD.co=JD.co.includes(k)?JD.co.filter(x=>x!==k):[...JD.co,k];keep(vJournal);});
+  app.querySelectorAll('[data-js]').forEach(b=>b.onclick=()=>{JD.s[b.dataset.js]=+b.dataset.v;keep(vJournal);});
+  app.querySelectorAll('[data-sv]').forEach(b=>b.onclick=()=>{const k=b.dataset.sv;if(jx.suivis.includes(k)){if(jx.suivis.length>1)jx.suivis=jx.suivis.filter(x=>x!==k);}else if(jx.suivis.length<3)jx.suivis.push(k);else{alert('Trois symptômes au maximum : retirez-en un d\'abord.');return;}saveP();keep(vJournal);});
+  $('#jx-add').onclick=()=>{if(!JD.ty){alert('Indiquez le type de journée.');return;}if(!jx.suivis.some(k=>JD.s[k]!=null)){alert('Notez au moins un symptôme.');return;}
+    if(jx.demo){jx.jours=[];jx.demo=false;}
+    const e={d:JD.d,ty:JD.ty,co:[...JD.co],s:{...JD.s}},i=jx.jours.findIndex(x=>x.d===e.d);i>=0?jx.jours[i]=e:jx.jours.push(e);jx.jours.sort((a,b)=>a.d<b.d?-1:1);saveP();keep(vJournal);};
+  app.querySelectorAll('[data-jrm]').forEach(b=>b.onclick=()=>{jx.jours=jx.jours.filter(x=>x.d!==b.dataset.jrm);saveP();keep(vJournal);});
+  const dm=$('#jx-demo'); if(dm) dm.onclick=()=>{jx.jours=demoJournal();jx.demo=true;jx.suivis=['M1','M3','M7'];saveP();vJournal();};
+  const cl=$('#jx-clr'); if(cl) cl.onclick=()=>{jx.jours=[];jx.demo=false;saveP();vJournal();};
+  const cp=$('#jx-cp'); if(cp) cp.onclick=()=>copier(cp,'Constats de mon journal ('+J.length+' jours notés) :\n'+obs.map(o=>'- '+phraseObs(o)).join('\n'),'Copier mes constats');
 }
 
 

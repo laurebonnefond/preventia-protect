@@ -85,6 +85,8 @@ p.f,label.f{display:grid;gap:4px;font-size:12px;font-weight:600;color:var(--mute
 .chart{width:100%;height:auto} .chart .gl{stroke:var(--line)} .chart .gt{fill:var(--muted);font-size:11px;font-family:var(--f-body)}
 .leg{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:4px} .leg i{display:inline-block;width:12px;height:4px;border-radius:2px;margin-right:5px;vertical-align:middle}
 #dash{display:grid;gap:14px} #dash:empty{display:none}
+.lecture{padding-block:4px 28px}.lecture .in{display:flex;gap:10px;align-items:flex-start;border:1px dashed var(--line);border-radius:var(--r);padding:12px 16px;background:var(--card);font-size:12.5px;color:var(--muted)}.lecture b{color:var(--ink)}.lecture p{margin:0}
+@media print{.lecture .in{border-style:solid}}
 @media print{.tabs,.pp-top,.no-print{display:none!important}}
 </style>
 </head>
@@ -97,6 +99,7 @@ p.f,label.f{display:grid;gap:4px;font-size:12px;font-weight:600;color:var(--mute
 </div></header>
 <nav class="tabs gut" aria-label="Sections"><div class="in" id="tabs"></div></nav>
 <main class="gut" id="app"></main>
+<aside class="gut lecture" role="note"><div class="in"><span aria-hidden="true">⚕️</span><p><b>Lecture médicale indispensable.</b> Outil de prévention en cours de validation. Les repères, scores et conseils sont donnés à titre indicatif et <b>doivent être vérifiés par un médecin</b> : médecin traitant ou gynécologue pour votre santé, médecin du travail pour l'adaptation de votre poste. Ils ne remplacent ni un examen, ni un diagnostic, ni une prescription.</p></div></aside>
 
 <script src="enquetes.js"></script>
 <script src="endo-data.js"></script>
@@ -106,6 +109,7 @@ p.f,label.f{display:grid;gap:4px;font-size:12px;font-weight:600;color:var(--mute
 const $=s=>document.querySelector(s), app=$('#app');
 const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 const {MATRICE,CONTRAINTES,IMPACT,calculerScores,SEUIL_PRIORITAIRE}=ENDO, SEUIL=ENQ.CONFIG.seuil;
+const LECTURE='Contenu de prévention à faire vérifier : ces repères, scores et conseils ne remplacent ni un examen, ni un diagnostic, ni une prescription. Ils doivent être relus et validés par un médecin : médecin traitant ou gynécologue pour la santé, médecin du travail pour l\'adaptation du poste.';
 const VIGIL=`<div class="vigil"><span>⚠️</span><p><b>Ni diagnostic, ni lien de cause avec le travail.</b> EndoPrév repère les symptômes que le poste rend plus difficiles à vivre et aide à aménager le travail. Le diagnostic relève du médecin traitant ou du gynécologue ; les aménagements, du médecin du travail.</p></div>`;
 const intro=(e,t,p,ref)=>`<div class="intro"><div><p class="eyebrow">${e}</p><h2>${t}</h2><p class="muted">${p}</p></div>${ref?`<div class="ref">${ref}</div>`:''}</div>`;
 const keep=fn=>{const y=scrollY,open=[...app.querySelectorAll('details')].map(d=>d.open);fn();app.querySelectorAll('details').forEach((d,i)=>{if(open[i])d.open=true;});scrollTo(0,y);};
@@ -172,7 +176,7 @@ function fiche(B){
   L.push('','CONTRAINTES DU POSTE',...(A.c.length?A.c.map(c=>'- '+CONTRAINTES[c]):['- Aucune cochée']),'','AMÉNAGEMENTS À DISCUTER');
   if(R.resultats.length) R.resultats.forEach(r=>L.push(`- [${r.niveau.toUpperCase()}] ${r.symptome} × ${r.contrainte} (score ${r.score}/6) — pistes : ${r.pistes.join(', ')}`)); else L.push('- Aucun croisement significatif.');
   const st=statsCycle(); if(st&&!S().demo){L.push('','MON CALENDRIER ('+S().cycle.length+' jours notés)');if(st.lon)L.push(`- Cycle moyen : ${st.lon} jours`);if(st.pr!=null)L.push(`- Douleur moyenne les jours de règles : ${dec(st.pr)}/10${st.ph!=null?' ; les autres jours : '+dec(st.ph)+'/10':''}`);if(st.jt)L.push(`- Jours de travail avec forte gêne ou absence : ${st.jt}`);}
-  L.push('','Outil de repérage non validé : il ne pose aucun diagnostic. Document personnel : vous choisissez de le montrer ou non.');
+  L.push('','Outil de repérage non validé : il ne pose aucun diagnostic. Document personnel : vous choisissez de le montrer ou non.',LECTURE);
   return L.join('\n');
 }
 function vAuto(){
@@ -189,7 +193,7 @@ function vAuto(){
         ${Object.entries(MATRICE).map(([k,m])=>`<div class="sym"><span>${esc(m.label)}</span><div class="lv" role="group" aria-label="${esc(m.label)}">${[0,1,2,3].map(v=>`<button data-s="${k}" data-v="${v}" aria-pressed="${A.s[k]===v}">${v}</button>`).join('')}</div></div>`).join('')}</div>
       <div class="card grid" style="align-content:start"><h3>3. Ce qui mérite d'en parler à un médecin</h3><p class="small muted">Cochez ce qui vous correspond. Ces signes sont fréquents : ils ne veulent pas dire « endométriose », mais ils justifient un avis.</p>
         ${Object.entries(ENDO.REPERES).filter(([,r])=>!r.perso).map(([k,r])=>`<label class="check"><input type="checkbox" data-rep="${k}" ${A.rep[k]?'checked':''}> ${esc(r.l)}</label>`).join('')}
-        <details><summary style="cursor:pointer;font-weight:600;font-size:13px">Deux signes plus personnels (facultatif, utile au médecin)</summary><div class="grid" style="gap:6px;margin-top:8px">${Object.entries(ENDO.REPERES).filter(([,r])=>r.perso).map(([k,r])=>`<label class="check"><input type="checkbox" data-rep="${k}" ${A.rep[k]?'checked':''}> ${esc(r.l)}</label>`).join('')}</div></details>
+        <details><summary style="cursor:pointer;font-weight:600;font-size:13px">Une question plus personnelle (facultatif, seulement si elle vous concerne)</summary><div class="grid" style="gap:6px;margin-top:8px">${Object.entries(ENDO.REPERES).filter(([,r])=>r.perso).map(([k,r])=>`<label class="check"><input type="checkbox" data-rep="${k}" ${A.rep[k]?'checked':''}> ${esc(r.l)}</label>`).join('')}</div></details>
         <p class="f" style="margin-top:6px">Mes saignements</p>
         ${Object.entries(ENDO.SAIGN).map(([k,l])=>`<label class="check"><input type="checkbox" data-sg="${k}" ${A.sg[k]?'checked':''}> ${esc(l)}</label>`).join('')}</div>
     </div>
@@ -366,7 +370,7 @@ async function demandeIA(){
 function vSoulager(){
   const actifs=Object.keys(MATRICE).filter(k=>(A.s[k]||0)>=1), p=pistesRetenues();
   const tri=[...SOINS].sort((a,b)=>b.pour.filter(k=>actifs.includes(k)).length-a.pour.filter(k=>actifs.includes(k)).length);
-  app.innerHTML=`${intro('Pour chaque salariée','Que faire ? Se soulager et s\'organiser au travail',"Ce qui a fait ses preuves pour soulager, ce que vous pouvez mettre en place au travail, et un message prêt à envoyer pour demander un aménagement."+(actifs.length?" Les conseils sont classés selon votre bilan.":""),'<b>Lecture :</b> chaque conseil indique son niveau de preuve. Sources : HAS et CNGOF (2017), revues Cochrane sur les règles douloureuses. Ces conseils ne remplacent pas un avis médical.')}
+  app.innerHTML=`${intro('Pour chaque salariée','Que faire ? Se soulager et s\'organiser au travail',"Ce qui a fait ses preuves pour soulager, ce que vous pouvez mettre en place au travail, et un message prêt à envoyer pour demander un aménagement."+(actifs.length?" Les conseils sont classés selon votre bilan.":""),'<b>Lecture :</b> chaque conseil indique son niveau de preuve. Sources : HAS et CNGOF (2017), revues Cochrane sur les règles douloureuses. <b>Conseils à vérifier avec votre médecin traitant ou votre gynécologue</b> : ils ne remplacent pas un avis médical.')}
   ${!actifs.length?'<div class="note">Faites d\'abord <a href="#auto">votre bilan</a> : les conseils seront classés selon vos symptômes et les aménagements adaptés à votre poste.</div>':''}
   <div class="grid g2">${tri.map(s=>{const n=s.pour.filter(k=>actifs.includes(k)).length;return `<div class="card soin ${n?'on':''}"><div class="row"><h3>${esc(s.t)}</h3><span class="sp"></span>${n?'<span class="pill ok">Pour vous</span>':''}<span class="pill ${PREUVE[s.p][1]}">${PREUVE[s.p][0]}</span></div><p>${esc(s.d)}</p>${s.w?`<p class="trav"><b>Au travail :</b> ${esc(s.w)}</p>`:''}</div>`;}).join('')}</div>
   <div class="card grid"><h3>Demander un aménagement : mon message</h3>
@@ -374,6 +378,7 @@ function vSoulager(){
     <div class="seg2">${Object.entries({manager:'À mon ou ma responsable',rh:'Aux RH',sst:'Au service de santé au travail'}).map(([k,l])=>`<button data-dest="${k}" aria-pressed="${DM.dest===k}">${l}</button>`).join('')}</div>
     <div class="fiche" id="dmt">${esc(DM.ia||demandeModele())}</div>
     <div class="row"><button class="btn sm" id="dmcp">Copier le message</button><button class="btn sm ghost" id="dmia">✨ Reformuler avec l'IA</button>${DM.ia?'<button class="btn sm ghost" id="dmraz">Revenir au modèle</button>':''}<span class="small" id="dmst">${esc(DM.etat)}</span></div>
+    <p class="small muted">Les conseils de cette page sont à vérifier avec votre médecin traitant ou votre gynécologue avant de les appliquer, et avec le médecin du travail pour tout aménagement.</p>
     <details><summary style="cursor:pointer;font-weight:600;font-size:13px">Ce qui est envoyé à l'IA</summary><p class="small muted" style="margin-top:6px">Uniquement le destinataire, les contraintes de poste cochées et la liste des aménagements. <b>Aucun symptôme, aucune douleur, aucun nom</b> : l'IA ne sait pas pourquoi vous demandez ces aménagements. Le service passe par la passerelle PréventIA (Make, puis l'API Claude d'Anthropic). Relisez toujours le texte avant de l'envoyer.</p></details></div>
   <div class="card"><h3 style="margin-bottom:8px">Le parcours de soins, en clair</h3><ol class="etapes">
     <li><b>Premier avis</b><span>Médecin traitant, gynécologue ou sage-femme : interrogatoire, examen, souvent une échographie.</span></li>
@@ -525,13 +530,13 @@ function planRegles(top,I){
   if((I.muet??0)>=50)L.push(`- ${I.muet} % n'en ont parlé à personne : sensibiliser les managers et faire connaître la visite à la demande auprès du service de santé au travail.`);
   if((I.med??0)>=20)L.push(`- ${I.med} % ont des symptômes justifiant un avis médical : diffuser le lien EndoPrév (bilan personnel) et les coordonnées de la filière régionale endométriose.`);
   if((I.pres??0)>=20)L.push(`- ${I.pres} % travaillent souvent malgré des douleurs importantes : prévoir une souplesse (télétravail ponctuel, échange de poste, pause au calme).`);
-  L.push('- Désigner un interlocuteur de confiance (infirmier·e d\'entreprise, référent handicap ou RH formé).','','3. QUI FAIT QUOI','- Direction / RH : valider les mesures, les inscrire au DUERP et au plan d\'action, informer le CSE.','- Managers : appliquer la souplesse prévue sans demander de justification médicale.','- Infirmier·e d\'entreprise : accueil, premiers soins selon protocole, orientation.','- Médecin du travail / IDE-ST : aménagements individuels, maintien dans l\'emploi.','','4. MESURER L\'EFFET','- Nouvelle enquête dans 6 mois : part des croisements prioritaires, douleur et gêne au travail moyennes, absences, part de salariées qui en ont parlé.','','Document collectif sans donnée individuelle. Aucun lien de cause avec le travail n\'est établi.');
+  L.push('- Désigner un interlocuteur de confiance (infirmier·e d\'entreprise, référent handicap ou RH formé).','','3. QUI FAIT QUOI','- Direction / RH : valider les mesures, les inscrire au DUERP et au plan d\'action, informer le CSE.','- Managers : appliquer la souplesse prévue sans demander de justification médicale.','- Infirmier·e d\'entreprise : accueil, premiers soins selon protocole, orientation.','- Médecin du travail / IDE-ST : aménagements individuels, maintien dans l\'emploi.','','4. MESURER L\'EFFET','- Nouvelle enquête dans 6 mois : part des croisements prioritaires, douleur et gêne au travail moyennes, absences, part de salariées qui en ont parlé.','','Document collectif sans donnée individuelle. Aucun lien de cause avec le travail n\'est établi.',LECTURE);
   return L.join('\n');
 }
 async function planIA(top,I){
   const donnees=[`Secteur d'activité : ${PLAN.secteur||'non précisé'}`,`Répondantes : ${I.n} (volontaires, anonymes)`,`Au moins un croisement prioritaire : ${I.prio} %`,`Symptômes justifiant un avis médical : ${I.med} %`,I.eva!=null?`Douleur moyenne des règles : ${I.eva}/10`:'',I.gene!=null?`Gêne moyenne au travail les jours de règles : ${I.gene}/10`:'',`Travaillent souvent malgré la douleur : ${I.pres} %`,`3 jours d'absence ou plus en 3 mois : ${I.abs3} %`,`N'en ont parlé à personne au travail : ${I.muet} %`,'Croisements symptôme × contrainte les plus fréquents :',...top.map(t=>`- ${MATRICE[t.s].court} × ${CONTRAINTES[t.c]} (${t.p} répondantes) ; aménagements de référence : ${AMEN[t.c].join(' ; ')}`)].filter(Boolean).join('\n');
   PLAN.etat='Rédaction en cours…';dash();
-  try{PLAN.ia=await PIA.texte({max_tokens:1400,system:"Tu es préventeur en santé au travail en France. À partir de résultats REGROUPÉS et anonymes d'une enquête sur les règles douloureuses et l'endométriose au travail, rédige un plan d'action d'entreprise concret, adapté au secteur indiqué. Structure : 1. Lecture des résultats (3 lignes, prudente : volontariat, pas de prévalence, aucun lien de cause avec le travail) ; 2. Actions collectives prioritaires (5 au plus, chacune avec : action, responsable, délai, indicateur) ; 3. Information et lutte contre le tabou ; 4. Articulation avec le service de santé au travail, l'infirmier·e d'entreprise, le CSE et le référent handicap ; 5. Inscription au DUERP et suivi à 6 mois. Règles : appuie-toi d'abord sur les aménagements de référence fournis ; n'invente ni chiffre ni texte réglementaire ; cite seulement les articles L4121-1, L4121-2, L4624-3, R4624-34 et L5213-6 du Code du travail quand ils sont pertinents ; aucune recommandation médicale ou médicamenteuse ; rappelle que les aménagements individuels relèvent du médecin du travail et que l'employeur n'a jamais accès au diagnostic. Texte brut en français, sans markdown, 350 mots au plus.",messages:[{role:'user',content:donnees}]});PLAN.etat='';}
+  try{PLAN.ia=(await PIA.texte({max_tokens:1400,system:"Tu es préventeur en santé au travail en France. À partir de résultats REGROUPÉS et anonymes d'une enquête sur les règles douloureuses et l'endométriose au travail, rédige un plan d'action d'entreprise concret, adapté au secteur indiqué. Structure : 1. Lecture des résultats (3 lignes, prudente : volontariat, pas de prévalence, aucun lien de cause avec le travail) ; 2. Actions collectives prioritaires (5 au plus, chacune avec : action, responsable, délai, indicateur) ; 3. Information et lutte contre le tabou ; 4. Articulation avec le service de santé au travail, l'infirmier·e d'entreprise, le CSE et le référent handicap ; 5. Inscription au DUERP et suivi à 6 mois. Règles : appuie-toi d'abord sur les aménagements de référence fournis ; n'invente ni chiffre ni texte réglementaire ; cite seulement les articles L4121-1, L4121-2, L4624-3, R4624-34 et L5213-6 du Code du travail quand ils sont pertinents ; aucune recommandation médicale ou médicamenteuse ; rappelle que les aménagements individuels relèvent du médecin du travail et que l'employeur n'a jamais accès au diagnostic. Texte brut en français, sans markdown, 350 mots au plus.",messages:[{role:'user',content:donnees}]}))+'\n\nTexte proposé par une IA, à relire. '+LECTURE;PLAN.etat='';}
   catch(e){PLAN.etat='⚠ '+e.message;}
   dash();
 }
@@ -634,7 +639,7 @@ const TRAME=[
 function texteVisite(){
   const L=['ENTRETIEN INFIRMIER — RÈGLES DOULOUREUSES ET TRAVAIL',`Date : ${new Date().toLocaleDateString('fr-FR')}`];
   TRAME.forEach(([k,t,items])=>{const c=items.filter((_,i)=>VIS.coche[k+i]),n=VIS.txt[k];if(!c.length&&!n)return;L.push('',t.toUpperCase());c.forEach(x=>L.push('- '+x));if(n)L.push('  Note : '+n);});
-  L.push('','Trame EndoPrév (HAS / CNGOF 2017). Repérage sans valeur de diagnostic ; aucun lien de cause avec le travail.');
+  L.push('','Trame EndoPrév (HAS / CNGOF 2017). Repérage sans valeur de diagnostic ; aucun lien de cause avec le travail.',LECTURE);
   return L.join('\n');
 }
 function vInfirmier(){

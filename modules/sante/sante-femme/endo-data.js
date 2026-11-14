@@ -74,14 +74,14 @@ window.ENDO = (function () {
      Dysménorrhée intense = intensité ≥ 8, OU absentéisme fréquent, OU résistance aux antalgiques de niveau 1 ;
      signes localisateurs : douleurs à la défécation ou signes urinaires pendant les règles, douleurs profondes
      pendant les rapports, infertilité. Ces signes sont fréquents et ne signifient PAS « endométriose ».
-     perso:true = question intime, facultative, jamais posée dans l'enquête collective. */
+     La question sur les douleurs pendant les rapports a été retirée volontairement (trop intime pour un outil de santé au travail).
+     perso:true = question personnelle, facultative, jamais posée dans l'enquête collective. */
   const REPERES = {
     R1: { l: "Mes règles me font régulièrement manquer le travail ou des activités" },
     R2: { l: "Les antidouleurs courants (paracétamol, ibuprofène) ne suffisent pas" },
     R3: { l: "J'ai mal en allant à la selle, surtout pendant les règles" },
     R4: { l: "J'ai des gênes ou des douleurs en urinant, surtout pendant les règles" },
-    R5: { l: "J'ai des douleurs profondes pendant les rapports", perso: true },
-    R6: { l: "J'ai des difficultés à avoir un enfant", perso: true }
+    R6: { l: "Si cette question vous concerne : j'ai des difficultés à avoir un enfant", perso: true }
   };
   /* ── Repères de règles abondantes (à explorer : fibromes, adénomyose, manque de fer…) ── */
   const SAIGN = {

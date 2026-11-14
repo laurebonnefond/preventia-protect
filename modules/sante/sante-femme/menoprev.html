@@ -146,6 +146,8 @@ p.f{font-size:12px;font-weight:600;color:var(--muted);margin:0 0 6px}
 .zb.z0 i{background:var(--card-2)} .z1>i,.lz.z1{background:color-mix(in oklch,var(--warn) 35%,var(--card))} .z2>i,.lz.z2{background:var(--warn)} .z3>i,.lz.z3{background:var(--bad)}
 table.lieux th{font-size:11px;font-weight:600;color:var(--muted);vertical-align:bottom} table.lieux td{text-align:center} table.lieux td:first-child{text-align:left;font-size:13px}
 table.lieux input{width:18px;height:18px}
+.lecture{padding-block:4px 28px}.lecture .in{display:flex;gap:10px;align-items:flex-start;border:1px dashed var(--line);border-radius:var(--r);padding:12px 16px;background:var(--card);font-size:12.5px;color:var(--muted)}.lecture b{color:var(--ink)}.lecture p{margin:0}
+@media print{.lecture .in{border-style:solid}}
 @media print{.tabs,.no-print,.pp-top .back{display:none}}
 /* Journal croisé, métier */
 label.f{display:grid;gap:4px;font-size:12px;font-weight:600;color:var(--muted)}
@@ -167,6 +169,7 @@ label.f{display:grid;gap:4px;font-size:12px;font-weight:600;color:var(--muted)}
 </div></header>
 <nav class="tabs gut" aria-label="Sections"><div class="in" id="tabs"></div></nav>
 <main class="gut" id="app"></main>
+<aside class="gut lecture" role="note"><div class="in"><span aria-hidden="true">⚕️</span><p><b>Lecture médicale indispensable.</b> Outil de prévention en cours de validation. Les repères, scores et conseils sont donnés à titre indicatif et <b>doivent être vérifiés par un médecin</b> : médecin traitant ou gynécologue pour votre santé, médecin du travail pour l'adaptation de votre poste. Ils ne remplacent ni un examen, ni un diagnostic, ni une prescription.</p></div></aside>
 
 <script src="enquetes.js"></script>
 <script src="meno-data.js"></script>
@@ -184,6 +187,7 @@ const keep=fn=>{const y=scrollY,open=[...app.querySelectorAll('details')].map(d=
 const copier=(btn,txt,lab)=>{const fin=t=>{btn.textContent=t;setTimeout(()=>btn.textContent=lab,1600);};try{navigator.clipboard.writeText(txt).then(()=>fin('Copié ✓'),()=>fin('Copie impossible'));}catch(_){fin('Copie impossible');}};
 const fr=d=>new Date(d).toLocaleDateString('fr-FR');
 const jours=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5);
+const LECTURE='Contenu de prévention à faire vérifier : ces repères, scores et conseils ne remplacent ni un examen, ni un diagnostic, ni une prescription. Ils doivent être relus et validés par un médecin : médecin traitant ou gynécologue pour la santé, médecin du travail pour l\'adaptation du poste.';
 const VIGIL=`<div class="vigil"><span>⚠️</span><p><b>Ni diagnostic, ni avis médical.</b> MénoPrév aide à repérer les symptômes que le poste rend plus difficiles à vivre, à se suivre et à aménager le travail. Le diagnostic et les traitements relèvent du médecin traitant, du gynécologue ou de la sage-femme ; les aménagements individuels, du médecin du travail.</p></div>`;
 
 /* ════════ DONNÉES ════════
@@ -248,7 +252,7 @@ function fiche(R){
   L.push('','POINTS À ABORDER');
   if(R.resultats.length) R.resultats.forEach(r=>L.push(`- [${r.niveau.toUpperCase()}] ${r.symptome} × ${r.contrainte} (score ${r.score}/8) — pistes : ${r.pistes.join(', ')}`)); else L.push('- Aucun croisement significatif.');
   if(R.orientationMedicale) L.push('','À SIGNALER : symptômes marqués justifiant un avis médical (médecin traitant, gynécologue ou sage-femme).');
-  L.push('','Grille adaptée de la Menopause Rating Scale (Heinemann 2004), items 1 à 7, 9 et 11 ; capacité de travail : Work Ability Score. Outil de repérage, sans valeur de diagnostic. Document personnel : vous choisissez de le montrer ou non.');
+  L.push('','Grille adaptée de la Menopause Rating Scale (Heinemann 2004), items 1 à 7, 9 et 11 ; capacité de travail : Work Ability Score. Outil de repérage, sans valeur de diagnostic. Document personnel : vous choisissez de le montrer ou non.',LECTURE);
   return L.join('\n');
 }
 function ligneItem(k,m){const v=A.s[k];return `<div class="sym"><span>${esc(m.label)}${m.facultatif?' <span class="muted small">(facultatif)</span>':''}</span><div class="lv" role="group" aria-label="${esc(m.label)}">${[0,1,2,3,4].map(i=>`<button data-s="${k}" data-v="${i}" aria-pressed="${v===i}" title="${LV5[i]}">${i}</button>`).join('')}<button class="nr" data-s="${k}" data-v="nr" aria-pressed="${v===null}" title="${NR}">–</button></div></div>`;}
@@ -638,7 +642,7 @@ function planAdaptation(top,E){
   const L=['PLAN D\'ADAPTATION DES CONDITIONS DE TRAVAIL — MÉNOPAUSE',`Établi le ${new Date().toLocaleDateString('fr-FR')} à partir de l'enquête : ${SRC.label} (${E.length} réponses)`,'','1. PRIORITÉS (croisements symptôme × contrainte les plus fréquents)'];
   top.forEach((t,i)=>{L.push(`${i+1}. ${ITEMS[t.s].court} × ${CONTRAINTES[t.c]} (${t.p} répondante${t.p>1?'s':''} en niveau prioritaire)`);AMEN[t.c].forEach(a=>L.push(`   - ${a}`));});
   if(lieux.length){L.push('','2. LIEUX À REVOIR');lieux.forEach(x=>L.push(`- ${x.l} (${Math.round(x.p/E.length*100)} %)`));}
-  L.push('','3. MESURES TRANSVERSALES','- Désigner un·e référent·e ménopause (RH, CSE ou santé au travail) et le faire connaître.','- Sensibiliser les managers (guide « Ménopause sur le lieu de travail », rapport Rist, recommandation 19).','- Diffuser le lien MénoPrév pour le suivi personnel et le programme TCC.','- Intégrer chaleur, tenues, accès aux sanitaires et horaires dans le DUERP, par unité de travail.','- Bureaux assis-debout lors des renouvellements (recommandation 22, GEMVi).','','4. ÉVALUATION','- Nouvelle vague d\'enquête dans 3 à 6 mois, à comparer avec celle-ci (indicateurs : % symptômes modérés ou sévères, capacité de travail moyenne, gêne au travail, absences).','','Document collectif, sans aucune donnée individuelle. Les aménagements individuels relèvent du médecin du travail (art. L4624-3 du Code du travail).');
+  L.push('','3. MESURES TRANSVERSALES','- Désigner un·e référent·e ménopause (RH, CSE ou santé au travail) et le faire connaître.','- Sensibiliser les managers (guide « Ménopause sur le lieu de travail », rapport Rist, recommandation 19).','- Diffuser le lien MénoPrév pour le suivi personnel et le programme TCC.','- Intégrer chaleur, tenues, accès aux sanitaires et horaires dans le DUERP, par unité de travail.','- Bureaux assis-debout lors des renouvellements (recommandation 22, GEMVi).','','4. ÉVALUATION','- Nouvelle vague d\'enquête dans 3 à 6 mois, à comparer avec celle-ci (indicateurs : % symptômes modérés ou sévères, capacité de travail moyenne, gêne au travail, absences).','','Document collectif, sans aucune donnée individuelle. Les aménagements individuels relèvent du médecin du travail (art. L4624-3 du Code du travail).',LECTURE);
   return L.join('\n');
 }
 function dash(){
@@ -727,7 +731,7 @@ const TRAME=[
 function texteVisite(){
   const L=['VISITE DE MI-CARRIÈRE — VOLET MÉNOPAUSE',`Date : ${new Date().toLocaleDateString('fr-FR')}`];
   TRAME.forEach(([k,t,items])=>{const c=items.filter((_,i)=>VIS.coche[k+i]);const n=VIS.txt[k];if(!c.length&&!n)return;L.push('',t.toUpperCase());c.forEach(x=>L.push('- '+x));if(n)L.push('  Note : '+n);});
-  L.push('','Trame MénoPrév (rapport Rist 2025, recommandation 24 ; note de cadrage HAS 2025). Outil de repérage, sans valeur de diagnostic.');
+  L.push('','Trame MénoPrév (rapport Rist 2025, recommandation 24 ; note de cadrage HAS 2025). Outil de repérage, sans valeur de diagnostic.',LECTURE);
   return L.join('\n');
 }
 function vVisite(){

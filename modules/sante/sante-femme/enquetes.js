@@ -1,6 +1,6 @@
 /* ════════════════════════════════════════════════════════════════
    PréventIA Protect · Santé de la femme — ENQUÊTES COLLECTIVES ANONYMES
-   Partagé par EndoPrév (et, plus tard, MénoPrév / SeinPrév).
+   Partagé par EndoPrév et MénoPrév (et, plus tard, SeinPrév).
 
    Deux circuits, un même tableau de bord :
      ⓐ Supabase (UE) : lien + QR code → les salariées répondent sur leur téléphone

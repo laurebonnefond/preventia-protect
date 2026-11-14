@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="femme.css">
 <style>
 /* Page de réponse des salariées (lien ou QR code d'une campagne) — mobile d'abord, une question par écran */
-:root{--acc:var(--endo)}
+:root{--acc:var(--endo);--acc-bg:var(--endo-bg)}
 body{min-height:100dvh;display:flex;flex-direction:column}
 .top{background:var(--navy);color:#fff;padding:14px max(16px,env(safe-area-inset-left,0px))}
 .top .in{max-width:640px;margin:0 auto;display:flex;gap:10px;align-items:center}
@@ -21,16 +21,20 @@ body{min-height:100dvh;display:flex;flex-direction:column}
 .kq{font-family:var(--f-display);font-size:1.55rem;line-height:1.25}
 .kopts{display:grid;gap:10px}
 .kopts button{border:1.5px solid var(--line);background:var(--card);border-radius:14px;padding:15px 16px;font-size:1.02rem;font-weight:600;text-align:left;display:flex;gap:12px;align-items:center}
-.kopts button[aria-pressed="true"]{border-color:var(--endo);background:var(--endo-bg)}
+.kopts button[aria-pressed="true"]{border-color:var(--acc);background:var(--acc-bg)}
 .kopts .v{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--card-2);font-weight:700;flex:none}
-.kopts button[aria-pressed="true"] .v{background:var(--endo);color:#fff}
+.kopts button[aria-pressed="true"] .v{background:var(--acc);color:#fff}
 .kprog{height:6px;background:var(--card-2);border-radius:99px;overflow:hidden}
-.kprog i{display:block;height:100%;background:var(--endo);transition:width .25s}
+.kprog i{display:block;height:100%;background:var(--acc);transition:width .25s}
 .nav{display:flex;gap:10px;justify-content:space-between;margin-top:auto}
 .big{font-size:1.05rem;padding:13px 20px}
 .recap{display:grid;gap:6px;font-size:13.5px}
 .recap div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line);padding-bottom:4px}
 .center{text-align:center;display:grid;gap:12px;justify-items:center}
+.kscale{display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:5px}
+.kscale button{border:1.5px solid var(--line);background:var(--card);border-radius:10px;height:46px;font-weight:700;font-size:1rem;padding:0}
+.kscale button[aria-pressed="true"]{border-color:var(--acc);background:var(--acc);color:#fff}
+.kbornes{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--muted)}
 .ok-ic{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:var(--ok-bg);color:var(--ok);font-size:30px}
 </style>
 </head>
@@ -40,6 +44,7 @@ body{min-height:100dvh;display:flex;flex-direction:column}
 
 <script src="enquetes.js"></script>
 <script src="endo-data.js"></script>
+<script src="meno-data.js"></script>
 <script>
 (function () {
   const $ = s => document.querySelector(s), Q = $('#q');
@@ -69,19 +74,22 @@ body{min-height:100dvh;display:flex;flex-direction:column}
     ecran(`<div class="kprog"><i style="width:2%"></i></div><h2 class="kq">${esc(Qn.filtre)}</h2>
       <div class="kopts"><button data-f="oui"><span class="v">✓</span>Oui</button><button data-f="non"><span class="v">✕</span>Non</button></div>`);
     Q.querySelectorAll('[data-f]').forEach(b => b.onclick = () => b.dataset.f === 'oui' ? (i = 0, question()) :
-      ecran(`<div class="center" style="margin-top:30px"><div class="ok-ic">✓</div><h2>Merci</h2><p class="muted">Cette enquête concerne les personnes qui ont des règles. Aucune réponse n'a été enregistrée.</p></div>`));
+      ecran(`<div class="center" style="margin-top:30px"><div class="ok-ic">✓</div><h2>Merci</h2><p class="muted">${esc(Qn.filtreNon || "Cette enquête concerne les personnes qui ont des règles. Aucune réponse n'a été enregistrée.")}</p></div>`));
   }
   function question() {
     const q = Qn.questions[i], n = Qn.questions.length, v = get(q.cle);
     let opts;
-    if (q.type === 'niveau') opts = ENDO.NIVEAUX.map((l, k) => `<button data-v="${k}" aria-pressed="${v === k}"><span class="v">${k}</span>${esc(l.slice(4))}</button>`).join('');
+    if (q.type === 'niveau') opts = (Qn.niveaux || ENDO.NIVEAUX).map((l, k) => `<button data-v="${k}" aria-pressed="${v === k}"><span class="v">${k}</span>${esc(l.slice(4))}</button>`).join('')
+      + (q.nr ? `<button data-nr="1" aria-pressed="${v === null}"><span class="v">–</span>${esc(Qn.nr || 'Je préfère ne pas répondre')}</button>` : '');
+    else if (q.type === 'echelle') opts = `<div class="kscale">${Array.from({ length: q.max - q.min + 1 }, (_, j) => q.min + j).map(k => `<button data-v="${k}" aria-pressed="${v === k}">${k}</button>`).join('')}</div><div class="kbornes"><span>${q.min} = ${esc(q.bornes[0])}</span><span>${q.max} = ${esc(q.bornes[1])}</span></div>`;
     else if (q.type === 'choix') opts = q.options.map(([k, l]) => `<button data-v="${esc(k)}" aria-pressed="${v === k}">${esc(l)}</button>`).join('');
     else opts = q.options.map(([k, l]) => `<button data-m="${esc(k)}" aria-pressed="${(v || []).includes(k)}"><span class="v">${(v || []).includes(k) ? '✓' : ''}</span>${esc(l)}</button>`).join('');
     ecran(`<div class="kprog"><i style="width:${Math.round((i + 1) / (n + 1) * 100)}%"></i></div>
       <p class="muted small">Question ${i + 1} sur ${n}${q.aide ? ' · ' + esc(q.aide) : ''}</p>
       <h2 class="kq">${esc(q.label)}</h2><div class="kopts">${opts}</div>
-      <div class="nav"><button class="btn ghost" id="prev">← Retour</button><button class="btn" id="next" ${q.type === 'multi' || v !== undefined ? '' : 'disabled'}>${q.type === 'multi' ? 'Continuer' : 'Suivant'}</button></div>`);
-    Q.querySelectorAll('[data-v]').forEach(b => b.onclick = () => { set(q.cle, q.type === 'niveau' ? +b.dataset.v : b.dataset.v); suivant(); });
+      <div class="nav"><button class="btn ghost" id="prev">← Retour</button><button class="btn" id="next" ${q.type === 'multi' || q.facultatif || v !== undefined ? '' : 'disabled'}>${q.type === 'multi' ? 'Continuer' : (v === undefined && q.facultatif ? 'Passer' : 'Suivant')}</button></div>`);
+    Q.querySelectorAll('[data-v]').forEach(b => b.onclick = () => { set(q.cle, q.type === 'niveau' || q.type === 'echelle' ? +b.dataset.v : b.dataset.v); suivant(); });
+    Q.querySelectorAll('[data-nr]').forEach(b => b.onclick = () => { set(q.cle, null); suivant(); });
     Q.querySelectorAll('[data-m]').forEach(b => b.onclick = () => {
       const cur = new Set(get(q.cle) || []); cur.has(b.dataset.m) ? cur.delete(b.dataset.m) : cur.add(b.dataset.m);
       set(q.cle, [...cur]); question();
@@ -94,11 +102,12 @@ body{min-height:100dvh;display:flex;flex-direction:column}
     if (++i < Qn.questions.length) question(); else recap();
   }
   function recap() {
-    const rs = ENDO.calculerScores(R.s, R.c);
+    /* Récapitulatif et alerte propres à chaque questionnaire (MénoPrév) ; à défaut, ceux d'EndoPrév */
+    const rs = Qn.recap ? null : ENDO.calculerScores(R.s, R.c);
+    const alerte = Qn.alerte ? Qn.alerte(R) : (rs.orientationMedicale ? '<b>Un avis médical est conseillé.</b> Des règles très douloureuses ou des douleurs pelviennes fréquentes ne sont pas « normales » : parlez-en à votre médecin traitant ou à un gynécologue, indépendamment de cette enquête.' : '');
     ecran(`<div class="kprog"><i style="width:100%"></i></div><h2 class="kq">Avant d'envoyer</h2>
-      <div class="card recap">${Object.entries(ENDO.MATRICE).map(([k, m]) => `<div><span>${esc(m.court)}</span><b>${R.s?.[k] ?? 0}/3</b></div>`).join('')}
-        <div><span>Contraintes du poste</span><b>${(R.c || []).length}</b></div></div>
-      ${rs.orientationMedicale ? '<div class="alert"><b>Un avis médical est conseillé.</b> Des règles très douloureuses ou des douleurs pelviennes fréquentes ne sont pas « normales » : parlez-en à votre médecin traitant ou à un gynécologue, indépendamment de cette enquête.</div>' : ''}
+      <div class="card recap">${Qn.recap ? Qn.recap(R) : Object.entries(ENDO.MATRICE).map(([k, m]) => `<div><span>${esc(m.court)}</span><b>${R.s?.[k] ?? 0}/3</b></div>`).join('') + `<div><span>Contraintes du poste</span><b>${(R.c || []).length}</b></div>`}</div>
+      ${alerte ? `<div class="alert">${alerte}</div>` : ''}
       <label class="check"><input type="checkbox" id="ok"> J'accepte que ces réponses, sans nom ni date, rejoignent les résultats regroupés de l'entreprise.</label>
       <div class="nav"><button class="btn ghost" id="prev">← Modifier</button><button class="btn big" id="send" disabled>Envoyer</button></div><p id="st" class="small"></p>`);
     $('#ok').onchange = e => $('#send').disabled = !e.target.checked;
@@ -111,7 +120,7 @@ body{min-height:100dvh;display:flex;flex-direction:column}
         ecran(`<div class="center" style="margin-top:20px"><div class="ok-ic">✓</div><h2>Merci, votre réponse est enregistrée</h2>
           <p class="muted">Elle a été ajoutée anonymement. Vous pouvez fermer cette page.</p>
           <div class="secret" style="text-align:left">Vous pouvez demander à voir le <b>médecin ou l'infirmier·e du travail</b> à tout moment, sans passer par votre employeur. Ils sont tenus au secret médical.</div>
-          <a class="btn ghost" href="endoprev.html#auto">Faire mon auto-évaluation personnelle (rien n'est envoyé)</a></div>`);
+          <a class="btn ghost" href="${Qn.lienPerso || 'endoprev.html#auto'}">${esc(Qn.lienPersoTexte || "Faire mon auto-évaluation personnelle (rien n'est envoyé)")}</a></div>`);
       } catch (e) { $('#st').innerHTML = `<span style="color:var(--bad)">⚠ ${esc(e.message)}</span>`; $('#send').disabled = false; }
     };
   }
@@ -122,6 +131,7 @@ body{min-height:100dvh;display:flex;flex-direction:column}
     if (!camp) return erreur("Ce lien ne correspond à aucune enquête.");
     if (!camp.ouverte) return erreur("Cette enquête est terminée. Merci de votre intérêt.");
     Qn = ENQ.QUESTIONNAIRES[camp.outil];
+    if (Qn && Qn.couleur) { document.documentElement.style.setProperty('--acc', `var(--${Qn.couleur})`); document.documentElement.style.setProperty('--acc-bg', `var(--${Qn.couleur}-bg)`); }
     if (!Qn) return erreur("Questionnaire indisponible.");
     $('#titre').textContent = Qn.titre;
     document.title = Qn.titre + ' — enquête anonyme';

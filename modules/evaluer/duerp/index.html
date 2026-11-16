@@ -28,6 +28,14 @@ const{useState,useEffect,useRef,useMemo}=React;
 const LS_KEY="preventia-duerp";
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const today=()=>new Date().toISOString().split("T")[0];
+/* Texte saisi → sûr dans l'export Word (un « < » ne casse plus la mise en page) */
+const esc=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+/* Ramène une cotation dans sa grille (ex. gravité 7 proposée par l'IA → 4) */
+const borne=(v,min,max,def)=>{const n=Math.round(+v);return Number.isFinite(n)?Math.min(max,Math.max(min,n)):def};
+const frD=s=>s?new Date(s+"T00:00").toLocaleDateString("fr-FR"):"";
+const enRetard=a=>!!a.echeance&&a.statut!=="fait"&&a.echeance<today();
+const STATUTS=["à faire","en cours","fait"];
+const ICO_STATUT={"à faire":"⬜","en cours":"🔄","fait":"✅"};
 
 /* ═══ CONSTANTES MÉTIER ═══ */
 const CATEGORIES=[
@@ -104,7 +112,7 @@ function Dashboard({data}){
     {l:"Risques identifiés",v:risques.length,i:"⚠️",c:"#f59e0b"},
     {l:"Risques P1 (critiques)",v:p1,i:"🔴",c:"#dc2626"},
     {l:"Risques P2 (élevés)",v:p2,i:"🟠",c:"#ea580c"},
-    {l:"Actions en cours",v:actTodo,i:"📋",c:"#2563eb"},
+    {l:"Actions restantes",v:actTodo,i:"📋",c:"#2563eb"},
     {l:"Actions réalisées",v:actDone,i:"✅",c:"#22c55e"},
   ];
   return(<div>
@@ -146,7 +154,7 @@ function Entreprise({data,update}){
         {fields.map(([k,l,t])=><label key={k} style={{display:"block"}}><span style={{fontSize:11,fontWeight:600,color:"#475569"}}>{l}</span><input type={t||"text"} value={e[k]||""} onChange={ev=>set(k,ev.target.value)} style={{marginTop:3}}/></label>)}
       </div>
       <div style={{marginTop:12,padding:10,background:"#eff6ff",borderRadius:8,fontSize:11,color:"#1e40af"}}>
-        📖 <b>Réglementation :</b> Art. L4121-3 (évaluation), R4121-1 (contenu DU), R4121-2 (mise à jour), L4121-3-1 (PAPRIPACT ≥ 50 sal.), R4121-4 (conservation 40 ans + dépôt dématérialisé).
+        📖 <b>Réglementation :</b> Art. L4121-3 (évaluation), R4121-1 (contenu DU), R4121-2 (mise à jour : au moins annuelle à partir de 11 salariés, et à chaque aménagement important ou information nouvelle), L4121-3-1 (PAPRIPACT à partir de 50 salariés ; en dessous, liste d'actions consignée dans le DUERP), R4121-4 (versions successives conservées 40 ans dans l'entreprise).
       </div>
     </Card>
   </div>);
@@ -224,10 +232,16 @@ function Risques({data,update,selUT,setSelUT}){
     setForm(empty);setEditId(null);setShow(false);
   }
   function handleEdit(r){setForm({categorie:r.categorie,danger:r.danger,situation:r.situation,dommage:r.dommage,gravite:r.gravite,frequence:r.frequence,maitrise:r.maitrise,actions:r.actions||[]});setEditId(r.id);setShow(true)}
-  function handleDel(id){update(d=>{d.risques=d.risques.filter(r=>r.id!==id)})}
+  function handleDel(id){if(confirm("Supprimer ce risque et ses actions ?"))update(d=>{d.risques=d.risques.filter(r=>r.id!==id)})}
 
+  const orphelins=data.risques.filter(r=>!data.uts.some(u=>u.id===r.utId));
   if(!selUT)return(<div>
     <h2 className="sf" style={{fontSize:20,marginBottom:12}}>⚠️ Évaluation des risques</h2>
+    {orphelins.length>0&&<Card mb={12}><p style={{fontSize:12,color:"#991b1b"}}>⚠️ {orphelins.length} risque(s) ne sont rattachés à aucune unité de travail (ancien import IA) : {orphelins.map(r=>r.danger).join(", ")}.</p>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:8,alignItems:"center"}}>
+        {data.uts.map(u=><Btn key={u.id} small c="var(--teal)" outline onClick={()=>update(d=>{d.risques.forEach(r=>{if(!d.uts.some(x=>x.id===r.utId))r.utId=u.id})})}>Rattacher à « {u.nom} »</Btn>)}
+        <Btn small c="#dc2626" outline onClick={()=>{if(confirm("Supprimer ces risques sans UT ?"))update(d=>{d.risques=d.risques.filter(r=>d.uts.some(u=>u.id===r.utId))})}}>Supprimer</Btn>
+      </div></Card>}
     <Card><p style={{color:"#64748b"}}>Sélectionnez une unité de travail :</p>
       <div style={{display:"flex",flexWrap:"wrap",gap:8,marginTop:8}}>
         {data.uts.map(u=><Btn key={u.id} onClick={()=>setSelUT(u.id)} c="var(--teal)" outline>{u.nom} ({data.risques.filter(r=>r.utId===u.id).length})</Btn>)}
@@ -360,20 +374,25 @@ function Papripact({data,update}){
     });
     setActForm(null);
   }
+  function editAction(rId,aIdx){
+    const a=data.risques.find(x=>x.id===rId)?.actions?.[aIdx];
+    if(a)setActForm({risqueId:rId,idx:aIdx,description:a.description||"",responsable:a.responsable||"",echeance:a.echeance||"",statut:a.statut||"à faire",type:a.type||"Prévention"});
+  }
+  /* Un clic fait avancer le statut : à faire → en cours → fait → à faire */
   function toggleStatut(rId,aIdx){
     update(d=>{
       const r=d.risques.find(x=>x.id===rId);
-      if(r&&r.actions&&r.actions[aIdx]) r.actions[aIdx].statut=r.actions[aIdx].statut==="fait"?"à faire":"fait";
+      if(r&&r.actions&&r.actions[aIdx]) r.actions[aIdx].statut=STATUTS[(STATUTS.indexOf(r.actions[aIdx].statut)+1)%STATUTS.length];
     });
   }
   function delAction(rId,aIdx){update(d=>{const r=d.risques.find(x=>x.id===rId);if(r?.actions)r.actions.splice(aIdx,1)})}
 
   return(<div>
     <h2 className="sf" style={{fontSize:20,marginBottom:12}}>📋 PAPRIPACT — Plan d'actions</h2>
-    <p style={{fontSize:11,color:"#64748b",marginBottom:12}}>Programme Annuel de Prévention des Risques Professionnels et d'Amélioration des Conditions de Travail (obligatoire ≥ 50 salariés — Art. L4121-3-1).</p>
+    <p style={{fontSize:11,color:"#64748b",marginBottom:12}}>Programme Annuel de Prévention des Risques Professionnels et d'Amélioration des Conditions de Travail (obligatoire à partir de 50 salariés — Art. L4121-3-1). En dessous de 50 salariés, la liste des actions de prévention est consignée dans le DUERP.</p>
 
     {actForm&&<Card mb={12}>
-      <h3 style={{fontSize:13,marginBottom:8}}>Nouvelle action</h3>
+      <h3 style={{fontSize:13,marginBottom:8}}>{actForm.idx!==undefined?"Modifier l'action":"Nouvelle action"}</h3>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
         <label style={{gridColumn:"1/-1"}}><span style={{fontSize:11,fontWeight:600,color:"#475569"}}>Action *</span><input value={actForm.description} onChange={e=>setActForm({...actForm,description:e.target.value})} style={{marginTop:3}}/></label>
         <label><span style={{fontSize:11,fontWeight:600,color:"#475569"}}>Responsable</span><input value={actForm.responsable} onChange={e=>setActForm({...actForm,responsable:e.target.value})} style={{marginTop:3}}/></label>
@@ -392,16 +411,18 @@ function Papripact({data,update}){
       <tbody>{allR.map(r=>{const p2=prio(r.score);const ut=data.uts.find(u=>u.id===r.utId);const acts=r.actions||[];
         return<tr key={r.id} style={{borderBottom:"1px solid #f1f5f9",fontSize:11,verticalAlign:"top"}}>
           <td style={{...td,textAlign:"center"}}><span style={{background:p2.bg,color:p2.c,padding:"2px 6px",borderRadius:4,fontSize:10,fontWeight:700}}>{p2.l.split("—")[0]}</span></td>
-          <td style={td}>{ut?.nom}</td>
+          <td style={td}>{ut?.nom||<span style={{color:"#dc2626"}}>⚠️ sans UT</span>}</td>
           <td style={{...td,fontWeight:600}}>{r.danger}<br/><span style={{fontWeight:400,color:"#64748b",fontSize:10}}>{r.categorie}</span></td>
           <td style={{...td,textAlign:"center",fontWeight:700,color:p2.c}}>{r.score}</td>
           <td style={td}>{acts.length===0?<span style={{color:"#94a3b8",fontSize:10}}>Aucune action</span>
             :acts.map((a,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:4,padding:"2px 0",borderBottom:i<acts.length-1?"1px solid #f8fafc":"none"}}>
-              <button onClick={()=>toggleStatut(r.id,i)} style={{border:"none",background:"transparent",cursor:"pointer",fontSize:12}}>{a.statut==="fait"?"✅":"⬜"}</button>
-              <span style={{flex:1,textDecoration:a.statut==="fait"?"line-through":"none",color:a.statut==="fait"?"#94a3b8":"#1e293b"}}>{a.description}</span>
-              {a.echeance&&<span style={{fontSize:9,color:"#64748b"}}>{a.echeance}</span>}
+              <button onClick={()=>toggleStatut(r.id,i)} title={`Statut : ${a.statut} — cliquer pour changer`} style={{border:"none",background:"transparent",cursor:"pointer",fontSize:12}}>{ICO_STATUT[a.statut]||"⬜"}</button>
+              <span style={{flex:1,textDecoration:a.statut==="fait"?"line-through":"none",color:a.statut==="fait"?"#94a3b8":"#1e293b"}}>{a.description}{a.responsable&&<span style={{color:"#64748b",fontSize:10}}> — {a.responsable}</span>}</span>
+              {a.statut==="en cours"&&<span style={{fontSize:9,background:"#dbeafe",color:"#1e40af",padding:"1px 5px",borderRadius:4}}>en cours</span>}
+              {a.echeance&&<span style={{fontSize:9,fontWeight:enRetard(a)?700:400,color:enRetard(a)?"#dc2626":"#64748b",whiteSpace:"nowrap"}}>{enRetard(a)?"⚠️ en retard · ":""}{frD(a.echeance)}</span>}
               <span style={{fontSize:9,background:"#f1f5f9",padding:"1px 5px",borderRadius:4}}>{a.type}</span>
-              <button onClick={()=>delAction(r.id,i)} style={{...ibtn,fontSize:9}}>✕</button>
+              <button onClick={()=>editAction(r.id,i)} title="Modifier" style={{...ibtn,fontSize:9}}>✏️</button>
+              <button onClick={()=>{if(confirm("Supprimer cette action ?"))delAction(r.id,i)}} title="Supprimer" style={{...ibtn,fontSize:9}}>✕</button>
             </div>)
           }</td>
           <td style={{...td,textAlign:"center"}}><button onClick={()=>addAction(r.id)} style={{...ibtn,fontSize:10}}>+ Action</button></td>
@@ -418,12 +439,24 @@ function IAAssistant({data,update}){
   const[ld,setLd]=useState(false);
   const[targetUT,setTargetUT]=useState(data.uts[0]?.id||"");
   const ref=useRef(null);
+  const[prop,setProp]=useState(null); // propositions de l'IA en attente de relecture : {utId, items:[{...risque, ok}]}
+  /* UT réellement ciblée : celle choisie si elle existe encore, sinon la première */
+  const cible=data.uts.some(u=>u.id===targetUT)?targetUT:(data.uts[0]?.id||"");
+
+  function importer(){
+    const garde=prop.items.filter(x=>x.ok);
+    update(d=>{garde.forEach(({ok,action,...nr})=>{
+      d.risques.push({id:uid(),utId:prop.utId,...nr,actions:action?[{description:action,responsable:"",echeance:"",statut:"à faire",type:"Prévention"}]:[]});
+    })});
+    setChat(p=>[...p,{role:"assistant",content:`✅ ${garde.length} risque(s) importé(s) sur ${prop.items.length} proposé(s). Cotations et actions restent à valider par l'employeur.`}]);
+    setProp(null);
+  }
 
   async function send(){
     if(!msg.trim()||ld)return;
     const userMsg=msg;setMsg("");setChat(p=>[...p,{role:"user",content:userMsg}]);setLd(true);
-    const ut=data.uts.find(u=>u.id===targetUT);
-    const utRisques=data.risques.filter(r=>r.utId===targetUT);
+    const ut=data.uts.find(u=>u.id===cible);
+    const utRisques=data.risques.filter(r=>r.utId===cible);
     try{
       const body={model:"claude-sonnet-4-5-20250514",max_tokens:2500,system:`Tu es un IPRP expert spécialisé dans l'aide au DUERP.
 Tu aides à identifier les risques professionnels, proposer des cotations et des actions de prévention.
@@ -446,14 +479,18 @@ Sinon, réponds normalement en texte.`,
       let parsed=null;
       try{const clean=resp.replace(/```json\n?|```/g,"").trim();parsed=JSON.parse(clean);if(!parsed.risques)parsed=null}catch{}
 
-      if(parsed&&parsed.risques){
-        // Import risques
-        update(d=>{
-          parsed.risques.forEach(nr=>{
-            d.risques.push({id:uid(),utId:targetUT,categorie:nr.categorie||CATEGORIES[0],danger:nr.danger,situation:nr.situation||"",dommage:nr.dommage||"",gravite:nr.gravite||2,frequence:nr.frequence||2,maitrise:nr.maitrise||3,actions:nr.action?[{description:nr.action,responsable:"",echeance:"",statut:"à faire",type:"Prévention"}]:[]});
-          });
-        });
-        setChat(p=>[...p,{role:"assistant",content:`✅ **${parsed.risques.length} risque(s) importé(s)** dans "${ut?.nom||"UT"}" :\n${parsed.risques.map(r=>`• ${r.danger} (${r.categorie}) — G${r.gravite}×F${r.frequence}×M${r.maitrise} = ${calcScore(r.gravite,r.frequence,r.maitrise)}`).join("\n")}`}]);
+      if(parsed&&Array.isArray(parsed.risques)){
+        if(!cible){
+          setChat(p=>[...p,{role:"assistant",content:"⚠️ Créez d'abord une unité de travail (onglet « Unités de travail ») : un risque doit toujours être rattaché à une UT."}]);
+        }else{
+          const items=parsed.risques.filter(nr=>nr&&String(nr.danger||"").trim()).map(nr=>({
+            categorie:CATEGORIES.includes(nr.categorie)?nr.categorie:CATEGORIES[0],
+            danger:String(nr.danger).trim(),situation:String(nr.situation||""),dommage:String(nr.dommage||""),
+            gravite:borne(nr.gravite,1,4,2),frequence:borne(nr.frequence,1,4,2),maitrise:borne(nr.maitrise,1,3,3),
+            action:String(nr.action||""),ok:true}));
+          setProp({utId:cible,items});
+          setChat(p=>[...p,{role:"assistant",content:`💡 ${items.length} risque(s) proposé(s) pour "${ut?.nom}". Relisez-les ci-dessous, décochez ceux qui ne s'appliquent pas, puis importez.`}]);
+        }
       }else{
         setChat(p=>[...p,{role:"assistant",content:resp}]);
       }
@@ -478,7 +515,7 @@ Sinon, réponds normalement en texte.`,
         <Card>
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
             <span style={{fontSize:11,fontWeight:600,color:"#475569"}}>UT cible :</span>
-            <select value={targetUT} onChange={e=>setTargetUT(e.target.value)} style={{width:"auto",fontSize:12,padding:"4px 8px"}}>
+            <select value={cible} onChange={e=>setTargetUT(e.target.value)} style={{width:"auto",fontSize:12,padding:"4px 8px"}}>
               {data.uts.map(u=><option key={u.id} value={u.id}>{u.nom}</option>)}
               {data.uts.length===0&&<option value="">Aucune UT</option>}
             </select>
@@ -493,6 +530,15 @@ Sinon, réponds normalement en texte.`,
             </div>)}
             {ld&&<div style={{display:"flex",gap:6,padding:8}}><div style={{width:14,height:14,border:"2px solid #e2e8f0",borderTopColor:"var(--teal)",borderRadius:"50%",animation:"spin 1s linear infinite"}}/><span style={{fontSize:11,color:"#64748b"}}>Analyse en cours…</span></div>}
           </div>
+          {prop&&<div style={{border:"1px solid #99f6e4",background:"#f0fdfa",borderRadius:10,padding:10,marginBottom:10}}>
+            <b style={{fontSize:12}}>À relire avant import — {data.uts.find(u=>u.id===prop.utId)?.nom}</b>
+            {prop.items.map((x,i)=>{const sc=calcScore(x.gravite,x.frequence,x.maitrise);const pp=prio(sc);return<label key={i} style={{display:"flex",gap:8,alignItems:"flex-start",padding:"5px 0",borderBottom:"1px solid #ccfbf1",fontSize:11,cursor:"pointer"}}>
+              <input type="checkbox" checked={x.ok} onChange={()=>setProp({...prop,items:prop.items.map((y,j)=>j===i?{...y,ok:!y.ok}:y)})} style={{width:"auto",marginTop:2}}/>
+              <span style={{flex:1}}><b>{x.danger}</b> <span style={{color:"#64748b"}}>({x.categorie})</span>{x.action&&<><br/><span style={{color:"#475569"}}>→ {x.action}</span></>}</span>
+              <span style={{background:pp.bg,color:pp.c,padding:"1px 6px",borderRadius:4,fontWeight:700,whiteSpace:"nowrap"}}>G{x.gravite}×F{x.frequence}×M{x.maitrise} = {sc}</span>
+            </label>})}
+            <div style={{display:"flex",gap:8,marginTop:8}}><Btn small c="var(--teal)" onClick={importer} disabled={!prop.items.some(x=>x.ok)}>Importer la sélection ({prop.items.filter(x=>x.ok).length})</Btn><Btn small c="#64748b" outline onClick={()=>setProp(null)}>Tout ignorer</Btn></div>
+          </div>}
           <div style={{display:"flex",gap:6}}>
             <input value={msg} onChange={e=>setMsg(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")send()}} placeholder="Votre question…" style={{flex:1}}/>
             <Btn onClick={send} c="var(--teal)" disabled={ld}>Envoyer</Btn>
@@ -504,7 +550,7 @@ Sinon, réponds normalement en texte.`,
           {suggestions.map((s,i)=><button key={i} onClick={()=>{setMsg(s);}} style={{display:"block",width:"100%",textAlign:"left",padding:"6px 8px",border:"none",background:"#f1f5f9",borderRadius:6,marginBottom:4,fontSize:11,cursor:"pointer",color:"#334155"}}>{s}</button>)}
         </Card>
         <Card title="📖 Réglementation" mt={10}>
-          {[["L4121-3","Évaluation des risques"],["R4121-1","Contenu du DU"],["R4121-2","Mise à jour annuelle"],["L4121-3-1","PAPRIPACT ≥ 50 sal."],["R4121-4","Conservation 40 ans"]].map(([c,t],i)=>
+          {[["L4121-3","Évaluation des risques"],["R4121-1","Contenu du DU"],["R4121-2","Mise à jour : annuelle dès 11 salariés"],["L4121-3-1","PAPRIPACT ≥ 50 sal. · liste d'actions < 50"],["R4121-4","Conservation 40 ans"]].map(([c,t],i)=>
             <div key={i} style={{padding:"4px 0",borderBottom:"1px solid #f1f5f9",fontSize:11}}><b style={{color:"var(--teal)"}}>Art. {c}</b> — {t}</div>
           )}
         </Card>
@@ -520,13 +566,13 @@ function exportWord(data){
 
   const utRows=uts.map(ut=>{
     const rs=allR.filter(r=>r.utId===ut.id);
-    if(!rs.length) return`<tr><td style="${wtd}" colspan="9"><b>${ut.nom}</b> — Aucun risque identifié</td></tr>`;
+    if(!rs.length) return`<tr><td style="${wtd}" colspan="10"><b>${esc(ut.nom)}</b> — Aucun risque identifié</td></tr>`;
     return rs.map((r,i)=>{
       const p2=prio(r.score);
-      const acts=(r.actions||[]).map(a=>`• ${a.description}${a.responsable?` (${a.responsable})`:""}`).join("<br/>");
+      const acts=(r.actions||[]).map(a=>`• ${esc(a.description)}${a.responsable?` (${esc(a.responsable)})`:""} — ${esc(a.statut||"à faire")}${a.echeance?`, échéance ${frD(a.echeance)}`:""}`).join("<br/>");
       return`<tr>
-        ${i===0?`<td style="${wtd};font-weight:bold" rowspan="${rs.length}">${ut.nom}<br/><span style="font-size:9px;color:#666">${ut.effectif||""} pers.</span></td>`:""}
-        <td style="${wtd}">${r.categorie}</td><td style="${wtd};font-weight:bold">${r.danger}</td><td style="${wtd}">${r.situation||""}</td><td style="${wtd}">${r.dommage||""}</td>
+        ${i===0?`<td style="${wtd};font-weight:bold" rowspan="${rs.length}">${esc(ut.nom)}<br/><span style="font-size:9px;color:#666">${esc(ut.effectif||"")} pers.</span></td>`:""}
+        <td style="${wtd}">${esc(r.categorie)}</td><td style="${wtd};font-weight:bold">${esc(r.danger)}</td><td style="${wtd}">${esc(r.situation||"")}</td><td style="${wtd}">${esc(r.dommage||"")}</td>
         <td style="${wtd};text-align:center">${r.gravite}</td><td style="${wtd};text-align:center">${r.frequence}</td><td style="${wtd};text-align:center">${r.maitrise}</td>
         <td style="${wtd};text-align:center;font-weight:bold;color:${p2.c}">${r.score}</td>
         <td style="${wtd};font-size:9px">${acts||"—"}</td>
@@ -549,11 +595,11 @@ h2{font-size:13px;color:#0f766e;border-bottom:2px solid #0f766e;padding-bottom:2
 <h1 style="color:white;margin:0">📝 DOCUMENT UNIQUE D'ÉVALUATION DES RISQUES PROFESSIONNELS</h1>
 </div>
 <table style="margin-bottom:10px"><tr>
-<td style="${wtd};width:25%"><b style="font-size:9px;color:#64748b">ENTREPRISE</b><br/>${e.nom||"—"}</td>
-<td style="${wtd};width:20%"><b style="font-size:9px;color:#64748b">SIRET</b><br/>${e.siret||"—"}</td>
-<td style="${wtd};width:15%"><b style="font-size:9px;color:#64748b">EFFECTIF</b><br/>${e.effectif||"—"}</td>
-<td style="${wtd};width:20%"><b style="font-size:9px;color:#64748b">RÉDACTEUR</b><br/>${e.redacteur||"—"}</td>
-<td style="${wtd};width:20%"><b style="font-size:9px;color:#64748b">DATE</b><br/>${e.date||"—"}</td>
+<td style="${wtd};width:25%"><b style="font-size:9px;color:#64748b">ENTREPRISE</b><br/>${esc(e.nom)||"—"}</td>
+<td style="${wtd};width:20%"><b style="font-size:9px;color:#64748b">SIRET</b><br/>${esc(e.siret)||"—"}</td>
+<td style="${wtd};width:15%"><b style="font-size:9px;color:#64748b">EFFECTIF</b><br/>${esc(e.effectif)||"—"}</td>
+<td style="${wtd};width:20%"><b style="font-size:9px;color:#64748b">RÉDACTEUR</b><br/>${esc(e.redacteur)||"—"}</td>
+<td style="${wtd};width:20%"><b style="font-size:9px;color:#64748b">DATE</b><br/>${frD(e.date)||"—"}</td>
 </tr></table>
 
 <h2>📊 Synthèse</h2>
@@ -573,13 +619,13 @@ ${utRows}
 <h2>📋 Cotation — Grille de lecture</h2>
 <table>
 <tr><td style="${wtd};background:#fee2e2;text-align:center;font-weight:bold;color:#dc2626">P1 (≥ 10)</td><td style="${wtd}">Action immédiate obligatoire</td>
-<td style="${wtd};background:#fef3c7;text-align:center;font-weight:bold;color:#f59e0b">P2 (6-9)</td><td style="${wtd}">Action à court terme (< 3 mois)</td></tr>
-<tr><td style="${wtd};background:#dbeafe;text-align:center;font-weight:bold;color:#2563eb">P3 (3-5)</td><td style="${wtd}">Action à moyen terme (< 1 an)</td>
+<td style="${wtd};background:#fef3c7;text-align:center;font-weight:bold;color:#f59e0b">P2 (6-9)</td><td style="${wtd}">Action à court terme (&lt; 3 mois)</td></tr>
+<tr><td style="${wtd};background:#dbeafe;text-align:center;font-weight:bold;color:#2563eb">P3 (3-5)</td><td style="${wtd}">Action à moyen terme (&lt; 1 an)</td>
 <td style="${wtd};background:#dcfce7;text-align:center;font-weight:bold;color:#22c55e">P4 (1-2)</td><td style="${wtd}">Surveillance, maintien des mesures</td></tr>
 </table>
 
 <div style="margin-top:14px;padding:8px;background:#eff6ff;border-radius:4px;font-size:9px;color:#1e40af">
-📖 <b>Base réglementaire :</b> Art. L4121-3, R4121-1 à R4121-4, L4121-3-1 (PAPRIPACT). Score = Gravité × Fréquence × Coeff. maîtrise. Conservation 40 ans minimum + dépôt dématérialisé.
+📖 <b>Base réglementaire :</b> Art. L4121-3, R4121-1 à R4121-4, L4121-3-1 (PAPRIPACT). Score = Gravité × Fréquence × Coeff. maîtrise. Versions successives conservées 40 ans minimum dans l'entreprise.
 </div>
 
 <div style="background:#0c1e3c;color:white;padding:8px 16px;margin:14px -1.2cm -1.2cm;text-align:center;font-size:9px">

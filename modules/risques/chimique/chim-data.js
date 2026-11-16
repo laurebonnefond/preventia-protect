@@ -107,7 +107,17 @@ window.CHIM = (function () {
     EUH066:{t:'S',cd:2,v:'c',l:"L'exposition répétée peut provoquer dessèchement ou gerçures de la peau"},
     EUH070:{t:'S',cd:4,v:'o',l:"Toxique par contact oculaire"},
     EUH071:{t:'S',cd:4,v:'i',l:"Corrosif pour les voies respiratoires"},
-    EUH208:{t:'S',cd:2,v:'c',l:"Contient une substance sensibilisante. Peut produire une réaction allergique"}
+    EUH208:{t:'S',cd:2,v:'c',l:"Contient une substance sensibilisante. Peut produire une réaction allergique"},
+    /* Nouvelles classes CLP (règlement délégué (UE) 2023/707) : perturbateurs endocriniens, PBT, PMT.
+       ⚠ Classes de danger 5 / 4 fixées par analogie avec les CMR (absentes de ND 2233) : à valider. */
+    EUH380:{t:'S',cd:5,l:"Peut provoquer une perturbation endocrinienne chez l'être humain"},
+    EUH381:{t:'S',cd:4,l:"Susceptible de provoquer une perturbation endocrinienne chez l'être humain"},
+    EUH430:{t:'E',l:"Peut provoquer une perturbation endocrinienne dans l'environnement"},
+    EUH431:{t:'E',l:"Susceptible de provoquer une perturbation endocrinienne dans l'environnement"},
+    EUH440:{t:'E',l:"Accumulation dans l'environnement et dans les organismes vivants, y compris chez l'être humain"},
+    EUH441:{t:'E',l:"Forte accumulation dans l'environnement et dans les organismes vivants, y compris chez l'être humain"},
+    EUH450:{t:'E',l:"Peut provoquer une contamination diffuse à long terme des ressources en eau"},
+    EUH451:{t:'E',l:"Peut provoquer une contamination diffuse à très long terme des ressources en eau"}
   };
 
   /* ── 3. Conseils de prudence P (sélection des plus fréquents) ──── */

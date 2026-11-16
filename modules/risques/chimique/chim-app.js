@@ -61,6 +61,7 @@
       usageCond: { freq: '2', vol: '', procede: 'ouvert', protection: 'aucune', surface: 'mains', freqCut: 'inter' },
       fiche: {}, ia: null
     }, p, {
+      verif: Object.assign({ date: '', par: '' }, p.verif || {}),   // vérification humaine sur la FDS
       usageCond: Object.assign({ freq: '2', vol: '', procede: 'ouvert', protection: 'aucune', surface: 'mains', freqCut: 'inter' }, p.usageCond || {}),
       vlep: Object.assign({}, p.vlep || {}), fiche: Object.assign({}, p.fiche || {})
     });
@@ -82,6 +83,9 @@
   function etatFDS(p) {
     const a = ageFDS(p);
     if (a === null) return { cls: 'bad', txt: 'FDS absente' };
+    /* Format de FDS du règlement (UE) 2020/878 : obligatoire depuis le 1er janvier 2023.
+       Une FDS datée d'avant 2021 est donc forcément à l'ancien format. */
+    if (p.fds_date < '2021-01-01') return { cls: 'warn', txt: 'FDS ancien format', ancien: true };
     if (a > 3) return { cls: 'warn', txt: `FDS ${Math.floor(a)} ans` };
     return { cls: 'ok', txt: 'FDS à jour' };
   }
@@ -100,8 +104,23 @@
   }
 
   /* ═══ 3. CALCULS ══════════════════════════════════════════════════ */
-  const estCMR = p => !!p.cmr || p.h.some(c => C.H[c]?.cmr && /1/.test(C.H[c].cmr));
-  const cmrCat = p => p.cmr || (p.h.map(c => C.H[c]?.cmr).filter(Boolean).some(x => /1/.test(x)) ? '1A/1B' : (p.h.some(c => C.H[c]?.cmr) ? '2' : ''));
+  /* estCMR = CMR AVÉRÉ ou PRÉSUMÉ (1A / 1B) uniquement : c'est lui qui déclenche les règles
+     particulières (art. R4412-59 et suivants). La catégorie 2 (suspecté) n'en fait pas partie. */
+  const estCMR = p => p.cmr === '1A' || p.cmr === '1B' || p.h.some(c => C.H[c]?.cmr && /1/.test(C.H[c].cmr));
+  const cmrCat = p => estCMR(p) ? (p.cmr === '1A' || p.cmr === '1B' ? p.cmr : '1A/1B')
+    : (p.cmr === '2' || p.h.some(c => C.H[c]?.cmr) ? '2' : '');
+  const tagCMR = p => cmrCat(p) ? `<span class="tag ${estCMR(p) ? 'bad' : 'warn'}">CMR ${esc(cmrCat(p))}</span>` : '';
+
+  /* Famille « effective » : si elle n'est pas renseignée mais que le pH est extrême,
+     on traite le produit comme un acide ou une base pour le stockage (pH ≤ 2 ou ≥ 11,5). */
+  function famEff(p) {
+    if (p.famille && p.famille !== 'none') return p.famille;
+    const ph = num(p.ph);
+    return ph === null ? 'none' : ph <= 2 ? 'acide_fort' : ph >= 11.5 ? 'base_forte' : 'none';
+  }
+  const sansFamille = liste => liste.filter(p => famEff(p) === 'none');
+  const lienFDS = p => /^https?:\/\//i.test(p.fds_lien || '') ? p.fds_lien : '';
+  const verifie = p => !!p.verif?.date;
 
   /* Classe de danger santé 1→5 : la mention H la plus sévère l'emporte */
   function classeDanger(p) {
@@ -151,7 +170,7 @@
 
   /* Groupe de stockage (ordre = du plus contraignant au plus courant) */
   function groupe(p) {
-    const has = x => p.pictos.includes(x), f = p.famille;
+    const has = x => p.pictos.includes(x), f = famEff(p);
     if (has('SGH01')) return 'explosif';
     if (has('SGH04') || p.etat === 'gaz') return 'gaz';
     if (f === 'peroxyde') return 'peroxyde';
@@ -159,8 +178,9 @@
     if (f === 'metal_alc' || p.h.some(c => ['H260', 'H261', 'EUH014'].includes(c))) return 'reactif_eau';
     if (has('SGH02') || f === 'inflammable') return 'inflammable';
     if (f === 'acide_fort' || f === 'acide_faible') return 'acide';
-    if (f === 'base_forte' || f === 'base_faible' || f === 'amine') return 'base';
-    if (has('SGH06') || estCMR(p)) return 'toxique';
+    /* L'eau de Javel est basique : jamais dans l'armoire des acides (dégagement de chlore) */
+    if (f === 'base_forte' || f === 'base_faible' || f === 'amine' || f === 'hypochlorite') return 'base';
+    if (has('SGH06') || cmrCat(p)) return 'toxique';
     if (has('SGH05')) return 'corrosif';
     return 'courant';
   }
@@ -170,7 +190,8 @@
   Object.entries(C.REACTIONS).forEach(([k, v]) => { REAC[k.split('|').sort().join('|')] = v; });
   function compat(a, b) {
     const raisons = []; let niv = 0;
-    const r = REAC[[a.famille, b.famille].sort().join('|')];
+    const fa = famEff(a), fb = famEff(b);
+    const r = REAC[[fa, fb].sort().join('|')];
     if (r) { niv = Math.max(niv, r[0]); raisons.push(r[1]); }
     for (const [k, v] of Object.entries(C.STOCK_PICTOS)) {
       const [x, y] = k.split('|');
@@ -181,7 +202,7 @@
         niv = Math.max(niv, v[0]); raisons.push(v[1]);
       }
     }
-    if ((a.famille === 'none' || b.famille === 'none') && niv === 0 && (a.pictos.length && b.pictos.length)) {
+    if ((fa === 'none' || fb === 'none') && niv === 0) {
       return { niv: -1, raisons: ["Famille chimique non précisée : se référer à la rubrique 10 de la FDS"] };
     }
     return { niv, raisons };
@@ -203,13 +224,14 @@
   function ficheRegles(p) {
     const h = c => p.h.includes(c), any = (...cs) => cs.some(h);
     const pic = x => p.pictos.includes(x);
-    const corrosif = any('H314') || pic('SGH05') && !p.h.length;
+    const ph = num(p.ph);
+    const corrosif = any('H314') || pic('SGH05') && !p.h.length || (ph !== null && (ph <= 2 || ph >= 11.5));
     const oeilGrave = corrosif || any('H318', 'EUH070');
     const cutane = corrosif || any('H310', 'H311', 'H312', 'H315', 'H317', 'EUH066', 'EUH208');
     const inhal = any('H330', 'H331', 'H332', 'H334', 'H335', 'H336', 'EUH071', 'H350i', 'EUH029', 'EUH031', 'EUH032') || estCMR(p);
     const inflammable = pic('SGH02') || p.famille === 'inflammable';
     const reactifEau = p.famille === 'metal_alc' || any('H260', 'H261', 'EUH014');
-    const f = p.famille;
+    const f = famEff(p);
     const filtre = p.etat === 'poudre' || p.etat === 'solide' ? 'P3 (poussières)'
       : f === 'amine' ? 'K (ammoniac/amines)' : (f === 'acide_fort' || f === 'hypochlorite') ? 'E ou B (gaz acides / inorganiques)'
       : (f === 'inflammable' || f === 'solvant_chl') ? 'A (vapeurs organiques, Téb > 65 °C) ou AX si Téb ≤ 65 °C' : 'adapté selon la FDS rubrique 8';
@@ -295,7 +317,10 @@
       add('S', "CMR 1A/1B : substitution obligatoire dès que techniquement possible (art. R4412-66). Tracer la recherche de substitution dans le DUERP.");
       add('T', "Travail en système clos si la substitution est impossible (art. R4412-68).");
       add('O', "Liste des travailleurs exposés, information et formation renforcées, suivi individuel renforcé : à organiser avec le médecin du travail.");
-    } else if (cat === '2' || ev.cd >= 4) add('S', "Danger élevé : étudier la substitution par un produit ou un procédé moins dangereux.");
+    } else if (cat === '2') {
+      add('S', "CMR catégorie 2 (effet suspecté) : étudier la substitution et réduire l'exposition au niveau le plus bas possible.");
+      add('O', "Signaler ce produit au médecin du travail : il apprécie le suivi adapté (les règles CMR 1A/1B ne s'appliquent pas d'office).");
+    } else if (ev.cd >= 4) add('S', "Danger élevé : étudier la substitution par un produit ou un procédé moins dangereux.");
     if (ev.inh.n === 3) add('T', p.usageCond.protection === 'aucune' || p.usageCond.protection === 'vmg'
       ? "Risque inhalation élevé : installer un captage à la source (ou capoter le procédé)." : "Risque inhalation élevé malgré la ventilation : vérifier son efficacité (contrôle annuel) et réduire les quantités ouvertes.");
     else if (ev.inh.n === 2) add('T', "Risque inhalation modéré : refermer les contenants, limiter les surfaces d'évaporation, vérifier la ventilation.");
@@ -303,9 +328,15 @@
     if (ev.cut.n === 3) add('O', "Risque cutané élevé : supprimer le contact direct (outils, pinces, distributeurs) et réduire la surface exposée.");
     if (ev.cut.n >= 2) add('P', "Gants de protection chimique adaptés au produit (FDS rubrique 8), renouvelés selon leur temps de passage.");
     if (p.h.some(c => ['H317', 'H334', 'EUH208'].includes(c))) add('O', "Produit sensibilisant : informer le médecin du travail, éviter tout contact cutané et respiratoire.");
-    if (p.pictos.includes('SGH02')) add('T', "Inflammable : supprimer les sources d'ignition, mise à la terre, évaluer le risque ATEX.");
+    const pe = num(p.pe);
+    if (p.pictos.includes('SGH02') || (pe !== null && pe <= 60)) add('T', "Inflammable"
+      + (pe !== null ? ` (point éclair ${pe} °C${pe < 23 ? " : vapeurs inflammables dès la température ambiante" : ''})` : '')
+      + " : supprimer les sources d'ignition, mise à la terre, évaluer le risque ATEX.");
     const e = etatFDS(p);
-    if (e.cls !== 'ok') add('O', e.cls === 'bad' ? "Demander la FDS au fournisseur (obligation de fourniture, REACH art. 31)." : "FDS de plus de 3 ans : vérifier auprès du fournisseur qu'il s'agit de la dernière version.");
+    if (e.cls !== 'ok') add('O', e.cls === 'bad' ? "Demander la FDS au fournisseur (obligation de fourniture, REACH art. 31)."
+      : e.ancien ? "FDS antérieure à 2021 : ancien format (le format du règlement (UE) 2020/878 est obligatoire depuis le 1er janvier 2023). Demander la version à jour au fournisseur."
+      : "FDS de plus de 3 ans : vérifier auprès du fournisseur qu'il s'agit de la dernière version.");
+    if (p.ia && !verifie(p)) add('O', "Données pré-remplies par l'IA : les vérifier sur la FDS du fournisseur, puis renseigner la date de vérification dans la fiche produit.");
     incompatibilites().filter(x => x.a === p || x.b === p).forEach(x => {
       const autre = x.a === p ? x.b : x.a;
       add('T', `Séparer de « ${autre.nom} » (${x.raisons[0] || 'incompatibilité'}).`);
@@ -386,15 +417,16 @@
     const coupe = texte.search(/RUBRIQUE\s*12|SECTION\s*12|12\s*[.:]\s*Informations\s+[ée]cologiques/i);
     if (coupe > 3000) texte = texte.slice(0, coupe);
     if (texte.length > 800) return { texte: texte.slice(0, 45000) };
-    /* PDF scanné : on envoie les 3 premières pages en image */
-    const imgs = [];
-    for (let i = 1; i <= Math.min(doc.numPages, 3); i++) {
-      const page = await doc.getPage(i), vp = page.getViewport({ scale: 1.6 });
+    /* PDF scanné : on envoie les 6 premières pages en image, pour atteindre
+       la rubrique 8 (VLEP, EPI) qui se trouve le plus souvent en pages 4 à 6 */
+    const imgs = [], nb = Math.min(doc.numPages, 6);
+    for (let i = 1; i <= nb; i++) {
+      const page = await doc.getPage(i), vp = page.getViewport({ scale: 1.4 });
       const cv = document.createElement('canvas'); cv.width = vp.width; cv.height = vp.height;
       await page.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
-      imgs.push(cv.toDataURL('image/jpeg', 0.72).split(',')[1]);
+      imgs.push(cv.toDataURL('image/jpeg', 0.62).split(',')[1]);
     }
-    return { images: imgs };
+    return { images: imgs, pages: nb, total: doc.numPages };
   }
   function compresserImage(file, maxPx = 1600) {
     return new Promise((ok, ko) => {
@@ -415,8 +447,11 @@
   function depuisIA(j, base = {}) {
     const h = [], p = [], libelles = {};
     (j.mentions_h || []).forEach(x => {
-      const code = normCodeH(typeof x === 'string' ? x : x.code); if (!code) return;
-      h.push(code); if (!C.H[code] && x.libelle) libelles[code] = x.libelle;
+      /* Une mention combinée « H300+H310 » donne deux codes */
+      String(typeof x === 'string' ? x : x.code || '').split('+').forEach(brut => {
+        const code = normCodeH(brut); if (!code) return;
+        h.push(code); if (!C.H[code] && x.libelle) libelles[code] = x.libelle;
+      });
     });
     (j.mentions_p || []).forEach(x => {
       const k = C.pKey(typeof x === 'string' ? x.split(/\s/)[0] : x.code); if (!/^P\d/.test(k)) return;
@@ -466,11 +501,12 @@
   }
   function rendreKPI() {
     const evs = produits.map(evaluer);
+    const nInc = incompatibilites().length, nSansFam = sansFamille(produits).length;
     const k = [
       [produits.length, 'produits', ''],
       [produits.filter(estCMR).length, 'CMR 1A / 1B', produits.some(estCMR) ? 'bad' : ''],
       [produits.filter(p => etatFDS(p).cls !== 'ok').length, 'FDS à demander / vérifier', produits.some(p => etatFDS(p).cls !== 'ok') ? 'warn' : ''],
-      [incompatibilites().length, 'incompatibilités de stockage', incompatibilites().length ? 'bad' : ''],
+      [nInc, 'incompatibilités de stockage' + (nSansFam ? ` · ${nSansFam} famille(s) à renseigner` : ''), nInc ? 'bad' : nSansFam ? 'warn' : ''],
       [evs.filter(e => e.prio.n === 3).length, 'priorités fortes', evs.some(e => e.prio.n === 3) ? 'bad' : '']
     ];
     $('#kpis').innerHTML = k.map(([v, l, c]) => `<div class="kpi ${c}"><b>${v}</b><span>${l}</span></div>`).join('');
@@ -499,12 +535,13 @@
         return `<tr>
           <td><button class="lien-prod" data-act="editer" data-id="${p.id}"><b>${esc(p.nom || 'Sans nom')}</b></button>
             <small>${esc(p.molecule || '')}${p.cas ? ' · CAS ' + esc(p.cas) : ''}</small>
-            ${estCMR(p) ? '<span class="tag bad">CMR ' + esc(cmrCat(p)) + '</span>' : ''}${p.ia ? '<span class="tag ia" title="Données pré-remplies par IA — à vérifier sur la FDS">IA</span>' : ''}</td>
+            ${tagCMR(p)}${verifie(p) ? `<span class="tag ok" title="Vérifié sur la FDS le ${esc(new Date(p.verif.date).toLocaleDateString('fr-FR'))}${p.verif.par ? ' par ' + esc(p.verif.par) : ''}">✓ vérifié</span>`
+              : p.ia ? '<span class="tag ia" title="Données pré-remplies par IA — à vérifier sur la FDS">IA · à vérifier</span>' : ''}</td>
           <td>${esc(p.lieu || '—')}<small>${esc(p.usage || '')}</small></td>
           <td><div class="pictos">${p.pictos.map(c => pictoImg(c, 30)).join('') || '<span class="muted">—</span>'}</div></td>
           <td><div class="hs">${p.h.slice(0, 6).map(c => `<span class="h ${C.H[c]?.t || ''}" title="${esc(libH(p, c))}">${esc(c)}</span>`).join('')}${p.h.length > 6 ? `<span class="h">+${p.h.length - 6}</span>` : ''}</div></td>
           <td class="num">${p.quantite !== '' && p.quantite !== null ? esc(p.quantite) + ' ' + esc(p.unite) : '—'}</td>
-          <td><span class="pill ${fds.cls}">${fds.txt}</span></td>
+          <td><span class="pill ${fds.cls}">${fds.txt}</span>${lienFDS(p) ? ` <a href="${esc(lienFDS(p))}" target="_blank" rel="noopener" title="Ouvrir la FDS">📄</a>` : ''}</td>
           <td><span class="pill ${ev.prio.cls}">${ev.prio.txt}</span></td>
           <td class="acts"><button class="ico" data-act="fiche" data-id="${p.id}" title="Fiche synthétique">📋</button><button class="ico" data-act="editer" data-id="${p.id}" title="Modifier">✏️</button><button class="ico" data-act="dupliquer" data-id="${p.id}" title="Dupliquer">⧉</button><button class="ico" data-act="suppr" data-id="${p.id}" title="Supprimer">🗑</button></td>
         </tr>`;
@@ -548,7 +585,7 @@
 
     ${cmr.length ? `<section class="card cmr-card">
       <div class="card-h"><span class="step">☣</span><div><h3>Agents CMR présents</h3><p class="muted">À signaler au médecin du travail · suivi individuel renforcé · substitution prioritaire</p></div></div>
-      <ul class="cmr-list">${cmr.map(p => `<li><b>${esc(p.nom)}</b> — ${esc(p.molecule || '')} <span class="tag bad">CMR ${esc(cmrCat(p))}</span> · ${esc(p.lieu || 'lieu ?')} · <b>${esc(p.exposes || '?')}</b> salarié(s) exposé(s)</li>`).join('')}</ul>
+      <ul class="cmr-list">${cmr.map(p => `<li><b>${esc(p.nom)}</b> — ${esc(p.molecule || '')} ${tagCMR(p)} · ${esc(p.lieu || 'lieu ?')} · <b>${esc(p.exposes || '?')}</b> salarié(s) exposé(s)</li>`).join('')}</ul>
     </section>` : ''}
 
     <section class="card">
@@ -567,6 +604,10 @@
     $('#s-lieu').innerHTML = '<option value="">Tous les lieux</option>' + lieux.map(l => `<option ${l === choix ? 'selected' : ''}>${esc(l)}</option>`).join('');
     const sel = produits.filter(p => !choix || (p.lieu || 'Lieu non précisé') === choix);
     const inc = incompatibilites().filter(x => !choix || (x.a.lieu || 'Lieu non précisé') === choix);
+    /* Sans famille chimique, les réactions dangereuses ne peuvent pas être contrôlées : on le dit */
+    const aCompleter = sansFamille(sel);
+    const avisFamilles = aCompleter.length ? `<p class="warnmsg">⚠ Contrôle incomplet : ${aCompleter.length} produit(s) sans famille chimique (${aCompleter.map(p => esc(p.nom || 'Sans nom')).join(', ')}).
+      Les réactions dangereuses avec ces produits ne sont pas vérifiées. Renseignez la famille dans la fiche produit (FDS rubrique 10).</p>` : '';
 
     const parLieu = {};
     sel.forEach(p => { const l = p.lieu || 'Lieu non précisé'; (parLieu[l] ||= {}); (parLieu[l][groupe(p)] ||= []).push(p); });
@@ -576,7 +617,9 @@
       <div class="card-h"><span class="step">1</span><div><h3>Incompatibilités dans un même lieu</h3><p class="muted">Paires de produits stockés ensemble qui doivent être séparés</p></div></div>
       ${inc.length ? `<ul class="inc-list">${inc.map(x => `<li class="${NIV[x.niv][0]}"><span class="badge ${NIV[x.niv][0]}">${NIV[x.niv][1]}</span>
         <div><b>${esc(x.a.nom)}</b> <span class="muted">×</span> <b>${esc(x.b.nom)}</b> <small>${esc(x.a.lieu || '')}</small><br>${x.raisons.map(esc).join(' · ')}</div></li>`).join('')}</ul>`
-        : '<p class="okmsg">✓ Aucune incompatibilité détectée entre produits d\'un même lieu (sous réserve que les familles chimiques soient renseignées).</p>'}
+        : aCompleter.length ? '<p class="muted">Aucune incompatibilité détectée entre les produits dont la famille est connue.</p>'
+        : '<p class="okmsg">✓ Aucune incompatibilité détectée entre produits d\'un même lieu.</p>'}
+      ${avisFamilles}
     </section>
 
     <section class="card">
@@ -622,6 +665,7 @@
           <p class="mol">${esc(p.molecule || '')}${p.cas ? ` · <b>CAS ${esc(p.cas)}</b>` : ''}${p.fournisseur ? ' · ' + esc(p.fournisseur) : ''}</p></div>
         <div class="fiche-pictos">${p.pictos.map(c => pictoImg(c, 64)).join('')}${m ? `<span class="mention">${esc(m)}</span>` : ''}</div>
       </header>
+      ${p.ia && !verifie(p) ? `<div class="bandeau-nonverif">⚠ Données pré-remplies par IA, NON VÉRIFIÉES sur la FDS du fournisseur — ne pas afficher au poste de travail en l'état.</div>` : ''}
       ${estCMR(p) ? `<div class="bandeau-cmr">☣ Agent CMR catégorie ${esc(cmrCat(p))} — substitution prioritaire, exposition à réduire au niveau le plus bas possible, suivi médical renforcé.</div>` : ''}
       <div class="fiche-grid">
         <section class="bloc"><h4>⚠️ Dangers</h4>
@@ -648,7 +692,7 @@
       </section>
       ${p.p.length ? `<details class="bloc pdetails"><summary>Conseils de prudence (P) — ${p.p.length}</summary><ul>${p.p.map(k => `<li><b>${esc(C.pCode(k))}</b> ${esc(libP(p, k))}</li>`).join('')}</ul></details>` : ''}
       <footer class="fiche-f">
-        <span>FDS ${p.fds_version ? 'v' + esc(p.fds_version) + ' ' : ''}${p.fds_date ? 'du ' + new Date(p.fds_date).toLocaleDateString('fr-FR') : 'non renseignée'}${p.ia ? ` · pré-remplie par IA (${esc(p.ia.confiance)}) le ${esc(p.ia.date)}` : ''}${f.sourceIA ? '' : ' · conduites à tenir générées par règles'}</span>
+        <span>FDS ${p.fds_version ? 'v' + esc(p.fds_version) + ' ' : ''}${p.fds_date ? 'du ' + new Date(p.fds_date).toLocaleDateString('fr-FR') : 'non renseignée'}${p.ia ? ` · pré-remplie par IA (${esc(p.ia.confiance)}) le ${esc(p.ia.date)}` : ''}${f.sourceIA ? '' : ' · conduites à tenir générées par règles'}${verifie(p) ? ` · vérifiée sur la FDS le ${esc(new Date(p.verif.date).toLocaleDateString('fr-FR'))}${p.verif.par ? ' par ' + esc(p.verif.par) : ''}` : ''}${lienFDS(p) ? ` · <a class="no-print" href="${esc(lienFDS(p))}" target="_blank" rel="noopener">ouvrir la FDS</a>` : ''}</span>
         <span>Document de travail — la FDS du fournisseur fait foi. À valider par le médecin du travail.</span>
       </footer>
       <div class="fiche-acts no-print"><button class="btn" data-act="editer" data-id="${p.id}" data-sec="fiche">✏️ Ajuster la fiche</button><button class="btn primary" data-act="imprimer-fiche" data-id="${p.id}">🖨 Imprimer / PDF</button></div>
@@ -685,6 +729,8 @@
         <label>Date de la FDS<input data-k="fds_date" type="date" value="${esc(b.fds_date)}"></label>
         <label>Version<input data-k="fds_version" value="${esc(b.fds_version)}"></label>
         <label class="span2">Lien vers la FDS (intranet, site fournisseur)<input data-k="fds_lien" value="${esc(b.fds_lien)}" placeholder="https://…"></label>
+        <label>Données vérifiées sur la FDS le<input data-k="verif.date" type="date" value="${esc(b.verif.date)}"></label>
+        <label>Vérifié par<input data-k="verif.par" value="${esc(b.verif.par)}" placeholder="Nom, fonction"></label>
       </div>
       <p class="small"><b>Pas de FDS sous la main ?</b> Le fournisseur est tenu de la fournir gratuitement (REACH art. 31). Pour la retrouver :</p>
       <div class="liens-fds">${C.SOURCES_FDS(b.nom || b.molecule).map(([l, u]) => `<a href="${u}" target="_blank" rel="noopener">${l}</a>`).join('')}</div>
@@ -796,6 +842,7 @@
         const r = await lirePDF(fichier);
         st(`<span class="spin"></span> Analyse de la FDS par l'IA${r.images ? ' (document scanné)' : ''}… 20 à 60 s`);
         j = r.texte ? await iaTexteFDS(r.texte) : await iaImages(r.images, 'Voici les premières pages de la FDS.');
+        if (r.images && r.total > r.pages) j.remarques = `FDS scannée : seules les pages 1 à ${r.pages} sur ${r.total} ont été lues. Compléter à la main les rubriques suivantes. ` + (j.remarques || '');
       } else {
         st('<span class="spin"></span> Préparation de la photo…');
         const img = await compresserImage(fichier);

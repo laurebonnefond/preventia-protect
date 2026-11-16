@@ -2,7 +2,7 @@
    Pages : réseau d'abord (pour recevoir les mises à jour), copie locale si pas de réseau.
    Images, styles, polices : copie locale d'abord.
    Le journal n'est PAS ici : il reste dans le stockage du navigateur du téléphone. */
-const CACHE = 'seinprev-app-v1';
+const CACHE = 'seinprev-app-v2';
 const BASE = [
   'seinprev.html', 'seinprev.html?app=1', 'femme.css', 'seinprev.webmanifest',
   'img/app-sein-192.png', 'img/app-sein-512.png',

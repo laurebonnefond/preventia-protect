@@ -49,7 +49,12 @@ const FREQ=[{v:1,l:"Rare",d:"< 1 fois/an"},{v:2,l:"Occasionnel",d:"Quelques fois
 const MAIT=[{v:1,l:"Bonne",d:"Mesures existantes et efficaces",f:.5},{v:2,l:"Partielle",d:"Mesures insuffisantes ou non suivies",f:.8},{v:3,l:"Insuffisante",d:"Pas de mesure ou inadaptée",f:1}];
 
 function calcScore(g,f,m){return Math.round(g*f*(MAIT.find(x=>x.v===m)?.f||1))}
-function prio(s){if(s>=10)return{n:1,l:"P1 — Immédiat",c:"#dc2626",bg:"#fee2e2"};if(s>=6)return{n:2,l:"P2 — Court terme",c:"#f59e0b",bg:"#fef3c7"};if(s>=3)return{n:3,l:"P3 — Moyen terme",c:"#2563eb",bg:"#dbeafe"};return{n:4,l:"P4 — Surveillance",c:"#22c55e",bg:"#dcfce7"}}
+function prio0(s){if(s>=10)return{n:1,l:"P1 — Immédiat",c:"#dc2626",bg:"#fee2e2"};if(s>=6)return{n:2,l:"P2 — Court terme",c:"#f59e0b",bg:"#fef3c7"};if(s>=3)return{n:3,l:"P3 — Moyen terme",c:"#2563eb",bg:"#dbeafe"};return{n:4,l:"P4 — Surveillance",c:"#22c55e",bg:"#dcfce7"}}
+/* Plancher : un risque de gravité 4 (IPP, décès, maladie irréversible) n'est jamais classé sous P2,
+   même rare et bien maîtrisé — la maîtrise réduit la probabilité, pas la gravité du dommage. */
+function prio(s,g){const p=prio0(s);return g>=4&&p.n>2?{...prio0(6),l:"P2 — Court terme (gravité 4)",plancher:true}:p}
+/* Tri : priorité d'abord, score ensuite */
+const ordre=(a,b)=>prio(a.score,a.gravite).n-prio(b.score,b.gravite).n||b.score-a.score;
 function matCell(g,f){const s=g*f;if(s>=12)return"#dc2626";if(s>=8)return"#f59e0b";if(s>=4)return"#eab308";return"#22c55e"}
 
 /* ═══ PERSISTENCE ═══ */
@@ -103,8 +108,8 @@ function App(){
 function Dashboard({data}){
   const{uts,risques,entreprise}=data;
   const scores=risques.map(r=>({...r,score:calcScore(r.gravite,r.frequence,r.maitrise)}));
-  const p1=scores.filter(r=>prio(r.score).n===1).length;
-  const p2=scores.filter(r=>prio(r.score).n===2).length;
+  const p1=scores.filter(r=>prio(r.score,r.gravite).n===1).length;
+  const p2=scores.filter(r=>prio(r.score,r.gravite).n===2).length;
   const actTodo=risques.reduce((n,r)=>n+(r.actions||[]).filter(a=>a.statut!=="fait").length,0);
   const actDone=risques.reduce((n,r)=>n+(r.actions||[]).filter(a=>a.statut==="fait").length,0);
   const cards=[
@@ -128,9 +133,9 @@ function Dashboard({data}){
       <MiniMatrice risques={risques}/>
     </Card>
     {/* Top risques */}
-    {scores.filter(r=>prio(r.score).n<=2).length>0&&<Card title="🔴 Risques prioritaires" mt={12}>
-      {scores.filter(r=>prio(r.score).n<=2).sort((a,b)=>b.score-a.score).slice(0,8).map((r,i)=>{
-        const p=prio(r.score);const ut=data.uts.find(u=>u.id===r.utId);
+    {scores.filter(r=>prio(r.score,r.gravite).n<=2).length>0&&<Card title="🔴 Risques prioritaires" mt={12}>
+      {scores.filter(r=>prio(r.score,r.gravite).n<=2).sort(ordre).slice(0,8).map((r,i)=>{
+        const p=prio(r.score,r.gravite);const ut=data.uts.find(u=>u.id===r.utId);
         return<div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 0",borderBottom:"1px solid #f1f5f9"}}>
           <span style={{background:p.bg,color:p.c,padding:"2px 8px",borderRadius:6,fontSize:10,fontWeight:700,whiteSpace:"nowrap"}}>{p.l}</span>
           <span style={{fontSize:11,color:"#64748b",minWidth:80}}>{ut?.nom||"?"}</span>
@@ -194,9 +199,9 @@ function UTs({data,update,onSelect}){
     :<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:10}}>
       {data.uts.map(ut=>{
         const nbR=data.risques.filter(r=>r.utId===ut.id).length;
-        const scores=data.risques.filter(r=>r.utId===ut.id).map(r=>calcScore(r.gravite,r.frequence,r.maitrise));
-        const maxP=scores.length?Math.min(...scores.map(s=>prio(s).n)):null;
-        return<div key={ut.id} style={{background:"white",borderRadius:12,padding:14,boxShadow:"0 1px 3px rgba(0,0,0,.06)",borderLeft:maxP?`4px solid ${prio(Math.max(...scores)).c}`:"4px solid #e2e8f0"}}>
+        const ps=data.risques.filter(r=>r.utId===ut.id).map(r=>prio(calcScore(r.gravite,r.frequence,r.maitrise),r.gravite));
+        const top=ps.length?ps.reduce((a,b)=>b.n<a.n?b:a):null;
+        return<div key={ut.id} style={{background:"white",borderRadius:12,padding:14,boxShadow:"0 1px 3px rgba(0,0,0,.06)",borderLeft:top?`4px solid ${top.c}`:"4px solid #e2e8f0"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
             <div><b style={{fontSize:14}}>{ut.nom}</b><br/><span style={{fontSize:11,color:"#64748b"}}>{ut.localisation}{ut.effectif?` — ${ut.effectif} pers.`:""}</span></div>
             <div style={{display:"flex",gap:4}}>
@@ -221,7 +226,7 @@ function Risques({data,update,selUT,setSelUT}){
   const[form,setForm]=useState(empty);
   const[editId,setEditId]=useState(null);
   const ut=data.uts.find(u=>u.id===selUT);
-  const risques=data.risques.filter(r=>r.utId===selUT).map(r=>({...r,score:calcScore(r.gravite,r.frequence,r.maitrise)})).sort((a,b)=>b.score-a.score);
+  const risques=data.risques.filter(r=>r.utId===selUT).map(r=>({...r,score:calcScore(r.gravite,r.frequence,r.maitrise)})).sort(ordre);
 
   function handleSave(){
     if(!form.danger.trim())return;
@@ -251,7 +256,7 @@ function Risques({data,update,selUT,setSelUT}){
   </div>);
 
   const score=calcScore(form.gravite,form.frequence,form.maitrise);
-  const p=prio(score);
+  const p=prio(score,form.gravite);
 
   return(<div>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:8}}>
@@ -280,7 +285,8 @@ function Risques({data,update,selUT,setSelUT}){
         <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
           <span style={{fontSize:10,fontWeight:600,color:"#64748b"}}>SCORE</span>
           <span style={{fontSize:28,fontWeight:700,color:p.c}}>{score}</span>
-          <span style={{fontSize:9,fontWeight:600,color:p.c,background:p.bg,padding:"2px 8px",borderRadius:6}}>{p.l}</span>
+          <span style={{fontSize:9,fontWeight:600,color:p.c,background:p.bg,padding:"2px 8px",borderRadius:6,textAlign:"center"}}>{p.l}</span>
+          {p.plancher&&<span style={{fontSize:9,color:"#92400e",marginTop:3,textAlign:"center"}}>Gravité 4 : jamais sous P2</span>}
         </div>
       </div>
       <div style={{marginTop:10,display:"flex",gap:8}}><Btn onClick={handleSave} c="var(--teal)">✅ {editId?"Modifier":"Enregistrer"}</Btn><Btn onClick={()=>{setShow(false);setEditId(null)}} c="#64748b" outline>Annuler</Btn></div>
@@ -292,8 +298,8 @@ function Risques({data,update,selUT,setSelUT}){
         <th style={th}>Priorité</th><th style={th}>Catégorie</th><th style={th}>Danger</th><th style={th}>Situation</th><th style={th}>Dommage</th>
         <th style={th}>G</th><th style={th}>F</th><th style={th}>M</th><th style={th}>Score</th><th style={th}>Actions</th><th style={th}></th>
       </tr></thead>
-      <tbody>{risques.map(r=>{const p2=prio(r.score);return<tr key={r.id} style={{borderBottom:"1px solid #f1f5f9",fontSize:11}}>
-        <td style={{...td,textAlign:"center"}}><span style={{background:p2.bg,color:p2.c,padding:"2px 8px",borderRadius:6,fontSize:10,fontWeight:700,whiteSpace:"nowrap"}}>{p2.l.split("—")[0]}</span></td>
+      <tbody>{risques.map(r=>{const p2=prio(r.score,r.gravite);return<tr key={r.id} style={{borderBottom:"1px solid #f1f5f9",fontSize:11}}>
+        <td style={{...td,textAlign:"center"}}><span title={p2.plancher?"Relevé en P2 : gravité 4":""} style={{background:p2.bg,color:p2.c,padding:"2px 8px",borderRadius:6,fontSize:10,fontWeight:700,whiteSpace:"nowrap"}}>{p2.l.split("—")[0]}{p2.plancher?"↑":""}</span></td>
         <td style={td}>{r.categorie}</td><td style={{...td,fontWeight:600}}>{r.danger}</td><td style={td}>{r.situation}</td><td style={td}>{r.dommage}</td>
         <td style={{...td,textAlign:"center"}}>{r.gravite}</td><td style={{...td,textAlign:"center"}}>{r.frequence}</td><td style={{...td,textAlign:"center"}}>{r.maitrise}</td>
         <td style={{...td,textAlign:"center",fontWeight:700,color:p2.c,fontSize:14}}>{r.score}</td>
@@ -318,7 +324,7 @@ function Matrice({data}){
         const rs=risques.filter(r=>r.categorie===cat);
         if(!rs.length)return null;
         const maxS=Math.max(...rs.map(r=>calcScore(r.gravite,r.frequence,r.maitrise)));
-        const p2=prio(maxS);
+        const p2=rs.map(r=>prio(calcScore(r.gravite,r.frequence,r.maitrise),r.gravite)).reduce((a,b)=>b.n<a.n?b:a);
         return<div key={cat} style={{display:"flex",alignItems:"center",gap:8,padding:"5px 0",borderBottom:"1px solid #f1f5f9"}}>
           <span style={{background:p2.bg,color:p2.c,padding:"2px 6px",borderRadius:4,fontSize:9,fontWeight:700,minWidth:20,textAlign:"center"}}>{rs.length}</span>
           <span style={{flex:1,fontSize:12}}>{cat}</span>
@@ -358,7 +364,7 @@ function MiniMatrice({risques,full}){
 /* ═══ PAPRIPACT ═══ */
 function Papripact({data,update}){
   const[actForm,setActForm]=useState(null); // {risqueId, idx?, description, responsable, echeance, statut, type}
-  const allR=data.risques.map(r=>({...r,score:calcScore(r.gravite,r.frequence,r.maitrise)})).sort((a,b)=>b.score-a.score);
+  const allR=data.risques.map(r=>({...r,score:calcScore(r.gravite,r.frequence,r.maitrise)})).sort(ordre);
 
   function addAction(risqueId){
     setActForm({risqueId,description:"",responsable:"",echeance:"",statut:"à faire",type:"Prévention"});
@@ -408,9 +414,9 @@ function Papripact({data,update}){
       <thead><tr style={{background:"var(--navy)",color:"white",fontSize:10,textTransform:"uppercase",letterSpacing:.5}}>
         <th style={th}>P</th><th style={th}>UT</th><th style={th}>Danger</th><th style={th}>Score</th><th style={th}>Actions de prévention</th><th style={th}></th>
       </tr></thead>
-      <tbody>{allR.map(r=>{const p2=prio(r.score);const ut=data.uts.find(u=>u.id===r.utId);const acts=r.actions||[];
+      <tbody>{allR.map(r=>{const p2=prio(r.score,r.gravite);const ut=data.uts.find(u=>u.id===r.utId);const acts=r.actions||[];
         return<tr key={r.id} style={{borderBottom:"1px solid #f1f5f9",fontSize:11,verticalAlign:"top"}}>
-          <td style={{...td,textAlign:"center"}}><span style={{background:p2.bg,color:p2.c,padding:"2px 6px",borderRadius:4,fontSize:10,fontWeight:700}}>{p2.l.split("—")[0]}</span></td>
+          <td style={{...td,textAlign:"center"}}><span title={p2.plancher?"Relevé en P2 : gravité 4":""} style={{background:p2.bg,color:p2.c,padding:"2px 6px",borderRadius:4,fontSize:10,fontWeight:700}}>{p2.l.split("—")[0]}{p2.plancher?"↑":""}</span></td>
           <td style={td}>{ut?.nom||<span style={{color:"#dc2626"}}>⚠️ sans UT</span>}</td>
           <td style={{...td,fontWeight:600}}>{r.danger}<br/><span style={{fontWeight:400,color:"#64748b",fontSize:10}}>{r.categorie}</span></td>
           <td style={{...td,textAlign:"center",fontWeight:700,color:p2.c}}>{r.score}</td>
@@ -532,7 +538,7 @@ Sinon, réponds normalement en texte.`,
           </div>
           {prop&&<div style={{border:"1px solid #99f6e4",background:"#f0fdfa",borderRadius:10,padding:10,marginBottom:10}}>
             <b style={{fontSize:12}}>À relire avant import — {data.uts.find(u=>u.id===prop.utId)?.nom}</b>
-            {prop.items.map((x,i)=>{const sc=calcScore(x.gravite,x.frequence,x.maitrise);const pp=prio(sc);return<label key={i} style={{display:"flex",gap:8,alignItems:"flex-start",padding:"5px 0",borderBottom:"1px solid #ccfbf1",fontSize:11,cursor:"pointer"}}>
+            {prop.items.map((x,i)=>{const sc=calcScore(x.gravite,x.frequence,x.maitrise);const pp=prio(sc,x.gravite);return<label key={i} style={{display:"flex",gap:8,alignItems:"flex-start",padding:"5px 0",borderBottom:"1px solid #ccfbf1",fontSize:11,cursor:"pointer"}}>
               <input type="checkbox" checked={x.ok} onChange={()=>setProp({...prop,items:prop.items.map((y,j)=>j===i?{...y,ok:!y.ok}:y)})} style={{width:"auto",marginTop:2}}/>
               <span style={{flex:1}}><b>{x.danger}</b> <span style={{color:"#64748b"}}>({x.categorie})</span>{x.action&&<><br/><span style={{color:"#475569"}}>→ {x.action}</span></>}</span>
               <span style={{background:pp.bg,color:pp.c,padding:"1px 6px",borderRadius:4,fontWeight:700,whiteSpace:"nowrap"}}>G{x.gravite}×F{x.frequence}×M{x.maitrise} = {sc}</span>
@@ -562,13 +568,13 @@ Sinon, réponds normalement en texte.`,
 /* ═══ EXPORT WORD ═══ */
 function exportWord(data){
   const{entreprise:e,uts,risques}=data;
-  const allR=risques.map(r=>({...r,score:calcScore(r.gravite,r.frequence,r.maitrise)})).sort((a,b)=>b.score-a.score);
+  const allR=risques.map(r=>({...r,score:calcScore(r.gravite,r.frequence,r.maitrise)})).sort(ordre);
 
   const utRows=uts.map(ut=>{
     const rs=allR.filter(r=>r.utId===ut.id);
     if(!rs.length) return`<tr><td style="${wtd}" colspan="10"><b>${esc(ut.nom)}</b> — Aucun risque identifié</td></tr>`;
     return rs.map((r,i)=>{
-      const p2=prio(r.score);
+      const p2=prio(r.score,r.gravite);
       const acts=(r.actions||[]).map(a=>`• ${esc(a.description)}${a.responsable?` (${esc(a.responsable)})`:""} — ${esc(a.statut||"à faire")}${a.echeance?`, échéance ${frD(a.echeance)}`:""}`).join("<br/>");
       return`<tr>
         ${i===0?`<td style="${wtd};font-weight:bold" rowspan="${rs.length}">${esc(ut.nom)}<br/><span style="font-size:9px;color:#666">${esc(ut.effectif||"")} pers.</span></td>`:""}
@@ -604,10 +610,10 @@ h2{font-size:13px;color:#0f766e;border-bottom:2px solid #0f766e;padding-bottom:2
 
 <h2>📊 Synthèse</h2>
 <table><tr>
-<td style="${wtd};text-align:center;background:#fee2e2;width:25%"><b style="color:#dc2626;font-size:16px">${allR.filter(r=>prio(r.score).n===1).length}</b><br/>P1 Critique</td>
-<td style="${wtd};text-align:center;background:#fef3c7;width:25%"><b style="color:#f59e0b;font-size:16px">${allR.filter(r=>prio(r.score).n===2).length}</b><br/>P2 Élevé</td>
-<td style="${wtd};text-align:center;background:#dbeafe;width:25%"><b style="color:#2563eb;font-size:16px">${allR.filter(r=>prio(r.score).n===3).length}</b><br/>P3 Moyen</td>
-<td style="${wtd};text-align:center;background:#dcfce7;width:25%"><b style="color:#22c55e;font-size:16px">${allR.filter(r=>prio(r.score).n===4).length}</b><br/>P4 Faible</td>
+<td style="${wtd};text-align:center;background:#fee2e2;width:25%"><b style="color:#dc2626;font-size:16px">${allR.filter(r=>prio(r.score,r.gravite).n===1).length}</b><br/>P1 Critique</td>
+<td style="${wtd};text-align:center;background:#fef3c7;width:25%"><b style="color:#f59e0b;font-size:16px">${allR.filter(r=>prio(r.score,r.gravite).n===2).length}</b><br/>P2 Élevé</td>
+<td style="${wtd};text-align:center;background:#dbeafe;width:25%"><b style="color:#2563eb;font-size:16px">${allR.filter(r=>prio(r.score,r.gravite).n===3).length}</b><br/>P3 Moyen</td>
+<td style="${wtd};text-align:center;background:#dcfce7;width:25%"><b style="color:#22c55e;font-size:16px">${allR.filter(r=>prio(r.score,r.gravite).n===4).length}</b><br/>P4 Faible</td>
 </tr></table>
 
 <h2>⚠️ Évaluation des risques par unité de travail</h2>
@@ -622,6 +628,7 @@ ${utRows}
 <td style="${wtd};background:#fef3c7;text-align:center;font-weight:bold;color:#f59e0b">P2 (6-9)</td><td style="${wtd}">Action à court terme (&lt; 3 mois)</td></tr>
 <tr><td style="${wtd};background:#dbeafe;text-align:center;font-weight:bold;color:#2563eb">P3 (3-5)</td><td style="${wtd}">Action à moyen terme (&lt; 1 an)</td>
 <td style="${wtd};background:#dcfce7;text-align:center;font-weight:bold;color:#22c55e">P4 (1-2)</td><td style="${wtd}">Surveillance, maintien des mesures</td></tr>
+<tr><td style="${wtd}" colspan="4"><b>Règle de plancher :</b> un risque de gravité 4 (IPP, décès, maladie irréversible) est classé au minimum en P2, quels que soient sa fréquence et son niveau de maîtrise.</td></tr>
 </table>
 
 <div style="margin-top:14px;padding:8px;background:#eff6ff;border-radius:4px;font-size:9px;color:#1e40af">

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MaterPrév</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap">
+<link rel="stylesheet" href="femme.css">
+<style>
+/* MaterPrév v1 · grossesse, allaitement et travail
+   Repérage des expositions du poste (interdites, changement d'affectation, à aménager) selon la situation,
+   calendrier du congé maternité, droits, engagements de l'entreprise. Rien n'est enregistré : tout reste à l'écran. */
+:root{--mater:oklch(52% .11 215);--mater-bg:oklch(95.5% .03 215);--acc:var(--mater)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--mater:oklch(76% .1 215);--mater-bg:oklch(28% .05 215)}}
+:root[data-theme="dark"]{--mater:oklch(76% .1 215);--mater-bg:oklch(28% .05 215)}
+.vigil{display:flex;gap:10px;align-items:flex-start;background:var(--mater-bg);border-radius:var(--r);padding:10px 14px;font-size:13px}
+.vigil b{color:var(--mater)}
+.tabs .tsep{width:1px;background:var(--line);margin:10px 6px;flex:none}
+.seg2{display:flex;flex-wrap:wrap;gap:6px}
+.seg2 button{border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:8px 12px;font-size:13.5px;font-weight:600}
+.seg2 button[aria-pressed="true"]{background:var(--mater-bg);border-color:var(--mater);color:var(--ink)}
+.fam{display:grid;gap:6px;align-content:start}
+.fam h3{color:var(--mater)}
+.res{display:grid;gap:4px;border-radius:12px;padding:10px 14px;border-left:5px solid var(--warn);background:var(--warn-bg)}
+.res.interdit{border-color:var(--bad);background:var(--bad-bg)}
+.res.affect{border-color:var(--orange);background:color-mix(in oklch,var(--orange) 14%,var(--card))}
+.res .tag{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.res.interdit .tag{color:var(--bad)}
+.res .ref{all:unset;font-size:11.5px;color:var(--muted)}
+.bilan{display:grid;gap:2px;border-radius:14px;padding:12px 16px;border-left:6px solid var(--ok);background:var(--ok-bg)}
+.bilan.warn{border-color:var(--warn);background:var(--warn-bg)} .bilan.bad{border-color:var(--bad);background:var(--bad-bg)}
+.tl{display:flex;flex-direction:column;gap:14px;position:relative;padding-left:22px}
+.tl::before{content:"";position:absolute;left:6px;top:6px;bottom:6px;width:2px;background:var(--mater-bg)}
+.tl > div{position:relative}
+.tl .dot{position:absolute;left:-22px;top:4px;width:14px;height:14px;border-radius:50%;background:var(--mater);box-shadow:0 0 0 3px var(--card)}
+.ul{margin:6px 0 0;padding-left:1.1rem;display:grid;gap:6px;font-size:.92rem}
+.droits{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:860px){.droits{grid-template-columns:1fr}}
+.lecture{padding-block:4px 28px}.lecture .in{display:flex;gap:10px;align-items:flex-start;border:1px dashed var(--line);border-radius:var(--r);padding:12px 16px;background:var(--card);font-size:12.5px;color:var(--muted)}.lecture b{color:var(--ink)}.lecture p{margin:0}
+#impr{display:none}
+@media print{body.print-doc>*:not(#impr){display:none!important}body.print-doc #impr{display:block}body.print-doc::before{display:none}}
+#impr{font-family:var(--f-body,system-ui);color:#111;font-size:12.5px;line-height:1.5;padding:8px 4px}
+#impr h1{font-family:var(--f-display);font-weight:400;font-size:24px;color:#1f5f7a;margin:0}
+#impr h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:#1f5f7a;margin:16px 0 6px;border-bottom:1px solid #c5dbe5;padding-bottom:3px}
+#impr .sous,#impr .pied{color:#555;font-size:11.5px} #impr .pied{margin-top:16px;border-top:1px solid #ddd;padding-top:8px}
+#impr table{width:100%;border-collapse:collapse;margin-bottom:8px} #impr th,#impr td{border:1px solid #ccc;padding:5px 7px;vertical-align:top;color:#111;text-align:left}
+#impr ul{margin:4px 0 8px;padding-left:1.1rem}
+#impr .lignes{height:90px;background:repeating-linear-gradient(#fff 0 26px,#bbb 26px 27px)}
+</style>
+</head>
+<body>
+<header class="pp-top gut"><div class="in">
+  <a class="back" href="index.html">← Santé de la femme</a>
+  <div class="ico" aria-hidden="true" style="background:linear-gradient(135deg,var(--mater),oklch(72% .1 200))"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.4"/><path d="M9 21v-6l-1-3a4 4 0 0 1 4-4c2.4 0 4 1.8 4 4.2 0 2.6-2 3.8-3 3.8h-1v5"/></svg></div>
+  <div><small>PréventIA Protect · Santé de la femme</small><h1>MaterPrév</h1></div>
+  <span class="sp"></span><span class="pill">Grossesse, allaitement et travail</span>
+</div></header>
+<nav class="tabs gut" aria-label="Sections"><div class="in" id="tabs"></div></nav>
+<main class="gut" id="app"></main>
+<aside class="gut lecture" role="note"><div class="in"><span aria-hidden="true">⚕️</span><p><b>Lecture médicale indispensable.</b> Outil de prévention en cours de validation. Les repères et conseils sont donnés à titre indicatif et <b>doivent être vérifiés par un médecin</b> : médecin du travail pour le poste et les aménagements, médecin traitant, gynécologue ou sage-femme pour le suivi de la grossesse. Ils ne remplacent ni un examen, ni une évaluation des risques, ni un avis juridique.</p></div></aside>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s), app=$('#app');
+const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+const intro=(e,t,p,ref)=>`<div class="intro"><div><p class="eyebrow">${e}</p><h2>${t}</h2><p class="muted">${p}</p></div>${ref?`<div class="ref">${ref}</div>`:''}</div>`;
+const keep=fn=>{const y=scrollY;fn();scrollTo(0,y);};
+const fr=d=>d.toLocaleDateString('fr-FR');
+const LECTURE='Lecture médicale indispensable : document de repérage, sans valeur d\'avis médical ni d\'évaluation des risques. Le médecin du travail se prononce sur le poste et les aménagements ; le médecin traitant, le gynécologue ou la sage-femme sur la grossesse.';
+const VIGIL=`<div class="vigil"><span>⚠️</span><p><b>Repérage, pas évaluation.</b> MaterPrév aide à repérer ce qui, dans le poste, est interdit ou à aménager pendant la grossesse et l'allaitement, et à en parler. L'évaluation du poste revient à l'employeur avec le service de santé au travail ; les aménagements individuels, au médecin du travail.</p></div>`;
+
+/* ════════ DONNÉES ════════
+   r : 'interdit' (texte d'interdiction), 'affect' (droit à un changement d'affectation), 'amen' (à évaluer et aménager, sans interdiction).
+   s : situations concernées par la règle (E = enceinte, A = allaitante ou venant d'accoucher). Hors de s, l'item retombe en 'amen'.
+   Sources : Code du travail (L1225-x, D4152-x, R4152-7-1, R4541-9) ; INRS, Grossesse et travail. */
+const FAM=[
+ ['chim','Produits chimiques',[
+  ['cmr','Produits toxiques pour la reproduction (mentions H360, H360F, H360D…) ou ayant des effets sur l\'allaitement (H362)','interdit','EA','D4152-10','Retrait du poste exposé. Vérifier les fiches de données de sécurité de tous les produits du poste.'],
+  ['benz','Benzène, dérivés nitrés ou chloronitrés des hydrocarbures benzéniques, dinitrophénol, aniline, naphtylamines','interdit','EA','D4152-10','Retrait du poste exposé.'],
+  ['plomb','Plomb métallique et ses composés','interdit','EA','R1225-4 (liste INRS)','Retrait du poste exposé. Le plomb s\'accumule dans l\'organisme : à anticiper dès le projet de grossesse.'],
+  ['phyto','Esters thiophosphoriques (certains insecticides), produits antiparasitaires CMR','interdit','EA','D4152-9','Retrait du poste exposé ; pas de présence habituelle dans les locaux concernés.'],
+  ['cyto','Médicaments anticancéreux (cytostatiques), gaz anesthésiques','amen','','INRS','Beaucoup sont classés toxiques pour la reproduction : à évaluer en priorité avec le médecin du travail. L\'éviction de la préparation et de l\'administration est souvent conseillée.'],
+  ['autres','Autres produits : solvants, produits de nettoyage, perturbateurs endocriniens suspectés','amen','','Évaluation du risque chimique','Inventaire et fiches de données de sécurité à regarder avec le médecin du travail ou la toxicologue ; substitution et réduction de l\'exposition.']]],
+ ['bio','Agents biologiques',[
+  ['rub','Exposition possible au virus de la rubéole ou au toxoplasme (petite enfance, soins, animaux, viande crue, terre)','interdit','E','D4152-3','Interdit sauf preuve d\'immunité : la sérologie se vérifie avec le médecin.'],
+  ['cmv','Jeunes enfants, soins : cytomégalovirus, varicelle, parvovirus B19','amen','','INRS','Hygiène des mains, pas de partage de couverts, statut immunitaire à vérifier ; éviction temporaire possible sur avis du médecin du travail.'],
+  ['aes','Soins, laboratoire : risque de piqûre ou de projection de sang','amen','','Prévention des AES','Matériel sécurisé, gants, conduite à tenir connue en cas d\'accident d\'exposition au sang.']]],
+ ['ray','Rayonnements',[
+  ['ria','Poste classé en catégorie A (rayonnements ionisants)','interdit','E','D4152-6','Changement de poste dès que la grossesse est connue.'],
+  ['rib','Autre exposition aux rayonnements ionisants (catégorie B, zone surveillée)','amen','','D4152-5','La dose reçue par l\'enfant à naître doit rester aussi basse que possible, et inférieure à 1 mSv de la déclaration à la naissance. À voir avec le conseiller en radioprotection et le médecin du travail.'],
+  ['rii','Sources radioactives non scellées : risque de contamination interne (médecine nucléaire, laboratoire)','interdit','A','D4152-7','Interdit pendant l\'allaitement. Pendant la grossesse, à évaluer de près avec le médecin du travail.'],
+  ['cem','Champs électromagnétiques intenses (IRM, soudage par induction, électrolyse)','amen','','R4152-7-1','L\'exposition de la femme enceinte doit rester aussi basse que possible, sous les valeurs fixées pour le public.']]],
+ ['phy','Contraintes physiques',[
+  ['hyper','Milieu hyperbare (plongée, caissons) au-delà de 100 hPa','interdit','E','D4152-29','Retrait du poste exposé.'],
+  ['mpq','Marteau-piqueur à air comprimé','interdit','EA','D4152-8','Retrait de la tâche.'],
+  ['diable','Transport de charges au diable','interdit','E','D4152-12','Retrait de la tâche.'],
+  ['charges','Port de charges, manutention de personnes','amen','','R4541-9','25 kg au plus pour toutes les femmes ; à réduire nettement pendant la grossesse (aides techniques, binôme), surtout à partir du 2e trimestre.'],
+  ['debout','Station debout prolongée, piétinement, marche','amen','','INRS','Siège assis-debout, pauses assises, rotation des tâches.'],
+  ['vib','Vibrations : conduite d\'engins, chariots, véhicules sur pistes','amen','','INRS','Réduire ou suspendre la conduite d\'engins, surtout en fin de grossesse.'],
+  ['bruit','Bruit élevé','amen','','INRS','Les protections auditives protègent la mère, pas l\'enfant à naître : éviter les ambiances bruyantes, surtout en fin de grossesse.'],
+  ['chaleur','Chaleur, froid, tenue couvrante','amen','','INRS','Eau, pauses au frais, tenue adaptée à l\'évolution de la silhouette.'],
+  ['chute','Travail en hauteur, sols glissants, échelles','amen','','INRS','L\'équilibre change pendant la grossesse : supprimer le travail en hauteur et sur échelle.']]],
+ ['orga','Organisation du travail',[
+  ['nuit','Travail de nuit','affect','EA','L1225-9','Droit à un poste de jour sur simple demande, sans perte de salaire, pendant la grossesse et le congé postnatal ; prolongation d\'un mois au plus si le médecin du travail le juge nécessaire.'],
+  ['horaires','Horaires longs, postés ou décalés, déplacements fréquents','amen','','INRS','Limiter la durée des journées et les déplacements, ajuster le rythme au fil de la grossesse.'],
+  ['public','Contact avec le public, risque d\'agression','amen','','INRS','Ne pas être seule au poste, consignes en cas d\'incivilité.'],
+  ['mental','Charge mentale, délais serrés, stress','amen','','INRS','Objectifs ajustés, préparation anticipée de la passation avant le congé.']]]
+];
+const ITEMS=Object.fromEntries(FAM.flatMap(([f,,l])=>l.map(([k,lab,r,s,ref,txt])=>[k,{f,lab,r,s,ref,txt}])));
+const SITU={projet:'Projet de grossesse',E:'Enceinte',A:'Allaitante ou venant d\'accoucher'};
+const ST={situ:'E',sel:new Set(),poste:''};
+const regle=k=>{const m=ITEMS[k];if(ST.situ==='projet')return m.r==='amen'?'amen':'anticip';return m.s.includes(ST.situ)?m.r:'amen';};
+const LIB={interdit:'Interdit',affect:'Changement d\'affectation de droit',amen:'À évaluer et aménager',anticip:'À anticiper'};
+
+/* ════════ NAVIGATION ════════ */
+const TABS=[['poste','Mon poste'],['calendrier','Mon calendrier'],['droits','Mes droits'],['entreprise','Côté entreprise']];
+function route(){const h=(location.hash||'#poste').slice(1);const cur=TABS.some(t=>t[0]===h)?h:'poste';
+  $('#tabs').innerHTML=TABS.map(([k,l],i)=>`${i===3?'<span class="tsep" aria-hidden="true"></span>':''}<a href="#${k}" ${k===cur?'aria-current="page"':''}>${l}</a>`).join('');
+  ({poste:vPoste,calendrier:vCal,droits:vDroits,entreprise:vEntreprise})[cur]();}
+window.addEventListener('hashchange',()=>{route();scrollTo(0,0);});
+function imprimer(html){let a=$('#impr');if(!a){a=document.createElement('div');a.id='impr';document.body.appendChild(a);}
+  a.innerHTML=html;document.body.classList.add('print-doc');setTimeout(()=>{print();setTimeout(()=>document.body.classList.remove('print-doc'),400);},200);}
+
+/* ════════ 1. MON POSTE ════════ */
+function resultats(){const ord={interdit:0,affect:1,anticip:2,amen:3};return [...ST.sel].map(k=>({k,...ITEMS[k],n:regle(k)})).sort((a,b)=>ord[a.n]-ord[b.n]);}
+function vPoste(){
+  const R=resultats(), ni=R.filter(r=>r.n==='interdit').length, na=R.filter(r=>r.n==='affect').length;
+  const bil=!R.length?'':ST.situ==='projet'?`<div class="bilan warn"><b>${R.length} point${R.length>1?'s':''} à préparer avant la grossesse</b><span>Certains risques agissent dès les premières semaines, souvent avant que la grossesse soit connue : parlez-en au médecin du travail dès maintenant. Il est tenu au secret médical.</span></div>`
+    :ni?`<div class="bilan bad"><b>${ni} exposition${ni>1?'s':''} interdite${ni>1?'s':''} repérée${ni>1?'s':''}</b><span>L'employeur doit vous retirer de ces expositions, en vous proposant un autre poste sans perte de salaire. S'il ne le peut pas, le contrat est suspendu avec garantie de rémunération (art. L1225-12 à L1225-14).</span></div>`
+    :na?`<div class="bilan warn"><b>Un changement d'affectation peut être demandé</b><span>Vous pouvez le demander dès maintenant, sans avoir à justifier d'un avis médical.</span></div>`
+    :`<div class="bilan"><b>Pas d'exposition interdite parmi ce que vous avez coché</b><span>Les points cochés se discutent avec le médecin du travail pour aménager le poste.</span></div>`;
+  app.innerHTML=`${intro('Pour chaque salariée · rien n\'est enregistré','Mon poste pendant la grossesse et l\'allaitement',"Indiquez votre situation, puis cochez ce que votre poste comporte. MaterPrév vous montre ce qui est interdit, ce que vous pouvez demander et ce qui est à aménager, avec les textes correspondants.",'<b>Repères :</b> Code du travail (art. L1225-1 et suivants, D4152-3 à D4152-29) ; INRS, <i>Grossesse et travail</i>. Les interdictions s\'appliquent une fois l\'employeur informé de la grossesse.')}
+  ${VIGIL}
+  <div class="card grid"><h3>Ma situation</h3><div class="seg2">${Object.entries(SITU).map(([k,l])=>`<button data-situ="${k}" aria-pressed="${ST.situ===k}">${l}</button>`).join('')}</div>
+    <label class="f" style="max-width:420px">Mon poste (facultatif, pour la fiche)<input class="i" id="poste" value="${esc(ST.poste)}" placeholder="ex. aide-soignante, préparatrice de commandes"></label></div>
+  <div class="grid g2" style="align-items:start">${FAM.map(([f,t,l])=>`<div class="card fam"><h3>${t}</h3>${l.map(([k,lab])=>`<label class="check"><input type="checkbox" data-k="${k}" ${ST.sel.has(k)?'checked':''}> ${esc(lab)}</label>`).join('')}</div>`).join('')}</div>
+  ${R.length?`<div class="card grid">${bil}${R.map(r=>`<div class="res ${r.n==='interdit'?'interdit':r.n==='affect'?'affect':''}"><span class="tag">${LIB[r.n]}</span><b>${esc(r.lab)}</b><span class="small">${esc(r.txt)}</span><span class="ref">Référence : ${esc(r.ref)}</span></div>`).join('')}
+    <div class="row"><button class="btn" id="imp">Imprimer ma fiche pour le médecin du travail</button><span class="small muted">Document personnel : vous choisissez de le montrer ou non.</span></div></div>`
+   :'<p class="muted">Cochez au moins un élément de votre poste pour voir le résultat.</p>'}
+  <div class="secret"><b>Qui sait quoi ?</b> Vous n'êtes pas obligée d'annoncer votre grossesse à l'employeur (art. L1225-2), mais les protections s'appliquent seulement une fois qu'il est informé. Vous pouvez en parler d'abord au médecin ou à l'infirmier·e du travail, tenus au secret, et demander une visite à tout moment (art. R4624-34).</div>`;
+  app.querySelectorAll('[data-situ]').forEach(b=>b.onclick=()=>{ST.situ=b.dataset.situ;keep(vPoste);});
+  app.querySelectorAll('[data-k]').forEach(c=>c.onchange=()=>{c.checked?ST.sel.add(c.dataset.k):ST.sel.delete(c.dataset.k);keep(vPoste);});
+  $('#poste').onchange=e=>{ST.poste=e.target.value.trim();};
+  const ip=$('#imp');if(ip)ip.onclick=()=>imprimer(`<h1>Grossesse, allaitement et travail · ma fiche</h1><p class="sous">Préparée le ${fr(new Date())} avec MaterPrév. Situation : ${SITU[ST.situ].toLowerCase()}${ST.poste?' · Poste : '+esc(ST.poste):''}. Document personnel, à remettre au médecin du travail si je le souhaite.</p>
+    <h2>Expositions repérées</h2><table><tr><th>Exposition</th><th>Règle</th><th>Ce qui est prévu</th><th>Référence</th></tr>${R.map(r=>`<tr><td>${esc(r.lab)}</td><td>${LIB[r.n]}</td><td>${esc(r.txt)}</td><td>${esc(r.ref)}</td></tr>`).join('')}</table>
+    <h2>Mes questions</h2><div class="lignes"></div><p class="pied">${LECTURE}</p>`);
+}
+
+/* ════════ 2. MON CALENDRIER ════════
+   Durées du congé de maternité (art. L1225-17 à L1225-19), en semaines avant / après la date prévue. */
+const RANGS={r1:['1er ou 2e enfant',6,10],r3:['3e enfant ou plus',8,18],jum:['Jumeaux',12,22],tri:['Triplés ou plus',24,22]};
+const CAL={dpa:'',rang:'r1'};
+const plusJ=(d,n)=>{const x=new Date(d+'T00:00');x.setDate(x.getDate()+n);return x;};
+function vCal(){
+  const [,av,ap]=RANGS[CAL.rang], D=CAL.dpa;
+  const E=[
+   ['Le plus tôt possible','En parler au médecin ou à l\'infirmier·e du travail','Surtout si le poste comporte des produits chimiques, des rayonnements, des agents biologiques ou des horaires de nuit : certaines expositions comptent dès les premières semaines.'],
+   ['Avant la fin du 3e mois','Déclarer la grossesse à l\'Assurance maladie','Par le médecin ou la sage-femme qui fait le premier examen.'],
+   ['Quand vous le décidez','Informer l\'employeur','Par écrit de préférence (lettre remise en main propre ou recommandée, avec un certificat médical) : c\'est ce qui déclenche les protections.'],
+   ['Pendant la grossesse','Examens prénataux','Absences autorisées et payées pour les examens médicaux obligatoires (art. L1225-16).'],
+   [D?'À partir du '+fr(plusJ(D,-av*7)):`${av} semaines avant la date prévue`,'Début du congé prénatal','Jusqu\'à 3 semaines peuvent être reportées après la naissance, sur avis favorable du professionnel de santé qui suit la grossesse.'],
+   [D?'Vers le '+fr(new Date(D+'T00:00')):'Date prévue d\'accouchement','Naissance',''],
+   [D?'Jusqu\'au '+fr(plusJ(D,ap*7-1)):`${ap} semaines après la date prévue`,'Fin du congé postnatal','Durées à vérifier avec l\'Assurance maladie : elles changent si la naissance est avancée ou retardée, en cas d\'hospitalisation ou de congé pathologique.'],
+   ['Dans les 8 jours qui suivent le retour','Visite de reprise','Obligatoire après un congé de maternité (art. R4624-31). C\'est le moment de parler de l\'allaitement et des aménagements.'],
+   ['Jusqu\'au 1 an de l\'enfant','Allaitement au travail','Une heure par jour pour allaiter, en deux temps (art. L1225-30).']
+  ];
+  app.innerHTML=`${intro('Pour chaque salariée · rien n\'est enregistré','Mon calendrier',"Les grandes étapes, de l'annonce de la grossesse au retour au travail. Indiquez la date prévue d'accouchement pour obtenir des dates indicatives.",'<b>Repères :</b> Code du travail, art. L1225-16 à L1225-30 et R4624-31. Les dates exactes du congé sont fixées par l\'Assurance maladie.')}
+  <div class="card grid"><div class="grid g2"><label class="f">Date prévue d'accouchement<input class="i" type="date" id="dpa" value="${CAL.dpa}"></label>
+    <label class="f">Situation<select class="i" id="rang">${Object.entries(RANGS).map(([k,[l]])=>`<option value="${k}" ${CAL.rang===k?'selected':''}>${l}</option>`).join('')}</select></label></div>
+    <p class="small muted">Congé de maternité : ${av} semaines avant et ${ap} semaines après la date prévue, soit ${av+ap} semaines.</p></div>
+  <div class="card"><div class="tl">${E.map(([q,t,p])=>`<div><span class="dot"></span><span class="eyebrow">${q}</span><br><b>${t}</b>${p?`<p class="small">${p}</p>`:''}</div>`).join('')}</div></div>`;
+  $('#dpa').onchange=e=>{CAL.dpa=e.target.value;keep(vCal);};
+  $('#rang').onchange=e=>{CAL.rang=e.target.value;keep(vCal);};
+}
+
+/* ════════ 3. MES DROITS ════════ */
+function vDroits(){
+  const B=[
+   ['Annonce et protection',['Pas d\'obligation d\'annoncer la grossesse à l\'employeur, ni à l\'embauche (art. L1225-1 et L1225-2).','Protection contre le licenciement pendant la grossesse, le congé de maternité et les 10 semaines qui suivent, sauf faute grave ou impossibilité de maintenir le contrat sans lien avec la grossesse (art. L1225-4).']],
+   ['Absences et horaires',['Absences payées pour les examens médicaux obligatoires (art. L1225-16).','Poste de jour sur simple demande si vous travaillez la nuit (art. L1225-9).','D\'autres facilités (réduction d\'horaire, pauses) existent souvent dans les conventions collectives : à vérifier.']],
+   ['Changement de poste',['Changement temporaire d\'affectation si votre état de santé, constaté par un médecin, l\'exige, sans baisse de salaire (art. L1225-7).','Retrait obligatoire des expositions interdites ; si aucun autre poste n\'est possible, contrat suspendu avec garantie de rémunération (art. L1225-12 à L1225-14).']],
+   ['Allaitement et retour',['Une heure par jour pour allaiter jusqu\'au 1 an de l\'enfant (art. L1225-30).','Expositions interdites pendant l\'allaitement : produits toxiques pour la reproduction ou l\'allaitement, benzène, plomb, contamination radioactive interne… (voir « Mon poste »).','Visite de reprise dans les 8 jours qui suivent le retour (art. R4624-31).']]
+  ];
+  app.innerHTML=`${intro('Pour chaque salariée','Mes droits','Les principales protections prévues par le Code du travail. Votre convention collective peut prévoir mieux.','<b>À vérifier :</b> ces repères simplifient les textes. En cas de difficulté : service de santé au travail, représentants du personnel, inspection du travail.')}
+  <div class="droits">${B.map(([t,l])=>`<div class="card"><h3>${t}</h3><ul class="ul">${l.map(x=>`<li>${x}</li>`).join('')}</ul></div>`).join('')}</div>`;
+}
+
+/* ════════ 4. CÔTÉ ENTREPRISE ════════ */
+const ENG=[
+ ['duerp','Le document unique tient compte des risques pour la grossesse et l\'allaitement','Évaluation des risques avec l\'impact différencié selon le sexe (art. L4121-3).'],
+ ['liste','Liste des postes comportant une exposition interdite, établie à l\'avance','Pour agir dès l\'annonce, sans improviser.'],
+ ['refuge','Postes ou tâches de remplacement repérés','Pour proposer un changement d\'affectation rapide, sans perte de salaire.'],
+ ['info','Information des salariées en âge de procréer sur les risques de leur poste','Elle se fait notamment à la visite d\'information et de prévention.'],
+ ['proc','Procédure d\'accueil de l\'annonce, confidentielle','Un interlocuteur désigné, le lien avec le service de santé au travail, aucune question sur la vie privée.'],
+ ['amen','Aménagements simples prévus d\'avance','Siège, pauses assises, accès à l\'eau, place de parking proche, tenue adaptée.'],
+ ['allait','Lieu calme et propre pour tirer son lait','Au-delà de 100 salariées, l\'entreprise peut être mise en demeure d\'installer un local dédié à l\'allaitement (art. L1225-32).'],
+ ['retour','Entretien de retour et visite de reprise organisés','Visite de reprise dans les 8 jours (art. R4624-31).']];
+const EN=new Set();
+function vEntreprise(){
+  app.innerHTML=`${intro('Pour l\'employeur, les RH et l\'infirmier·e','Côté entreprise','Les mesures collectives qui permettent d\'agir vite et sans discrimination quand une salariée annonce sa grossesse. Aucune ne concerne une salariée en particulier.','<b>Repères :</b> Code du travail, art. L4121-3, L1225-1 et suivants ; INRS, <i>Grossesse et travail</i>.')}
+  <div class="card grid"><div class="row"><h3>Huit engagements</h3><span class="sp"></span><span class="pill ${EN.size>=6?'ok':EN.size>=3?'warn':'na'} num">${EN.size} / ${ENG.length}</span></div>
+    ${ENG.map(([k,l,d])=>`<label class="check"><input type="checkbox" data-en="${k}" ${EN.has(k)?'checked':''}><span><b>${l}</b><br><span class="small muted">${d}</span></span></label>`).join('')}
+    <div class="row"><button class="btn" id="impE">Imprimer le bilan</button></div></div>
+  <div class="note"><b>Ce que l'employeur ne demande pas.</b> Ni la date de conception, ni un projet de grossesse, ni des détails médicaux. Le médecin du travail se prononce sur le poste ; il ne transmet pas d'information médicale.</div>`;
+  app.querySelectorAll('[data-en]').forEach(c=>c.onchange=()=>{c.checked?EN.add(c.dataset.en):EN.delete(c.dataset.en);keep(vEntreprise);});
+  $('#impE').onclick=()=>imprimer(`<h1>Grossesse et travail · engagements de l'entreprise</h1><p class="sous">Bilan du ${fr(new Date())}, préparé avec MaterPrév. Document collectif, sans donnée individuelle.</p>
+    <table><tr><th>Engagement</th><th>En place</th></tr>${ENG.map(([k,l])=>`<tr><td>${l}</td><td>${EN.has(k)?'Oui':'À faire'}</td></tr>`).join('')}</table>
+    <p class="pied">Repères simplifiés, à vérifier avec le service de prévention et de santé au travail. ${LECTURE}</p>`);
+}
+
+route();
+})();
+</script>
+</body>
+</html>

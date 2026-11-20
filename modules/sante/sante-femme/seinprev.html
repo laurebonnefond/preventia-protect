@@ -799,6 +799,7 @@ function vPlan(){
   const Pa=paliers(), E=etapesPlan(), R=CTR.filter(([k])=>RT.ctr.has(k)&&REINTRO[k]);
   const opt=(arr,v)=>arr.map(([k,l])=>`<option value="${k}" ${String(v)===k?'selected':''}>${l}</option>`).join('');
   return `<div class="card grid"><div><h3>Mon plan de reprise par paliers</h3><p class="small muted">Un calendrier indicatif pour reprendre progressivement. Il se discute avec le médecin traitant, qui prescrit le temps partiel thérapeutique, et le médecin du travail, qui propose les aménagements. Rien n'est enregistré.</p></div>
+    <div class="note"><b>⚕️ Lecture médicale indispensable.</b> Ce plan est une proposition indicative, sans valeur de prescription. Il doit être validé par le médecin traitant (quotité et durée du temps partiel thérapeutique) et par le médecin du travail (aménagements du poste), qui peuvent le modifier à tout moment.</div>
     <div class="grid g3">
       <label class="f">Date de reprise prévue<input class="i" type="date" data-pl="date" value="${PL.date}"></label>
       <label class="f">Durée de l'arrêt<select class="i" data-pl="arret">${opt(ARRETS,PL.arret)}</select></label>

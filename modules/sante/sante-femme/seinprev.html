@@ -752,6 +752,80 @@ let wsub=null; const RT={seq:new Set(),ctr:new Set()};
 function pistesRetour(){
   return SEQ.filter(([k])=>RT.seq.has(k)).map(([k,l])=>({l,b:PISTES[k].b,x:PISTES[k].x.filter(([c])=>c.some(v=>RT.ctr.has(v))).map(x=>x[1])}));
 }
+/* Plan de reprise par paliers : calendrier indicatif à discuter avec le médecin traitant (prescription du temps partiel
+   thérapeutique) et le médecin du travail (aménagements). Rien n'est enregistré : le plan reste à l'écran et s'imprime. */
+const PL={date:'',arret:'60',mode:'tpt',h:35,dep:50,sem:12,rep:'demi'};
+const ARRETS=[['29','Moins de 30 jours'],['30','30 à 59 jours'],['60','60 jours ou plus']];
+const REPART={demi:'Demi-journées tous les jours',jours:'Journées entières, non consécutives au début',mixte:'Mélange des deux'};
+/* Tâches du poste à réintroduire en dernier, et à quelle condition */
+const REINTRO={charges:'Port de charges : reprise progressive, limitée du côté opéré tant que le médecin du travail le juge utile.',
+  gestes:'Travail bras en l\'air ou gestes répétitifs : par séquences courtes, alternées avec d\'autres tâches.',
+  nuit:'Horaires de nuit ou postés : pas pendant les premiers paliers ; reprise seulement sur avis du médecin du travail.',
+  vigil:'Conduite, machines, poste de sécurité : uniquement après l\'avis du médecin du travail.',
+  route:'Déplacements et trajets longs : limités au début, puis réintroduits.',
+  mental:'Objectifs et délais : ajustés pendant la reprise, sans rattrapage du travail en retard.',
+  chaud:'Ambiance chaude, tenue couvrante : pauses au frais prévues tant que les bouffées de chaleur gênent.',
+  public:'Accueil du public : plages plus courtes au début, possibilité de s\'isoler quelques minutes.'};
+const plusJ=(d,n)=>{const x=new Date(d+'T00:00');x.setDate(x.getDate()+n);return x.toLocaleDateString('fr-FR');};
+const h1=v=>(Math.round(v*2)/2).toString().replace('.',',');
+function paliers(){
+  if(PL.mode!=='tpt') return [];
+  const d=+PL.dep, n=d>=80?2:3, lv=[...new Set(Array.from({length:n},(_,i)=>Math.min(90,Math.round((d+i*(100-d)/n)/10)*10)))];
+  const w=Math.max(1,Math.round(PL.sem/lv.length));
+  return lv.map((p,i)=>({p,de:i*w+1,a:i===lv.length-1?Math.max(PL.sem,i*w+1):(i+1)*w,h:PL.h*p/100}));
+}
+function repartition(p){
+  const hj=PL.h/5, hw=PL.h*p/100, full=Math.floor(hw/hj+1e-9), rest=hw-full*hj, pl=(n,m)=>`${n} ${m}${n>1?'s':''}`;
+  if(PL.rep==='demi') return `${h1(hw/5)} h par jour, 5 jours`;
+  if(PL.rep==='jours') return `${pl(full,'jour')} entier${full>1?'s':''}${rest>.4?` et ${h1(rest)} h`:''}${full<=3&&rest<=.4?' (ex. lundi, mercredi'+(full===3?', vendredi':'')+')':''}`;
+  const fj=Math.max(1,full-1), nd=Math.round((hw-fj*hj)/(hj/2));
+  return `${pl(fj,'jour')} entier${fj>1?'s':''} et ${pl(nd,'demi-journée')}`;
+}
+function etapesPlan(){
+  const D=PL.date, q=(n,t,p,max)=>({q:D?(n<0?'Avant le '+plusJ(D,0):n===0?'Le '+plusJ(D,0):(max?'Au plus tard le ':'Vers le ')+plusJ(D,n)):(n<0?'Avant la reprise':n===0?'Jour de la reprise':max?`Dans les ${n} jours`:`Semaine ${Math.ceil(n/7)}`),t,p}), E=[], Pa=paliers();
+  if(+PL.arret>=30) E.push(q(-1,'Visite de pré-reprise','À demander dès maintenant au service de santé au travail : c\'est là que le plan et les aménagements se préparent (art. R4624-29).'));
+  if(PL.mode==='tpt') E.push(q(-1,'Temps partiel thérapeutique','Prescrit par le médecin traitant (quotité et durée), avec l\'accord de l\'employeur et de l\'Assurance maladie (CSS L323-3). Les paliers ci-dessous sont une proposition à lui montrer.'));
+  E.push(q(0,'Premier jour','Accueil par le manager ou le référent, point sur le poste et sur ce qui a changé pendant l\'absence. Pas d\'objectif de rattrapage.'));
+  if(+PL.arret>=60) E.push(q(8,'Visite de reprise','Obligatoire dans les 8 jours qui suivent la reprise (art. R4624-31). Le médecin du travail valide ou ajuste les aménagements.',true));
+  E.push(q(14,'Premier point d\'étape','Avec l\'infirmier·e ou le référent : fatigue, horaires, trajets, tâches. On ajuste si besoin.'));
+  Pa.slice(0,-1).forEach((x,i)=>E.push(q(x.a*7,`Fin du palier ${i+1}`,`Point avant de passer à ${Pa[i+1].p} %. On ne monte que si la fatigue reste supportable : rester plus longtemps sur un palier est normal.`)));
+  const fin=PL.mode==='tpt'?PL.sem*7:0;
+  if(PL.mode==='tpt') E.push(q(fin,'Retour au temps plein','Si la fatigue le permet. Sinon, en parler au médecin traitant (prolongation) et au médecin du travail (visite à la demande, art. R4624-34).'));
+  E.push(q(fin+90,'Point à 3 mois','Bilan du maintien en emploi : ce qui tient, ce qui reste difficile. La cellule de prévention de la désinsertion professionnelle peut être sollicitée.'));
+  E.push(q(fin+180,'Point à 6 mois','Dernier point prévu. La fatigue peut durer : la visite à la demande reste possible à tout moment.'));
+  return E;
+}
+function vPlan(){
+  const Pa=paliers(), E=etapesPlan(), R=CTR.filter(([k])=>RT.ctr.has(k)&&REINTRO[k]);
+  const opt=(arr,v)=>arr.map(([k,l])=>`<option value="${k}" ${String(v)===k?'selected':''}>${l}</option>`).join('');
+  return `<div class="card grid"><div><h3>Mon plan de reprise par paliers</h3><p class="small muted">Un calendrier indicatif pour reprendre progressivement. Il se discute avec le médecin traitant, qui prescrit le temps partiel thérapeutique, et le médecin du travail, qui propose les aménagements. Rien n'est enregistré.</p></div>
+    <div class="grid g3">
+      <label class="f">Date de reprise prévue<input class="i" type="date" data-pl="date" value="${PL.date}"></label>
+      <label class="f">Durée de l'arrêt<select class="i" data-pl="arret">${opt(ARRETS,PL.arret)}</select></label>
+      <label class="f">Mode de reprise<select class="i" data-pl="mode">${opt([['tpt','Temps partiel thérapeutique'],['plein','Temps plein avec aménagements']],PL.mode)}</select></label>
+      ${PL.mode==='tpt'?`<label class="f">Heures par semaine à temps plein<input class="i num" type="number" min="10" max="48" data-pl="h" value="${PL.h}"></label>
+      <label class="f">Quotité de départ<select class="i" data-pl="dep">${opt([['50','50 %'],['60','60 %'],['70','70 %'],['80','80 %']],PL.dep)}</select></label>
+      <label class="f">Durée du temps partiel<select class="i" data-pl="sem">${opt([['4','1 mois'],['8','2 mois'],['12','3 mois'],['26','6 mois']],PL.sem)}</select></label>
+      <label class="f">Répartition souhaitée<select class="i" data-pl="rep">${opt(Object.entries(REPART),PL.rep)}</select></label>`:''}
+    </div>
+    ${Pa.length?`<div class="tw"><table><thead><tr><th>Palier</th><th>Semaines</th><th>Temps de travail</th><th>Organisation possible</th></tr></thead><tbody>
+      ${Pa.map((x,i)=>`<tr><td><b>${i+1}</b></td><td class="num">${x.de} à ${x.a}</td><td class="num"><b>${x.p} %</b> · ${h1(x.h)} h</td><td class="small">${repartition(x.p)}</td></tr>`).join('')}
+      <tr><td><b>Ensuite</b></td><td class="num">${PL.sem+1} et après</td><td class="num"><b>100 %</b> · ${h1(PL.h)} h</td><td class="small">Si la fatigue le permet, avec les aménagements encore utiles</td></tr></tbody></table></div>
+      <p class="small muted">Au début, mieux vaut des journées courtes ou espacées : la fatigue après un cancer se récupère mal sur deux longues journées d'affilée.</p>`:''}
+    <div><p class="eyebrow" style="margin-bottom:10px">Points d'étape</p><div class="tl">${E.map((e,i)=>`<div><span class="dot${i%2?' alt':''}"></span><span class="eyebrow">${e.q}</span><br><b>${e.t}</b><p class="small">${e.p}</p></div>`).join('')}</div></div>
+    ${R.length?`<div><p class="eyebrow">Tâches à réintroduire en dernier</p><ul class="ul">${R.map(([k])=>`<li>${REINTRO[k]}</li>`).join('')}</ul></div>`:'<p class="small muted">Cochez plus haut ce que demande votre poste pour voir les tâches à réintroduire progressivement.</p>'}
+    <div class="row"><button class="btn" id="impPlan">Imprimer mon plan</button><span class="muted small">Proposition indicative : la quotité et la durée sont fixées par le médecin traitant, les aménagements par le médecin du travail.</span></div></div>`;
+}
+function docPlan(){
+  const Pa=paliers(), E=etapesPlan(), R=CTR.filter(([k])=>RT.ctr.has(k)&&REINTRO[k]);
+  return `<h1>Mon plan de reprise par paliers</h1><p class="sous">Proposition préparée le ${new Date().toLocaleDateString('fr-FR')} avec SeinPrév${PL.date?', pour une reprise prévue le '+fmt(PL.date):''}. Document personnel, à discuter avec mon médecin traitant et mon médecin du travail. Il ne mentionne aucun diagnostic.</p>
+  <h2>Mode de reprise</h2><p>${PL.mode==='tpt'?`Temps partiel thérapeutique, de ${PL.dep} % sur ${PL.sem} semaines, sur une base de ${h1(PL.h)} h par semaine. Répartition souhaitée : ${REPART[PL.rep].toLowerCase()}.`:'Temps plein avec aménagements.'}</p>
+  ${Pa.length?`<h2>Paliers</h2><table><tr><th>Palier</th><th>Semaines</th><th>Temps de travail</th><th>Organisation possible</th></tr>${Pa.map((x,i)=>`<tr><td>${i+1}</td><td>${x.de} à ${x.a}</td><td>${x.p} % · ${h1(x.h)} h</td><td>${repartition(x.p)}</td></tr>`).join('')}<tr><td>Ensuite</td><td>${PL.sem+1} et après</td><td>100 % · ${h1(PL.h)} h</td><td>Si la fatigue le permet</td></tr></table>`:''}
+  <h2>Points d'étape</h2><table><tr><th>Quand</th><th>Quoi</th><th>Notes</th></tr>${E.map(e=>`<tr><td>${e.q}</td><td><b>${e.t}</b><br>${e.p}</td><td style="width:28%"></td></tr>`).join('')}</table>
+  ${R.length?`<h2>Tâches à réintroduire en dernier</h2><ul>${R.map(([k])=>`<li>${REINTRO[k]}</li>`).join('')}</ul>`:''}
+  <h2>Mes questions</h2><div class="lignes"></div>
+  <p class="pied">Calendrier indicatif, sans valeur de prescription : la quotité et la durée du temps partiel thérapeutique sont fixées par le médecin traitant et acceptées par l'Assurance maladie ; les aménagements de poste sont proposés par le médecin du travail (art. L4624-3). Lecture médicale indispensable.</p>`;
+}
 function vTravail(){
   const SW=APP?[['retour','Après un cancer : mon retour au travail'],['expo','Mon travail et mes seins']]:[['expo','Expositions professionnelles'],['retour','Retour au travail après un cancer'],['employeur','Engagements de l\'employeur']];
   if(!SW.some(s=>s[0]===wsub)) wsub=SW[0][0];
@@ -788,6 +862,7 @@ function vTravail(){
        ${Pi.length?`<div class="grid" style="gap:10px"><p class="eyebrow">Pistes à discuter avec le médecin du travail</p>${Pi.map(p=>`<div class="orient o-rose" style="padding:12px 14px"><b>${p.l}</b><p class="small">${p.b}</p>${p.x.length?`<ul class="ul">${p.x.map(x=>`<li>${x}</li>`).join('')}</ul>`:''}</div>`).join('')}
          <div class="row"><button class="btn" id="impRetour">Imprimer ma préparation</button><span class="muted small">Seul le médecin du travail propose les aménagements à l'employeur, sans jamais donner le diagnostic.</span></div></div>`
         :'<p class="muted small">Cochez au moins une difficulté pour voir les pistes.</p>'}</div>
+     ${vPlan()}
      <div class="secret"><b>Ce que l'employeur sait.</b> L'avis du médecin du travail porte sur le poste et ses aménagements, jamais sur la maladie. La salariée n'a pas à donner son diagnostic à son employeur ni à ses collègues.</div>`,
    employeur:()=>`<div class="grid g2" style="align-items:start">
      <div class="card grid"><div class="row"><h3>Dix engagements collectifs</h3><span class="sp"></span><span class="pill ${eng.length>=7?'ok':eng.length>=4?'warn':'na'} num">${eng.length} / ${ENG.length}</span></div>
@@ -811,6 +886,8 @@ function vTravail(){
   app.querySelectorAll('[data-ctr]').forEach(c=>c.onchange=()=>{c.checked?RT.ctr.add(c.dataset.ctr):RT.ctr.delete(c.dataset.ctr);vTravail();});
   app.querySelectorAll('[data-eng]').forEach(c=>c.onchange=()=>{const E=new Set(S.cfg.eng||[]);c.checked?E.add(c.dataset.eng):E.delete(c.dataset.eng);S.cfg.eng=[...E];save();vTravail();});
   app.querySelectorAll('[data-cfgw]').forEach(el=>el.onchange=()=>{S.cfg[el.dataset.cfgw]=el.value;save();});
+  app.querySelectorAll('[data-pl]').forEach(el=>el.onchange=()=>{const k=el.dataset.pl;PL[k]=['h','sem'].includes(k)?Math.max(1,+el.value||PL[k]):el.value;const y=scrollY;vTravail();scrollTo(0,y);});
+  const ip=$('#impPlan');if(ip)ip.onclick=()=>imprimer(docPlan());
   const ir=$('#impRetour');if(ir)ir.onclick=()=>imprimer(`<h1>Préparer ma visite de pré-reprise</h1><p class="sous">Document personnel, préparé le ${new Date().toLocaleDateString('fr-FR')} avec SeinPrév. À remettre au médecin du travail si je le souhaite, pas à l'employeur.</p>
     <h2>Ce qui me gêne encore</h2><p>${SEQ.filter(s=>RT.seq.has(s[0])).map(s=>s[1]).join(' · ')}</p><h2>Ce que demande mon poste</h2><p>${CTR.filter(s=>RT.ctr.has(s[0])).map(s=>s[1]).join(' · ')||'Non renseigné'}</p>
     <h2>Pistes à discuter</h2>${Pi.map(p=>`<p><b>${p.l}.</b> ${p.b}</p>${p.x.length?`<ul>${p.x.map(x=>`<li>${x.replace(/<a[^>]*>.*?<\/a>\.?/,'')}</li>`).join('')}</ul>`:''}`).join('')}

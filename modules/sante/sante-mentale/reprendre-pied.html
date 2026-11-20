@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reprendre pied — PréventIA Protect</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sm.css">
+<style>
+/* Reprendre pied v1 · retour au travail après un arrêt pour raison psychologique (burn-out, dépression, anxiété, choc)
+   Préparer (ce qui doit changer, fiche de pré-reprise) · Plan par paliers · Météo de reprise (opt-in, locale) · Manager · Infirmier·e.
+   Rien n'est envoyé ; seule la météo peut être gardée dans CE navigateur, au choix de la personne. */
+.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.8rem}
+@media(max-width:860px){.g2,.g3{grid-template-columns:1fr}}
+.stack{display:flex;flex-direction:column;gap:1rem}
+.chk{display:flex;gap:.6rem;align-items:flex-start;font-size:14px;margin:.35rem 0}
+.chk input{margin-top:.3rem;accent-color:var(--psy);width:16px;height:16px;flex:none}
+label.f{display:flex;flex-direction:column;gap:.25rem;font-size:12px;font-weight:600;color:var(--muted)}
+.i{padding:.55rem .7rem;border:1px solid var(--line);border-radius:9px;background:#fff;font:14px 'DM Sans',sans-serif;color:var(--text);width:100%}
+textarea.i{min-height:64px;resize:vertical}
+.tl{display:flex;flex-direction:column;gap:.9rem;position:relative;padding-left:22px;margin-top:.6rem}
+.tl::before{content:"";position:absolute;left:6px;top:6px;bottom:6px;width:2px;background:var(--psy-pale)}
+.tl>div{position:relative}
+.tl .dot{position:absolute;left:-22px;top:5px;width:14px;height:14px;border-radius:50%;background:var(--psy);box-shadow:0 0 0 3px #fff}
+.tl .dot.alt{background:var(--teal)}
+.tl .q{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--psy-dark)}
+.tl p{font-size:13.5px;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{padding:.5rem;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.lv{display:flex;gap:4px}
+.lv button{border:1px solid var(--line);background:#fff;border-radius:8px;width:36px;height:34px;font-weight:700;cursor:pointer}
+.lv button[aria-pressed="true"]{background:var(--psy);border-color:var(--psy);color:#fff}
+.sym{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.6rem;align-items:center;padding:.45rem 0;border-bottom:1px dashed var(--line);font-size:14px}
+.fiche{white-space:pre-wrap;font-size:13px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:.8rem;max-height:320px;overflow:auto}
+.alerte{border-left:4px solid var(--warn);background:var(--warn-bg);padding:.8rem 1rem;border-radius:0 12px 12px 0;font-size:13.5px}
+.chart{width:100%;height:auto}.chart .gl{stroke:var(--line)}.chart .gt{fill:var(--muted);font-size:11px;font-family:'DM Sans',sans-serif}
+.leg{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)}.leg i{display:inline-block;width:12px;height:4px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+.muted{color:var(--muted)}.small{font-size:12.5px}
+#impr{display:none}
+@media print{body.print-doc>*:not(#impr){display:none!important}body.print-doc #impr{display:block}}
+#impr{font-family:'DM Sans',system-ui;color:#111;font-size:12.5px;line-height:1.5;padding:8px 4px}
+#impr h1{font-family:'DM Serif Display',serif;font-weight:400;font-size:24px;color:#5b2a86;margin:0}
+#impr h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:#5b2a86;margin:16px 0 6px;border-bottom:1px solid #dccbe9;padding-bottom:3px}
+#impr .sous,#impr .pied{color:#555;font-size:11.5px}#impr .pied{margin-top:16px;border-top:1px solid #ddd;padding-top:8px}
+#impr table{margin-bottom:8px}#impr th,#impr td{border:1px solid #ccc;padding:5px 7px;color:#111}
+#impr ul{margin:4px 0 8px;padding-left:1.1rem}
+#impr .lignes{height:90px;background:repeating-linear-gradient(#fff 0 26px,#bbb 26px 27px)}
+</style>
+</head>
+<body>
+<nav class="sm-nav"><div class="in">
+  <a class="brand" href="../../../index.html">Prévent<span>IA</span> Protect</a>
+  <a href="index.html">← Santé mentale</a>
+  <span class="sp"></span>
+  <a href="reperer-agir.html#urgence" class="sm-sos">🆘 Urgence</a>
+</div></nav>
+
+<header class="sm-head"><div class="in">
+  <div class="crumb"><a href="../../../index.html">Protect</a> › Santé › <a href="index.html">Santé mentale</a> › Reprendre pied</div>
+  <div class="sm-eyebrow">Revenir · Ajuster · Tenir dans la durée</div>
+  <h1>Reprendre pied</h1>
+  <p>Préparer le retour au travail après un arrêt pour épuisement, dépression, anxiété ou après un choc : ce qui doit changer, une reprise progressive, un suivi simple, et le rôle de chacun.</p>
+</div></header>
+
+<main>
+  <div class="note red" style="margin-top:0"><b>⚕️ Lecture médicale indispensable.</b> Outil de prévention en cours de validation, sans valeur de diagnostic ni de prescription. Le plan et les repères proposés doivent être validés par le médecin traitant (arrêt, temps partiel thérapeutique), le médecin du travail (aménagements du poste) et, le cas échéant, le psychologue ou le psychiatre qui vous suit. En cas d'idées suicidaires : <b>3114</b>, gratuit, 24 h/24 ; danger immédiat : <b>15</b> ou <b>112</b>.</div>
+  <div class="tabs">
+    <button class="tab on" data-t="preparer">🧭 Préparer mon retour</button>
+    <button class="tab" data-t="plan">📅 Mon plan de reprise</button>
+    <button class="tab" data-t="meteo">🌦 Ma météo</button>
+    <button class="tab" data-t="manager">🤝 Côté manager</button>
+    <button class="tab" data-t="infirmier">🩺 Espace infirmier·e</button>
+  </div>
+  <section class="panel on" id="preparer"></section>
+  <section class="panel" id="plan"></section>
+  <section class="panel" id="meteo"></section>
+  <section class="panel" id="manager"></section>
+  <section class="panel" id="infirmier"></section>
+</main>
+<p class="foot">Repères : Code du travail (art. L1226-1-3, L4624-3, L4622-8-1, R4624-29 à R4624-34) ; Code de la sécurité sociale (art. L323-3, D323-6) ; HAS, <i>Burn-out : repérage et prise en charge</i> (2017) ; INRS, <i>Retour au travail après un arrêt</i>. Ces outils aident à préparer et à orienter ; ils ne remplacent pas l'avis du médecin du travail.</p>
+
+<script src="regle.js"></script>
+<script src="../../../core/preventia-ia.js"></script>
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+const fr=d=>d.toLocaleDateString('fr-FR');
+const plusJ=(d,n)=>{const x=new Date(d+'T00:00');x.setDate(x.getDate()+n);return x;};
+const h1=v=>(Math.round(v*2)/2).toString().replace('.',',');
+const LECTURE='Lecture médicale indispensable : document de préparation, sans valeur de diagnostic ni de prescription. Le médecin traitant fixe l\'arrêt et le temps partiel thérapeutique ; le médecin du travail propose les aménagements du poste (art. L4624-3), sans jamais transmettre de diagnostic à l\'employeur.';
+const copier=(btn,txt,lab)=>{const fin=t=>{btn.textContent=t;setTimeout(()=>btn.textContent=lab,1600);};try{navigator.clipboard.writeText(txt).then(()=>fin('Copié ✓'),()=>fin('Copie impossible'));}catch(_){fin('Copie impossible');}};
+function imprimer(html){let a=$('#impr');if(!a){a=document.createElement('div');a.id='impr';document.body.appendChild(a);}
+  a.innerHTML=html;document.body.classList.add('print-doc');setTimeout(()=>{print();setTimeout(()=>document.body.classList.remove('print-doc'),400);},200);}
+const rerender=fn=>{const y=scrollY;fn();scrollTo(0,y);};
+const chk=(set,arr,d)=>arr.map(([k,l])=>`<label class="chk"><input type="checkbox" data-${d}="${k}" ${set.has(k)?'checked':''}><span>${l}</span></label>`).join('');
+const bindSet=(root,d,set,fn)=>root.querySelectorAll(`[data-${d}]`).forEach(c=>c.onchange=()=>{c.checked?set.add(c.dataset[d]):set.delete(c.dataset[d]);rerender(fn);});
+
+/* ════════ 1. PRÉPARER MON RETOUR ════════ */
+const PESE=[['charge','La charge de travail, les délais'],['orga','Des priorités floues ou contradictoires, des interruptions permanentes'],['relation','Une relation difficile avec une personne (collègue, encadrant, client)'],
+  ['manag','Le manque de soutien ou de reconnaissance'],['sens','Un conflit avec mes valeurs, une qualité de travail empêchée'],['violence','Des violences, du harcèlement, un événement choquant'],
+  ['horaires','Les horaires, les trajets, la difficulté à décrocher'],['insec','L\'insécurité : réorganisation, avenir du poste'],['perso','Surtout des raisons personnelles, sans lien avec le travail']];
+const CHANGE=[['c_charge','Une charge et des objectifs ajustés pendant la reprise'],['c_prio','Des priorités claires, un interlocuteur pour arbitrer'],['c_rel','Ne plus travailler directement avec une personne, ou avec un tiers présent'],
+  ['c_poste','Un autre poste, une autre équipe ou un autre site'],['c_hor','Des horaires aménagés, du télétravail partiel'],['c_point','Des points réguliers avec mon encadrant'],['c_mail','Une boîte mail triée avant mon retour, pas de rattrapage'],['c_info','Être informé·e de ce qui a changé pendant mon absence']];
+const ETAPES=[
+ ['Pendant l\'arrêt','Rendez-vous de liaison','Arrêt d\'au moins 30 jours. Échange facultatif avec l\'employeur, le service de santé au travail associé, pour garder le lien et connaître les aides. Ce n\'est pas un rendez-vous médical ; vous pouvez le refuser.','L1226-1-3'],
+ ['Pendant l\'arrêt','Visite de pré-reprise','Arrêt de plus de 30 jours. À demander vous-même, ou par votre médecin traitant ou le médecin-conseil. C\'est le rendez-vous clé pour préparer les aménagements, avant de revenir.','R4624-29'],
+ ['Pendant l\'arrêt','Essai encadré','Tester son poste, ou un autre, pendant l\'arrêt et sans perdre ses indemnités. À demander à l\'Assurance maladie, avec l\'accord du médecin du travail.','CSS D323-6'],
+ ['À la reprise','Temps partiel thérapeutique','Prescrit par le médecin traitant, avec l\'accord de l\'employeur et de l\'Assurance maladie.','CSS L323-3'],
+ ['À la reprise','Visite de reprise','Obligatoire après un arrêt maladie d\'au moins 60 jours (30 jours après un accident du travail), dans les 8 jours qui suivent la reprise.','R4624-31'],
+ ['Dans la durée','Visite à la demande, maintien en emploi','À tout moment, sans passer par l\'employeur. Cellule de prévention de la désinsertion professionnelle, RQTH si les difficultés durent.','R4624-34 · L4622-8-1']];
+const PR={pese:new Set(),change:new Set(),txt:''};
+function vPreparer(){
+  const el=$('#preparer');
+  el.innerHTML=`<h2>Préparer mon retour</h2><p class="lead">Après un arrêt pour raison psychologique, la reprise tient mieux quand ce qui a pesé dans le travail a été regardé <b>avant</b> le retour. Cochez ce qui vous concerne : rien n'est enregistré, vous imprimez si vous le souhaitez.</p>
+  <div class="g2" style="align-items:start">
+    <div class="box"><h3>Les étapes, dans l'ordre</h3><div class="tl">${ETAPES.map(([q,t,p,r],i)=>`<div><span class="dot${i>2?' alt':''}"></span><span class="q">${q}</span><br><b>${t}</b><p>${p} <span class="small">(${r})</span></p></div>`).join('')}</div></div>
+    <div class="stack">
+      <div class="box"><h3>Ce qui a pesé dans mon travail</h3>${chk(PR.pese,PESE,'pe')}</div>
+      <div class="box"><h3>Ce qui devrait changer pour que je revienne</h3>${chk(PR.change,CHANGE,'ch')}
+        <label class="f" style="margin-top:.6rem">Autre chose, avec mes mots<textarea class="i" id="prtxt">${esc(PR.txt)}</textarea></label></div>
+    </div></div>
+  ${PR.pese.has('violence')?'<div class="note red"><b>Violences, harcèlement, événement choquant :</b> parlez-en au médecin du travail avant le retour. L\'employeur doit faire cesser une situation de violence ; un retour au contact de la même personne sans mesure n\'est pas une bonne idée. Voir aussi le <a href="violentometre.html">violentomètre</a>.</div>':''}
+  ${PR.pese.size&&!PR.change.size?'<div class="alerte">Vous avez coché ce qui a pesé, mais rien à changer. Si rien ne bouge dans le travail, le risque de rechute augmente : le médecin du travail peut proposer des aménagements ou un autre poste.</div>':''}
+  <div class="row" style="margin-top:1rem"><button class="btn p" id="impPrep">🖨 Imprimer ma fiche de pré-reprise</button><span class="small muted">Pour le médecin du travail, pas pour l'employeur. Vous décidez de la montrer ou non.</span></div>`;
+  bindSet(el,'pe',PR.pese,vPreparer); bindSet(el,'ch',PR.change,vPreparer);
+  $('#prtxt').oninput=e=>{PR.txt=e.target.value;};
+  $('#impPrep').onclick=()=>imprimer(`<h1>Préparer ma visite de pré-reprise</h1><p class="sous">Document personnel, préparé le ${fr(new Date())} avec Reprendre pied. À remettre au médecin du travail si je le souhaite.</p>
+    <h2>Ce qui a pesé dans mon travail</h2>${PR.pese.size?`<ul>${PESE.filter(([k])=>PR.pese.has(k)).map(([,l])=>`<li>${l}</li>`).join('')}</ul>`:'<p>Non renseigné.</p>'}
+    <h2>Ce qui devrait changer</h2>${PR.change.size?`<ul>${CHANGE.filter(([k])=>PR.change.has(k)).map(([,l])=>`<li>${l}</li>`).join('')}</ul>`:'<p>Non renseigné.</p>'}${PR.txt?`<p>${esc(PR.txt)}</p>`:''}
+    <h2>Mes questions</h2><div class="lignes"></div><p class="pied">${LECTURE}</p>`);
+}
+
+/* ════════ 2. MON PLAN DE REPRISE ════════
+   Même logique que le plan de SeinPrév, avec des tâches propres à la santé mentale. Calendrier indicatif, rien n'est enregistré. */
+const PL={date:'',arret:'60',mode:'tpt',h:35,dep:50,sem:12,rep:'demi'};
+const TACHES=[['reunions','Réunions longues ou nombreuses','Réunions : courtes et peu nombreuses au début, ordre du jour connu à l\'avance.'],
+  ['public','Public ou clients difficiles','Public difficile : plages courtes, jamais seul·e au début, possibilité de passer la main.'],
+  ['astreinte','Astreintes, permanences, urgences','Astreintes et urgences : pas pendant les premiers paliers.'],
+  ['objectifs','Objectifs chiffrés, évaluations','Objectifs chiffrés : suspendus ou réduits pendant la reprise, sans rattrapage.'],
+  ['encadrement','Encadrement d\'une équipe','Encadrement : d\'abord appuyé·e par un binôme, retour progressif des décisions difficiles.'],
+  ['deplacements','Déplacements, trajets longs','Déplacements : limités au début.'],
+  ['flux','Flux de mails et de messages, interruptions','Messages : boîte triée avant le retour, plages sans interruption, droit à la déconnexion respecté.'],
+  ['nuit','Horaires de nuit, postés ou décalés','Horaires de nuit ou décalés : horaires de jour stables au début, sur avis du médecin du travail.'],
+  ['personne','Travail avec la personne liée aux difficultés','Contact avec la personne en cause : seulement si une solution a été trouvée avec le médecin du travail et l\'employeur.']];
+const TS=new Set();
+function paliers(){
+  if(PL.mode!=='tpt') return [];
+  const d=+PL.dep,n=d>=80?2:3,lv=[...new Set(Array.from({length:n},(_,i)=>Math.min(90,Math.round((d+i*(100-d)/n)/10)*10)))],w=Math.max(1,Math.round(PL.sem/lv.length));
+  return lv.map((p,i)=>({p,de:i*w+1,a:i===lv.length-1?Math.max(PL.sem,i*w+1):(i+1)*w,h:PL.h*p/100}));
+}
+function repartition(p){const hj=PL.h/5,hw=PL.h*p/100,full=Math.floor(hw/hj+1e-9),rest=hw-full*hj;
+  if(PL.rep==='demi')return `${h1(hw/5)} h par jour, 5 jours`;
+  return `${full} jour${full>1?'s':''} entier${full>1?'s':''}${rest>.4?` et ${h1(rest)} h`:''}, jamais deux longues journées d'affilée au début`;}
+function etapesPlan(){
+  const D=PL.date,q=(n,t,p,max)=>({q:D?(n<0?'Avant le '+fr(plusJ(D,0)):n===0?'Le '+fr(plusJ(D,0)):(max?'Au plus tard le ':'Vers le ')+fr(plusJ(D,n))):(n<0?'Avant la reprise':n===0?'Jour de la reprise':max?`Dans les ${n} jours`:`Semaine ${Math.ceil(n/7)}`),t,p}),E=[],Pa=paliers();
+  if(+PL.arret>=30)E.push(q(-1,'Visite de pré-reprise','Avec votre fiche « Préparer mon retour ». Le plan se discute là (art. R4624-29).'));
+  if(PL.mode==='tpt')E.push(q(-1,'Temps partiel thérapeutique','Prescrit par le médecin traitant ; les paliers ci-dessous sont une proposition à lui montrer.'));
+  E.push(q(0,'Premier jour : entretien de retour','Avec le manager : accueil, ce qui a changé, missions des premières semaines, ce qui n\'est pas attendu. On ne parle pas de santé.'));
+  E.push(q(7,'Premier point','Avec le manager ou l\'infirmier·e : rythme, fatigue, charge. On ajuste.'));
+  if(+PL.arret>=60)E.push(q(8,'Visite de reprise','Obligatoire dans les 8 jours qui suivent la reprise (art. R4624-31).',true));
+  Pa.slice(0,-1).forEach((x,i)=>E.push(q(x.a*7,`Fin du palier ${i+1}`,`Point avant de passer à ${Pa[i+1].p} %. Rester plus longtemps sur un palier est normal.`)));
+  const fin=PL.mode==='tpt'?PL.sem*7:30;
+  if(PL.mode==='tpt')E.push(q(fin,'Retour au temps plein','Si l\'énergie le permet. Sinon : médecin traitant (prolongation) et médecin du travail (visite à la demande).'));
+  E.push(q(fin+60,'Point à 2 mois','Ce qui tient, ce qui reste difficile. Les rechutes surviennent souvent quand la vigilance retombe.'));
+  E.push(q(fin+150,'Point à 6 mois','Dernier point prévu. La visite à la demande reste possible à tout moment.'));
+  return E;
+}
+const DM={ia:'',etat:''};
+function messageManager(){const t=TACHES.filter(([k])=>TS.has(k)).map(x=>x[2].split(' : ')[0].toLowerCase());
+  return `Bonjour,\n\nJe reprends le travail${PL.date?' le '+fr(plusJ(PL.date,0)):''}${PL.mode==='tpt'?', d\'abord à temps partiel':''}. Pour que ce retour se passe bien, j'aimerais que nous puissions échanger au début de ma reprise sur l'organisation des premières semaines${t.length?', notamment : '+t.join(', '):''}.\n\nLe médecin du travail pourra, si besoin, préciser les aménagements utiles, sans qu'il soit nécessaire d'entrer dans des détails de santé.\n\nMerci d'avance,\nCordialement,`;}
+async function messageIA(){
+  DM.etat='⏳ Rédaction en cours…';rerender(vPlan);
+  try{DM.ia=(await PIA.texte({max_tokens:500,system:"Tu aides un salarié français qui reprend le travail après un arrêt maladie à écrire un message court (120 mots au plus) à son manager pour préparer son retour. Règles strictes : ne mentionne AUCUNE maladie, AUCUN symptôme, AUCUN traitement, ni la santé mentale, ni la cause de l'arrêt ; parle seulement d'organisation du travail. Ton courtois, confiant, tourné vers la reprise. N'invente aucun aménagement en dehors de ceux fournis. Rappelle en une phrase que le médecin du travail peut préciser les aménagements sans détail médical. Réponds uniquement par le message, en français, terminé par « Cordialement, ».",messages:[{role:'user',content:`Date de reprise : ${PL.date||'non précisée'}. Mode : ${PL.mode==='tpt'?'temps partiel thérapeutique':'temps plein'}. Points d'organisation : ${TACHES.filter(([k])=>TS.has(k)).map(x=>x[2]).join(' ; ')||'aucun précisé'}.`}]}))+'\n\nTexte proposé par une IA, à relire.';DM.etat='';}
+  catch(e){DM.etat='⚠ '+(e.message||'Service IA indisponible')+' : le modèle ci-dessus reste utilisable.';}
+  rerender(vPlan);
+}
+function vPlan(){
+  const el=$('#plan'),Pa=paliers(),E=etapesPlan(),R=TACHES.filter(([k])=>TS.has(k));
+  const opt=(arr,v)=>arr.map(([k,l])=>`<option value="${k}" ${String(v)===k?'selected':''}>${l}</option>`).join('');
+  el.innerHTML=`<h2>Mon plan de reprise</h2><p class="lead">Un calendrier indicatif pour revenir progressivement. Après un épuisement ou une dépression, la fatigue et la concentration reviennent lentement : mieux vaut un départ doux qu'une reprise trop rapide suivie d'une rechute.</p>
+  <div class="note"><b>⚕️ Proposition à valider.</b> La quotité et la durée du temps partiel thérapeutique sont fixées par le médecin traitant ; les aménagements, par le médecin du travail. Rien n'est enregistré.</div>
+  <div class="box"><div class="g3">
+    <label class="f">Date de reprise prévue<input class="i" type="date" data-pl="date" value="${PL.date}"></label>
+    <label class="f">Durée de l'arrêt<select class="i" data-pl="arret">${opt([['29','Moins de 30 jours'],['30','30 à 59 jours'],['60','60 jours ou plus']],PL.arret)}</select></label>
+    <label class="f">Mode de reprise<select class="i" data-pl="mode">${opt([['tpt','Temps partiel thérapeutique'],['plein','Temps plein avec aménagements']],PL.mode)}</select></label>
+    ${PL.mode==='tpt'?`<label class="f">Heures par semaine à temps plein<input class="i" type="number" min="10" max="48" data-pl="h" value="${PL.h}"></label>
+    <label class="f">Quotité de départ<select class="i" data-pl="dep">${opt([['50','50 %'],['60','60 %'],['70','70 %']],PL.dep)}</select></label>
+    <label class="f">Durée du temps partiel<select class="i" data-pl="sem">${opt([['8','2 mois'],['12','3 mois'],['26','6 mois']],PL.sem)}</select></label>
+    <label class="f">Répartition souhaitée<select class="i" data-pl="rep">${opt([['demi','Demi-journées tous les jours'],['jours','Journées entières espacées']],PL.rep)}</select></label>`:''}</div>
+    ${Pa.length?`<div style="overflow-x:auto;margin-top:1rem"><table><thead><tr><th>Palier</th><th>Semaines</th><th>Temps de travail</th><th>Organisation possible</th></tr></thead><tbody>${Pa.map((x,i)=>`<tr><td><b>${i+1}</b></td><td>${x.de} à ${x.a}</td><td><b>${x.p} %</b> · ${h1(x.h)} h</td><td class="small">${repartition(x.p)}</td></tr>`).join('')}<tr><td><b>Ensuite</b></td><td>${PL.sem+1} et après</td><td><b>100 %</b> · ${h1(PL.h)} h</td><td class="small">Si l'énergie le permet</td></tr></tbody></table></div>`:''}</div>
+  <div class="g2" style="align-items:start;margin-top:1rem">
+    <div class="box"><h3>Points d'étape</h3><div class="tl">${E.map((e,i)=>`<div><span class="dot${i%2?' alt':''}"></span><span class="q">${e.q}</span><br><b>${e.t}</b><p>${e.p}</p></div>`).join('')}</div></div>
+    <div class="stack"><div class="box"><h3>Ce que comporte mon poste</h3><p class="small muted">Ces tâches reviennent en dernier, progressivement.</p>${chk(TS,TACHES.map(([k,l])=>[k,l]),'ts')}
+      ${R.length?`<ul style="margin-top:.6rem">${R.map(x=>`<li>${x[2]}</li>`).join('')}</ul>`:''}</div>
+      <div class="box"><h3>Mon message au manager</h3><p class="small muted">Il parle d'organisation, jamais de santé.</p><div class="fiche" id="msg">${esc(DM.ia||messageManager())}</div>
+        <div class="row" style="margin-top:.6rem"><button class="btn" id="cpMsg">Copier</button><button class="btn" id="iaMsg">✨ Reformuler avec l'IA</button>${DM.ia?'<button class="btn" id="rzMsg">Revenir au modèle</button>':''}</div>${DM.etat?`<p class="small muted" style="margin-top:.4rem">${esc(DM.etat)}</p>`:''}
+        <p class="small muted" style="margin-top:.4rem">L'IA ne reçoit que la date, le mode de reprise et les points cochés : aucune information de santé.</p></div></div></div>
+  <div class="row" style="margin-top:1rem"><button class="btn p" id="impPlan">🖨 Imprimer mon plan</button></div>`;
+  el.querySelectorAll('[data-pl]').forEach(x=>x.onchange=()=>{const k=x.dataset.pl;PL[k]=['h','sem'].includes(k)?Math.max(1,+x.value||PL[k]):x.value;DM.ia='';rerender(vPlan);});
+  bindSet(el,'ts',TS,()=>{DM.ia='';vPlan();});
+  $('#cpMsg').onclick=e=>copier(e.target,DM.ia||messageManager(),'Copier');
+  $('#iaMsg').onclick=()=>{if(!window.PIA){DM.etat='⚠ Service IA indisponible sur cette page.';rerender(vPlan);return;}messageIA();};
+  const rz=$('#rzMsg');if(rz)rz.onclick=()=>{DM.ia='';rerender(vPlan);};
+  $('#impPlan').onclick=()=>imprimer(`<h1>Mon plan de reprise</h1><p class="sous">Proposition préparée le ${fr(new Date())} avec Reprendre pied${PL.date?', pour une reprise prévue le '+fr(plusJ(PL.date,0)):''}. Document personnel, à discuter avec mon médecin traitant et mon médecin du travail. Il ne mentionne aucun diagnostic.</p>
+    <h2>Mode de reprise</h2><p>${PL.mode==='tpt'?`Temps partiel thérapeutique, de ${PL.dep} % sur ${PL.sem} semaines, base ${h1(PL.h)} h par semaine.`:'Temps plein avec aménagements.'}</p>
+    ${Pa.length?`<h2>Paliers</h2><table><tr><th>Palier</th><th>Semaines</th><th>Temps</th><th>Organisation</th></tr>${Pa.map((x,i)=>`<tr><td>${i+1}</td><td>${x.de} à ${x.a}</td><td>${x.p} % · ${h1(x.h)} h</td><td>${repartition(x.p)}</td></tr>`).join('')}</table>`:''}
+    <h2>Points d'étape</h2><table><tr><th>Quand</th><th>Quoi</th><th>Notes</th></tr>${E.map(e=>`<tr><td>${e.q}</td><td><b>${e.t}</b><br>${e.p}</td><td style="width:28%"></td></tr>`).join('')}</table>
+    ${R.length?`<h2>Tâches à réintroduire en dernier</h2><ul>${R.map(x=>`<li>${x[2]}</li>`).join('')}</ul>`:''}
+    <h2>Mes questions</h2><div class="lignes"></div><p class="pied">${LECTURE}</p>`);
+}
+
+/* ════════ 3. MA MÉTÉO DE REPRISE ════════
+   Opt-in : gardée dans CE navigateur seulement (localStorage), jamais envoyée. Aucune interprétation par l'IA. */
+const MKEY='pp_reprise_meteo';
+const mstore={get(){try{return JSON.parse(localStorage.getItem(MKEY))}catch(_){return null}},set(v){try{localStorage.setItem(MKEY,JSON.stringify(v))}catch(_){}},del(){try{localStorage.removeItem(MKEY)}catch(_){}}};
+const MI=[['en','Mon énergie','oklch(0.62 0.15 150)'],['so','Mon sommeil','oklch(0.55 0.13 240)'],['co','Ma concentration','oklch(0.55 0.16 300)'],['ca','Mon calme intérieur','oklch(0.72 0.15 70)']];
+const LV=['Très bas','Bas','Moyen','Bien','Très bien'];
+let MT=mstore.get(); const MD={d:new Date().toISOString().slice(0,10),v:{}};
+const tot=e=>MI.reduce((s,[k])=>s+(e.v[k]??0),0);
+function courbe(E){const W=560,H=170,L=30,R=10,T=10,B=26,n=E.length,px=i=>L+(n<2?(W-L-R)/2:i*(W-L-R)/(n-1)),py=v=>T+(1-v/4)*(H-T-B);
+  const g=[0,1,2,3,4].map(v=>`<line x1="${L}" x2="${W-R}" y1="${py(v)}" y2="${py(v)}" class="gl"/><text x="${L-6}" y="${py(v)+4}" text-anchor="end" class="gt">${v}</text>`).join('');
+  const sx=E.map((e,i)=>`<text x="${px(i)}" y="${H-6}" text-anchor="middle" class="gt">${e.d.slice(8,10)}/${e.d.slice(5,7)}</text>`).join('');
+  const ls=MI.map(([k,,c])=>{const p=E.map((e,i)=>e.v[k]==null?null:[px(i),py(e.v[k])]).filter(Boolean);return `<polyline points="${p.map(q=>q.join(',')).join(' ')}" fill="none" stroke="${c}" stroke-width="2.5"/>${p.map(q=>`<circle cx="${q[0]}" cy="${q[1]}" r="3.5" fill="${c}"/>`).join('')}`;}).join('');
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Évolution de ma météo">${g}${sx}${ls}</svg><div class="leg">${MI.map(([,l,c])=>`<span><i style="background:${c}"></i>${l}</span>`).join('')}</div>`;}
+function signal(E){
+  if(!E.length)return '';const l=E.at(-1);
+  if(tot(l)<=4)return 'Votre météo est très basse cette semaine. Parlez-en rapidement à votre médecin traitant ou au médecin du travail, et ne restez pas seul·e.';
+  if(E.length>=3&&tot(E.at(-1))<tot(E.at(-2))&&tot(E.at(-2))<tot(E.at(-3)))return 'Votre météo baisse depuis deux semaines. C\'est le moment d\'en parler : médecin du travail (visite à votre demande), médecin traitant, ou la personne qui vous suit.';
+  return '';}
+function vMeteo(){
+  const el=$('#meteo'),E=MT?MT.j:[],sig=signal(E);
+  el.innerHTML=`<h2>Ma météo de reprise</h2><p class="lead">Une minute par semaine, quatre curseurs. La courbe vous aide à voir où vous en êtes et à en parler, si vous le souhaitez, au médecin du travail ou à la personne qui vous suit.</p>
+  <div class="note"><b>Confidentiel.</b> Rien n'est envoyé. ${MT?'Votre météo est gardée sur cet appareil uniquement.':'Par défaut, rien n\'est gardé : activez le suivi pour conserver votre courbe sur cet appareil.'} Ce n'est pas un test : seules les personnes qui vous soignent peuvent interpréter votre état.</div>
+  ${sig?`<div class="alerte"><b>À noter :</b> ${sig}</div>`:''}
+  <div class="note red"><b>Idées noires, envie de tout arrêter ?</b> Appelez le <b>3114</b> (gratuit, 24 h/24). Danger immédiat : <b>15</b> ou <b>112</b>.</div>
+  <div class="g2" style="align-items:start">
+    <div class="box"><h3>Ma semaine</h3><label class="f" style="max-width:180px;margin-bottom:.4rem">Date<input class="i" type="date" id="md" value="${MD.d}" max="${new Date().toISOString().slice(0,10)}"></label>
+      ${MI.map(([k,l])=>`<div class="sym"><span>${l}</span><div class="lv">${[0,1,2,3,4].map(v=>`<button data-m="${k}" data-v="${v}" aria-pressed="${MD.v[k]===v}" title="${LV[v]}">${v}</button>`).join('')}</div></div>`).join('')}
+      <p class="small muted" style="margin:.4rem 0">0 = très bas · 4 = très bien</p>
+      <div class="row">${MT?'<button class="btn p" id="madd">Enregistrer ma semaine</button>':'<button class="btn p" id="mon">Activer mon suivi</button>'}</div></div>
+    <div class="box"><h3>Ma courbe</h3>${E.length?courbe(E.slice(-12)):'<p class="small muted">Votre courbe apparaîtra après votre première semaine.</p>'}
+      ${E.length?`<div class="row" style="margin-top:.6rem"><button class="btn" id="mexp">💾 Sauvegarder</button><button class="btn" id="mdel">Tout effacer</button></div>`:''}</div></div>`;
+  el.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{MD.v[b.dataset.m]=+b.dataset.v;rerender(vMeteo);});
+  $('#md').onchange=e=>{MD.d=e.target.value;};
+  const on=$('#mon');if(on)on.onclick=()=>{MT={j:[]};mstore.set(MT);rerender(vMeteo);};
+  const ad=$('#madd');if(ad)ad.onclick=()=>{if(MI.some(([k])=>MD.v[k]==null)){alert('Renseignez les quatre curseurs.');return;}const i=MT.j.findIndex(x=>x.d===MD.d),e={d:MD.d,v:{...MD.v}};i>=0?MT.j[i]=e:MT.j.push(e);MT.j.sort((a,b)=>a.d<b.d?-1:1);mstore.set(MT);MD.v={};rerender(vMeteo);};
+  const ex=$('#mexp');if(ex)ex.onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(MT,null,1)],{type:'application/json'}));a.download=`ma-meteo-reprise-${new Date().toISOString().slice(0,10)}.json`;a.click();};
+  const dl=$('#mdel');if(dl)dl.onclick=()=>{if(!confirm('Effacer définitivement votre météo sur cet appareil ?'))return;mstore.del();MT=null;rerender(vMeteo);};
+}
+
+/* ════════ 4. CÔTÉ MANAGER ════════ */
+const ENTRETIEN=[['Accueillir','« Je suis content·e de te revoir. » Un lieu calme, du temps, la porte fermée. Le poste de travail est prêt (accès, matériel).'],
+ ['Informer','Ce qui a changé pendant l\'absence : équipe, outils, dossiers. Qui a repris quoi.'],
+ ['Organiser','Les missions des premières semaines, et surtout ce qui n\'est PAS attendu : pas de rattrapage, pas d\'objectifs chiffrés au début.'],
+ ['Ajuster','Le rythme (temps partiel, paliers), les tâches qui reviendront plus tard, la boîte mail.'],
+ ['Convenir','Ce que la personne souhaite dire, ou non, à l\'équipe. Les prochains points : J+7, J+30, J+90.']];
+const PASDIRE=['Demander le diagnostic, le traitement ou les raisons de l\'arrêt.','« Alors, ça va mieux ? » répété, ou « tu as bonne mine ».','Annoncer à l\'équipe des informations de santé.','Rattraper le retard ou confier « un petit dossier urgent » le premier jour.','Mettre la personne à l\'écart « pour la ménager » sans le lui demander.'];
+function vManager(){
+  $('#manager').innerHTML=`<h2>Côté manager</h2><p class="lead">Le rôle du manager n'est pas de soigner : c'est d'organiser un retour où la personne peut retrouver sa place. On parle de travail, jamais de santé.</p>
+  <div class="g2" style="align-items:start">
+    <div class="box"><h3>L'entretien de retour, en 5 temps</h3>${ENTRETIEN.map(([t,p],i)=>`<div class="step" style="margin:.6rem 0"><div class="n">${i+1}</div><div class="b"><h4>${t}</h4><p>${p}</p></div></div>`).join('')}</div>
+    <div class="stack">
+      <div class="box"><h3>Ce qu'on évite</h3><ul>${PASDIRE.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+      <div class="box"><h3>Ce que l'on dit à l'équipe</h3><ul><li>Seulement ce que la personne a accepté : en général, « X revient, à temps partiel au début ».</li><li>Comment la charge est répartie pendant la reprise, pour que l'équipe ne la porte pas seule.</li><li>Accueillir simplement, sans questions sur l'absence.</li></ul></div>
+      <div class="box"><h3>Dans la durée</h3><ul><li>Points courts et réguliers : J+7, J+30, J+90.</li><li>Surveiller la charge : les rechutes surviennent souvent quand tout « redevient normal ».</li><li>Si l'organisation du travail était en cause, la traiter avec le préventeur ou le CSE : voir le <a href="rps.html">diagnostic RPS</a>.</li><li>En cas de doute : le médecin du travail ou l'infirmier·e, qui ne vous diront rien de médical mais peuvent conseiller.</li></ul></div>
+    </div></div>
+  <div class="note"><b>Signaux qui doivent alerter après le retour :</b> retrait, irritabilité inhabituelle, erreurs qui se multiplient, présence très tardive. On en parle avec la personne et on oriente vers le service de santé au travail. Voir <a href="reperer-agir.html">Repérer et agir</a>.</div>`;
+}
+
+/* ════════ 5. ESPACE INFIRMIER·E ════════ */
+const TRAME=[
+ ['sit','1. Situation',['Arrêt de plus de 30 jours','Arrêt de 60 jours ou plus (visite de reprise obligatoire)','Suivi en cours par le médecin traitant','Suivi psychologique ou psychiatrique en cours','Visite de pré-reprise réalisée']],
+ ['fac','2. Facteurs professionnels évoqués',['Charge, délais','Organisation, interruptions, priorités','Relations, conflit','Manque de soutien ou de reconnaissance','Conflit de valeurs, qualité empêchée','Violences, harcèlement évoqué, événement choquant','Insécurité de l\'emploi']],
+ ['etat','3. Au moment du retour',['Fatigue importante','Sommeil perturbé','Difficultés de concentration','Appréhension forte du retour','Idées suicidaires recherchées (question posée)']],
+ ['mes','4. Mesures',['Temps partiel thérapeutique','Aménagements proposés par le médecin du travail (art. L4624-3)','Changement de poste ou d\'équipe à étudier','Cellule de prévention de la désinsertion professionnelle','RQTH évoquée','Orientation psychologue / médecin traitant','Météo de reprise proposée','Nouveau point prévu']],
+ ['col','5. Prévention collective',['Facteur organisationnel à signaler, sans nom, au préventeur ou au CSE','Diagnostic RPS de l\'unité à proposer']]];
+const VIS={c:{},t:{}};
+function texteVis(){const L=['ENTRETIEN DE REPRISE — SANTÉ MENTALE',`Date : ${fr(new Date())}`];
+  TRAME.forEach(([k,t,it])=>{const c=it.filter((_,i)=>VIS.c[k+i]);const n=VIS.t[k];if(!c.length&&!n)return;L.push('',t.toUpperCase());c.forEach(x=>L.push('- '+x));if(n)L.push('  Note : '+n);});
+  L.push('','Trame Reprendre pied, outil de préparation sans valeur de diagnostic. À reporter dans le dossier médical en santé au travail.');return L.join('\n');}
+function vInfirmier(){
+  const el=$('#infirmier');
+  el.innerHTML=`<h2>Espace infirmier·e</h2><p class="lead">Trame de l'entretien de reprise, à mener dans le cadre du protocole avec le médecin du travail. Rien n'est enregistré : la synthèse se copie dans le dossier médical.</p>
+  <div class="note red"><b>Si la personne évoque des idées suicidaires :</b> posez la question directement, ne la laissez pas repartir seule, prévenez le médecin du travail, 3114 ou 15 selon l'urgence. <a href="reperer-agir.html#urgence">Conduite à tenir</a>.</div>
+  <div class="g2" style="align-items:start">${TRAME.map(([k,t,it])=>`<div class="box"><h3>${t}</h3>${it.map((x,i)=>`<label class="chk"><input type="checkbox" data-vc="${k+i}" ${VIS.c[k+i]?'checked':''}><span>${x}</span></label>`).join('')}<label class="f" style="margin-top:.4rem">Note<textarea class="i" data-vt="${k}">${esc(VIS.t[k]||'')}</textarea></label></div>`).join('')}</div>
+  <div class="box" style="margin-top:1rem"><div class="row"><h3>Synthèse à reporter</h3><span class="sp" style="flex:1"></span><button class="btn" id="vcp">Copier</button><button class="btn" id="vraz">Effacer</button></div><div class="fiche" id="vtx" style="margin-top:.6rem">${esc(texteVis())}</div></div>`;
+  el.querySelectorAll('[data-vc]').forEach(c=>c.onchange=()=>{VIS.c[c.dataset.vc]=c.checked;$('#vtx').textContent=texteVis();});
+  el.querySelectorAll('[data-vt]').forEach(t=>t.oninput=()=>{VIS.t[t.dataset.vt]=t.value.trim();$('#vtx').textContent=texteVis();});
+  $('#vcp').onclick=e=>copier(e.target,texteVis(),'Copier');
+  $('#vraz').onclick=()=>{VIS.c={};VIS.t={};vInfirmier();};
+}
+
+vPreparer();vPlan();vMeteo();vManager();vInfirmier();
+SM.onglets();
+})();
+</script>
+</body>
+</html>

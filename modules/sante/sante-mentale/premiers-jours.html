@@ -106,6 +106,12 @@ main{max-width:640px;margin:0 auto;padding-block:22px 48px}
 .progress{display:flex;gap:3px}
 .progress i{width:12px;height:4px;border-radius:4px;background:var(--line)}
 .progress i.on{background:var(--teal)}
+.dayprog{display:flex;flex-direction:column;gap:4px;flex:1;min-width:150px;max-width:260px}
+.dayprog .bar{height:8px;background:var(--card-2);border-radius:99px;overflow:hidden}
+.dayprog .bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--teal),var(--orange));transition:width .6s}
+.dayprog small{font-size:.72rem;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.evo{width:100%;height:auto;display:block}.evo .gl{stroke:var(--line)}.evo text{fill:var(--muted);font-size:10px;font-family:var(--f-body)}
+.evo-leg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.78rem;margin-top:8px}.evo-leg span{display:flex;align-items:center;gap:6px}.evo-leg i{width:14px;height:3px;border-radius:2px}
 .scene-text{font-size:1.1rem;line-height:1.6}
 .choices{display:flex;flex-direction:column;gap:10px}
 .choice{text-align:left;background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:13px 16px;font-size:.98rem;line-height:1.45}
@@ -199,6 +205,7 @@ const SITUATIONS = {
 };
 const GAUGES = [{k:"sommeil",l:"Sommeil"},{k:"energie",l:"Énergie"},{k:"moral",l:"Moral"},{k:"relations",l:"Relations"},{k:"equilibre",l:"Équilibre"}];
 const DAYS = ["Jour 1","Jour 5","Semaine 2","Semaine 3","Mois 1","Semaine 6","Mois 2","Semaine 10","Semaine 12","Mois 3"];
+const DAYN = [1,5,14,21,30,42,60,70,84,90]; // jour réel de chaque étape, pour la progression sur 100 jours
 
 const C = {
  arrivee:{t:"{j1} On vous présente quinze personnes, trois logiciels et une dizaine de sigles maison en une heure. Vous en avez retenu quelques-uns.",c:[
@@ -313,11 +320,11 @@ const SECTEURS = {
 /* =========================================================
    ÉTAT
    ========================================================= */
-const S = {sit:null, sect:null, step:-1, g:null, answered:false};
+const S = {sit:null, sect:null, step:-1, g:null, h:[], answered:false}; // h : jauges après chaque étape, en mémoire seulement
 const fill = s => s.replace('{j1}', SITUATIONS[S.sit]?.j1 || '');
 const clamp = v => Math.max(0,Math.min(100,v));
 const scenes = () => { const m = SECTEURS[S.sect]; return [C.arrivee,C.referent,m.a,C.mails,C.erreur,m.b,C.remarques,C.pot,C.coupdemou,C.essai]; };
-const reset = () => { S.g={sommeil:60,energie:60,moral:60,relations:55,equilibre:60}; };
+const reset = () => { S.g={sommeil:60,energie:60,moral:60,relations:55,equilibre:60}; S.h=[{...S.g}]; };
 const label = k => GAUGES.find(x=>x.k===k).l;
 const scrollTop = () => window.scrollTo(0,0);
 
@@ -357,7 +364,7 @@ function renderParcours(){
   gz.innerHTML=gaugesHTML();
   app.innerHTML=`<section class="stack">
     <div class="when"><div><p class="eyebrow">${SECTEURS[S.sect].label}</p><p class="day">${DAYS[S.step]}</p></div>
-      <div class="progress" aria-label="Étape ${S.step+1} sur ${list.length}">${list.map((_,i)=>`<i class="${i<=S.step?'on':''}"></i>`).join('')}</div></div>
+      <div class="dayprog" role="progressbar" aria-label="Progression sur les 100 jours" aria-valuemin="1" aria-valuemax="100" aria-valuenow="${DAYN[S.step]}"><div class="bar"><i style="width:${DAYN[S.step]}%"></i></div><small>Jour ${DAYN[S.step]} sur 100 · étape ${S.step+1}/${list.length}</small></div></div>
     <p class="scene-text">${fill(sc.t)}</p>
     <div class="choices">${sc.c.map((c,i)=>`<button class="choice" data-i="${i}">${c.t}</button>`).join('')}</div>
     <div id="fb" class="stack"></div>
@@ -369,6 +376,7 @@ function choose(sc,i,btn){
   const c=sc.c[i], d=Object.entries(c.fx);
   app.querySelectorAll('.choice').forEach(b=>b.disabled=true); btn.classList.add('chosen');
   d.forEach(([k,v])=>S.g[k]=clamp(S.g[k]+v));
+  S.h[S.step+1]={...S.g};
   gz.querySelectorAll('.gauge').forEach((g,j)=>{const k=GAUGES[j].k;g.querySelector('.fill').style.width=S.g[k]+'%';g.classList.toggle('low',S.g[k]<=25);g.querySelector('.track').setAttribute('aria-valuenow',S.g[k]);});
   const tools={stop:"la méthode STOP",breath:"la respiration 3-6-5",non:"la formule pour dire non"};
   const last=S.step===scenes().length-1;
@@ -391,6 +399,16 @@ const TIPS={
   relations:"Demander de l'aide, proposer un café, dire les choses au calme et en tête à tête.",
   equilibre:"Le droit à la déconnexion, des limites claires sur les heures en plus, du temps pour vous."
 };
+function evoSVG(){
+  const xs=[0,...DAYN], W=600, H=210, L=30, R=12, T=10, B=28;
+  const x=d=>L+(d/100)*(W-L-R), y=v=>T+(1-v/100)*(H-T-B);
+  const grid=[0,25,50,75,100].map(v=>`<line class="gl" x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}"/><text x="${L-6}" y="${y(v)+3}" text-anchor="end">${v}</text>`).join('');
+  const ticks=[[0,"Départ","start"],[30,"Mois 1","middle"],[60,"Mois 2","middle"],[90,"Mois 3","middle"]].map(([d,l,a])=>`<text x="${x(d)}" y="${H-8}" text-anchor="${a}">${l}</text>`).join('');
+  const lines=GAUGES.map(g=>{const p=S.h.map((s,i)=>s?`${x(xs[i]).toFixed(1)},${y(s[g.k]).toFixed(1)}`:null).filter(Boolean).join(' ');
+    return `<polyline points="${p}" fill="none" stroke="var(--g-${g.k})" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;}).join('');
+  return `<svg class="evo" viewBox="0 0 ${W} ${H}" role="img" aria-label="Évolution des cinq jauges, du départ au mois 3">${grid}${ticks}${lines}</svg>
+    <div class="evo-leg">${GAUGES.map(g=>`<span><i style="background:var(--g-${g.k})"></i>${g.l}</span>`).join('')}</div>`;
+}
 function renderBilan(){
   gz.innerHTML='';
   const avg=Math.round(GAUGES.reduce((a,x)=>a+S.g[x.k],0)/5);
@@ -402,6 +420,8 @@ function renderBilan(){
     <p class="eyebrow">Jour 100 · Bilan</p>
     <h2>${msg}</h2>
     <div class="card stack" style="gap:10px">${GAUGES.map(x=>`<div class="bb"><span>${x.l}</span><div class="track"><div class="fill" style="width:${S.g[x.k]}%;background:var(--g-${x.k})"></div></div><span>${S.g[x.k]}</span></div>`).join('')}</div>
+    <h3>Mon évolution sur les 100 jours</h3>
+    <div class="card">${evoSVG()}<p class="muted" style="font-size:.82rem;margin-top:6px">Chaque point correspond à une situation du parcours. Repérez où une jauge a décroché : c'est là qu'un appui aurait aidé.</p></div>
     <h3>À garder pour la suite</h3>
     ${low.map(x=>`<div class="card tip"><i style="background:var(--g-${x.k})"></i><div><b>${x.l}</b><p class="muted">${TIPS[x.k]}</p></div></div>`).join('')}
     <p class="note">Dans la réalité, il existe bien plus que trois réactions possibles. Si une situation ressemble à ce que vous vivez, <button class="linklike" data-goto="aide">parlez-en à quelqu'un</button>.</p>

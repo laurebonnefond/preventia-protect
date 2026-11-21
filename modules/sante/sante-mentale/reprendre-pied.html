@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="sm.css">
 <style>
 /* Reprendre pied v1 · retour au travail après un arrêt pour raison psychologique (burn-out, dépression, anxiété, choc)
-   Préparer (ce qui doit changer, fiche de pré-reprise) · Retour au poste (tâches, message manager) · Météo de reprise (opt-in, locale) · Manager · Infirmier·e.
+   Préparer (ce qui pourrait aider, notes pour l'échange) · Retour au poste (tâches, message manager) · Météo de reprise (opt-in, locale) · Manager · Infirmier·e.
    Rien n'est envoyé ; seule la météo peut être gardée dans CE navigateur, au choix de la personne. */
 .g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
 .g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.8rem}
@@ -118,18 +118,18 @@ function vPreparer(){
     <div class="box"><h3>Les étapes, dans l'ordre</h3><div class="tl">${ETAPES.map(([q,t,p,r],i)=>`<div><span class="dot${i>2?' alt':''}"></span><span class="q">${q}</span><br><b>${t}</b><p>${p} <span class="small">(${r})</span></p></div>`).join('')}</div></div>
     <div class="stack">
       <div class="box"><h3>Ce qui a pesé dans mon travail</h3>${chk(PR.pese,PESE,'pe')}</div>
-      <div class="box"><h3>Ce qui devrait changer pour que je revienne</h3>${chk(PR.change,CHANGE,'ch')}
+      <div class="box"><h3>Ce qui pourrait m'aider à revenir</h3>${chk(PR.change,CHANGE,'ch')}
         <label class="f" style="margin-top:.6rem">Autre chose, avec mes mots<textarea class="i" id="prtxt">${esc(PR.txt)}</textarea></label></div>
     </div></div>
   ${PR.pese.has('violence')?'<div class="note red"><b>Violences, harcèlement, événement choquant :</b> parlez-en au médecin du travail avant le retour. L\'employeur doit faire cesser une situation de violence ; un retour au contact de la même personne sans mesure n\'est pas une bonne idée. Voir aussi le <a href="violentometre.html">violentomètre</a>.</div>':''}
-  ${PR.pese.size&&!PR.change.size?'<div class="alerte">Vous avez coché ce qui a pesé, mais rien à changer. Si rien ne bouge dans le travail, le risque de rechute augmente : le médecin du travail peut proposer des aménagements ou un autre poste.</div>':''}
-  <div class="row" style="margin-top:1rem"><button class="btn p" id="impPrep">🖨 Imprimer ma fiche de pré-reprise</button><span class="small muted">Pour le médecin du travail, pas pour l'employeur. Vous décidez de la montrer ou non.</span></div>`;
+  ${PR.pese.size&&!PR.change.size?'<div class="alerte">Vous avez coché ce qui a pesé, mais aucune piste pour revenir. Si rien ne bouge dans le travail, le risque de rechute augmente : le médecin du travail peut proposer des aménagements ou un autre poste.</div>':''}
+  <div class="row" style="margin-top:1rem"><button class="btn p" id="impPrep">🖨 Imprimer mes notes pour l'échange</button><span class="small muted">Une base de réflexion pour échanger avec votre service de santé au travail. Elle reste à vous : l'employeur n'y a pas accès.</span></div>`;
   bindSet(el,'pe',PR.pese,vPreparer); bindSet(el,'ch',PR.change,vPreparer);
   $('#prtxt').oninput=e=>{PR.txt=e.target.value;};
-  $('#impPrep').onclick=()=>imprimer(`<h1>Préparer ma visite de pré-reprise</h1><p class="sous">Document personnel, préparé le ${fr(new Date())} avec Reprendre pied. À remettre au médecin du travail si je le souhaite.</p>
+  $('#impPrep').onclick=()=>imprimer(`<h1>Mes repères avant la reprise</h1><p class="sous">Base de réflexion personnelle, préparée le ${fr(new Date())} avec Reprendre pied, pour échanger avec mon service de santé au travail (médecin du travail ou infirmier·e) si je le souhaite.</p>
     <h2>Ce qui a pesé dans mon travail</h2>${PR.pese.size?`<ul>${PESE.filter(([k])=>PR.pese.has(k)).map(([,l])=>`<li>${l}</li>`).join('')}</ul>`:'<p>Non renseigné.</p>'}
-    <h2>Ce qui devrait changer</h2>${PR.change.size?`<ul>${CHANGE.filter(([k])=>PR.change.has(k)).map(([,l])=>`<li>${l}</li>`).join('')}</ul>`:'<p>Non renseigné.</p>'}${PR.txt?`<p>${esc(PR.txt)}</p>`:''}
-    <h2>Mes questions</h2><div class="lignes"></div><p class="pied">${LECTURE}</p>`);
+    <h2>Pistes qui pourraient m'aider</h2>${PR.change.size?`<ul>${CHANGE.filter(([k])=>PR.change.has(k)).map(([,l])=>`<li>${l}</li>`).join('')}</ul>`:'<p>Non renseigné.</p>'}${PR.txt?`<p>${esc(PR.txt)}</p>`:''}
+    <h2>Mes questions</h2><div class="lignes"></div><p class="pied">Ces éléments sont des pistes de réflexion ; les aménagements possibles seront évalués avec l'équipe de santé au travail.</p><p class="pied">${LECTURE}</p>`);
 }
 
 /* ════════ 2. MON RETOUR AU POSTE ════════

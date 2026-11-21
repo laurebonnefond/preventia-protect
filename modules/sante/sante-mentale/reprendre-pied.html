@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="sm.css">
 <style>
 /* Reprendre pied v1 · retour au travail après un arrêt pour raison psychologique (burn-out, dépression, anxiété, choc)
-   Préparer (ce qui doit changer, fiche de pré-reprise) · Plan par paliers · Météo de reprise (opt-in, locale) · Manager · Infirmier·e.
+   Préparer (ce qui doit changer, fiche de pré-reprise) · Retour au poste (tâches, message manager) · Météo de reprise (opt-in, locale) · Manager · Infirmier·e.
    Rien n'est envoyé ; seule la météo peut être gardée dans CE navigateur, au choix de la personne. */
 .g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
 .g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.8rem}
@@ -62,14 +62,14 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute
   <div class="crumb"><a href="../../../index.html">Protect</a> › Santé › <a href="index.html">Santé mentale</a> › Reprendre pied</div>
   <div class="sm-eyebrow">Revenir · Ajuster · Tenir dans la durée</div>
   <h1>Reprendre pied</h1>
-  <p>Préparer le retour au travail après un arrêt pour épuisement, dépression, anxiété ou après un choc : ce qui doit changer, une reprise progressive, un suivi simple, et le rôle de chacun.</p>
+  <p>Préparer le retour au travail après un arrêt pour épuisement, dépression, anxiété ou après un choc : ce qui doit changer, le retour au poste, un suivi simple, et le rôle de chacun.</p>
 </div></header>
 
 <main>
-  <div class="note red" style="margin-top:0"><b>⚕️ Lecture médicale indispensable.</b> Outil de prévention en cours de validation, sans valeur de diagnostic ni de prescription. Le plan et les repères proposés doivent être validés par le médecin traitant (arrêt, temps partiel thérapeutique), le médecin du travail (aménagements du poste) et, le cas échéant, le psychologue ou le psychiatre qui vous suit. En cas d'idées suicidaires : <b>3114</b>, gratuit, 24 h/24 ; danger immédiat : <b>15</b> ou <b>112</b>.</div>
+  <div class="note red" style="margin-top:0"><b>⚕️ Lecture médicale indispensable.</b> Outil de prévention en cours de validation, sans valeur de diagnostic ni de prescription. Les repères proposés doivent être validés par le médecin traitant (arrêt, temps partiel thérapeutique), le médecin du travail (aménagements du poste) et, le cas échéant, le psychologue ou le psychiatre qui vous suit. En cas d'idées suicidaires : <b>3114</b>, gratuit, 24 h/24 ; danger immédiat : <b>15</b> ou <b>112</b>.</div>
   <div class="tabs">
     <button class="tab on" data-t="preparer">🧭 Préparer mon retour</button>
-    <button class="tab" data-t="plan">📅 Mon plan de reprise</button>
+    <button class="tab" data-t="plan">🧩 Mon retour au poste</button>
     <button class="tab" data-t="meteo">🌦 Ma météo</button>
     <button class="tab" data-t="manager">🤝 Côté manager</button>
     <button class="tab" data-t="infirmier">🩺 Espace infirmier·e</button>
@@ -89,8 +89,6 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 const fr=d=>d.toLocaleDateString('fr-FR');
-const plusJ=(d,n)=>{const x=new Date(d+'T00:00');x.setDate(x.getDate()+n);return x;};
-const h1=v=>(Math.round(v*2)/2).toString().replace('.',',');
 const LECTURE='Lecture médicale indispensable : document de préparation, sans valeur de diagnostic ni de prescription. Le médecin traitant fixe l\'arrêt et le temps partiel thérapeutique ; le médecin du travail propose les aménagements du poste (art. L4624-3), sans jamais transmettre de diagnostic à l\'employeur.';
 const copier=(btn,txt,lab)=>{const fin=t=>{btn.textContent=t;setTimeout(()=>btn.textContent=lab,1600);};try{navigator.clipboard.writeText(txt).then(()=>fin('Copié ✓'),()=>fin('Copie impossible'));}catch(_){fin('Copie impossible');}};
 function imprimer(html){let a=$('#impr');if(!a){a=document.createElement('div');a.id='impr';document.body.appendChild(a);}
@@ -134,82 +132,45 @@ function vPreparer(){
     <h2>Mes questions</h2><div class="lignes"></div><p class="pied">${LECTURE}</p>`);
 }
 
-/* ════════ 2. MON PLAN DE REPRISE ════════
-   Même logique que le plan de SeinPrév, avec des tâches propres à la santé mentale. Calendrier indicatif, rien n'est enregistré. */
-const PL={date:'',arret:'60',mode:'tpt',h:35,dep:50,sem:12,rep:'demi'};
+/* ════════ 2. MON RETOUR AU POSTE ════════
+   Pas de calendrier ni de quotité : le rythme de reprise relève du médecin traitant et du médecin du travail.
+   Ici : ce que comporte le poste et qui revient progressivement, et un message au manager sans donnée de santé. */
 const TACHES=[['reunions','Réunions longues ou nombreuses','Réunions : courtes et peu nombreuses au début, ordre du jour connu à l\'avance.'],
   ['public','Public ou clients difficiles','Public difficile : plages courtes, jamais seul·e au début, possibilité de passer la main.'],
-  ['astreinte','Astreintes, permanences, urgences','Astreintes et urgences : pas pendant les premiers paliers.'],
-  ['objectifs','Objectifs chiffrés, évaluations','Objectifs chiffrés : suspendus ou réduits pendant la reprise, sans rattrapage.'],
+  ['astreinte','Astreintes, permanences, urgences','Astreintes et urgences : pas tout de suite.'],
+  ['objectifs','Objectifs chiffrés, évaluations','Objectifs chiffrés : suspendus ou réduits au début, sans rattrapage.'],
   ['encadrement','Encadrement d\'une équipe','Encadrement : d\'abord appuyé·e par un binôme, retour progressif des décisions difficiles.'],
   ['deplacements','Déplacements, trajets longs','Déplacements : limités au début.'],
   ['flux','Flux de mails et de messages, interruptions','Messages : boîte triée avant le retour, plages sans interruption, droit à la déconnexion respecté.'],
-  ['nuit','Horaires de nuit, postés ou décalés','Horaires de nuit ou décalés : horaires de jour stables au début, sur avis du médecin du travail.'],
+  ['nuit','Horaires de nuit, postés ou décalés','Horaires de nuit ou décalés : à voir avec le médecin du travail.'],
   ['personne','Travail avec la personne liée aux difficultés','Contact avec la personne en cause : seulement si une solution a été trouvée avec le médecin du travail et l\'employeur.']];
 const TS=new Set();
-function paliers(){
-  if(PL.mode!=='tpt') return [];
-  const d=+PL.dep,n=d>=80?2:3,lv=[...new Set(Array.from({length:n},(_,i)=>Math.min(90,Math.round((d+i*(100-d)/n)/10)*10)))],w=Math.max(1,Math.round(PL.sem/lv.length));
-  return lv.map((p,i)=>({p,de:i*w+1,a:i===lv.length-1?Math.max(PL.sem,i*w+1):(i+1)*w,h:PL.h*p/100}));
-}
-function repartition(p){const hj=PL.h/5,hw=PL.h*p/100,full=Math.floor(hw/hj+1e-9),rest=hw-full*hj;
-  if(PL.rep==='demi')return `${h1(hw/5)} h par jour, 5 jours`;
-  return `${full} jour${full>1?'s':''} entier${full>1?'s':''}${rest>.4?` et ${h1(rest)} h`:''}, jamais deux longues journées d'affilée au début`;}
-function etapesPlan(){
-  const D=PL.date,q=(n,t,p,max)=>({q:D?(n<0?'Avant le '+fr(plusJ(D,0)):n===0?'Le '+fr(plusJ(D,0)):(max?'Au plus tard le ':'Vers le ')+fr(plusJ(D,n))):(n<0?'Avant la reprise':n===0?'Jour de la reprise':max?`Dans les ${n} jours`:`Semaine ${Math.ceil(n/7)}`),t,p}),E=[],Pa=paliers();
-  if(+PL.arret>=30)E.push(q(-1,'Visite de pré-reprise','Avec votre fiche « Préparer mon retour ». Le plan se discute là (art. R4624-29).'));
-  if(PL.mode==='tpt')E.push(q(-1,'Temps partiel thérapeutique','Prescrit par le médecin traitant ; les paliers ci-dessous sont une proposition à lui montrer.'));
-  E.push(q(0,'Premier jour : entretien de retour','Avec le manager : accueil, ce qui a changé, missions des premières semaines, ce qui n\'est pas attendu. On ne parle pas de santé.'));
-  E.push(q(7,'Premier point','Avec le manager ou l\'infirmier·e : rythme, fatigue, charge. On ajuste.'));
-  if(+PL.arret>=60)E.push(q(8,'Visite de reprise','Obligatoire dans les 8 jours qui suivent la reprise (art. R4624-31).',true));
-  Pa.slice(0,-1).forEach((x,i)=>E.push(q(x.a*7,`Fin du palier ${i+1}`,`Point avant de passer à ${Pa[i+1].p} %. Rester plus longtemps sur un palier est normal.`)));
-  const fin=PL.mode==='tpt'?PL.sem*7:30;
-  if(PL.mode==='tpt')E.push(q(fin,'Retour au temps plein','Si l\'énergie le permet. Sinon : médecin traitant (prolongation) et médecin du travail (visite à la demande).'));
-  E.push(q(fin+60,'Point à 2 mois','Ce qui tient, ce qui reste difficile. Les rechutes surviennent souvent quand la vigilance retombe.'));
-  E.push(q(fin+150,'Point à 6 mois','Dernier point prévu. La visite à la demande reste possible à tout moment.'));
-  return E;
-}
 const DM={ia:'',etat:''};
 function messageManager(){const t=TACHES.filter(([k])=>TS.has(k)).map(x=>x[2].split(' : ')[0].toLowerCase());
-  return `Bonjour,\n\nJe reprends le travail${PL.date?' le '+fr(plusJ(PL.date,0)):''}${PL.mode==='tpt'?', d\'abord à temps partiel':''}. Pour que ce retour se passe bien, j'aimerais que nous puissions échanger au début de ma reprise sur l'organisation des premières semaines${t.length?', notamment : '+t.join(', '):''}.\n\nLe médecin du travail pourra, si besoin, préciser les aménagements utiles, sans qu'il soit nécessaire d'entrer dans des détails de santé.\n\nMerci d'avance,\nCordialement,`;}
+  return `Bonjour,\n\nJe vais reprendre le travail prochainement. Pour que ce retour se passe bien, j'aimerais que nous puissions échanger au début de ma reprise sur l'organisation des premières semaines${t.length?', notamment : '+t.join(', '):''}.\n\nLe médecin du travail pourra, si besoin, préciser les aménagements utiles, sans qu'il soit nécessaire d'entrer dans des détails de santé.\n\nMerci d'avance,\nCordialement,`;}
 async function messageIA(){
   DM.etat='⏳ Rédaction en cours…';rerender(vPlan);
-  try{DM.ia=(await PIA.texte({max_tokens:500,system:"Tu aides un salarié français qui reprend le travail après un arrêt maladie à écrire un message court (120 mots au plus) à son manager pour préparer son retour. Règles strictes : ne mentionne AUCUNE maladie, AUCUN symptôme, AUCUN traitement, ni la santé mentale, ni la cause de l'arrêt ; parle seulement d'organisation du travail. Ton courtois, confiant, tourné vers la reprise. N'invente aucun aménagement en dehors de ceux fournis. Rappelle en une phrase que le médecin du travail peut préciser les aménagements sans détail médical. Réponds uniquement par le message, en français, terminé par « Cordialement, ».",messages:[{role:'user',content:`Date de reprise : ${PL.date||'non précisée'}. Mode : ${PL.mode==='tpt'?'temps partiel thérapeutique':'temps plein'}. Points d'organisation : ${TACHES.filter(([k])=>TS.has(k)).map(x=>x[2]).join(' ; ')||'aucun précisé'}.`}]}))+'\n\nTexte proposé par une IA, à relire.';DM.etat='';}
+  try{DM.ia=(await PIA.texte({max_tokens:500,system:"Tu aides un salarié français qui reprend le travail après un arrêt maladie à écrire un message court (120 mots au plus) à son manager pour préparer son retour. Règles strictes : ne mentionne AUCUNE maladie, AUCUN symptôme, AUCUN traitement, ni la santé mentale, ni la cause de l'arrêt, ni de calendrier ou de quotité de temps de travail ; parle seulement d'organisation du travail. Ton courtois, confiant, tourné vers la reprise. N'invente aucun aménagement en dehors de ceux fournis. Rappelle en une phrase que le médecin du travail peut préciser les aménagements sans détail médical. Réponds uniquement par le message, en français, terminé par « Cordialement, ».",messages:[{role:'user',content:`Points d'organisation : ${TACHES.filter(([k])=>TS.has(k)).map(x=>x[2]).join(' ; ')||'aucun précisé'}.`}]}))+'\n\nTexte proposé par une IA, à relire.';DM.etat='';}
   catch(e){DM.etat='⚠ '+(e.message||'Service IA indisponible')+' : le modèle ci-dessus reste utilisable.';}
   rerender(vPlan);
 }
 function vPlan(){
-  const el=$('#plan'),Pa=paliers(),E=etapesPlan(),R=TACHES.filter(([k])=>TS.has(k));
-  const opt=(arr,v)=>arr.map(([k,l])=>`<option value="${k}" ${String(v)===k?'selected':''}>${l}</option>`).join('');
-  el.innerHTML=`<h2>Mon plan de reprise</h2><p class="lead">Un calendrier indicatif pour revenir progressivement. Après un épuisement ou une dépression, la fatigue et la concentration reviennent lentement : mieux vaut un départ doux qu'une reprise trop rapide suivie d'une rechute.</p>
-  <div class="note"><b>⚕️ Proposition à valider.</b> La quotité et la durée du temps partiel thérapeutique sont fixées par le médecin traitant ; les aménagements, par le médecin du travail. Rien n'est enregistré.</div>
-  <div class="box"><div class="g3">
-    <label class="f">Date de reprise prévue<input class="i" type="date" data-pl="date" value="${PL.date}"></label>
-    <label class="f">Durée de l'arrêt<select class="i" data-pl="arret">${opt([['29','Moins de 30 jours'],['30','30 à 59 jours'],['60','60 jours ou plus']],PL.arret)}</select></label>
-    <label class="f">Mode de reprise<select class="i" data-pl="mode">${opt([['tpt','Temps partiel thérapeutique'],['plein','Temps plein avec aménagements']],PL.mode)}</select></label>
-    ${PL.mode==='tpt'?`<label class="f">Heures par semaine à temps plein<input class="i" type="number" min="10" max="48" data-pl="h" value="${PL.h}"></label>
-    <label class="f">Quotité de départ<select class="i" data-pl="dep">${opt([['50','50 %'],['60','60 %'],['70','70 %']],PL.dep)}</select></label>
-    <label class="f">Durée du temps partiel<select class="i" data-pl="sem">${opt([['8','2 mois'],['12','3 mois'],['26','6 mois']],PL.sem)}</select></label>
-    <label class="f">Répartition souhaitée<select class="i" data-pl="rep">${opt([['demi','Demi-journées tous les jours'],['jours','Journées entières espacées']],PL.rep)}</select></label>`:''}</div>
-    ${Pa.length?`<div style="overflow-x:auto;margin-top:1rem"><table><thead><tr><th>Palier</th><th>Semaines</th><th>Temps de travail</th><th>Organisation possible</th></tr></thead><tbody>${Pa.map((x,i)=>`<tr><td><b>${i+1}</b></td><td>${x.de} à ${x.a}</td><td><b>${x.p} %</b> · ${h1(x.h)} h</td><td class="small">${repartition(x.p)}</td></tr>`).join('')}<tr><td><b>Ensuite</b></td><td>${PL.sem+1} et après</td><td><b>100 %</b> · ${h1(PL.h)} h</td><td class="small">Si l'énergie le permet</td></tr></tbody></table></div>`:''}</div>
-  <div class="g2" style="align-items:start;margin-top:1rem">
-    <div class="box"><h3>Points d'étape</h3><div class="tl">${E.map((e,i)=>`<div><span class="dot${i%2?' alt':''}"></span><span class="q">${e.q}</span><br><b>${e.t}</b><p>${e.p}</p></div>`).join('')}</div></div>
-    <div class="stack"><div class="box"><h3>Ce que comporte mon poste</h3><p class="small muted">Ces tâches reviennent en dernier, progressivement.</p>${chk(TS,TACHES.map(([k,l])=>[k,l]),'ts')}
+  const el=$('#plan'),R=TACHES.filter(([k])=>TS.has(k));
+  el.innerHTML=`<h2>Mon retour au poste</h2><p class="lead">Le rythme de reprise est propre à chacun : il se décide avec le médecin traitant et le médecin du travail. Ici, vous repérez ce que comporte votre poste, pour en parler avec eux et avec votre manager.</p>
+  <div class="note"><b>⚕️ À valider avec le médecin du travail.</b> Les pistes ci-dessous sont des exemples d'aménagement, pas des prescriptions. Rien n'est enregistré.</div>
+  <div class="g2" style="align-items:start">
+    <div class="box"><h3>Ce que comporte mon poste</h3><p class="small muted">Ce qui peut revenir progressivement, selon l'avis du médecin du travail.</p>${chk(TS,TACHES.map(([k,l])=>[k,l]),'ts')}
       ${R.length?`<ul style="margin-top:.6rem">${R.map(x=>`<li>${x[2]}</li>`).join('')}</ul>`:''}</div>
-      <div class="box"><h3>Mon message au manager</h3><p class="small muted">Il parle d'organisation, jamais de santé.</p><div class="fiche" id="msg">${esc(DM.ia||messageManager())}</div>
-        <div class="row" style="margin-top:.6rem"><button class="btn" id="cpMsg">Copier</button><button class="btn" id="iaMsg">✨ Reformuler avec l'IA</button>${DM.ia?'<button class="btn" id="rzMsg">Revenir au modèle</button>':''}</div>${DM.etat?`<p class="small muted" style="margin-top:.4rem">${esc(DM.etat)}</p>`:''}
-        <p class="small muted" style="margin-top:.4rem">L'IA ne reçoit que la date, le mode de reprise et les points cochés : aucune information de santé.</p></div></div></div>
-  <div class="row" style="margin-top:1rem"><button class="btn p" id="impPlan">🖨 Imprimer mon plan</button></div>`;
-  el.querySelectorAll('[data-pl]').forEach(x=>x.onchange=()=>{const k=x.dataset.pl;PL[k]=['h','sem'].includes(k)?Math.max(1,+x.value||PL[k]):x.value;DM.ia='';rerender(vPlan);});
+    <div class="box"><h3>Mon message au manager</h3><p class="small muted">Il parle d'organisation, jamais de santé.</p><div class="fiche" id="msg">${esc(DM.ia||messageManager())}</div>
+      <div class="row" style="margin-top:.6rem"><button class="btn" id="cpMsg">Copier</button><button class="btn" id="iaMsg">✨ Reformuler avec l'IA</button>${DM.ia?'<button class="btn" id="rzMsg">Revenir au modèle</button>':''}</div>${DM.etat?`<p class="small muted" style="margin-top:.4rem">${esc(DM.etat)}</p>`:''}
+      <p class="small muted" style="margin-top:.4rem">L'IA ne reçoit que les points cochés : aucune information de santé.</p></div></div>
+  <div class="row" style="margin-top:1rem"><button class="btn p" id="impPlan">🖨 Imprimer pour en parler</button></div>`;
   bindSet(el,'ts',TS,()=>{DM.ia='';vPlan();});
   $('#cpMsg').onclick=e=>copier(e.target,DM.ia||messageManager(),'Copier');
   $('#iaMsg').onclick=()=>{if(!window.PIA){DM.etat='⚠ Service IA indisponible sur cette page.';rerender(vPlan);return;}messageIA();};
   const rz=$('#rzMsg');if(rz)rz.onclick=()=>{DM.ia='';rerender(vPlan);};
-  $('#impPlan').onclick=()=>imprimer(`<h1>Mon plan de reprise</h1><p class="sous">Proposition préparée le ${fr(new Date())} avec Reprendre pied${PL.date?', pour une reprise prévue le '+fr(plusJ(PL.date,0)):''}. Document personnel, à discuter avec mon médecin traitant et mon médecin du travail. Il ne mentionne aucun diagnostic.</p>
-    <h2>Mode de reprise</h2><p>${PL.mode==='tpt'?`Temps partiel thérapeutique, de ${PL.dep} % sur ${PL.sem} semaines, base ${h1(PL.h)} h par semaine.`:'Temps plein avec aménagements.'}</p>
-    ${Pa.length?`<h2>Paliers</h2><table><tr><th>Palier</th><th>Semaines</th><th>Temps</th><th>Organisation</th></tr>${Pa.map((x,i)=>`<tr><td>${i+1}</td><td>${x.de} à ${x.a}</td><td>${x.p} % · ${h1(x.h)} h</td><td>${repartition(x.p)}</td></tr>`).join('')}</table>`:''}
-    <h2>Points d'étape</h2><table><tr><th>Quand</th><th>Quoi</th><th>Notes</th></tr>${E.map(e=>`<tr><td>${e.q}</td><td><b>${e.t}</b><br>${e.p}</td><td style="width:28%"></td></tr>`).join('')}</table>
-    ${R.length?`<h2>Tâches à réintroduire en dernier</h2><ul>${R.map(x=>`<li>${x[2]}</li>`).join('')}</ul>`:''}
+  $('#impPlan').onclick=()=>imprimer(`<h1>Mon retour au poste</h1><p class="sous">Document personnel, préparé le ${fr(new Date())} avec Reprendre pied, à discuter avec mon médecin du travail. Il ne mentionne aucun diagnostic.</p>
+    <h2>Ce que comporte mon poste</h2>${R.length?`<ul>${R.map(x=>`<li>${x[1]} — ${x[2].split(' : ')[1]}</li>`).join('')}</ul>`:'<p>Non renseigné.</p>'}
     <h2>Mes questions</h2><div class="lignes"></div><p class="pied">${LECTURE}</p>`);
 }
 
@@ -256,7 +217,7 @@ function vMeteo(){
 const ENTRETIEN=[['Accueillir','« Je suis content·e de te revoir. » Un lieu calme, du temps, la porte fermée. Le poste de travail est prêt (accès, matériel).'],
  ['Informer','Ce qui a changé pendant l\'absence : équipe, outils, dossiers. Qui a repris quoi.'],
  ['Organiser','Les missions des premières semaines, et surtout ce qui n\'est PAS attendu : pas de rattrapage, pas d\'objectifs chiffrés au début.'],
- ['Ajuster','Le rythme (temps partiel, paliers), les tâches qui reviendront plus tard, la boîte mail.'],
+ ['Ajuster','Le rythme convenu avec le médecin du travail, les tâches qui reviendront plus tard, la boîte mail.'],
  ['Convenir','Ce que la personne souhaite dire, ou non, à l\'équipe. Les prochains points : J+7, J+30, J+90.']];
 const PASDIRE=['Demander le diagnostic, le traitement ou les raisons de l\'arrêt.','« Alors, ça va mieux ? » répété, ou « tu as bonne mine ».','Annoncer à l\'équipe des informations de santé.','Rattraper le retard ou confier « un petit dossier urgent » le premier jour.','Mettre la personne à l\'écart « pour la ménager » sans le lui demander.'];
 function vManager(){

@@ -178,11 +178,11 @@ main{max-width:640px;margin:0 auto;padding-block:22px 48px}
   <a class="back" href="index.html">← Santé mentale</a>
   <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-5-8-11a5 5 0 0 1 8-4 5 5 0 0 1 8 4c0 6-8 11-8 11z"/></svg></div>
   <div><small>PréventIA Protect · Santé mentale</small><h1>Mes 100 premiers jours</h1></div>
-  <span class="sp"></span><span class="pill">Anonyme · rien n'est enregistré</span>
+  <span class="sp"></span><span class="pill">Anonyme · rien n'est transmis</span>
 </div></header>
 <nav class="tabs gut" aria-label="Sections"><div class="in">
   <a href="#parcours" data-tab="parcours">Parcours</a>
-  <a href="#meteo" data-tab="meteo">Météo</a>
+  <a href="#meteo" data-tab="meteo">Mon suivi</a>
   <a href="#outils" data-tab="outils">Respirer</a>
   <a href="#aide" data-tab="aide">Aide</a>
 </div></nav>
@@ -426,7 +426,7 @@ function renderBilan(){
     ${low.map(x=>`<div class="card tip"><i style="background:var(--g-${x.k})"></i><div><b>${x.l}</b><p class="muted">${TIPS[x.k]}</p></div></div>`).join('')}
     <p class="note">Dans la réalité, il existe bien plus que trois réactions possibles. Si une situation ressemble à ce que vous vivez, <button class="linklike" data-goto="aide">parlez-en à quelqu'un</button>.</p>
     <button class="btn" id="again">Refaire le parcours avec un autre secteur</button>
-    <button class="btn ghost" data-goto="meteo">Faire ma météo intérieure</button>
+    <button class="btn ghost" data-goto="meteo">Commencer mon suivi mois par mois</button>
   </section>`;
   bindGoto(app);
   $('#again').onclick=()=>{S.step=-1;S.sect=null;renderAccueil();scrollTop();};
@@ -445,34 +445,105 @@ function wxSVG(v){
   return `<svg viewBox="0 0 40 40" aria-hidden="true">${cloud(0,-6,'var(--ink)')}<path d="M21 28l-5 7h5l-3 5 8-9h-5l3-3z" fill="var(--orange)"/></svg>`;
 }
 const WXQ=[
-  {k:"sommeil",q:"Votre sommeil cette semaine ?",tip:"Gardez une heure de coucher régulière et coupez les notifications pro le soir."},
+  {k:"sommeil",q:"Votre sommeil ce mois-ci ?",tip:"Gardez une heure de coucher régulière et coupez les notifications pro le soir."},
   {k:"energie",q:"Votre énergie au travail ?",tip:"Prenez toutes vos pauses et un vrai repas. Si la fatigue dure, parlez-en au service de santé au travail."},
   {k:"moral",q:"Votre moral ?",tip:"Quand le moral est bas plus de deux semaines, il faut en parler : un proche, votre médecin, l'équipe santé au travail."},
   {k:"stress",q:"Votre calme face aux tensions ?",tip:"Essayez la respiration 3-6-5 : 5 minutes, 3 fois par jour. Et repérez ce qui vous met le plus sous tension."},
   {k:"ambiance",q:"L'ambiance avec votre équipe ?",tip:"Si quelque chose se répète et vous blesse (remarques, cris, mise à l'écart), notez-le et parlez-en à une personne de confiance."}
 ];
 const W={};
+/* Suivi mensuel : un point par mois (J30, J60, J90…), gardé sur cet appareil uniquement, si la personne le choisit */
+const SUIVI_KEY='pp_100j_suivi';
+const JALONS=[[0,"Arrivée"],[30,"Mois 1"],[60,"Mois 2"],[90,"Mois 3"]];
+const AIDES={
+  sommeil:{t:"Mieux dormir",l:["Même heure de lever, y compris le week-end.","Écrans et mails pro coupés une heure avant de dormir.","Pas de café ni de boisson énergisante après 14 h.","Chambre fraîche, sombre et calme. En horaires décalés : voir « Dormir en horaires décalés »."],o:"nuit"},
+  energie:{t:"Retrouver de l'énergie",l:["Bouger 30 minutes par jour, même en marchant (150 minutes par semaine au total).","Un vrai repas le midi, assis, loin de l'écran.","Prendre toutes ses pauses : une courte pause toutes les deux heures.","Si la fatigue dure malgré le repos : en parler à votre médecin traitant."]},
+  moral:{t:"Prendre soin de son moral",l:["Garder au moins une activité plaisir par semaine, hors travail.","Voir ou appeler un proche chaque semaine.","Si le moral reste bas plus de deux semaines : médecin traitant, ou dispositif Mon soutien psy (séances remboursées).","Vous pouvez demander une visite au service de santé au travail, sans passer par l'employeur."]},
+  stress:{t:"Faire baisser la pression",l:["Respiration 3-6-5 : 5 minutes, 3 fois par jour.","Noter ce qui met sous tension, pour en parler avec votre manager.","Limiter l'alcool et le tabac « pour décompresser » : ils entretiennent le stress. Tabac Info Service : 39 89. Alcool Info Service : 0 980 980 930.","Couper les notifications pro le soir : c'est votre droit à la déconnexion."],o:"breath"},
+  ambiance:{t:"Les relations au travail",l:["Proposer un café ou un déjeuner à un·e collègue.","Dire les choses au calme et en tête à tête, avec la méthode STOP.","Si des remarques ou une mise à l'écart se répètent : noter les dates et en parler (manager, RH, CSE, médecin du travail)."],o:"stop"}
+};
+const suiviGet=()=>store.get(SUIVI_KEY)||{arrivee:"",points:[]};
+const jourDe=(iso,arr)=>arr?Math.round((new Date(iso)-new Date(arr))/864e5):null;
+const fmt=iso=>new Date(iso+'T12:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long'});
+const today=()=>new Date().toISOString().slice(0,10);
 function renderMeteo(){
   gz.innerHTML='';
-  const done=WXQ.every(q=>W[q.k]!==undefined);
+  const sv=suiviGet(), done=WXQ.every(q=>W[q.k]!==undefined);
+  const last=sv.points.at(-1), next=last?new Date(new Date(last.d).getTime()+30*864e5).toISOString().slice(0,10):null;
+  const jNow=jourDe(today(),sv.arrivee);
   app.innerHTML=`<section class="stack">
-    <p class="eyebrow">30 secondes</p>
-    <h2>Ma météo intérieure</h2>
-    <p class="muted">Pas de bonne ou de mauvaise réponse. Choisissez le temps qu'il fait à l'intérieur, cette semaine.</p>
-    ${WXQ.map(q=>`<div class="stack" style="gap:8px"><h3>${q.q}</h3><div class="wx-row">${WX.map(w=>`<button class="wx" data-k="${q.k}" data-v="${w.v}" aria-pressed="${W[q.k]===w.v}">${wxSVG(w.v)}${w.l}</button>`).join('')}</div></div>`).join('')}
+    <p class="eyebrow">Une minute par mois</p>
+    <h2>Mon suivi des 100 jours</h2>
+    <p class="muted">Répondez une fois par mois : à votre arrivée, puis vers le mois 1, le mois 2 et le mois 3. La courbe montre comment vous évoluez, et les conseils s'adaptent.</p>
+    <div class="card stack" style="gap:10px">
+      <label class="form" style="gap:4px"><span class="muted" style="font-size:.8rem;font-weight:600">Date de mon arrivée dans l'entreprise</span>
+        <input type="date" id="arr" value="${sv.arrivee}" max="${today()}" style="padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink)"></label>
+      ${jNow!==null&&jNow>=0?`<div class="dayprog" style="max-width:none"><div class="bar"><i style="width:${Math.min(100,jNow)}%"></i></div><small>Jour ${jNow} ${jNow<=100?'sur 100':'· au-delà des 100 jours'}</small></div>`:''}
+      ${next?`<p class="small" style="font-size:.88rem">${next<=today()?'<b>C\'est le moment de faire votre point du mois.</b>':`Prochain point conseillé : <b>${fmt(next)}</b>.`}</p>`:''}
+    </div>
+    ${sv.points.length?`<h3>Mon évolution</h3><div class="card">${suiviSVG(sv)}<p class="muted" style="font-size:.8rem;margin-top:6px">${sv.points.length} point${sv.points.length>1?'s':''} enregistré${sv.points.length>1?'s':''}. Plus la ligne est haute, mieux ça va.</p></div>${evolution(sv)}`:''}
+    <h3>${sv.points.length?'Mon point de ce mois-ci':'Mon premier point'}</h3>
+    ${WXQ.map(q=>`<div class="stack" style="gap:8px"><h3 style="font-weight:600">${q.q}</h3><div class="wx-row">${WX.map(w=>`<button class="wx" data-k="${q.k}" data-v="${w.v}" aria-pressed="${W[q.k]===w.v}">${wxSVG(w.v)}${w.l}</button>`).join('')}</div></div>`).join('')}
     <div>${done?meteoResult():`<p class="muted">Répondez aux cinq questions pour voir votre météo.</p>`}</div>
-    <p class="foot">Rien n'est enregistré ni transmis. Ce n'est pas un diagnostic, juste un moyen de faire le point.</p>
+    ${done?`<button class="btn" id="save">Enregistrer ce point sur cet appareil</button><p class="muted" style="font-size:.8rem">Gardé uniquement dans ce navigateur, jamais transmis, ni à l'employeur ni à personne. Évitez un ordinateur partagé.</p>`:''}
+    ${sv.points.length?`<button class="linklike" id="wipe" style="align-self:flex-start">Effacer mon suivi de cet appareil</button>`:''}
+    <p class="foot">Ce n'est pas un diagnostic, juste un moyen de faire le point et d'en parler si besoin.</p>
   </section>`;
   app.querySelectorAll('.wx').forEach(b=>b.onclick=()=>{W[b.dataset.k]=+b.dataset.v;const y=window.scrollY;renderMeteo();window.scrollTo(0,y);});
+  $('#arr').onchange=e=>{const s=suiviGet();s.arrivee=e.target.value;store.set(SUIVI_KEY,s);renderMeteo();};
   const r=$('#wxreset'); if(r) r.onclick=()=>{Object.keys(W).forEach(k=>delete W[k]);renderMeteo();};
+  const sb=$('#save'); if(sb) sb.onclick=()=>{const s=suiviGet();const p={d:today(),v:{...W}};
+    if(s.points.length&&s.points.at(-1).d===p.d) s.points[s.points.length-1]=p; else s.points.push(p);
+    store.set(SUIVI_KEY,s);Object.keys(W).forEach(k=>delete W[k]);renderMeteo();scrollTop();};
+  const wp=$('#wipe'); if(wp) wp.onclick=()=>{if(confirm('Effacer tous vos points de suivi sur cet appareil ?')){try{localStorage.removeItem(SUIVI_KEY)}catch(e){}renderMeteo();}};
   bindGoto(app);
+}
+function suiviSVG(sv){
+  const pts=sv.points, W2=600,H=210,L=70,R=12,T=12,B=28;
+  const useDays=!!sv.arrivee, xv=(p,i)=>useDays?Math.max(0,jourDe(p.d,sv.arrivee)):i;
+  const xmax=useDays?Math.max(100,...pts.map(xv)):Math.max(3,pts.length-1);
+  const x=v=>L+(v/xmax)*(W2-L-R), y=v=>T+(1-v/3)*(H-T-B);
+  const lab=["Orage","Pluie","Éclaircies","Soleil"];
+  const grid=[0,1,2,3].map(v=>`<line class="gl" x1="${L}" x2="${W2-R}" y1="${y(v)}" y2="${y(v)}"/><text x="${L-6}" y="${y(v)+3}" text-anchor="end">${lab[v]}</text>`).join('');
+  const ticks=useDays?JALONS.filter(([d])=>d<=xmax).map(([d,l],i)=>`<line class="gl" x1="${x(d)}" x2="${x(d)}" y1="${T}" y2="${H-B}" stroke-dasharray="3 4"/><text x="${x(d)}" y="${H-8}" text-anchor="${i?'middle':'start'}">${l}</text>`).join('')
+    :pts.map((p,i)=>`<text x="${x(i)}" y="${H-8}" text-anchor="middle">${fmt(p.d)}</text>`).join('');
+  const lines=WXQ.map((q,qi)=>{const off=(qi-2)*2.5; const c=`var(--g-${q.k==='stress'?'equilibre':q.k==='ambiance'?'relations':q.k})`;
+    const pp=pts.map((p,i)=>[x(xv(p,i)),y(p.v[q.k])+off]); // léger décalage pour voir les courbes superposées
+    return `<polyline points="${pp.map(a=>a.map(n=>n.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="${c}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>${pp.map(([a,b])=>`<circle cx="${a.toFixed(1)}" cy="${b.toFixed(1)}" r="3.5" fill="${c}"/>`).join('')}`;}).join('');
+  const leg=WXQ.map(q=>`<span><i style="background:var(--g-${q.k==='stress'?'equilibre':q.k==='ambiance'?'relations':q.k})"></i>${q.q.replace('Votre ','').replace(' ?','').replace(/ (cette semaine|au travail|ce mois-ci|avec votre équipe)/,'').replace(/^./,m=>m.toUpperCase())}</span>`).join('');
+  return `<svg class="evo" viewBox="0 0 ${W2} ${H}" role="img" aria-label="Évolution de vos réponses mois après mois">${grid}${ticks}${lines}</svg><div class="evo-leg">${leg}</div>`;
+}
+function evolution(sv){
+  const pts=sv.points, last=pts.at(-1), prev=pts.at(-2), prev2=pts.at(-3);
+  const nom=k=>({sommeil:"Sommeil",energie:"Énergie",moral:"Moral",stress:"Calme face aux tensions",ambiance:"Ambiance d'équipe"}[k]);
+  const baisse=prev?WXQ.filter(q=>last.v[q.k]<prev.v[q.k]).map(q=>q.k):[];
+  const hausse=prev?WXQ.filter(q=>last.v[q.k]>prev.v[q.k]).map(q=>q.k):[];
+  const durable=prev?WXQ.filter(q=>last.v[q.k]<=1&&prev.v[q.k]<=1).map(q=>q.k):[];
+  const glisse=prev2?WXQ.filter(q=>last.v[q.k]<prev.v[q.k]&&prev.v[q.k]<prev2.v[q.k]).map(q=>q.k):[];
+  const faible=WXQ.filter(q=>last.v[q.k]<=1).map(q=>q.k);
+  const alerte=durable.includes('moral')||glisse.includes('moral')||last.v.moral===0||durable.length>=3;
+  const cibles=[...new Set([...durable,...glisse,...baisse,...faible])].slice(0,3);
+  let h='<h3>Ce que montre mon évolution</h3>';
+  if(!prev) h+=`<div class="card"><p>Premier point enregistré. Refaites-le dans un mois : la comparaison commencera à ce moment-là.</p></div>`;
+  else {
+    const L=[];
+    if(hausse.length) L.push(`<li><b>En progrès :</b> ${hausse.map(nom).join(', ')}. Notez ce qui a aidé, pour le garder.</li>`);
+    if(baisse.length) L.push(`<li><b>En baisse depuis le dernier point :</b> ${baisse.map(nom).join(', ')}.</li>`);
+    if(glisse.length) L.push(`<li><b>Baisse continue depuis deux mois :</b> ${glisse.map(nom).join(', ')}. Ce n'est plus un passage difficile isolé : c'est le bon moment pour en parler.</li>`);
+    if(durable.length) L.push(`<li><b>Bas depuis au moins deux points :</b> ${durable.map(nom).join(', ')}. Cela dure : un avis extérieur peut vraiment aider.</li>`);
+    if(!L.length) L.push(`<li>Stable depuis le dernier point. Continuez ce qui fonctionne.</li>`);
+    h+=`<div class="card"><ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px">${L.join('')}</ul></div>`;
+  }
+  if(alerte) h+=`<div class="alertbox"><b>Votre suivi montre que ça pèse depuis un moment.</b> Vous pouvez demander une visite au médecin ou à l'infirmier·e du travail, sans passer par l'employeur (art. R4624-34), ou voir votre médecin traitant. <button class="linklike" data-goto="aide">Qui peut m'aider ?</button></div>`;
+  if(cibles.length) h+=`<h3>Aides complémentaires pour ce mois-ci</h3>`+cibles.map(k=>{const a=AIDES[k];return `<div class="card tip"><i style="background:var(--g-${k==='stress'?'equilibre':k==='ambiance'?'relations':k})"></i><div><b>${a.t}</b><ul class="muted" style="margin:6px 0 0;padding-left:18px">${a.l.map(x=>`<li>${x}</li>`).join('')}</ul>${a.o?`<p style="margin-top:6px"><button class="linklike" data-goto="outils" data-open="${a.o}">Ouvrir l'outil</button></p>`:''}</div></div>`;}).join('');
+  return h;
 }
 function meteoResult(){
   const vals=WXQ.map(q=>W[q.k]), avg=vals.reduce((a,b)=>a+b,0)/vals.length, storms=vals.filter(v=>v===0).length;
   const overall=avg>=2.5?3:avg>=1.75?2:avg>=1?1:0;
   const weak=WXQ.filter(q=>W[q.k]<=1), strong=storms>=2||W.moral===0;
   return `<div class="stack">
-    <div class="card wx-result">${wxSVG(overall)}<div><p class="eyebrow">Votre météo de la semaine</p><h3>${["Ciel orageux","Temps pluvieux","Temps variable","Beau temps"][overall]}</h3></div></div>
+    <div class="card wx-result">${wxSVG(overall)}<div><p class="eyebrow">Votre météo du mois</p><h3>${["Ciel orageux","Temps pluvieux","Temps variable","Beau temps"][overall]}</h3></div></div>
     ${strong?`<div class="alertbox"><b>Ça a l'air lourd en ce moment.</b> Vous méritez d'en parler : un proche, votre médecin, l'équipe santé au travail. <button class="linklike" data-goto="aide">Voir les contacts</button></div>`:''}
     ${weak.length?weak.map(q=>`<div class="card"><b>${q.q.replace(' ?','')}</b><p class="muted">${q.tip}</p></div>`).join(''):`<div class="card"><p>Plutôt beau fixe. Notez ce qui vous aide en ce moment : ça servira les semaines plus grises.</p></div>`}
     <button class="btn ghost" id="wxreset">Recommencer</button>

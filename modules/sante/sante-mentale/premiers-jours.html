@@ -386,7 +386,7 @@ function choose(sc,i,btn){
       ${c.tool?`<p><button class="linklike" data-goto="outils" data-open="${c.tool}">Essayer ${tools[c.tool]}</button></p>`:''}
       ${c.help?`<p><button class="linklike" data-goto="aide">Voir qui peut vous aider</button></p>`:''}
     </div>
-    ${S.g.moral<=25?`<div class="alertbox"><b>Le moral est bas.</b> Dans le jeu comme dans la réalité, ça ne se porte pas seul·e. <button class="linklike" data-goto="aide">Qui peut m'aider ?</button></div>`:''}
+    ${S.g.moral<=25?`<div class="alertbox"><b>Le moral est bas.</b> Ça ne se porte pas seul·e : des personnes peuvent vous aider. <button class="linklike" data-goto="aide">Qui peut m'aider ?</button></div>`:''}
     <button class="btn" id="next">${last?'Voir mon bilan des 100 jours':'Étape suivante'}</button>`;
   bindGoto($('#fb'));
   $('#next').onclick=()=>{S.step++;S.answered=false;renderParcours();scrollTop();};

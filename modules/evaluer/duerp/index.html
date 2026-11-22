@@ -23,6 +23,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal);bo
 <body>
 <div id="root"></div>
 <script src="../../../core/preventia-ia.js"></script>
+<script src="../../../assets/js/duerp-passerelle.js"></script>
 <script type="text/babel">
 const{useState,useEffect,useRef,useMemo}=React;
 const LS_KEY="preventia-duerp";
@@ -66,9 +67,11 @@ function App(){
   const[data,setData]=useState(load);
   const[tab,setTab]=useState("dashboard");
   const[selUT,setSelUT]=useState(null);
+  const[props,refreshProps]=usePropositions();
   const update=(fn)=>{setData(prev=>{const next={...prev};fn(next);save(next);return next})};
   const tabs=[
     {k:"dashboard",l:"📊 Tableau de bord"},
+    {k:"avalider",l:`📥 À valider${props.length?" ("+props.length+")":""}`},
     {k:"entreprise",l:"🏢 Entreprise"},
     {k:"uts",l:"🏭 Unités de travail"},
     {k:"risques",l:"⚠️ Évaluation"},
@@ -93,7 +96,9 @@ function App(){
       </div>
     </div>
     <main style={{maxWidth:1200,margin:"0 auto",padding:"16px"}}>
+      {props.length>0&&tab!=="avalider"&&<div className="noP" style={{background:"#fef3c7",border:"1px solid #f59e0b",borderRadius:10,padding:"8px 14px",marginBottom:12,fontSize:12,display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}><span>📥 <b>{props.length} risque{props.length>1?"s":""} proposé{props.length>1?"s":""}</b> par d'autres modules ({[...new Set(props.map(p=>p.source.label))].join(", ")}) attend{props.length>1?"ent":""} votre validation.</span><Btn small c="#b45309" onClick={()=>setTab("avalider")}>Voir</Btn></div>}
       {tab==="dashboard"&&<Dashboard data={data}/>}
+      {tab==="avalider"&&<AValider data={data} update={update} props={props} refresh={refreshProps}/>}
       {tab==="entreprise"&&<Entreprise data={data} update={update}/>}
       {tab==="uts"&&<UTs data={data} update={update} onSelect={(id)=>{setSelUT(id);setTab("risques")}}/>}
       {tab==="risques"&&<Risques data={data} update={update} selUT={selUT} setSelUT={setSelUT}/>}
@@ -300,7 +305,7 @@ function Risques({data,update,selUT,setSelUT}){
       </tr></thead>
       <tbody>{risques.map(r=>{const p2=prio(r.score,r.gravite);return<tr key={r.id} style={{borderBottom:"1px solid #f1f5f9",fontSize:11}}>
         <td style={{...td,textAlign:"center"}}><span title={p2.plancher?"Relevé en P2 : gravité 4":""} style={{background:p2.bg,color:p2.c,padding:"2px 8px",borderRadius:6,fontSize:10,fontWeight:700,whiteSpace:"nowrap"}}>{p2.l.split("—")[0]}{p2.plancher?"↑":""}</span></td>
-        <td style={td}>{r.categorie}</td><td style={{...td,fontWeight:600}}>{r.danger}</td><td style={td}>{r.situation}</td><td style={td}>{r.dommage}</td>
+        <td style={td}>{r.categorie}</td><td style={{...td,fontWeight:600}}>{r.danger}{r.source&&<div style={{fontSize:9,fontWeight:500,color:"#0f766e",marginTop:2}}>↳ {r.source.label}, {new Date(r.source.date).toLocaleDateString("fr-FR")}</div>}</td><td style={td}>{r.situation}</td><td style={td}>{r.dommage}</td>
         <td style={{...td,textAlign:"center"}}>{r.gravite}</td><td style={{...td,textAlign:"center"}}>{r.frequence}</td><td style={{...td,textAlign:"center"}}>{r.maitrise}</td>
         <td style={{...td,textAlign:"center",fontWeight:700,color:p2.c,fontSize:14}}>{r.score}</td>
         <td style={{...td,textAlign:"center"}}>{(r.actions||[]).length}</td>
@@ -358,6 +363,74 @@ function MiniMatrice({risques,full}){
         <span style={{fontSize:9,color:"#64748b"}}>← Fréquence →</span>
       </div>
     </div>
+  </div>);
+}
+
+/* ═══ À VALIDER : propositions venues des autres modules (passerelle PPDuerp) ═══ */
+function usePropositions(){
+  const lire=()=>window.PPDuerp?PPDuerp.pending():[];
+  const[props,setProps]=useState(lire);
+  useEffect(()=>{
+    const maj=()=>setProps(lire());
+    window.addEventListener("storage",maj);window.addEventListener("focus",maj);
+    return()=>{window.removeEventListener("storage",maj);window.removeEventListener("focus",maj)};
+  },[]);
+  return[props,()=>setProps(lire())];
+}
+function AValider({data,update,props,refresh}){
+  const[utChoix,setUtChoix]=useState({});
+  const[nouvelleUT,setNouvelleUT]=useState("Ensemble de l'entreprise");
+  const utDe=p=>utChoix[p.id]||(p.maj&&data.risques.find(r=>r.id===p.maj)?.utId)||(data.uts.find(u=>p.ut&&u.nom.toLowerCase()===p.ut.toLowerCase())||{}).id||(data.uts.length===1?data.uts[0].id:"");
+  const fr=s=>s?new Date(s).toLocaleDateString("fr-FR"):"";
+  function accepter(p){
+    const utId=utDe(p);
+    if(!utId){alert("Choisissez d'abord l'unité de travail.");return}
+    const existe=p.maj&&data.risques.some(r=>r.id===p.maj), rid=existe?p.maj:uid();
+    const src={id:p.source.id,label:p.source.label,date:p.date,url:p.source.url};
+    const acts=p.actions.map(a=>({description:a.description,responsable:"",echeance:a.echeance||"",statut:"à faire",type:a.type||"Prévention"}));
+    const champs={utId,categorie:p.categorie,danger:p.danger,situation:p.situation,dommage:p.dommage,gravite:p.gravite,frequence:p.frequence,maitrise:p.maitrise,source:src};
+    update(d=>{
+      if(existe&&d.risques.some(r=>r.id===rid)) d.risques=d.risques.map(r=>r.id!==rid?r:{...r,...champs,actions:[...(r.actions||[]),...acts.filter(a=>!(r.actions||[]).some(x=>x.description===a.description))]});
+      else if(!d.risques.some(r=>r.id===rid)) d.risques=[...d.risques,{id:rid,...champs,actions:acts}];
+    });
+    PPDuerp.resolve(p.id,"acceptee",rid);refresh();
+  }
+  function ignorer(p){PPDuerp.resolve(p.id,"rejetee");refresh()}
+  function creerUT(){
+    if(!nouvelleUT.trim())return;
+    const id=uid(),nom=nouvelleUT.trim();update(d=>{if(!d.uts.some(u=>u.id===id))d.uts=[...d.uts,{id,nom,effectif:"",responsable:"",localisation:""}]});
+    const c={};props.forEach(p=>{if(!utDe(p))c[p.id]=id});setUtChoix({...utChoix,...c});
+  }
+  const ent=data.entreprise.nom;
+  const sources=[...new Set(props.map(p=>p.source.label))];
+  if(!window.PPDuerp)return<Card><p style={{padding:16,color:"#991b1b"}}>Passerelle indisponible : rechargez la page.</p></Card>;
+  return(<div>
+    <h2 className="sf" style={{fontSize:20,marginBottom:4}}>📥 Propositions à valider</h2>
+    <p style={{fontSize:12,color:"#64748b",marginBottom:12,maxWidth:760}}>Les autres modules (évaluation RPS…) proposent des risques déjà cotés, avec des actions. Rien n'entre dans le Document Unique sans votre validation : choisissez l'unité de travail, ajoutez, puis complétez responsables et échéances dans le PAPRIPACT.</p>
+    {props.length===0?<Card><p style={{color:"#64748b",textAlign:"center",padding:16}}>Aucune proposition en attente. Depuis la synthèse de l'évaluation RPS, utilisez « Envoyer au DUERP ».</p></Card>:<>
+    {data.uts.length===0||props.some(p=>!utDe(p))?<Card mb={12}><div style={{padding:12,display:"flex",gap:8,alignItems:"center",flexWrap:"wrap",fontSize:12}}>
+      <span>{data.uts.length===0?"Aucune unité de travail. Créez-en une pour rattacher ces risques :":"Les évaluations collectives portent souvent sur toute l'entreprise. Créer une unité de travail :"}</span>
+      <input value={nouvelleUT} onChange={e=>setNouvelleUT(e.target.value)} style={{width:220}}/>
+      <Btn small c="var(--teal)" onClick={creerUT}>Créer et rattacher</Btn></div></Card>:null}
+    {sources.map(s=>{const list=props.filter(p=>p.source.label===s);const e0=list[0].source.entreprise;return<Card key={s} mb={12} title={`${s} · ${list.length} proposition${list.length>1?"s":""} · envoyée${list.length>1?"s":""} le ${fr(list[0].date)}`}>
+      {e0&&ent&&e0.trim().toLowerCase()!==ent.trim().toLowerCase()&&<p style={{fontSize:11,color:"#991b1b",background:"#fee2e2",padding:"6px 14px"}}>⚠️ Évaluation réalisée pour « {e0} », alors que ce DUERP concerne « {ent} ». Vérifiez qu'il s'agit bien de la même entreprise.</p>}
+      {list.map(p=>{const sc=calcScore(p.gravite,p.frequence,p.maitrise),pr=prio(sc,p.gravite);return<div key={p.id} style={{padding:"10px 14px",borderTop:"1px solid #f1f5f9",display:"grid",gridTemplateColumns:"minmax(0,1fr) auto",gap:12,alignItems:"start"}}>
+        <div style={{minWidth:0}}>
+          <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+            <span style={{background:pr.bg,color:pr.c,padding:"2px 8px",borderRadius:6,fontSize:10,fontWeight:700}}>{pr.l.split("—")[0]}</span>
+            {p.maj&&<span style={{background:"#dbeafe",color:"#1e40af",padding:"2px 8px",borderRadius:6,fontSize:10,fontWeight:700}}>Mise à jour d'un risque existant</span>}
+            <b style={{fontSize:13}}>{p.danger}</b><span style={{fontSize:11,color:"#64748b"}}>{p.categorie}</span></div>
+          <p style={{fontSize:11,color:"#475569",marginTop:4}}>{p.situation}</p>
+          <p style={{fontSize:11,color:"#475569"}}><b>Dommage :</b> {p.dommage} · <b>G</b> {p.gravite} · <b>F</b> {p.frequence} · <b>M</b> {MAIT.find(m=>m.v===p.maitrise)?.l} · score {sc}</p>
+          {p.actions.length>0&&<ul style={{fontSize:11,color:"#334155",margin:"4px 0 0",paddingLeft:16}}>{p.actions.map((a,i)=><li key={i}>{a.description} <span style={{color:"#64748b"}}>({a.type}{a.echeance?", échéance proposée "+fr(a.echeance):""})</span></li>)}</ul>}
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:6,minWidth:180}}>
+          <select value={utDe(p)} onChange={e=>setUtChoix({...utChoix,[p.id]:e.target.value})}><option value="">Unité de travail…</option>{data.uts.map(u=><option key={u.id} value={u.id}>{u.nom}</option>)}</select>
+          <Btn small c="var(--teal)" onClick={()=>accepter(p)} disabled={!utDe(p)}>{p.maj?"Mettre à jour le risque":"Ajouter au DUERP"}</Btn>
+          <Btn small c="#64748b" outline onClick={()=>ignorer(p)}>Ignorer</Btn>
+        </div></div>})}
+      {list.length>1&&<div style={{padding:"8px 14px",borderTop:"1px solid #f1f5f9",textAlign:"right"}}><Btn small c="var(--navy)" disabled={list.some(p=>!utDe(p))} onClick={()=>list.forEach(accepter)}>Tout ajouter ({list.length})</Btn></div>}
+    </Card>})}</>}
   </div>);
 }
 

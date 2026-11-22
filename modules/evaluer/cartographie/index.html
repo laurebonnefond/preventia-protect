@@ -24,6 +24,7 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#f1f5f9;color:#1e293b
 <body>
 <div id="root"></div>
 <script src="../../../core/preventia-ia.js"></script>
+<script src="../../../assets/js/duerp-passerelle.js"></script>
 <script type="text/babel">
 const {useState,useRef,useEffect}=React;
 const today=()=>new Date().toLocaleDateString("fr-FR");
@@ -59,6 +60,22 @@ const NIVEAUX={
 };
 
 const uid=()=>Math.random().toString(36).slice(2,9);
+
+/* Passerelle DUERP : famille de risque → catégorie du DUERP, niveau global → gravité × fréquence
+   (critique 4×3 = P1 · élevé 3×3 = P2 · modéré 2×2 = P3 · faible 1×2 = P4), maîtrise à préciser */
+const CAT_DUERP={chute_pp:"Chute de plain-pied",chute_h:"Chute de hauteur",manut:"Manutention manuelle / TMS",tms:"Manutention manuelle / TMS",machine:"Risque machine",circulation:"Circulation interne / engins",bruit:"Bruit / Vibrations",vibration:"Bruit / Vibrations",thermique:"Ambiance thermique / Rayonnements",electrique:"Risque électrique",incendie:"Incendie / Explosion",chimique:"Risque chimique",poussiere:"Risque chimique",biologique:"Risque biologique",rps:"Risque psychosocial (RPS)",routier:"Risque routier",rayonnement:"Ambiance thermique / Rayonnements"};
+const GF={1:[1,2],2:[2,2],3:[3,3],4:[4,3]};
+function versDuerp(unites,entreprise){
+  if(!window.PPDuerp)return"Passerelle indisponible : rechargez la page.";
+  const items=[];
+  unites.forEach(u=>RISQUES.forEach(r=>{const n=u.risques[r.id]||0;if(!n)return;
+    items.push({ref:u.id+"|"+r.id,ut:u.nom,categorie:CAT_DUERP[r.id]||"Risque machine",danger:r.nom,
+      situation:`Cartographie des risques : niveau ${NIVEAUX[n].label.toLowerCase()} pour cette unité (cotation globale). Situation, gravité, fréquence et mesures existantes à préciser.`,
+      dommage:"À préciser",gravite:GF[n][0],frequence:GF[n][1],maitrise:3,actions:[]})}));
+  if(!items.length)return"Aucun risque coté à envoyer.";
+  const k=PPDuerp.propose({id:"carto",label:"Cartographie des risques",entreprise:entreprise||"",url:"../../evaluer/cartographie/index.html"},items);
+  return`${k} risque${k>1?"s":""} proposé${k>1?"s":""} au DUERP. À valider dans l'onglet « À valider » du DUERP.`;
+}
 const STORAGE_KEY="preventia-carto";
 
 /* ═══ APP ═══ */
@@ -261,8 +278,11 @@ function Synthese({unites,entreprise}){
     pdf.save(`Synthese_risques_${(entreprise||"").replace(/\s/g,'_')}.pdf`);
   }
 
+  const[msgDuerp,setMsgDuerp]=useState("");
   return(<div>
-    <div className="noP" style={{display:"flex",justifyContent:"flex-end",marginBottom:12}}>
+    <div className="noP" style={{display:"flex",justifyContent:"flex-end",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:12}}>
+      {msgDuerp&&<span style={{fontSize:12,color:"#0f766e"}}>{msgDuerp} <a href="../duerp/index.html" style={{color:"#0f766e",fontWeight:700}}>Ouvrir le DUERP</a></span>}
+      <button onClick={()=>setMsgDuerp(versDuerp(unites,entreprise))} style={{...bP,background:"#0f766e"}} disabled={!points.length}>📥 Envoyer au DUERP ({points.length})</button>
       <button onClick={toPDF} style={{...bP,background:"#dc2626"}}>📄 Export PDF</button>
     </div>
     <div ref={ref} style={{background:"white",borderRadius:12,padding:20,boxShadow:"0 1px 4px rgba(0,0,0,.06)"}}>

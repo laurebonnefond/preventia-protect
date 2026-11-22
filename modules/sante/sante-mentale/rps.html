@@ -196,6 +196,7 @@ details.acteur summary::-webkit-details-marker{display:none}
 <div class="kiosk gut" id="kiosk" hidden></div>
 
 <script src="rps-data.js"></script>
+<script src="../../../assets/js/duerp-passerelle.js"></script>
 <script src="../sante-femme/enquetes.js"></script>
 <script>
 (function(){
@@ -478,6 +479,27 @@ function criticite(rows){
     const C=Math.round(E*G*(1-.25*M)*10)/10;
     return {...r,E,G,ga,M,C,P:C>=9?1:C>=6?2:C>=3?3:4};
   });
+}
+/* Passerelle vers le DUERP : familles P1 à P3 proposées (pas d'ajout direct, validation dans le DUERP).
+   Correspondance des grilles : exposition 1-4 → fréquence, gravité 1-4 → gravité,
+   maîtrise RPS 0 aucune / 1 partielle / 2 efficace → DUERP 3 insuffisante / 2 partielle / 1 bonne. */
+function envoyerDuerp(){
+  const msg=$('#toDuerpMsg');
+  if(!window.PPDuerp){msg.textContent="Passerelle indisponible : rechargez la page.";return;}
+  if(S.demo){msg.textContent="Indisponible avec les données d'exemple.";return;}
+  const add=m=>{const d=new Date();d.setMonth(d.getMonth()+m);return d.toISOString().slice(0,10);};
+  const ECH={1:1,2:6,3:12};
+  const items=synthData().crit.filter(c=>c.P&&c.P<=3).map(c=>({
+    ref:c.f.k, categorie:'Risque psychosocial (RPS)', danger:c.f.l,
+    situation:`Évaluation RPS${S.ctx.periode?' ('+S.ctx.periode+')':''} : score d'exposition ${Math.round(c.score)}/100${c.ga.why.length?'. Signaux : '+c.ga.why.map(w=>w.replace(/^… dont risque élevé/,'pré-dépistages burn-out à risque élevé')).join(' ; '):''}.`,
+    dommage:GRAV_L[c.G],
+    gravite:c.G, frequence:c.E, maitrise:3-(c.M||0),
+    actions:[...ACTIONS[c.f.k].filter(([t])=>t==='P'),...ACTIONS[c.f.k].filter(([t])=>t==='S')].slice(0,3)
+      .map(([t,x])=>({description:x.replace(/<[^>]+>/g,''),type:t==='P'?'Organisation':'Formation',echeance:add(ECH[c.P])}))
+  }));
+  if(!items.length){msg.textContent='Aucune famille en priorité P1 à P3 à proposer.';return;}
+  const n=PPDuerp.propose({id:'rps',label:'Évaluation RPS',entreprise:S.ctx.entreprise||'',url:'../../sante/sante-mentale/rps.html#synthese'},items);
+  msg.innerHTML=`<b>${n} proposition${n>1?'s':''} envoyée${n>1?'s':''}.</b> À valider dans le <a href="../../evaluer/duerp/index.html">DUERP, onglet « À valider »</a>.`;
 }
 function ecarts(){
   return F.map((f,i)=>{const vals=ACTEURS.map(a=>({a,v:S.avis[a.k]?.f?.[i]})).filter(x=>x.v!=null&&x.v>=0); if(vals.length<2)return null;
@@ -1035,7 +1057,7 @@ function vSynth(){
      <td><select class="i sm" data-cm="${c.f.k}">${MAIT_L.map((l,v)=>`<option value="${v}" ${c.M===v?'selected':''}>${l}</option>`).join('')}</select></td>
      <td class="num" style="text-align:center"><b>${c.C??'–'}</b></td><td>${c.P?`<span class="pill ${PRIO[c.P].c}">${PRIO[c.P].l}</span>`:'<span class="pill lvn">Non évalué</span>'}</td></tr>`).join('')}
    </tbody></table></div>${matrice(D.crit)}</div>
-   <p class="muted small" style="margin-top:8px">Gravité : ${GRAV_L.slice(1).map((l,i)=>`<b>${i+1}</b> ${l}`).join(' · ')}.</p></div>
+   <p class="muted small" style="margin-top:8px">Gravité : ${GRAV_L.slice(1).map((l,i)=>`<b>${i+1}</b> ${l}`).join(' · ')}.</p>${(()=>{const n=D.crit.filter(c=>c.P&&c.P<=3).length;return `<div class="row" style="margin-top:12px;gap:10px;flex-wrap:wrap;align-items:center"><button class="btn sm" id="toDuerp" ${S.demo||!n?'disabled':''}>Envoyer au DUERP (${n} risque${n>1?'s':''})</button><span class="muted small" id="toDuerpMsg" style="flex:1;min-width:220px">${S.demo?'Indisponible avec les données d\'exemple.':n?'Les familles en priorité P1 à P3 sont proposées dans l\'onglet « À valider » du DUERP. Rien n\'y est ajouté sans votre validation.':'Aucune famille en priorité P1 à P3 à proposer.'}</span></div>`;})()}</div>
   <div class="card"><h3 style="margin-bottom:6px">Ce que cela entraîne</h3>
    ${D.cons.map(([t,x])=>`<div class="action"><span class="tag ${t}">${t==='ob'?'Obligation':t==='p3'?'Prioritaire':'À prévoir'}</span><span>${esc(x)}</span></div>`).join('')}</div>
   ${hot.length?`<div class="card"><h3 style="margin-bottom:6px">Pistes d'actions pour les facteurs prioritaires</h3><p class="muted small" style="margin-bottom:6px">Prévention primaire (agir sur l'organisation du travail) en premier, puis secondaire (renforcer les ressources), puis tertiaire (prendre en charge).</p>
@@ -1044,6 +1066,7 @@ function vSynth(){
    <div class="report" id="rep" tabindex="0">${esc(report(D))}</div>
    <div class="row"><span class="muted small">Données brutes de l'évaluation, prêtes à verser dans Supabase.</span><span class="sp"></span><button class="btn ghost sm" id="cpj">Copier les données (JSON)</button></div></div>
   <div class="row"><a class="btn ghost" href="#barometre">Retour</a></div>`;
+  const td=$('#toDuerp'); if(td) td.onclick=()=>envoyerDuerp();
   app.querySelectorAll('[data-cg]').forEach(s=>s.onchange=()=>{const k=s.dataset.cg;S.crit[k]=S.crit[k]||{};S.crit[k].g=+s.value||0;save();const y=scrollY;vSynth();scrollTo(0,y);});
   app.querySelectorAll('[data-cm]').forEach(s=>s.onchange=()=>{const k=s.dataset.cm;S.crit[k]=S.crit[k]||{};S.crit[k].m=+s.value;save();const y=scrollY;vSynth();scrollTo(0,y);});
   $('#cp').onclick=()=>{const t=report(D),b=$('#cp');const ok=()=>{b.textContent='Copié';setTimeout(()=>b.textContent='Copier le rapport',1500)};

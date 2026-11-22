@@ -890,6 +890,36 @@
     $$('.need-ia').forEach(el => el.classList.toggle('off', !IA_ON));
   }
 
+  /* ═══ Passerelle vers le DUERP ══════════════════════════════════
+     Propose (sans rien écrire dans le DUERP) les produits utilisés à risque
+     potentiel moyen ou fort, les CMR, et ceux à exposition modérée ou élevée.
+     Grille du DUERP : gravité = classe de danger (CMR 1A/1B → 4), fréquence = fréquence d'usage,
+     maîtrise = exposition résiduelle (inhalation / cutané : élevé → insuffisante, modéré → partielle). */
+  function versDuerp() {
+    if (!window.PPDuerp) { toast('Passerelle DUERP indisponible : rechargez la page.', 'bad'); return; }
+    const E = C.EVAL, TYPE = { S: 'Prévention', T: 'Protection', O: 'Organisation', P: 'Protection' }, ordre = { S: 0, T: 1, O: 2, P: 3 };
+    const ech = pr => { const d = new Date(); d.setMonth(d.getMonth() + (pr === 1 ? 1 : pr === 2 ? 6 : 12)); return d.toISOString().slice(0, 10); };
+    const items = produits.map(p => ({ p, ev: evaluer(p) }))
+      .filter(({ p, ev }) => ev.cf > 0 && (ev.prio.n >= 2 || cmrCat(p) || Math.max(ev.inh.n, ev.cut.n) >= 2))
+      .map(({ p, ev }) => {
+        const g = estCMR(p) ? 4 : Math.min(4, ev.cd), f = Math.min(4, ev.cf), x = Math.max(ev.inh.n, ev.cut.n), m = x >= 3 ? 3 : x === 2 ? 2 : 1;
+        const sc = Math.round(g * f * [0, .5, .8, 1][m]); let pr = sc >= 10 ? 1 : sc >= 6 ? 2 : sc >= 3 ? 3 : 4; if (g >= 4 && pr > 2) pr = 2;
+        const freq = (E.frequences.find(q => q[0] === String(ev.cf)) || ['', ''])[1];
+        return {
+          ref: p.id, ut: p.lieu || '', categorie: cmrCat(p) ? 'Agents CMR' : 'Risque chimique',
+          danger: p.nom + (p.molecule ? ' (' + p.molecule + ')' : '') + (cmrCat(p) ? ' · CMR ' + cmrCat(p) : ''),
+          situation: [p.usage, E.procedes[p.usageCond.procede]?.[0], freq && "fréquence d'usage : " + freq.charAt(0).toLowerCase() + freq.slice(1), p.exposes && p.exposes + ' salarié(s) exposé(s)'].filter(Boolean).join(' · ')
+            + `. Priorité ${ev.prio.txt.toLowerCase()} · inhalation : ${ev.inh.txt.toLowerCase()} · contact cutané : ${ev.cut.txt.toLowerCase()}.`,
+          dommage: p.h.slice(0, 4).map(c => c + (libH(p, c) ? ' ' + libH(p, c) : '')).join(' ; ') || 'Effets sur la santé : voir la FDS (rubriques 2 et 11)',
+          gravite: g, frequence: f, maitrise: m,
+          actions: recommandations(p, ev).sort((a, b) => ordre[a.n] - ordre[b.n]).slice(0, 4).map(a => ({ description: a.t, type: TYPE[a.n], echeance: ech(pr) }))
+        };
+      });
+    if (!items.length) { toast('Aucun produit à risque moyen ou fort, ni CMR, à proposer au DUERP.', 'ok'); return; }
+    const n = PPDuerp.propose({ id: 'chimique', label: 'Risque chimique', entreprise: '', url: '../../risques/chimique/index.html#evaluation' }, items);
+    toast(`${n} produit${n > 1 ? 's' : ''} proposé${n > 1 ? 's' : ''} au DUERP : à valider dans l'onglet « À valider » du DUERP.`, 'ok');
+  }
+
   function brancher() {
     $$('.tabs button').forEach(b => b.onclick = () => { ongletActif = b.dataset.tab; rendre(); history.replaceState(null, '', '#' + ongletActif); });
     ['#f-q', '#f-lieu', '#f-type'].forEach(s => $(s).addEventListener('input', rendreInventaire));
@@ -912,6 +942,7 @@
       else if (act === 'fiche' && p) { ficheActive = id; ongletActif = 'fiches'; rendre(); window.scrollTo({ top: $('.toolbar').offsetTop - 8, behavior: 'smooth' }); }
       else if (act === 'imprimer-fiche' && p) imprimer(ficheHTML(p), 'Fiche ' + p.nom);
       else if (act === 'imprimer-fiches') { if (produits.length) imprimer(produits.map(ficheHTML).join(''), 'Fiches synthétiques produits chimiques'); }
+      else if (act === 'vers-duerp') versDuerp();
       else if (act === 'imprimer-eval') { rendreEvaluation(); imprimer(`<h1 class="print-title">Évaluation du risque chimique — ${new Date().toLocaleDateString('fr-FR')}</h1>` + $('#eval-zone').innerHTML, 'Évaluation risque chimique'); }
       else if (act === 'imprimer-stock') { rendreStockage(); imprimer(`<h1 class="print-title">Stockage des produits chimiques — ${new Date().toLocaleDateString('fr-FR')}</h1>` + $('#stock-zone').innerHTML, 'Stockage produits chimiques'); }
       else if (act === 'demo') { C.DEMO.forEach(d => produits.push(normaliser(JSON.parse(JSON.stringify(d))))); sauver(); rendre(); toast('4 produits d\'exemple ajoutés', 'ok'); }

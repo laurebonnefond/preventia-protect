@@ -43,7 +43,8 @@ const CATEGORIES=[
   "Chute de hauteur","Chute de plain-pied","Manutention manuelle / TMS","Postures contraignantes",
   "Risque chimique","Risque biologique","Risque électrique","Bruit / Vibrations",
   "Risque routier","Risque machine","Incendie / Explosion","Risque psychosocial (RPS)",
-  "Travail isolé","Ambiance thermique / Rayonnements","Agents CMR","Risque lié au travail de nuit"
+  "Travail isolé","Ambiance thermique / Rayonnements","Agents CMR","Risque lié au travail de nuit",
+  "Circulation interne / engins"
 ];
 const GRAV=[{v:1,l:"Mineur",d:"Premiers soins, gêne légère"},{v:2,l:"Modéré",d:"Arrêt < 8 jours, soin médical"},{v:3,l:"Grave",d:"Arrêt > 8 jours, séquelles possibles"},{v:4,l:"Très grave",d:"IPP, décès, maladie irréversible"}];
 const FREQ=[{v:1,l:"Rare",d:"< 1 fois/an"},{v:2,l:"Occasionnel",d:"Quelques fois/an"},{v:3,l:"Fréquent",d:"Hebdomadaire"},{v:4,l:"Permanent",d:"Quotidien / continu"}];
@@ -380,7 +381,7 @@ function usePropositions(){
 function AValider({data,update,props,refresh}){
   const[utChoix,setUtChoix]=useState({});
   const[nouvelleUT,setNouvelleUT]=useState("Ensemble de l'entreprise");
-  const utDe=p=>utChoix[p.id]||(p.maj&&data.risques.find(r=>r.id===p.maj)?.utId)||(data.uts.find(u=>p.ut&&u.nom.toLowerCase()===p.ut.toLowerCase())||{}).id||(data.uts.length===1?data.uts[0].id:"");
+  const utDe=p=>utChoix[p.id]||(p.maj&&data.risques.find(r=>r.id===p.maj)?.utId)||(data.uts.find(u=>p.ut&&u.nom.toLowerCase()===p.ut.toLowerCase())||{}).id||(!p.ut&&data.uts.length===1?data.uts[0].id:"");
   const fr=s=>s?new Date(s).toLocaleDateString("fr-FR"):"";
   function accepter(p){
     const utId=utDe(p);
@@ -399,16 +400,21 @@ function AValider({data,update,props,refresh}){
   function creerUT(){
     if(!nouvelleUT.trim())return;
     const id=uid(),nom=nouvelleUT.trim();update(d=>{if(!d.uts.some(u=>u.id===id))d.uts=[...d.uts,{id,nom,effectif:"",responsable:"",localisation:""}]});
-    const c={};props.forEach(p=>{if(!utDe(p))c[p.id]=id});setUtChoix({...utChoix,...c});
+    const c={};props.forEach(p=>{if(!p.ut&&!utDe(p))c[p.id]=id});setUtChoix({...utChoix,...c});
   }
+  const manquantes=[...new Set(props.map(p=>p.ut).filter(n=>n&&!data.uts.some(u=>u.nom.trim().toLowerCase()===n.trim().toLowerCase())))];
+  function creerManquantes(){update(d=>{const ex=new Set(d.uts.map(u=>u.nom.trim().toLowerCase()));d.uts=[...d.uts,...manquantes.filter(n=>!ex.has(n.trim().toLowerCase())).map(n=>({id:uid(),nom:n.trim(),effectif:"",responsable:"",localisation:""}))]})}
   const ent=data.entreprise.nom;
   const sources=[...new Set(props.map(p=>p.source.label))];
   if(!window.PPDuerp)return<Card><p style={{padding:16,color:"#991b1b"}}>Passerelle indisponible : rechargez la page.</p></Card>;
   return(<div>
     <h2 className="sf" style={{fontSize:20,marginBottom:4}}>📥 Propositions à valider</h2>
-    <p style={{fontSize:12,color:"#64748b",marginBottom:12,maxWidth:760}}>Les autres modules (évaluation RPS…) proposent des risques déjà cotés, avec des actions. Rien n'entre dans le Document Unique sans votre validation : choisissez l'unité de travail, ajoutez, puis complétez responsables et échéances dans le PAPRIPACT.</p>
-    {props.length===0?<Card><p style={{color:"#64748b",textAlign:"center",padding:16}}>Aucune proposition en attente. Depuis la synthèse de l'évaluation RPS, utilisez « Envoyer au DUERP ».</p></Card>:<>
-    {data.uts.length===0||props.some(p=>!utDe(p))?<Card mb={12}><div style={{padding:12,display:"flex",gap:8,alignItems:"center",flexWrap:"wrap",fontSize:12}}>
+    <p style={{fontSize:12,color:"#64748b",marginBottom:12,maxWidth:760}}>Les autres modules (évaluation RPS, risque chimique, cartographie) proposent des risques déjà cotés, avec des actions. Rien n'entre dans le Document Unique sans votre validation : choisissez l'unité de travail, ajoutez, puis complétez responsables et échéances dans le PAPRIPACT.</p>
+    {props.length===0?<Card><p style={{color:"#64748b",textAlign:"center",padding:16}}>Aucune proposition en attente. Utilisez « Envoyer au DUERP » depuis l'évaluation RPS (synthèse), le risque chimique (onglet Évaluation) ou la cartographie (synthèse).</p></Card>:<>
+    {manquantes.length>0&&<Card mb={12}><div style={{padding:12,display:"flex",gap:8,alignItems:"center",flexWrap:"wrap",fontSize:12}}>
+      <span>Unités de travail proposées, absentes de ce DUERP : <b>{manquantes.join(", ")}</b>.</span>
+      <Btn small c="var(--teal)" onClick={creerManquantes}>Créer ces unités ({manquantes.length})</Btn></div></Card>}
+    {props.some(p=>!p.ut&&!utDe(p))?<Card mb={12}><div style={{padding:12,display:"flex",gap:8,alignItems:"center",flexWrap:"wrap",fontSize:12}}>
       <span>{data.uts.length===0?"Aucune unité de travail. Créez-en une pour rattacher ces risques :":"Les évaluations collectives portent souvent sur toute l'entreprise. Créer une unité de travail :"}</span>
       <input value={nouvelleUT} onChange={e=>setNouvelleUT(e.target.value)} style={{width:220}}/>
       <Btn small c="var(--teal)" onClick={creerUT}>Créer et rattacher</Btn></div></Card>:null}
@@ -419,7 +425,7 @@ function AValider({data,update,props,refresh}){
           <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
             <span style={{background:pr.bg,color:pr.c,padding:"2px 8px",borderRadius:6,fontSize:10,fontWeight:700}}>{pr.l.split("—")[0]}</span>
             {p.maj&&<span style={{background:"#dbeafe",color:"#1e40af",padding:"2px 8px",borderRadius:6,fontSize:10,fontWeight:700}}>Mise à jour d'un risque existant</span>}
-            <b style={{fontSize:13}}>{p.danger}</b><span style={{fontSize:11,color:"#64748b"}}>{p.categorie}</span></div>
+            <b style={{fontSize:13}}>{p.danger}</b><span style={{fontSize:11,color:"#64748b"}}>{p.categorie}</span>{p.ut&&<span style={{fontSize:11,color:"#0f766e",fontWeight:600}}>· {p.ut}</span>}</div>
           <p style={{fontSize:11,color:"#475569",marginTop:4}}>{p.situation}</p>
           <p style={{fontSize:11,color:"#475569"}}><b>Dommage :</b> {p.dommage} · <b>G</b> {p.gravite} · <b>F</b> {p.frequence} · <b>M</b> {MAIT.find(m=>m.v===p.maitrise)?.l} · score {sc}</p>
           {p.actions.length>0&&<ul style={{fontSize:11,color:"#334155",margin:"4px 0 0",paddingLeft:16}}>{p.actions.map((a,i)=><li key={i}>{a.description} <span style={{color:"#64748b"}}>({a.type}{a.echeance?", échéance proposée "+fr(a.echeance):""})</span></li>)}</ul>}

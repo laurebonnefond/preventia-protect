@@ -342,7 +342,7 @@ legend{font-family:var(--f-display);font-size:1.2rem;margin-bottom:10px;padding:
   <section class="panel" id="tab-evaluation" hidden>
     <div class="panel-h">
       <h2>Évaluation du risque chimique</h2>
-      <button class="btn" data-act="imprimer-eval">🖨 Imprimer la synthèse</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-act="vers-duerp" title="Proposer au DUERP les produits à risque moyen ou fort, et les CMR">📥 Envoyer au DUERP</button><button class="btn" data-act="imprimer-eval">🖨 Imprimer la synthèse</button></div>
     </div>
     <div class="avis"><span>🩺</span><p><b>Première approche, pas un avis d'expert.</b> Ces résultats aident à hiérarchiser et à préparer le DUERP. Toute conclusion sur l'exposition des salariés (CMR, VLEP, suivi médical, métrologie) doit être validée par le <b>médecin du travail</b> et, si besoin, par le <b>toxicologue</b> ou l'IPRP du service de prévention et de santé au travail.</p></div>
     <div id="eval-zone" class="panel"></div>
@@ -418,6 +418,8 @@ legend{font-family:var(--f-display);font-size:1.2rem;margin-bottom:10px;padding:
 <script src="../../../core/preventia-ia.js"></script>
 <script src="chim-pictos.js"></script>
 <script src="chim-data.js"></script>
+<script src="../../../assets/js/duerp-passerelle.js"></script>
 <script src="chim-app.js"></script>
+<script src="../../../assets/js/pp-entreprise.js"></script>
 </body>
 </html>

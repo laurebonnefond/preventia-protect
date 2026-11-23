@@ -17,6 +17,7 @@
    et préférences : jamais concernés.
    ========================================================= */
 (function () {
+  const ICI = document.currentScript ? document.currentScript.src : '';   // pour charger pp-auth.js à côté
   const REG = 'pp_entreprises', DOS = 'pp_dossier_';
   const EXACT = ['preventia-duerp', 'preventia-carto', 'preventia_chimique_v2', 'preventia_chimique_products', 'preventia-inventaire',
     'pp_rps_v1', 'pp_atmp', 'pp_atmp_rh', 'pp_atmp_param', 'pp_suivi_global', 'pp_duerp_inbox', 'pp_sm_contacts',
@@ -142,4 +143,9 @@
     };
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', barre); else barre();
+
+  /* Compte commun avec PréventIA Réseau : pastille « Se connecter » ajoutée dans cette barre (assets/js/pp-auth.js) */
+  if (ICI && !window.PPAuth && !document.querySelector('script[data-pp-auth]')) {
+    const s = document.createElement('script'); s.src = new URL('pp-auth.js', ICI).href; s.dataset.ppAuth = '1'; document.head.appendChild(s);
+  }
 })();

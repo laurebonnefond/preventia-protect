@@ -1,30 +1,58 @@
 /* =====================================================================
-   PréventIA — Passerelle IA commune (Make.com → API Claude)
+   PréventIA — Passerelle IA commune (fonction serveur sécurisée)
    ---------------------------------------------------------------------
    UN SEUL fichier à modifier pour tous les modules qui utilisent l'IA.
 
    Chemin d'un appel :
      Module → PIA.fetch(body)
-        1. FILTRE  : masque les données personnelles dans le texte envoyé
-        2. ROUTAGE : webhook "texte" ou "vision" (détecté automatiquement)
-        3. EMBALLAGE "Solution C" : { token, payload: JSON.stringify(body) }
-     → Make.com (vérifie le token, ajoute la clé API cachée)
-     → API Claude → réponse renvoyée au module, inchangée
+        1. FILTRE   : masque les données personnelles dans le texte envoyé
+        2. IDENTITÉ : session PréventIA (compte commun avec PréventIA Réseau)
+     → fonction serveur Supabase « ia » (UE) : vérifie l'origine, le compte,
+       les quotas, masque à nouveau, journalise SANS le contenu
+        → modules santé (salariés)  : Mistral, traitement dans l'UE
+        → modules professionnels    : Claude (Anthropic)
+     → réponse renvoyée au module, au format habituel
 
-   La clé API Anthropic n'est JAMAIS ici : elle reste dans Make.com.
+   Aucune clé ni aucun jeton ici : les clés des IA restent sur le serveur.
+   Modules professionnels : connexion obligatoire (👤 Se connecter).
+   Modules santé (modules/sante/…) : utilisables sans compte, limites strictes.
    ===================================================================== */
 (function () {
+  const ICI = document.currentScript ? document.currentScript.src : '';
   /* ------------------ RÉGLAGES (modifiez ici seulement) ------------------ */
   const CONFIG = {
-    webhookTexte:  'https://hook.eu1.make.com/qhvt4lylqgbykqljwd1sdybpdaoapedu',
-    webhookVision: 'https://hook.eu1.make.com/y91ilwbt4jpfgt4m42gzurbbmolkxj2x',
-    tokenTexte:    'previa_text_2026_xxx',    // = valeur du filtre « Verif token » du scénario texte
-    tokenVision:   'previa_vision_2026_xxx',  // = valeur du filtre du scénario vision
-    modele:        'claude-sonnet-4-5',       // imposé à tous les modules
-    maxTokensMax:  4000,                      // plafond de longueur de réponse (coût)
-    delaiMs:       90000,                     // abandon après 90 s
-    filtrer:       true                       // false = désactiver le masquage
+    fonction:     'https://vjiryvqyijfljzsaekee.supabase.co/functions/v1/ia',
+    cle:          'sb_publishable_I7Ao0-YCve34t6qTrhGc7A_M5Fduxg1',   // clé publique Supabase (pas une clé d'IA)
+    maxTokensMax: 4000,                      // plafond de longueur de réponse (le serveur plafonne aussi)
+    delaiMs:      90000,                     // abandon après 90 s
+    filtrer:      true                       // false = désactiver le masquage côté navigateur
   };
+
+  /* Module appelant, déduit de l'adresse : « sante/sante-mentale/reprendre-pied », « risques/chimique/index »… */
+  const usage = () => {
+    const m = location.pathname.match(/\/modules\/(.+?)(?:\.html?)?$/);
+    return m ? m[1].replace(/\/$/, '/index') : 'accueil';
+  };
+  const estSante = () => usage().startsWith('sante/');
+
+  /* Session PréventIA : charge pp-auth.js si besoin (pas sur les pages santé utilisées par les salariés) */
+  let chargement = null;
+  function auth() {
+    if (window.PPAuth) return Promise.resolve(window.PPAuth);
+    if (estSante() || !ICI) return Promise.resolve(null);
+    if (!chargement) chargement = new Promise(ok => {
+      const s = document.createElement('script');
+      s.src = new URL('../assets/js/pp-auth.js', ICI).href; s.dataset.ppAuth = '1';
+      s.onload = () => ok(window.PPAuth || null); s.onerror = () => ok(null);
+      document.head.appendChild(s);
+    });
+    return chargement;
+  }
+  async function jeton() {
+    const A = await auth(); if (!A) return '';
+    try { await A.pret; const c = A.client(); if (!c) return ''; const { data } = await c.auth.getSession(); return data.session?.access_token || ''; }
+    catch (e) { return ''; }
+  }
 
   /* ------------------ FILTRE : données personnelles ---------------------- */
   /* Chaque règle : [nom affiché, motif, remplacement]. Ajoutez-en au besoin. */
@@ -73,24 +101,25 @@
   async function piaFetch(body, options = {}) {
     const bilan = {};
     const corps = filtrerCorps(body, bilan);
-    corps.model = CONFIG.modele;
     corps.max_tokens = Math.min(corps.max_tokens || 1500, CONFIG.maxTokensMax);
-
-    const vision = options.vision ?? aUneImage(corps);
-    const url   = vision ? CONFIG.webhookVision : CONFIG.webhookTexte;
-    const token = vision ? CONFIG.tokenVision   : CONFIG.tokenTexte;
 
     const masques = Object.entries(bilan).map(([k, n]) => `${n} ${k}`).join(', ');
     if (masques) toast(`🔒 Masqué avant envoi à l'IA : ${masques}`, '#0f766e');
+
+    const tok = await jeton();
+    if (!tok && !estSante()) {
+      const msg = "Connectez-vous avec votre compte PréventIA (👤 Se connecter) pour utiliser l'IA.";
+      toast('🔒 ' + msg, '#b45309'); if (window.PPAuth) PPAuth.ouvrir(); throw new Error(msg);
+    }
 
     const ctrl = new AbortController();
     const minuteur = setTimeout(() => ctrl.abort(), CONFIG.delaiMs);
     let r;
     try {
-      r = await fetch(url, {
+      r = await fetch(CONFIG.fonction, {
         method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },   // évite le pré-contrôle CORS
-        body: JSON.stringify({ token, payload: JSON.stringify(corps) }),
+        headers: { 'Content-Type': 'application/json', apikey: CONFIG.cle, ...(tok ? { Authorization: 'Bearer ' + tok } : {}) },
+        body: JSON.stringify({ usage: usage(), body: corps }),
         signal: ctrl.signal
       });
     } catch (e) {
@@ -99,15 +128,16 @@
     } finally { clearTimeout(minuteur); }
 
     if (!r.ok) {
-      const msg = r.status === 429 ? "Trop de demandes à l'IA, patientez une minute."
-                : r.status >= 500 ? "Le service IA (Make) est indisponible pour l'instant."
-                : `Requête IA refusée (code ${r.status}).`;
+      let msg = '';
+      try { msg = (await r.clone().json())?.error?.message || ''; } catch (e) {}
+      msg = msg || (r.status === 429 ? "Trop de demandes à l'IA, patientez." : r.status >= 500 ? "Le service IA est indisponible pour l'instant." : `Requête IA refusée (code ${r.status}).`);
+      if (r.status === 401 && window.PPAuth) PPAuth.ouvrir();
       toast('⚠️ ' + msg, '#b91c1c'); throw new Error(msg);
     }
     return r;   /* même objet qu'un fetch classique : r.text(), r.json() */
   }
 
-  /* Raccourci : renvoie directement le texte de Claude */
+  /* Raccourci : renvoie directement le texte de la réponse */
   async function piaTexte(body, options) {
     const t = await (await piaFetch(body, options)).text();
     try {

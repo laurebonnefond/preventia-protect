@@ -197,6 +197,7 @@ details.acteur summary::-webkit-details-marker{display:none}
 
 <script src="rps-data.js"></script>
 <script src="../../../assets/js/duerp-passerelle.js"></script>
+<script src="../../../core/preventia-ia.js"></script>
 <script src="../sante-femme/enquetes.js"></script>
 <script>
 (function(){
@@ -1065,11 +1066,13 @@ function vSynth(){
    ${D.cons.map(([t,x])=>`<div class="action"><span class="tag ${t}">${t==='ob'?'Obligation':t==='p3'?'Prioritaire':'À prévoir'}</span><span>${esc(x)}</span></div>`).join('')}</div>
   ${hot.length?`<div class="card"><h3 style="margin-bottom:6px">Pistes d'actions pour les facteurs prioritaires</h3><p class="muted small" style="margin-bottom:6px">Prévention primaire (agir sur l'organisation du travail) en premier, puis secondaire (renforcer les ressources), puis tertiaire (prendre en charge).</p>
    ${hot.map(r=>`<h4 style="margin-top:10px">${r.f.l} ${pill(r.lv)}</h4>${ACTIONS[r.f.k].map(([t,x])=>`<div class="action"><span class="tag ${t==='P'?'p1':t==='S'?'p2':'p3'}">${t==='P'?'Primaire':t==='S'?'Secondaire':'Tertiaire'}</span><span>${x}</span></div>`).join('')}`).join('')}</div>`:''}
+  ${iaCarte()}
   <div class="card grid"><div class="row"><h3>Rapport de synthèse</h3><span class="sp"></span><button class="btn sm" id="cp">Copier le rapport</button></div>
    <div class="report" id="rep" tabindex="0">${esc(report(D))}</div>
    <div class="row"><span class="muted small">Données brutes de l'évaluation, prêtes à verser dans Supabase.</span><span class="sp"></span><button class="btn ghost sm" id="cpj">Copier les données (JSON)</button></div></div>
   <div class="row"><a class="btn ghost" href="#barometre">Retour</a></div>`;
   const td=$('#toDuerp'); if(td) td.onclick=()=>envoyerDuerp();
+  iaBind();
   app.querySelectorAll('[data-cg]').forEach(s=>s.onchange=()=>{const k=s.dataset.cg;S.crit[k]=S.crit[k]||{};S.crit[k].g=+s.value||0;save();const y=scrollY;vSynth();scrollTo(0,y);});
   app.querySelectorAll('[data-cm]').forEach(s=>s.onchange=()=>{const k=s.dataset.cm;S.crit[k]=S.crit[k]||{};S.crit[k].m=+s.value;save();const y=scrollY;vSynth();scrollTo(0,y);});
   $('#cp').onclick=()=>{const t=report(D),b=$('#cp');const ok=()=>{b.textContent='Copié';setTimeout(()=>b.textContent='Copier le rapport',1500)};
@@ -1077,6 +1080,61 @@ function vSynth(){
   $('#cpj').onclick=()=>{const b=$('#cpj'),t=JSON.stringify({version:1,exporte_le:new Date().toISOString().slice(0,10),...S},null,1);
     try{navigator.clipboard.writeText(t).then(()=>{b.textContent='Copié';setTimeout(()=>b.textContent='Copier les données (JSON)',1500)},()=>b.textContent='Copie refusée par le navigateur')}catch(e){b.textContent='Copie refusée par le navigateur'}};
   bindDemo();
+}
+/* ---------- Lecture assistée par l'IA (facultative) ----------
+   Ce qui part : remontées et notes de la grille, regroupées par équipe.
+   Avant l'envoi : entreprise, équipes et mots choisis remplacés ; noms, e-mails, téléphones… masqués (PIA.filtrerTexte) ;
+   équipes de moins de 5 salariés regroupées. L'infirmier·e relit exactement le texte envoyé, puis valide la lecture.
+   Module santé → la passerelle l'envoie à Mistral, dans l'UE. */
+const IA_MIN=5;
+function iaCorpus(){
+  const eqs=S.ctx.equipes.filter(e=>e.n), lab={}; let i=0;
+  eqs.forEach(e=>{lab[e.n]=+e.eff>=IA_MIN?'Équipe '+String.fromCharCode(65+i++):'Autres équipes (moins de 5 salariés)';});
+  const mots=[S.ctx.entreprise,...eqs.map(e=>e.n),...String(S.iaMots||'').split(/[,;\n]/)].map(x=>String(x||'').trim()).filter(x=>x.length>=2).sort((a,b)=>b.length-a.length);
+  const re=x=>new RegExp(x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi');
+  const bilan={};
+  const masq=t=>{let x=String(t); mots.forEach(m=>{x=x.replace(re(m),()=>{bilan['mots choisis']=(bilan['mots choisis']||0)+1;return '[masqué]';});});
+    return window.PIA?PIA.filtrerTexte(x,bilan):x;};
+  const G={};
+  const add=(eq,f,src,t)=>{if(!String(t||'').trim())return;const g=lab[eq]||'Équipe non précisée';(G[g]=G[g]||[]).push(`- [${F.find(x=>x.k===f)?.l||'Famille non précisée'}] (${src}) ${masq(t).replace(/\s+/g,' ').trim()}`);};
+  S.rem.forEach(r=>add(r.eq,r.f,'remontée',r.txt));
+  Object.entries(S.grille||{}).forEach(([eq,g])=>Object.entries(g?.notes||{}).forEach(([k,t])=>add(eq,k,'grille RPS-DU',t)));
+  const n=Object.values(G).reduce((a,l)=>a+l.length,0);
+  const txt=Object.entries(G).map(([g,l])=>`${g.toUpperCase()}\n${l.join('\n')}`).join('\n\n');
+  const vers=Object.fromEntries(Object.entries(lab).filter(([,v])=>/^Équipe [A-Z]$/.test(v)).map(([k,v])=>[v,k]));
+  return {n,txt,bilan,vers};
+}
+const iaReel=(t,vers)=>String(t||'').replace(/\*\*/g,'').replace(/([ée]quipe)\s+([A-Z])(?![A-Za-zÀ-ÿ])/gi,(m,w,l)=>vers?.['Équipe '+l.toUpperCase()]?`${m} (${vers['Équipe '+l.toUpperCase()]})`:m); // pseudonymes → noms réels, à l'affichage local seulement
+const IA_SYS=`Tu aides une infirmière en santé au travail à lire des remontées sur les risques psychosociaux, déjà pseudonymisées (équipes A, B…, [masqué], [personne]).
+Pour chaque équipe : 1) thèmes récurrents, rattachés aux familles de facteurs indiquées ; 2) signaux d'alerte précoce à vérifier ; 3) ressources ou éléments protecteurs cités.
+Termine par 2 ou 3 points transversaux à toutes les équipes.
+Règles strictes : ne cherche jamais à identifier une personne ; ne cite pas les textes mot pour mot ; aucun diagnostic individuel ; formule des hypothèses à vérifier, pas des conclusions. Français, titres courts et tirets, 350 mots au plus.`;
+function iaCarte(){
+  const C=iaCorpus(), ia=S.ia;
+  return `<div class="card grid" id="iaCard"><h3>Lecture assistée par l'IA <span class="muted small">(facultative)</span></h3>
+   <p class="muted small" style="margin:0">L'IA (Mistral, traitement dans l'Union européenne) aide à repérer les thèmes récurrents des <b>remontées</b> et des <b>notes de la grille</b>. Avant l'envoi : entreprise et équipes remplacées (Équipe A, B…), noms de personnes, e-mails et téléphones masqués, équipes de moins de ${IA_MIN} salariés regroupées. Vous relisez exactement ce qui part. Les scores ne sont jamais calculés par l'IA.</p>
+   <label class="f">Autres mots à masquer : noms, lieux, sites, clients… (séparés par des virgules)<input class="i" id="iaMots" value="${esc(S.iaMots||'')}" placeholder="Ex. : Dupont, site de Panazol, client Leclerc"></label>
+   <div class="row"><button class="btn ghost sm" id="iaVoir" ${C.n&&window.PIA?'':'disabled'}>Voir ce qui sera envoyé (${C.n} texte${C.n>1?'s':''})</button>${window.PIA?'':'<span class="muted small">Passerelle IA indisponible sur cette page.</span>'}</div>
+   <div id="iaApercu"></div>
+   ${ia?`<div class="grid"><div class="row"><b>Lecture du ${new Date(ia.date).toLocaleDateString('fr-FR')}</b>${ia.valide?`<span class="pill lv0">Validée le ${new Date(ia.valide).toLocaleDateString('fr-FR')}</span>`:'<span class="pill lv1">À relire et valider</span>'}<span class="sp"></span>${ia.valide?'':'<button class="btn sm" id="iaOk">Je l\'ai relue : valider</button>'}<button class="btn ghost sm" id="iaDel">Effacer</button></div>
+    <div class="report">${esc(iaReel(ia.texte,C.vers))}</div>
+    <p class="muted small" style="margin:0">Hypothèses proposées par l'IA, à confronter aux données chiffrées et aux entretiens. Une fois validée, cette lecture est ajoutée au rapport de synthèse.</p></div>`:''}
+  </div>`;
+}
+function iaBind(){
+  const m=$('#iaMots'); if(!m) return;
+  m.onchange=()=>{S.iaMots=m.value;save();const y=scrollY;vSynth();scrollTo(0,y);};
+  const v=$('#iaVoir'); if(v) v.onclick=()=>{const C=iaCorpus(),b=Object.entries(C.bilan).map(([k,n])=>`${n} ${k}`).join(', ');
+    $('#iaApercu').innerHTML=`<div class="grid"><p class="small" style="margin:0"><b>Texte exact envoyé à l'IA</b>${b?` · masqué : ${esc(b)}`:''}</p><div class="report">${esc(C.txt)}</div>
+     <label class="row small" style="gap:8px;align-items:flex-start"><input type="checkbox" id="iaRelu"> <span>J'ai relu : ce texte ne contient aucun nom ni détail permettant de reconnaître quelqu'un. Sinon, j'ajoute les mots à masquer ci-dessus.</span></label>
+     <div class="row"><button class="btn sm" id="iaGo" disabled>Envoyer à l'IA</button><span class="muted small" id="iaSt"></span></div></div>`;
+    $('#iaRelu').onchange=e=>$('#iaGo').disabled=!e.target.checked;
+    $('#iaGo').onclick=async()=>{const g=$('#iaGo'),st=$('#iaSt');g.disabled=true;st.textContent='Lecture en cours…';
+      try{const t=await PIA.texte({max_tokens:1200,system:IA_SYS,messages:[{role:'user',content:C.txt}]});
+        S.ia={date:new Date().toISOString(),texte:t,n:C.n,valide:null};save();const y=scrollY;vSynth();scrollTo(0,y);}
+      catch(e){st.textContent=e.message||'Échec de la lecture IA.';g.disabled=false;}};};
+  const ok=$('#iaOk'); if(ok) ok.onclick=()=>{S.ia.valide=new Date().toISOString();save();const y=scrollY;vSynth();scrollTo(0,y);};
+  const del=$('#iaDel'); if(del) del.onclick=()=>{delete S.ia;save();const y=scrollY;vSynth();scrollTo(0,y);};
 }
 function report(D){
   const c=S.ctx, L=[];
@@ -1100,6 +1158,7 @@ function report(D){
   if(D.ec.length) L.push('ÉCARTS DE PERCEPTION',...D.ec.map(e=>`- ${e.f.l} : ${e.mx.a.l} (${AV_LV[e.mx.v+1].l}) / ${e.mn.a.l} (${AV_LV[e.mn.v+1].l})`),'');
   const av=ACTEURS.filter(a=>S.avis[a.k]?.c);
   if(av.length) L.push('AVIS DES ACTEURS',...av.map(a=>`- ${a.l} : ${S.avis[a.k].c}`),'');
+  if(S.ia?.valide) L.push(`LECTURE ASSISTÉE PAR L'IA DES REMONTÉES (Mistral, UE) — validée par l'infirmier·e le ${new Date(S.ia.valide).toLocaleDateString('fr-FR')}`,iaReel(S.ia.texte,iaCorpus().vers),'');
   L.push('CE QUE CELA ENTRAÎNE',...D.cons.map(([,x])=>'- '+x),'');
   const hot=D.rows.filter(r=>r.lv!=null&&r.lv>=2);
   if(hot.length){L.push('PISTES D\'ACTIONS');hot.forEach(r=>{L.push(`${r.f.l} :`);ACTIONS[r.f.k].forEach(([t,x])=>L.push(`  [${t==='P'?'Primaire':t==='S'?'Secondaire':'Tertiaire'}] ${x}`));});L.push('');}

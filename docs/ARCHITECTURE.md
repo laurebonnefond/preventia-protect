@@ -1,78 +1,92 @@
-# 🏗️ Architecture Technique — PréventIA Protect
+# 🏗️ Architecture technique — PréventIA Protect
+
+*Mise à jour : novembre 2026. Vue d'ensemble, liste des modules et fonctionnement détaillé de l'IA : voir le [README](../README.md).*
 
 ## Principes
 
-1. **Modulaire** — Chaque outil est un module autonome dans `modules/`
-2. **Partagé** — La couche transversale IA (`core/`) est importée par tous les modules
-3. **Isolé** — Chaque module a son propre namespace de stockage
-4. **Évolutif** — Ajouter un module = créer un dossier + l'enregistrer dans `modules.registry.js`
-5. **Sécurisé** — Pas de données de santé, webhooks externalisés, CSP
+1. **Sans compilation** — HTML, CSS et JavaScript « purs », servis tels quels par GitHub Pages.
+2. **Un module = un dossier** dans `modules/<domaine>/<module>/`, avec sa propre page autonome.
+3. **Peu de briques communes**, chargées par une simple balise `<script>` (voir ci-dessous).
+4. **Données de travail dans le navigateur** ; serveur seulement pour ce qui doit être partagé (compte, base FDS, enquêtes anonymes, IA).
+5. **Aucune clé ni aucun jeton dans le code** — les clés des IA sont des secrets du serveur.
 
-## Flux de données
+## Vue d'ensemble
 
 ```
-┌─────────────────────────────────────────────────┐
-│                  NAVIGATEUR                      │
-│                                                  │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐      │
-│  │ Module A │  │ Module B │  │ Module C │ ...   │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘      │
-│       │              │              │            │
-│  ┌────┴──────────────┴──────────────┴───────┐   │
-│  │          COUCHE TRANSVERSALE (core/)       │   │
-│  │  ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐        │   │
-│  │  │ AI  │ │Photo│ │ OCR │ │Voice│ ...     │   │
-│  │  └──┬──┘ └──┬──┘ └──┬──┘ └─────┘        │   │
-│  └─────┼───────┼───────┼────────────────────┘   │
-│        │       │       │                         │
-│  ┌─────┴───────┴───────┴─────┐  ┌────────────┐ │
-│  │    localStorage (isolé)    │  │   UI/CSS    │ │
-│  └────────────────────────────┘  └────────────┘ │
-└────────────────┬────────────────────────────────┘
-                 │ HTTPS (fetch)
-         ┌───────┴────────┐
-         │   Make.com      │
-         │   Webhooks      │
-         └───────┬─────────┘
-                 │
-         ┌───────┴────────┐
-         │   Claude API    │
-         │   (Anthropic)   │
-         └─────────────────┘
+┌────────────────────────── Navigateur ──────────────────────────┐
+│  Modules (DUERP, chimique, RPS, infirmerie, EPI, …)             │
+│        │                                                        │
+│  Briques communes                                               │
+│   core/preventia-ia.js ········ passerelle IA (objet PIA)       │
+│   core/avertissement-prototype.js · bandeau « prototype »       │
+│   assets/js/pp-entreprise.js ··· dossiers entreprise            │
+│   assets/js/pp-auth.js ········· compte commun (objet PPAuth)   │
+│   assets/js/duerp-passerelle.js  propositions vers le DUERP     │
+│   assets/js/protect-registre.js  moteur des modules « registre »│
+│        │                                                        │
+│  localStorage : une clé par module (pp_*)                       │
+└────────┬─────────────────────────────────────┬──────────────────┘
+         │ HTTPS                               │ HTTPS
+         ▼                                     ▼
+┌──────────── Supabase · UE (Irlande) ──────────────────────────┐
+│  Auth : compte commun avec PréventIA Réseau                    │
+│  Base : fds*, substances, enq_*, ia_journal (règles RLS)       │
+│  Fonction serveur « ia » ──► Mistral (UE)  modules santé       │
+│                          └─► Claude        modules pro         │
+└────────────────────────────────────────────────────────────────┘
 ```
 
-## Convention de nommage
+## Briques communes
+
+| Fichier | Objet global | Rôle | Chargé par |
+|---|---|---|---|
+| `core/preventia-ia.js` | `PIA` | Seul accès à l'IA : masque les données personnelles, ajoute la session, appelle la fonction serveur `ia` | Pages utilisant l'IA |
+| `core/avertissement-prototype.js` | — | Bandeau et fenêtre « prototype pédagogique » | Pages de module |
+| `assets/js/pp-entreprise.js` | `PPEntreprise` | Sélecteur « Dossier entreprise », export / import ; charge `pp-auth.js` | Pages avec barre entreprise |
+| `assets/js/pp-auth.js` | `PPAuth` | Connexion Supabase partagée avec PréventIA Réseau, choix du SPSTI (`pr-org`) | `pp-entreprise.js` ou `preventia-ia.js` |
+| `assets/js/duerp-passerelle.js` | `PPDuerp` | File de risques proposés (`pp_duerp_inbox`), validés dans l'onglet « À valider » du DUERP | DUERP, RPS, chimique, cartographie |
+| `assets/js/protect-registre.js` | `PP` | Moteur des modules « registre » (`PP.app({...})`) | Modules registre |
+
+## Côté serveur (Supabase, projet partagé avec PréventIA Réseau)
+
+| Élément | Contenu | Accès |
+|---|---|---|
+| `organizations`, `memberships`, `profiles` | SPSTI, appartenance, profils | Règles RLS, partagées avec Réseau |
+| `fds`, `substances`, `fds_composition`, `fds_mentions_h`, `fds_sections` | Base FDS partagée (contenu des FDS uniquement) | Lecture : mon SPSTI + FDS vérifiées partagées ; écriture : mon SPSTI |
+| `enq_campagnes`, `enq_reponses` | Enquêtes anonymes (RPS, santé de la femme) | Fonctions dédiées ; aucun résultat sous 5 réponses |
+| `ia_journal` | Appels IA : qui, quand, module, volume (jamais le texte) | Écrit par la fonction `ia` ; chacun lit ses lignes |
+| Fonction `ia` | Passerelle IA : origine, compte, quotas, masquage, routage | Secrets `MISTRAL_API_KEY`, `ANTHROPIC_API_KEY` |
+
+Chaque table porte une étiquette de catégorie dans Supabase : `[Comptes]`, `[Réseau]`, `[Enquêtes]`, `[FDS]`, `[IA]`, `[LaB]`.
+
+## Conventions
 
 | Élément | Convention | Exemple |
-|---------|-----------|---------|
-| Fichier module | `kebab-case` | `analyse-poste` |
-| Fichier core | `kebab-case.js` | `ai-assistant.js` |
-| Clé storage | `pp_moduleId_vN_key` | `pp_chimique_v1_products` |
-| Export JS | `camelCase` | `createAssistant()` |
-| CSS class | `pp-component` | `pp-card`, `pp-badge` |
+|---|---|---|
+| Dossier de module | `kebab-case` | `analyse-poste` |
+| Clé de stockage | `pp_<module>_<donnée>` (+ `_vN` si le format change) | `pp_100j_suivi`, `pp_rps_v1` |
+| Objet global partagé | `PP…` / `PIA` | `PPAuth`, `PPDuerp` |
+| Usage IA (journal) | chemin après `modules/` | `sante/sante-mentale/reprendre-pied` |
 
 ## Ajouter un module
 
-1. Créer le dossier : `modules/categorie/mon-module/`
-2. Créer `index.html` (page du module)
-3. Enregistrer dans `config/modules.registry.js`
-4. Importer les services `core/` nécessaires
-5. Utiliser `createStore('mon-module')` pour le stockage
+1. Créer `modules/<domaine>/<module>/index.html`.
+2. Ajouter les briques utiles :
+   ```html
+   <script src="../../../core/avertissement-prototype.js" defer></script>
+   <script src="../../../core/preventia-ia.js"></script>          <!-- si IA -->
+   <script src="../../../assets/js/pp-entreprise.js"></script>    <!-- si dossiers entreprise -->
+   ```
+3. Déclarer le module dans la liste `MODULES` de `index.html` (voir README, § 8).
+4. Choisir une clé `pp_<module>_…` et l'ajouter au registre de `pp-entreprise.js` si elle dépend de l'entreprise suivie (jamais pour des données de santé individuelles).
+5. Module destiné aux salariés sans compte ? Le placer sous `modules/sante/` : l'IA y passe alors par Mistral (UE), avec les limites prévues pour les accès sans compte.
 
-## Sécurité
+## Feuille de route technique
 
-- Webhooks : jamais dans le HTML, toujours via `config/webhooks.config.js`
-- En production : proxy via Supabase Edge Functions
-- localStorage : namespace isolé par module
-- CSP : restreindre les origines (fonts.googleapis.com, hook.eu2.make.com)
-- Pas de `eval()`, pas de `innerHTML` non sanitisé
-
-## Roadmap technique
-
-| Phase | Stack | Fonctionnalités |
-|-------|-------|-----------------|
-| 1 (actuel) | GitHub Pages + localStorage | Prototypes, validation terrain |
-| 2 | + Supabase Auth & DB | Multi-utilisateurs, persistance serveur |
-| 3 | + Supabase Storage | Photos, FDS, rapports stockés en cloud |
-| 4 | + PWA | Mode hors-ligne terrain, sync différée |
-| 5 | + API REST | Intégration ERP, Power BI, exports |
+| Phase | Stack | État |
+|---|---|---|
+| 1 | GitHub Pages + navigateur | ✅ |
+| 2 | + Supabase UE : compte commun, base FDS, enquêtes anonymes, passerelle IA | 🟠 en cours (nov. 2026) |
+| 3 | + stockage des PDF de FDS, assistant FDS (recherche texte + vecteurs) | À venir |
+| 4 | Application hors-ligne pour le terrain | À venir |
+| 5 | Exports et intégrations (Power BI…) | À venir |

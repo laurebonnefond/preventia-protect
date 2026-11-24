@@ -41,7 +41,7 @@
 
 ## 1. À quoi ça sert
 
-PréventIA Protect est la **branche entreprise** de l'écosystème PréventIA-LaB. C'est une suite d'outils web, gratuits et sans installation, pour piloter la santé et la sécurité au travail dans une entreprise : évaluer les risques, suivre les équipements et les échéances, organiser la coactivité, gérer l'infirmerie, prévenir les risques psychosociaux, suivre l'environnement.
+PréventIA Protect est l'une des **trois plateformes de l'écosystème PréventIA**, au même niveau que PréventIA-LaB et PréventIA Réseau. C'est une suite d'outils web, gratuits et sans installation, pour piloter la santé et la sécurité au travail dans une entreprise : évaluer les risques, suivre les équipements et les échéances, organiser la coactivité, gérer l'infirmerie, prévenir les risques psychosociaux, suivre l'environnement.
 
 | Public | Ce qu'il y trouve |
 |---|---|
@@ -54,13 +54,36 @@ PréventIA Protect est la **branche entreprise** de l'écosystème PréventIA-La
 
 ## 2. Vue d'ensemble
 
+### L'écosystème PréventIA
+
+Trois plateformes au même niveau, qui peuvent s'interconnecter. Entre PréventIA Protect et PréventIA Réseau se trouve un **socle commun** : une base de données hébergée dans l'UE, partagée par les deux.
+
+```mermaid
+flowchart LR
+    LAB["🧪 PréventIA-LaB<br/>outils pour les professionnels<br/>de santé au travail"]
+    PROTECT["🛡️ PréventIA Protect<br/>outils de prévention<br/>en entreprise (ce dépôt)"]
+    SOCLE[("🗄️ Socle commun<br/>Supabase · UE (Irlande)<br/>────────<br/>👤 Compte commun · SPSTI<br/>📚 Base FDS partagée<br/>📋 Enquêtes anonymes<br/>🤖 Passerelle IA sécurisée<br/>Mistral UE · Claude")]
+    RESEAU["🤝 PréventIA Réseau<br/>plateforme collaborative<br/>des SPSTI"]
+    PROTECT <--> SOCLE <--> RESEAU
+    LAB <-.->|liens| PROTECT
+    LAB <-.->|liens| RESEAU
+    classDef plateforme fill:#e6f4f1,stroke:#0f766e,color:#0c1e3c
+    classDef socle fill:#eef2ff,stroke:#4338ca,color:#0c1e3c
+    class LAB,PROTECT,RESEAU plateforme
+    class SOCLE socle
+```
+
+| Plateforme | Rôle | Lien avec les autres |
+|---|---|---|
+| 🧪 **PréventIA-LaB** | Outils pour les professionnels de santé au travail | Liens vers Protect et Réseau ; IA encore via Make.com (migration prévue) |
+| 🛡️ **PréventIA Protect** | Outils de prévention en entreprise (ce dépôt) | Socle commun : compte, base FDS, enquêtes anonymes, passerelle IA |
+| 🤝 **PréventIA Réseau** | Plateforme collaborative des SPSTI (idées, expérimentations, documents) | Socle commun : même compte et même session, consultation et partage de la base FDS |
+
+### Les domaines de PréventIA Protect
+
 ```mermaid
 flowchart TB
-    LAB["🧪 PréventIA-LaB<br/>écosystème · outils pour les professionnels de santé au travail"]
-    LAB --> PROTECT["🛡️ PréventIA Protect<br/>branche entreprise (ce dépôt)"]
-    LAB --> RESEAU["🤝 PréventIA Réseau"]
-    LAB --> SENIOR["👵 PréventIA Senior"]
-
+    PROTECT["🛡️ PréventIA Protect"]
     PROTECT --> EV["📝 Évaluer<br/>DUERP · Cartographie"]
     PROTECT --> EQ["🦺 Équipements & conformité<br/>Suivi global · EPI · Inventaire · Registres"]
     PROTECT --> SA["🩺 Santé<br/>Infirmerie · AT/MP · Santé mentale · Santé de la femme"]
@@ -395,7 +418,7 @@ flowchart LR
 
 **Chantiers transverses** : masquage des noms et des lieux dans les commentaires libres avant l'IA, suppression automatique des réponses d'enquête 12 mois après la fin de campagne, AIPD et registre des traitements avec le DPO, assistant FDS (recherche hybride texte + vecteurs, déjà prévue dans la base), éventuel nom de domaine dédié.
 
-**Fait en novembre 2026** : passerelle IA sécurisée (fin de Make.com pour Protect), compte commun avec PréventIA Réseau, base FDS partagée, passerelle vers le DUERP, dossiers entreprise.
+**Fait en novembre 2026** : passerelle IA sécurisée (fin de Make.com pour Protect), compte commun avec PréventIA Réseau, base FDS partagée, passerelle vers le DUERP, dossiers entreprise, suppression de l'ancienne architecture inutilisée (`core/ai-*.js`, `alerts.js`, `planning.js`, `stats.js`, `storage.js`, `reglementation.js`, dossier `config/`).
 
 ---
 
@@ -403,14 +426,12 @@ flowchart LR
 
 | Élément | Constat | Proposition |
 |---|---|---|
-| `core/ai-*.js`, `alerts.js`, `planning.js`, `stats.js`, `storage.js`, `reglementation.js` · `config/*.js` | Première architecture en modules ES, **non utilisée** par les pages actuelles (seuls `preventia-ia.js` et `avertissement-prototype.js` servent) | Archiver dans `docs/archive/` ou supprimer |
 | `index-v1.html`, `protect-ui.css` (racine) | Anciennes versions de l'accueil et de la feuille de style (la bonne est dans `assets/css/`) | Supprimer |
 | `modules/risques/chimique/evaluation.html`, `index.preced.html` | Anciennes versions du risque chimique (données reprises par le nouveau module) | Supprimer après vérification |
 | `modules/equipements/epi/*.prec.html` | Sauvegardes de la Fiche EPI | Supprimer (l'historique Git les conserve) |
 | `modules/pilotage/at-mp/` | Simple redirection vers `sante/at-mp` | Garder tant que d'anciens liens circulent |
 | `docs/Archi` | Fichier vide | Supprimer |
 | Webhooks Make.com | ✅ Plus utilisés par Protect depuis la passerelle sécurisée (nov. 2026). Encore utilisés par PréventIA-LaB, dont le jeton reste visible | Migrer PréventIA-LaB vers la fonction serveur, puis désactiver les scénarios Make |
-| `config/webhooks.config.js` | Ancienne configuration des webhooks, non utilisée | Supprimer avec les `core/ai-*.js` |
 
 ---
 

@@ -12,7 +12,8 @@
 ![Statut](https://img.shields.io/badge/statut-prototype%20p%C3%A9dagogique-orange)
 ![Stack](https://img.shields.io/badge/stack-HTML%20%2F%20CSS%20%2F%20JS%20sans%20build-0f766e)
 ![Hébergement](https://img.shields.io/badge/h%C3%A9bergement-GitHub%20Pages-0c1e3c)
-![Données](https://img.shields.io/badge/donn%C3%A9es-locales%20(navigateur)-2e7d32)
+![Données](https://img.shields.io/badge/donn%C3%A9es-navigateur%20%2B%20Supabase%20UE-2e7d32)
+![IA](https://img.shields.io/badge/IA-Mistral%20UE%20%C2%B7%20Claude-6d28d9)
 
 </div>
 
@@ -80,8 +81,8 @@ Légende : 🟢 **Nouveau** (version récente, utilisable) · 🟠 **Prototype**
 
 | Module | Statut | Ce qu'il fait | Dossier |
 |---|:---:|---|---|
-| **Aide au DUERP** | 🟠 | Risques par unité de travail identifiés par l'IA, cotation Gravité × Fréquence × Maîtrise, matrice de criticité, PAPRIPACT priorisé, assistant IA | `modules/evaluer/duerp/` |
-| **Cartographie des risques** | ⚪ | Plan de bâtiment interactif, zones liées aux unités de travail, 18 pictogrammes normalisés | `modules/evaluer/cartographie/` |
+| **Aide au DUERP** | 🟠 | Risques par unité de travail identifiés par l'IA, cotation Gravité × Fréquence × Maîtrise, matrice de criticité, PAPRIPACT priorisé, assistant IA. Onglet **« À valider »** : reçoit les risques proposés par les modules RPS, Risque chimique et Cartographie | `modules/evaluer/duerp/` |
+| **Cartographie des risques** | ⚪ | Plan de bâtiment interactif, zones liées aux unités de travail, 18 pictogrammes normalisés, envoi des risques repérés vers le DUERP | `modules/evaluer/cartographie/` |
 
 ### 🦺 Équipements & conformité
 
@@ -106,11 +107,13 @@ Légende : 🟢 **Nouveau** (version récente, utilisable) · 🟠 **Prototype**
 
 | Page | Contenu |
 |---|---|
-| `rps.html` | Diagnostic RPS à 4 sources (indicateurs, remontées, avis CSE / RH / médecin du travail, questionnaire COPSOQ anonyme), TF et TG repris du suivi AT/MP |
+| `rps.html` | Diagnostic RPS à 4 sources (indicateurs, remontées, avis CSE / RH / médecin du travail, questionnaire COPSOQ anonyme), TF et TG repris du suivi AT/MP, **envoi des risques au DUERP** (grille alignée G × F × M) |
+| `indicateurs-rps.html` · `enquete-rps.html` | Saisie des indicateurs par les RH par lien sécurisé · questionnaire anonyme des salariés (aucun résultat sous 5 réponses) |
 | `burnout.html` | Pré-dépistage du risque de burn-out |
 | `violentometre.html` | Violentomètre centré sur les incivilités et la souffrance au travail |
 | `reperer-agir.html` | Repérer une personne en difficulté et conduite à tenir en urgence |
-| `premiers-jours.html` | « Mes 100 premiers jours » : intégration ludique des nouveaux salariés |
+| `premiers-jours.html` | « Mes 100 premiers jours » : accompagnement de l'intégration des nouveaux salariés, questionnaire mensuel, courbe d'évolution, conseils adaptés et aides complémentaires (hygiène de vie, ressources) |
+| `reprendre-pied.html` | « Reprendre pied » : préparer la reprise après un arrêt, fiche servant de base de réflexion pour échanger avec la santé au travail |
 | `detente.html` | Cohérence cardiaque et relaxation guidée |
 
 </details>
@@ -126,7 +129,7 @@ Légende : 🟢 **Nouveau** (version récente, utilisable) · 🟠 **Prototype**
 
 | Module | Statut | Ce qu'il fait | Dossier |
 |---|:---:|---|---|
-| **Risque chimique** | 🟠 | Inventaire avec lecture IA des FDS (PDF ou photo), évaluation hiérarchisée inspirée de Seirich, compatibilités de stockage, fiche synthétique par produit | `modules/risques/chimique/` |
+| **Risque chimique** | 🟠 | Inventaire avec lecture IA des FDS (PDF ou photo), **base FDS partagée** entre SPSTI, contrôle des substances avec PubChem, évaluation hiérarchisée inspirée de Seirich, compatibilités de stockage, fiche synthétique par produit, envoi des risques au DUERP | `modules/risques/chimique/` |
 | **Risque radon** | 🟠 | Zone radon par commune, scoring du bâtiment et de la ventilation, dose efficace (arrêté du 16/11/2023), seuils 300 Bq/m³ et 6 mSv/an | `modules/risques/radon/` |
 
 <details>
@@ -150,9 +153,28 @@ Légende : 🟢 **Nouveau** (version récente, utilisable) · 🟠 **Prototype**
 | `chim-data.js` | Référentiels : mentions H / P / EUH, classes de danger, familles, réactions dangereuses, groupes de stockage, coefficients d'évaluation, produits d'exemple |
 | `chim-app.js` | Logique : inventaire, calculs, IA, affichage, éditeur, exports |
 | `chim-pictos.js` | Les 9 pictogrammes SGH officiels (repris de PréventIA-LaB) |
+| `chim-fds.js` | Base FDS partagée : recherche avant l'IA (même nom ou même PDF), brouillon → vérifiée → partagée au réseau, contrôle PubChem (classification harmonisée CLP, sinon notifications ECHA), liens ECHA, GESTIS, INRS |
+
+**Base FDS partagée** (avec un compte PréventIA) :
+
+```
+Nom saisi / PDF déposé ─► déjà dans la base ? ── oui ─► repris sans IA
+                                              └─ non ─► IA ─► ☁ brouillon du SPSTI ─► ✔ vérifiée ─► 🌐 partagée
+```
+
+Seul le contenu de la FDS part dans la base : jamais le lieu, l'usage, les quantités ni les salariés exposés. Consultation et gestion aussi depuis **PréventIA Réseau → Base FDS**.
 
 Les coefficients d'évaluation sont **simplifiés** à partir de la méthode INRS ND 2233 et doivent être validés par l'équipe pluridisciplinaire.
 </details>
+
+### 🔗 Briques communes
+
+| Brique | Rôle | Fichier |
+|---|---|---|
+| **Dossier entreprise** | Sélecteur en haut des pages : un dossier par entreprise suivie, bascule, export / import. Les données de santé individuelles ne sont jamais exportées | `assets/js/pp-entreprise.js` |
+| **Compte commun** | Connexion avec le compte PréventIA Réseau (même session sur les deux sites), choix du SPSTI | `assets/js/pp-auth.js` |
+| **Passerelle DUERP** | Les modules proposent des risques ; ils n'entrent au DUERP qu'après validation dans l'onglet « À valider » | `assets/js/duerp-passerelle.js` |
+| **Passerelle IA** | Accès unique et sécurisé à l'IA (voir § 5) | `core/preventia-ia.js` |
 
 ### ⚪ Pages d'attente
 
@@ -177,10 +199,13 @@ preventia-protect/
 ├── assets/
 │   ├── css/protect-ui.css        # Interface commune des modules « registre »
 │   ├── js/protect-registre.js    # Moteur de registres (PP.app) : champs, échéances, démo, stockage
+│   ├── js/pp-entreprise.js       # Dossiers entreprise (sélecteur commun)
+│   ├── js/pp-auth.js             # Compte commun avec PréventIA Réseau (Supabase)
+│   ├── js/duerp-passerelle.js    # Propositions de risques vers le DUERP
 │   ├── styles/design-tokens.css  # Styles des pages d'attente
 │   └── img/                      # Logos, favicon
 ├── core/
-│   ├── preventia-ia.js           # ★ Passerelle IA unique (Make.com → API Claude)
+│   ├── preventia-ia.js           # ★ Passerelle IA unique (→ fonction serveur Supabase « ia »)
 │   └── avertissement-prototype.js# ★ Bandeau + fenêtre « prototype pédagogique »
 ├── modules/
 │   ├── evaluer/        duerp · cartographie · analyse-poste
@@ -221,26 +246,37 @@ flowchart LR
 
 ## 5. Comment fonctionne l'IA
 
-Tous les modules passent par **un seul fichier** : `core/preventia-ia.js` (objet global `PIA`).
+Tous les modules passent par **un seul fichier** : `core/preventia-ia.js` (objet global `PIA`), qui appelle une **fonction serveur Supabase** (`ia`, hébergée dans l'UE). **Aucune clé ni aucun jeton dans le code** : les clés des IA sont des secrets du serveur.
 
 ```mermaid
 sequenceDiagram
     participant M as Module (navigateur)
     participant P as preventia-ia.js
-    participant K as Make.com
-    participant C as API Claude
+    participant F as Fonction serveur « ia » (Supabase, UE)
+    participant MI as Mistral (UE)
+    participant C as Claude (Anthropic)
     M->>P: PIA.texte(body)
-    P->>P: 1. masque e-mails, n° sécu, IBAN, téléphones, dates de naissance
-    P->>P: 2. choisit le webhook texte ou vision (image ou PDF détecté)
-    P->>K: 3. { token, payload } en text/plain (« Solution C »)
-    K->>K: vérifie le token, ajoute la clé API (jamais dans le code)
-    K->>C: requête
-    C-->>K: réponse
-    K-->>M: réponse renvoyée telle quelle
+    P->>P: masque e-mails, n° sécu, IBAN, téléphones, dates de naissance
+    P->>F: { usage: module, body } + session PréventIA si connecté
+    F->>F: origine autorisée ? compte valide ? quota du jour ?
+    F->>F: masque à nouveau, plafonne la réponse, journalise SANS le contenu
+    alt modules santé (modules/sante/…)
+        F->>MI: point d'accès UE, sans entraînement
+    else modules professionnels
+        F->>C: requête
+    end
+    F-->>M: réponse au format habituel
 ```
 
-- **Modèle imposé**, plafond de réponse et délai d'abandon réglés au même endroit (`CONFIG`).
-- **La clé API Anthropic n'est jamais dans le dépôt** : elle reste dans Make.com.
+| | Modules professionnels | Modules santé (`modules/sante/…`) |
+|---|---|---|
+| Qui | Professionnel **connecté** (compte PréventIA) | Salarié, **sans compte** |
+| IA | Claude | **Mistral, traitement dans l'UE**, jamais de repli hors UE |
+| Quota | 60 demandes / jour / personne | 15 / jour / appareil (empreinte d'IP du jour, non réversible), 500 / jour au total |
+| Fichiers (PDF, photos) | Oui | Non |
+
+- **Journal `ia_journal`** : qui, quand, quel module, nombre de jetons, statut. **Jamais le texte** envoyé ni la réponse.
+- **Plafonds de dépense** fixés chez chaque fournisseur ; l'option d'entraînement des modèles sur nos appels est **désactivée** chez Mistral.
 - Dans les modules qui le prévoient, l'IA est **désactivée par défaut** (interrupteur en haut de page, mémorisé dans `preventia_ai_mode`).
 - Chaque résultat produit par l'IA est présenté comme **pré-rempli, à vérifier**.
 
@@ -255,12 +291,13 @@ sequenceDiagram
 │  localStorage  (une clé par module : pp_inf_soins, pp_coact_pdp, …)   │
 │  → rien n'est envoyé sur un serveur, sauf les appels IA volontaires   │
 └───────────────────────────────────────────────────────────────────────┘
-          │ export / import JSON, CSV, PDF          │ appels IA (contenu filtré)
+          │ export / import JSON, CSV, PDF          │ appels IA (contenu filtré) · compte · base FDS · enquêtes anonymes
           ▼                                         ▼
-     Fichiers de l'utilisateur              Make.com → API Claude
+     Fichiers de l'utilisateur              Supabase (UE, Irlande) → Mistral (UE) / Claude
 ```
 
-- **GitHub Pages ne sert que des fichiers statiques** : aucune base de données côté serveur aujourd'hui.
+- **GitHub Pages ne sert que des fichiers statiques.** Une base **Supabase hébergée dans l'UE (Irlande)**, partagée avec PréventIA Réseau, sert uniquement aux comptes, à la base FDS, aux enquêtes anonymes et au journal IA. Les droits d'accès par SPSTI sont imposés par la base (règles RLS).
+- **Enquêtes anonymes** : ni nom, ni e-mail, ni heure de réponse enregistrés ; aucun résultat lisible sous 5 réponses ; réponses rendues dans un ordre mélangé.
 - Les données restent **dans le navigateur du poste utilisé**. Changer d'ordinateur ou vider le cache les fait disparaître : utiliser les **exports** (JSON, CSV, PDF) pour sauvegarder ou partager.
 - Les vues destinées à la direction, aux RH et au CSE sont **anonymes**. Les noms des salariés ne sont visibles que dans l'espace infirmier.
 
@@ -283,6 +320,10 @@ sequenceDiagram
 | `pp_rps_v*`, `pp_sm_*` | Santé mentale |
 | `pp_sein_*`, `pp_meno_v*`, `pp_endo_campagnes` | Santé de la femme (EndoPrév ne garde localement que la liste des campagnes et leurs codes) |
 | `pp_reg_v*` | Registres |
+| `pp_entreprises`, `pp_dossier_*` | Dossiers entreprise |
+| `pp_duerp_inbox` | Risques proposés au DUERP, en attente de validation |
+| `pp_100j_suivi` | Suivi mensuel « Mes 100 premiers jours » |
+| `pr-org` | SPSTI choisi (partagé avec PréventIA Réseau) |
 | `preventia_chimique_v2` | Risque chimique (reprend automatiquement l'ancienne clé `preventia_chimique_products`) |
 
 ---
@@ -345,14 +386,16 @@ python -m http.server 8000      # ou : npx serve
 
 ```mermaid
 flowchart LR
-    P1["Phase 1 · actuelle<br/>GitHub Pages + navigateur"] --> P2["Phase 2<br/>Supabase UE : comptes,<br/>données non médicales"]
+    P1["Phase 1<br/>GitHub Pages + navigateur"] --> P2["Phase 2 · en cours<br/>Supabase UE : comptes, base FDS,<br/>enquêtes anonymes, passerelle IA"]
     P2 --> P3["Phase 3<br/>Un espace par entreprise,<br/>connexion Power BI"]
     P3 --> P4["Phase 4<br/>Application hors-ligne<br/>pour le terrain"]
 ```
 
 **Prochains modules envisagés** : cartographie des risques, analyse de poste, VGP et maintenance, habilitations et formations, incendie, ATEX, amiante, radioprotection, tableau de bord de pilotage, intégration de PréventIA Visio et Audio dans l'infirmerie.
 
-**Chantiers transverses** : contrôle d'accès, protection des webhooks (proxy ou fonction serveur), conformité RGPD de l'hébergement IA, éventuel passage à Netlify ou à un nom de domaine dédié.
+**Chantiers transverses** : masquage des noms et des lieux dans les commentaires libres avant l'IA, suppression automatique des réponses d'enquête 12 mois après la fin de campagne, AIPD et registre des traitements avec le DPO, assistant FDS (recherche hybride texte + vecteurs, déjà prévue dans la base), éventuel nom de domaine dédié.
+
+**Fait en novembre 2026** : passerelle IA sécurisée (fin de Make.com pour Protect), compte commun avec PréventIA Réseau, base FDS partagée, passerelle vers le DUERP, dossiers entreprise.
 
 ---
 
@@ -366,7 +409,8 @@ flowchart LR
 | `modules/equipements/epi/*.prec.html` | Sauvegardes de la Fiche EPI | Supprimer (l'historique Git les conserve) |
 | `modules/pilotage/at-mp/` | Simple redirection vers `sante/at-mp` | Garder tant que d'anciens liens circulent |
 | `docs/Archi` | Fichier vide | Supprimer |
-| Webhooks et jetons dans `core/preventia-ia.js` | Visibles dans un dépôt public : n'importe qui peut appeler les scénarios Make.com | Passer par un proxy (fonction Netlify ou Supabase Edge Function) avant toute diffusion large |
+| Webhooks Make.com | ✅ Plus utilisés par Protect depuis la passerelle sécurisée (nov. 2026). Encore utilisés par PréventIA-LaB, dont le jeton reste visible | Migrer PréventIA-LaB vers la fonction serveur, puis désactiver les scénarios Make |
+| `config/webhooks.config.js` | Ancienne configuration des webhooks, non utilisée | Supprimer avec les `core/ai-*.js` |
 
 ---
 

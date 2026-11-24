@@ -390,7 +390,7 @@ function demoCop(r,bias){
     out.push({eq,a});}});
   return out;
 }
-function blank(){return {demo:false,ctx:{entreprise:'',secteur:'',effectif:'',periode:'',equipes:[{n:'Équipe 1',eff:''}],pilotage:'',demande:''},ind:{},rem:[],avis:{},baro:[],copsoq:[],camps:[],campsInd:[],grille:{},indEq:{},indiv:{},crit:{}};}
+function blank(){return {demo:false,ctx:{entreprise:'',secteur:'',naf:'',ref:{},effectif:'',periode:'',equipes:[{n:'Équipe 1',eff:''}],pilotage:'',demande:''},ind:{},rem:[],avis:{},baro:[],copsoq:[],camps:[],campsInd:[],grille:{},indEq:{},indiv:{},crit:{}};}
 let S=store.get()||demo();
 S.copsoq=S.copsoq||[]; S.camps=S.camps||[]; S.campsInd=S.campsInd||[]; S.grille=S.grille||{}; S.indEq=S.indEq||{}; S.indiv=S.indiv||{}; S.crit=S.crit||{};
 // Migration : avis enregistrés sur 6 familles → 7 (« Horaires » insérée en 2e position, non évaluée)
@@ -400,7 +400,13 @@ const save=()=>store.set(S);
 /* =========================================================
    CALCULS
    ========================================================= */
+/* TF et TG : comparés au repère du secteur (statistiques Assurance Maladie par code NAF, saisi à la main)
+   et non interprétés sous TAUX_EFF_MIN salariés (un seul AT fait varier le TF de plus de 10 points). */
+const TAUX_AT=['tf','tg'], TAUX_EFF_MIN=50, REF_SECT_X=1.5;
+const tauxFragile=()=>{const e=+S.ctx.effectif;return e>0&&e<TAUX_EFF_MIN;};
+const refSect=k=>{const r=+(S.ctx.ref?.[k]);return r>0?r:null;};
 const indAlert=k=>{const d=IND.find(x=>x.k===k),v=S.ind[k];if(!v||v.n===''||v.n==null)return 0;const n=+v.n,p=+v.n1;
+  if(TAUX_AT.includes(k)){if(tauxFragile())return 0; const r=refSect(k); if(r&&n>=r*REF_SECT_X)return 1;}
   if(d.crit&&n>=d.thr)return 2; if(d.thr!=null&&n>=d.thr)return 1; if(v.n1!==''&&v.n1!=null&&p>0&&n>p*1.2)return 1; if(v.n1!==''&&p===0&&n>0&&d.u==='nb'&&n>=2)return 1; return 0;};
 const indFilled=()=>IND.some(d=>S.ind[d.k]&&S.ind[d.k].n!==''&&S.ind[d.k].n!=null);
 function baroScores(eq){
@@ -545,7 +551,8 @@ function vContexte(){
   <div class="grid g2">
     <div class="card grid">
       <label class="f">Entreprise<input class="i" data-c="entreprise" value="${esc(c.entreprise)}"></label>
-      <label class="f">Secteur d'activité<input class="i" data-c="secteur" value="${esc(c.secteur)}"></label>
+      <div class="grid g2"><label class="f">Secteur d'activité<input class="i" data-c="secteur" value="${esc(c.secteur)}"></label>
+      <label class="f">Code NAF <span class="muted small">(ex. 4941A)</span><input class="i" data-c="naf" value="${esc(c.naf||'')}" maxlength="6"></label></div>
       <div class="grid g2"><label class="f">Effectif total<input class="i num" type="number" min="0" data-c="effectif" value="${esc(c.effectif)}"></label>
       <label class="f">Période évaluée<input class="i" data-c="periode" value="${esc(c.periode)}"></label></div>
       <label class="f">Origine de la demande<textarea class="i" data-c="demande">${esc(c.demande)}</textarea></label>
@@ -577,16 +584,16 @@ function vInd(){
   <div class="kpis"><div class="kpi"><div class="l">Indicateurs renseignés</div><div class="v">${IND.filter(d=>S.ind[d.k]?.n!==''&&S.ind[d.k]?.n!=null).length}<span class="muted small"> / ${IND.length}</span></div></div>
    <div class="kpi"><div class="l">En alerte</div><div class="v" style="color:var(--l2)">${nA}</div></div>
    <div class="kpi"><div class="l">Alertes critiques</div><div class="v" style="color:var(--l3)">${nC}</div><div class="d">Harcèlement, affection psychique, événement grave</div></div></div>
-  ${groups.map(g=>`<div class="card"><h3 style="margin-bottom:8px">${g}</h3><div class="tw"><table>
+  ${groups.map(g=>`<div class="card"><h3 style="margin-bottom:8px">${g}</h3>${g==='Santé et sécurité'?`<p class="muted small" style="margin:0 0 10px"><b>TF et TG :</b> ${tauxFragile()?`effectif inférieur à ${TAUX_EFF_MIN} salariés, les taux sont affichés mais ne déclenchent pas d'alerte (un seul accident les fait trop varier). Suivez plutôt le nombre d'AT et les jours d'arrêt.`:`saisissez dans « Repère » le TF et le TG du secteur${S.ctx.naf?` (code NAF ${esc(S.ctx.naf)})`:' (code NAF à indiquer à l\'étape 1)'}, publiés par l'Assurance Maladie (statistiques de sinistralité par code NAF, <a href="https://www.assurance-maladie.ameli.fr/etudes-et-donnees" target="_blank" rel="noopener">ameli.fr</a>). Alerte si l'entreprise atteint ${String(REF_SECT_X).replace('.',',')} fois le secteur, ou en cas de hausse de plus de 20 % sur N-1.`}</p>`:''}<div class="tw"><table>
    <thead><tr><th>Indicateur</th><th>Période N</th><th>N-1</th><th>Évolution</th><th>Repère</th><th>Facteurs éclairés</th><th>État</th></tr></thead><tbody>
    ${IND.filter(d=>d.g===g).map(d=>{const v=S.ind[d.k]||{},a=indAlert(d.k);const n=+v.n,p=+v.n1;const ev=(v.n!==''&&v.n!=null&&v.n1!==''&&v.n1!=null&&p>0)?Math.round((n-p)/p*100):null;
      return `<tr><td>${d.l}</td>
      <td><input class="i num" type="number" step="any" min="0" data-ind="${d.k}" data-p="n" value="${esc(v.n)}" aria-label="${esc(d.l)} période N"> <span class="muted small">${d.u}</span></td>
      <td><input class="i num" type="number" step="any" min="0" data-ind="${d.k}" data-p="n1" value="${esc(v.n1)}" aria-label="${esc(d.l)} N-1"></td>
      <td class="num">${ev==null?'<span class="muted">–</span>':`<span class="trend ${ev>0?'up':'down'}">${ev>0?'▲ +':'▼ '}${ev} %</span>`}</td>
-     <td class="muted small num" ${d.calc?`title="${esc(d.calc)}"`:''}>${d.calc?'tendance <span title="'+esc(d.calc)+'">ⓘ</span>':d.thr!=null?(d.crit?'dès 1':'≥ '+d.thr+(d.u==='%'?' %':d.u==='h'?' h':'')):'tendance'}</td>
+     <td class="muted small num" ${d.calc?`title="${esc(d.calc)}"`:''}>${TAUX_AT.includes(d.k)?`<input class="i num" type="number" step="any" min="0" data-ref="${d.k}" value="${esc(S.ctx.ref?.[d.k]??'')}" placeholder="secteur" style="max-width:90px" aria-label="${esc(d.l)} : repère du secteur">${refSect(d.k)&&!tauxFragile()&&v.n!==''&&v.n!=null?`<br>× ${(n/refSect(d.k)).toFixed(1).replace('.',',')} le secteur`:''} <span title="${esc(d.calc)}">ⓘ</span>`:d.calc?'tendance <span title="'+esc(d.calc)+'">ⓘ</span>':d.thr!=null?(d.crit?'dès 1':'≥ '+d.thr+(d.u==='%'?' %':d.u==='h'?' h':'')):'tendance'}</td>
      <td class="small muted">${d.f.map(k=>F.find(x=>x.k===k).s).join(', ')}</td>
-     <td>${a===2?'<span class="pill lv3">Critique</span>':a===1?'<span class="pill lv2">Alerte</span>':(v.n!==''&&v.n!=null)?'<span class="pill lv0">RAS</span>':'<span class="pill lvn">–</span>'}</td></tr>`;}).join('')}
+     <td>${TAUX_AT.includes(d.k)&&tauxFragile()&&v.n!==''&&v.n!=null?`<span class="pill lvn" title="Moins de ${TAUX_EFF_MIN} salariés : un seul accident fait fortement varier le taux">Non interprétable</span>`:a===2?'<span class="pill lv3">Critique</span>':a===1?'<span class="pill lv2">Alerte</span>':(v.n!==''&&v.n!=null)?'<span class="pill lv0">RAS</span>':'<span class="pill lvn">–</span>'}</td></tr>`;}).join('')}
    </tbody></table></div></div>`).join('')}
   <div class="card"><h3>Indicateurs par équipe</h3><p class="muted small" style="margin:2px 0 10px">Une case passe en alerte si la valeur dépasse le repère, 1,25 fois la valeur de l'entreprise (taux) ou 1,5 fois la valeur par salarié (effectifs). Ces alertes alimentent la cartographie par équipe.</p>
    <div class="tw"><table><thead><tr><th>Équipe</th>${EQ_IND.map(d=>`<th>${d.l} <span style="text-transform:none">(${d.u})</span></th>`).join('')}</tr></thead><tbody>
@@ -601,6 +608,7 @@ function vInd(){
   app.querySelectorAll('[data-eqi]').forEach(el=>el.onchange=()=>{const e=el.dataset.eqi;S.indEq[e]=S.indEq[e]||{};S.indEq[e][el.dataset.k]=el.value;save();const y=scrollY;vInd();scrollTo(0,y);});
   app.querySelectorAll('[data-iv]').forEach(el=>el.onchange=()=>{S.indiv[el.dataset.iv]=el.value;save();const y=scrollY;vInd();scrollTo(0,y);});
   app.querySelectorAll('[data-ind]').forEach(el=>el.onchange=()=>{const k=el.dataset.ind;S.ind[k]=S.ind[k]||{};S.ind[k][el.dataset.p]=el.value;save();vInd();});
+  app.querySelectorAll('[data-ref]').forEach(el=>el.onchange=()=>{S.ctx.ref=S.ctx.ref||{};S.ctx.ref[el.dataset.ref]=el.value;save();const y=scrollY;vInd();scrollTo(0,y);});
   bindIndRH();
   $('#imp').onclick=()=>{const r=importATMP();if(r.ok){save();vInd();renderTabs('indicateurs');} $('#impMsg').textContent=r.msg;};
   bindDemo();
@@ -1136,14 +1144,23 @@ function iaBind(){
   const ok=$('#iaOk'); if(ok) ok.onclick=()=>{S.ia.valide=new Date().toISOString();save();const y=scrollY;vSynth();scrollTo(0,y);};
   const del=$('#iaDel'); if(del) del.onclick=()=>{delete S.ia;save();const y=scrollY;vSynth();scrollTo(0,y);};
 }
+/* Lignes TF / TG du rapport : comparaison au secteur, ou mention « non interprétable » sous TAUX_EFF_MIN salariés */
+function tauxReport(){
+  const f=k=>{const v=S.ind[k]?.n;return v===''||v==null?null:+v;}, has=TAUX_AT.some(k=>f(k)!=null);
+  if(!has) return [];
+  if(tauxFragile()) return [`- TF et TG non interprétés : effectif inférieur à ${TAUX_EFF_MIN} salariés`];
+  return TAUX_AT.filter(k=>f(k)!=null).map(k=>{const r=refSect(k), l=k.toUpperCase();
+    return r?`- ${l} ${String(f(k)).replace('.',',')} pour un repère secteur de ${String(r).replace('.',',')}${S.ctx.naf?` (NAF ${S.ctx.naf}, Assurance Maladie)`:' (Assurance Maladie)'}, soit ${(f(k)/r).toFixed(1).replace('.',',')} fois le secteur`
+      :`- ${l} ${String(f(k)).replace('.',',')} : pas de repère sectoriel saisi, seule l'évolution sur N-1 est analysée`;});
+}
 function report(D){
   const c=S.ctx, L=[];
   L.push(`ÉVALUATION DES RISQUES PSYCHOSOCIAUX — ${c.entreprise||'Entreprise'}`);
-  L.push(`Secteur : ${c.secteur||'–'} · Effectif : ${c.effectif||'–'} · Période : ${c.periode||'–'}`);
+  L.push(`Secteur : ${c.secteur||'–'}${c.naf?` (NAF ${c.naf})`:''} · Effectif : ${c.effectif||'–'} · Période : ${c.periode||'–'}`);
   L.push(`Établie par l'infirmier·e en santé au travail, le ${new Date().toLocaleDateString('fr-FR')}.`,'');
   if(c.demande) L.push('ORIGINE DE LA DEMANDE',c.demande,'');
   if(c.pilotage) L.push('COMITÉ DE PILOTAGE',c.pilotage,'');
-  L.push('SOURCES MOBILISÉES',`- Indicateurs : ${IND.filter(d=>indAlert(d.k)).length} en alerte sur ${IND.filter(d=>S.ind[d.k]?.n!==''&&S.ind[d.k]?.n!=null).length} renseignés`,`- Remontées : ${S.rem.length} consignées`,`- Avis : ${D.nAvis} acteurs`,`- Questionnaires anonymes : baromètre PréventIA ${S.baro.length} réponses, COPSOQ ${S.copsoq.length} réponses${D.part!=null?` (participation ${Math.round(D.part)} %)`:''}`,`- Indice de fiabilité : ${Math.round(D.fiab)}/100`,'');
+  L.push('SOURCES MOBILISÉES',`- Indicateurs : ${IND.filter(d=>indAlert(d.k)).length} en alerte sur ${IND.filter(d=>S.ind[d.k]?.n!==''&&S.ind[d.k]?.n!=null).length} renseignés`,...tauxReport(),`- Remontées : ${S.rem.length} consignées`,`- Avis : ${D.nAvis} acteurs`,`- Questionnaires anonymes : baromètre PréventIA ${S.baro.length} réponses, COPSOQ ${S.copsoq.length} réponses${D.part!=null?` (participation ${Math.round(D.part)} %)`:''}`,`- Indice de fiabilité : ${Math.round(D.fiab)}/100`,'');
   if(D.alerts.length) L.push('ALERTES',...D.alerts.map(a=>'- '+a),'');
   L.push('RÉSULTATS PAR FAMILLE DE FACTEURS (INRS) — exposition 0-100, criticité, priorité');
   D.crit.forEach(c=>L.push(`- ${c.f.l} : ${c.score==null?'non évalué':`exposition ${Math.round(c.score)} (${LEVELS[c.lv].l.toLowerCase()}), gravité ${c.G}, maîtrise « ${MAIT_L[c.M].toLowerCase()} », criticité ${c.C} → ${PRIO[c.P].l}`}${c.grave?' — situation grave signalée':''}`));

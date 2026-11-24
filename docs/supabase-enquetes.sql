@@ -7,7 +7,9 @@
 --   • personne ne peut RELIRE une réponse isolée : les tables sont fermées (RLS sans règle) ;
 --   • l'infirmier·e lit les résultats avec un code secret, et seulement
 --     à partir du seuil (5 réponses minimum), dans un ordre mélangé ;
---   • aucune identité, aucune date, aucune adresse IP n'est enregistrée.
+--   • aucune identité, aucune date, aucune adresse IP n'est enregistrée sur les réponses ;
+--   • plafond de 2 000 réponses par campagne, 200 créations de campagnes par jour (sans compte) ;
+--   • suppression automatique 12 mois après la fin de campagne (section 6).
 -- Tout passe par 5 fonctions (« RPC ») qui vérifient ces règles côté serveur.
 -- ════════════════════════════════════════════════════════════════════
 
@@ -21,7 +23,9 @@ create table if not exists public.enq_campagnes (
   ouverte       boolean not null default true,
   seuil         int not null default 5 check (seuil >= 5),
   fin           date,                           -- clôture automatique (facultatif)
-  created_at    timestamptz not null default now()
+  created_at    timestamptz not null default now(),
+  derniere_reponse timestamptz,                 -- dernière activité (sert à la suppression automatique)
+  max_reponses  int not null default 2000 check (max_reponses between 1 and 20000)  -- anti-envoi massif
 );
 
 -- 2. Les réponses : AUCUNE colonne d'identité ni de date ─────────────
@@ -46,6 +50,10 @@ language plpgsql security definer set search_path = public as $$
 declare c text; l text;
 begin
   if p_outil not in ('endoprev','menoprev','seinprev','rps_baro','rps_copsoq','rps_ind') then raise exception 'outil inconnu'; end if;
+  -- pas de compte exigé : limite globale contre les créations en masse
+  if (select count(*) from enq_campagnes where created_at > now() - interval '1 day') >= 200 then
+    raise exception 'trop de créations aujourd''hui, réessayez demain';
+  end if;
   c := upper(substr(replace(gen_random_uuid()::text,'-',''), 1, 8));
   l := replace(gen_random_uuid()::text,'-','') || substr(replace(gen_random_uuid()::text,'-',''),1,8);
   insert into enq_campagnes(code, code_lecture, outil, entreprise, fin)
@@ -65,13 +73,16 @@ $$;
 create or replace function public.enq_repondre(p_code text, p_reponses jsonb)
 returns boolean
 language plpgsql security definer set search_path = public as $$
-declare cid uuid;
+declare cid uuid; mx int; n int;
 begin
-  select id into cid from enq_campagnes
+  select id, max_reponses into cid, mx from enq_campagnes
    where code = upper(p_code) and ouverte and (fin is null or fin >= current_date);
   if cid is null then raise exception 'campagne fermée ou inconnue'; end if;
   if jsonb_typeof(p_reponses) <> 'object' or pg_column_size(p_reponses) >= 4000 then raise exception 'réponse invalide'; end if;
+  select count(*) into n from enq_reponses where campagne_id = cid;
+  if n >= mx then raise exception 'campagne complète : nombre maximal de réponses atteint'; end if;
   insert into enq_reponses(campagne_id, reponses) values (cid, p_reponses);
+  update enq_campagnes set derniere_reponse = now() where id = cid;  -- date sur la campagne, jamais sur la réponse
   return true;
 end $$;
 
@@ -109,3 +120,30 @@ alter table public.enq_campagnes drop constraint if exists enq_campagnes_seuil_c
 alter table public.enq_campagnes add constraint enq_campagnes_seuil_check
   check (seuil >= 5 or (outil = 'rps_ind' and seuil >= 1));
 -- enq_creer insère seuil = 1 pour 'rps_ind', 5 sinon (migration Supabase « enq_rps_indicateurs_rh »).
+
+-- 6. Durée de conservation : suppression automatique (migration « enquetes_plafond_et_purge », 24/11/2026)
+--   • campagne + réponses : 12 mois après la plus tardive de (fin, dernière réponse, création) ;
+--   • campagne restée vide : 3 mois ;
+--   • journal de la passerelle IA (table ia_journal, sans contenu) : 13 mois.
+create or replace function public.enq_purger()
+returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare ids uuid[]; nr int; nc int; nj int;
+begin
+  select coalesce(array_agg(c.id), '{}') into ids from enq_campagnes c
+   where greatest(coalesce(c.fin, '-infinity'::date), coalesce(c.derniere_reponse::date, '-infinity'::date), c.created_at::date)
+           < (current_date - interval '12 months')
+      or (c.derniere_reponse is null
+          and not exists (select 1 from enq_reponses r where r.campagne_id = c.id)
+          and greatest(coalesce(c.fin, '-infinity'::date), c.created_at::date) < (current_date - interval '3 months'));
+  delete from enq_reponses where campagne_id = any(ids); get diagnostics nr = row_count;
+  delete from enq_campagnes where id = any(ids);        get diagnostics nc = row_count;
+  delete from ia_journal where cree_le < now() - interval '13 months'; get diagnostics nj = row_count;
+  return jsonb_build_object('campagnes', nc, 'reponses', nr, 'journal_ia', nj, 'le', now());
+end $$;
+revoke all on function public.enq_purger() from public, anon, authenticated;  -- jamais appelable depuis le web
+
+-- Tâche quotidienne (pg_cron), chaque nuit à 3 h 17
+create extension if not exists pg_cron with schema pg_catalog;
+select cron.unschedule('purge-enquetes') where exists (select 1 from cron.job where jobname = 'purge-enquetes');
+select cron.schedule('purge-enquetes', '17 3 * * *', 'select public.enq_purger()');

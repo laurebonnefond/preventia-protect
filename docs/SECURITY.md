@@ -46,7 +46,9 @@ Tous les appels passent par `core/preventia-ia.js` puis par la fonction serveur 
 
 - Responsable de traitement envisagé : le SPSTI 23/87. Base légale, durées de conservation, AIPD et fiche au registre : **à établir avec le DPO**.
 - Sous-traitants : Supabase (UE), Mistral AI (UE), Anthropic (États-Unis, modules professionnels), GitHub (pages, aucune donnée).
-- Prévu : suppression automatique des réponses d'enquête 12 mois après la fin de campagne ; masquage des noms et des lieux dans les commentaires libres avant l'IA.
+- **Durées de conservation appliquées automatiquement** (tâche nocturne `enq_purger`, pg_cron) : enquête et réponses supprimées 12 mois après la fin de campagne ou la dernière réponse ; campagne restée vide : 3 mois ; journal IA : 13 mois.
+- **Anti-abus sans compte** : 2 000 réponses maximum par campagne, 200 créations de campagnes par jour au total.
+- **Masquage avant l'IA** : e-mails, n° de sécurité sociale, IBAN, téléphones, dates de naissance, noms de personnes (civilité + nom, prénoms courants) ; dans le Diagnostic RPS, entreprise et équipes pseudonymisées, équipes de moins de 5 salariés regroupées, mots choisis par l'infirmier·e masqués, aperçu et relecture obligatoires.
 
 ## Limites connues
 

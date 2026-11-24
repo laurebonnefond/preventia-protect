@@ -55,13 +55,19 @@
   }
 
   /* ------------------ FILTRE : données personnelles ---------------------- */
+  /* Prénoms courants repérés par le filtre « prénom » (à compléter au besoin) */
+  const PRENOMS = ('Adrien Agathe Agnès Alain Alexandra Alexandre Alexis Alice Aline Amandine Amélie Anaïs André Andrée Angélique Anne Annie Antoine Arnaud Arthur Audrey Aurélie Aurélien Axel Baptiste Benjamin Benoît Bernadette Bernard Brigitte Bruno Camille Carole Caroline Catherine Cécile Céline Chantal Charles Charlotte Christelle Christian Christiane Christine Christophe Claire Claude Claudine Clément Clémence Colette Corinne Cyril Damien Daniel Danielle David Delphine Denis Denise Didier Dominique Dylan Éléonore Élise Élodie Émilie Emma Enzo Éric Estelle Étienne Eva Fabien Fabienne Fabrice Fanny Fatima Florence Florian Francis Franck François Françoise Frédéric Gabriel Gaëlle Geneviève Georges Gérard Ghislaine Gilles Grégory Guillaume Guy Hélène Henri Hervé Hugo Inès Isabelle Jacqueline Jacques Jean Jeanne Jérémy Jérôme Jessica Joël Johanna Jonathan Jordan Joseph Josiane Julie Julien Juliette Justine Karim Karine Kevin Laëtitia Laura Laure Laurence Laurent Léa Léo Lionel Louis Louise Luc Lucas Lucie Ludovic Lydie Madeleine Magali Manon Marc Marcel Margaux Marie Marine Marion Marthe Martin Martine Mathieu Mathilde Maxime Mélanie Michel Michèle Mickaël Mohamed Monique Muriel Mylène Nadia Nadine Nathalie Nicolas Nicole Noémie Océane Odile Olivier Pascal Pascale Patrice Patricia Patrick Paul Pauline Philippe Pierre Quentin Rachel Raphaël Raymond Régine Rémi Renée René Richard Robert Romain Sabine Samir Sandra Sandrine Sarah Sébastien Serge Simone Sophie Stéphane Stéphanie Suzanne Sylvain Sylvie Thierry Thomas Tony Valérie Vanessa Véronique Victor Vincent Virginie Xavier Yannick Yasmine Yves Yvette Yvonne Zoé').split(' ').join('|');
   /* Chaque règle : [nom affiché, motif, remplacement]. Ajoutez-en au besoin. */
   const REGLES = [
     ['e-mail',      /[\w.+-]+@[\w-]+\.[\w.-]+/g,                                                     '[e-mail]'],
     ['n° sécu',     /\b[12][\s.]?\d{2}[\s.]?(0[1-9]|1[0-2]|[2-9]\d)[\s.]?(\d{2}|2[AB])[\s.]?\d{3}[\s.]?\d{3}(?:[\s.]?\d{2})?\b/gi, '[n° sécu]'],
     ['IBAN',        /\bFR\d{2}(?:\s?[0-9A-Z]{4}){5}\s?[0-9A-Z]{3}\b/gi,                                '[IBAN]'],
     ['téléphone',   /(?:(?:\+|00)33[\s.-]?|\b0)[1-9](?:[\s.-]?\d{2}){4}\b/g,                            '[téléphone]'],
-    ['date de naissance', /\b(n[ée]e?\s+le|date de naissance\s*:?)\s*\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4}/gi, '$1 [date]']
+    ['date de naissance', /\b(n[ée]e?\s+le|date de naissance\s*:?)\s*\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4}/gi, '$1 [date]'],
+    /* Noms de personnes : civilité ou titre suivi d'un nom (« Mme Durand », « M. D. », « Dr Martin ») */
+    ['nom',         /\b(?:M\.|Mme|Mlle|Mr|Monsieur|Madame|Mademoiselle|Dr|Docteur|Pr|Professeur|Me|Maître)\s+[A-ZÀ-Ý][A-Za-zÀ-ÿ'’-]*\.?(?:\s+[A-ZÀ-Ý][A-Za-zÀ-ÿ'’-]*\.?)?/g, '[personne]'],
+    /* Prénoms courants (avec majuscule), suivis ou non d'un nom ou d'une initiale (« Julie », « Karim B. », « Sophie Martin ») */
+    ['prénom',      new RegExp('\\b(?:' + PRENOMS + ')\\b(?:\\s+[A-ZÀ-Ý](?:[A-Za-zÀ-ÿ\'’-]+|\\.))?', 'g'),          '[personne]']
   ];
 
   function filtrerTexte(txt, bilan) {
@@ -147,5 +153,5 @@
     } catch { return t; }
   }
 
-  window.PIA = { fetch: piaFetch, texte: piaTexte, filtrerTexte: t => filtrerTexte(t, {}), config: CONFIG };
+  window.PIA = { fetch: piaFetch, texte: piaTexte, filtrerTexte: (t, bilan) => filtrerTexte(t, bilan || {}), config: CONFIG };
 })();

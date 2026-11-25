@@ -128,7 +128,7 @@ Score remontées = somme des points de la famille (plafond 100)
 
 ## Étape 4 — Grille RPS-DU
 
-C'est la grille INRS d'évaluation des RPS dans le document unique, avec 18 questions et 4 réponses possibles : Jamais/Non, Parfois/Plutôt non, Souvent/Plutôt oui, Toujours/Oui. Elle se remplit **par équipe**.
+C'est la grille INRS d'évaluation des RPS dans le document unique, avec 26 questions et 4 réponses possibles : Jamais/Non, Parfois/Plutôt non, Souvent/Plutôt oui, Toujours/Oui. Elle se remplit **par équipe**.
 
 ```
 Niveau d'une question : 1 = favorable … 4 = élevé

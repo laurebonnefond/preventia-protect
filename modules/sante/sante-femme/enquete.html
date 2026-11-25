@@ -120,7 +120,7 @@ body{min-height:100dvh;display:flex;flex-direction:column}
         ecran(`<div class="center" style="margin-top:20px"><div class="ok-ic">✓</div><h2>Merci, votre réponse est enregistrée</h2>
           <p class="muted">Elle a été ajoutée anonymement. Vous pouvez fermer cette page.</p>
           <div class="secret" style="text-align:left">Vous pouvez demander à voir le <b>médecin ou l'infirmier·e du travail</b> à tout moment, sans passer par votre employeur. Ils sont tenus au secret médical.</div>
-          <a class="btn ghost" href="${Qn.lienPerso || 'endoprev.html#auto'}">${esc(Qn.lienPersoTexte || "Faire mon auto-évaluation personnelle (rien n'est envoyé)")}</a></div>`);
+          <a class="btn ghost" href="${Qn.lienPerso || 'endoprev.html?app=1#auto'}">${esc(Qn.lienPersoTexte || "Faire mon auto-évaluation personnelle (rien n'est envoyé)")}</a></div>`);
       } catch (e) { $('#st').innerHTML = `<span style="color:var(--bad)">⚠ ${esc(e.message)}</span>`; $('#send').disabled = false; }
     };
   }

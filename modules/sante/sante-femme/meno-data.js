@@ -136,7 +136,7 @@ window.MENO = (function () {
     },
     alerte(R) { return calculerScores(R.s || {}, R.c || []).orientationMedicale
       ? "<b>Un avis médical est conseillé.</b> Certains symptômes sont marqués : parlez-en à votre médecin traitant, à votre gynécologue ou à une sage-femme, indépendamment de cette enquête." : ''; },
-    lienPerso: 'menoprev.html#suivi',
+    lienPerso: 'menoprev.html?app=1#auto',
     lienPersoTexte: 'Ouvrir MénoPrév pour mon suivi personnel (rien n\'est envoyé)'
   };
   if (window.ENQ) ENQ.QUESTIONNAIRES.menoprev = QUESTIONNAIRE;

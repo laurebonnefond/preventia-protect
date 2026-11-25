@@ -97,7 +97,7 @@ p.f,label.f{display:grid;gap:4px;font-size:12px;font-weight:600;color:var(--mute
   <div><small>PréventIA Protect · Santé de la femme</small><h1>EndoPrév</h1></div>
   <span class="sp"></span><span class="pill">Règles douloureuses, endométriose et travail</span>
 </div></header>
-<nav class="tabs gut" aria-label="Sections"><div class="in" id="tabs"></div></nav>
+<nav class="tabs gut" aria-label="Sections" id="tabs"></nav>
 <main class="gut" id="app"></main>
 <aside class="gut lecture" role="note"><div class="in"><span aria-hidden="true">⚕️</span><p><b>Lecture médicale indispensable.</b> Outil de prévention en cours de validation. Les repères, scores et conseils sont donnés à titre indicatif et <b>doivent être vérifiés par un médecin</b> : médecin traitant ou gynécologue pour votre santé, médecin du travail pour l'adaptation de votre poste. Ils ne remplacent ni un examen, ni un diagnostic, ni une prescription.</p></div></aside>
 
@@ -131,9 +131,18 @@ let P=perso.get(); const MEM=vide(); if(P)P={...vide(),...P};
 const S=()=>P||MEM, saveP=()=>{if(P)perso.set(P);};
 
 /* ---------- Navigation ---------- */
-const TABS=[['auto','Mon bilan'],['suivi','Mon suivi'],['soulager','Que faire ?'],['droits','Droits & démarches'],['collectif','Enquête collective'],['entreprise','Côté entreprise'],['infirmier','Espace infirmier·e'],['comprendre','Comprendre']];
-function route(){const h=(location.hash||'#auto').slice(1);const cur=TABS.some(t=>t[0]===h)?h:'auto';
-  $('#tabs').innerHTML=TABS.map(([k,l],i)=>`${i===4?'<span class="tsep" aria-hidden="true"></span>':''}<a href="#${k}" ${k===cur?'aria-current="page"':''}>${l}</a>`).join('');
+const APP=new URLSearchParams(location.search).has('app');
+if(APP)document.body.classList.add('app');
+const ESPACES=[['moi','Pour moi'],['entreprise','Côté entreprise'],['ide','Espace infirmier·e']];
+const TABS=[['auto','Mon bilan','moi'],['suivi','Mon suivi','moi'],['soulager','Que faire ?','moi'],['droits','Droits & démarches','moi'],['collectif','Enquête collective','entreprise'],['entreprise','Plan d\'action','entreprise'],['infirmier','Crise et entretien','ide'],['comprendre','Comprendre','tous']];
+function route(){const h=(location.hash||'#auto').slice(1);
+  const vis=TABS.filter(t=>!APP||t[2]==='moi'||t[2]==='tous');
+  const cur=vis.some(t=>t[0]===h)?h:'auto';
+  const esp=TABS.find(t=>t[0]===cur)[2];
+  if(esp!=='tous')route.e=esp; const e=route.e||'moi';
+  const barre=APP?'':`<div class="esp">${ESPACES.map(([k,l])=>`<a href="#${TABS.find(t=>t[2]===k)[0]}" ${k===e?'aria-current="page"':''}>${l}</a>`).join('')}</div>`;
+  const onglets=vis.filter(t=>t[2]===e||t[2]==='tous').map(([k,l])=>`<a href="#${k}" ${k===cur?'aria-current="page"':''}>${l}</a>`).join('');
+  $('#tabs').innerHTML=`${barre}<div class="in">${onglets}${APP?'<a href="assistant-droits.html">Poser une question ↗</a>':''}</div>`;
   ({auto:vAuto,suivi:vSuivi,soulager:vSoulager,droits:vDroits,collectif:vCollectif,entreprise:vEntreprise,infirmier:vInfirmier,comprendre:vComprendre})[cur]();}
 window.addEventListener('hashchange',()=>{route();scrollTo(0,0);});
 
@@ -270,7 +279,7 @@ function demoCycle(){let seed=9;const r=()=>{seed=(seed*16807)%2147483647;return
   return out;}
 const JD={d:iso(new Date()),r:0,p:null,f:0,a:0,w:null,g:null};
 function vSuivi(){
-  const st=S(), J=st.cycle, E=st.evals, X=statsCycle(), lien=new URL('endoprev.html#auto',location.href).href;
+  const st=S(), J=st.cycle, E=st.evals, X=statsCycle(), lien=new URL('endoprev.html?app=1#auto',location.href).href;
   const ex=J.find(e=>e.d===JD.d), par=Object.fromEntries(J.map(e=>[e.d,e]));
   const today=iso(new Date()), cal=Array.from({length:42},(_,i)=>plus(today,i-41));
   const dans=X?.proch?jours(today,X.proch):null;
@@ -308,7 +317,7 @@ function vSuivi(){
     <div class="grid" style="gap:6px;margin-top:8px">${E.map((e,i)=>`<div class="row small"><b>${fr(e.d)}</b><span>douleur ${e.eva??'–'}/10 · capacité ${e.was??'–'}/10 · gêne ${e.gene??'–'}/10</span><span class="pill ${NIVB[e.niveau][1]}">${NIVB[e.niveau][0]}</span><span class="sp"></span><button class="btn sm ghost" data-erm="${i}">Supprimer</button></div>`).join('')}</div></div>`
     :'<div class="card row"><span class="muted">Aucun bilan enregistré pour l\'instant.</span><span class="sp"></span><a class="btn sm" href="#auto">Faire mon bilan</a></div>'}
   ${P?`<details class="card"><summary style="cursor:pointer;font-weight:700">Sauvegarder, changer d'appareil, effacer</summary><div class="row" style="margin-top:10px"><button class="btn sm" id="exp">💾 Télécharger ma sauvegarde</button><label class="btn sm ghost" style="cursor:pointer">📂 Restaurer<input type="file" id="imp" accept=".json" hidden></label><button class="btn sm ghost" id="del">Tout effacer</button></div></details>`:''}
-  <details class="card"><summary style="cursor:pointer;font-weight:700">Pour l'infirmier·e : proposer EndoPrév aux salariées</summary><p class="small muted" style="margin:8px 0">Ce lien ouvre l'outil personnel. Aucune donnée n'est collectée.</p><div class="row"><span class="code">${esc(lien)}</span><button class="btn sm ghost" id="cl">Copier le lien</button><button class="btn sm ghost" id="qrb">QR code</button></div><div class="qrbox" id="qr" hidden style="margin-top:8px"></div></details>`;
+  ${APP?'':`<details class="card"><summary style="cursor:pointer;font-weight:700">Pour l'infirmier·e : proposer EndoPrév aux salariées</summary><p class="small muted" style="margin:8px 0">Ce lien ouvre l'outil personnel. Aucune donnée n'est collectée.</p><div class="row"><span class="code">${esc(lien)}</span><button class="btn sm ghost" id="cl">Copier le lien</button><button class="btn sm ghost" id="qrb">QR code</button></div><div class="qrbox" id="qr" hidden style="margin-top:8px"></div></details>`}`;
   const charge=d=>{JD.d=d;const o=par[d];Object.assign(JD,{r:o?.r||0,p:o?.p??null,f:o?.f||0,a:o?.a||0,w:o?.w||null,g:o?.g??null});keep(vSuivi);};
   $('#jd').onchange=e=>charge(e.target.value);
   app.querySelectorAll('[data-cd]').forEach(b=>b.onclick=()=>charge(b.dataset.cd));
@@ -328,8 +337,8 @@ function vSuivi(){
   const ex2=$('#exp'); if(ex2) ex2.onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(P,null,1)],{type:'application/json'}));a.download=`endoprev-suivi-${today}.json`;a.click();};
   const imp=$('#imp'); if(imp) imp.onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const j=JSON.parse(await f.text());if(!Array.isArray(j.cycle))throw 0;P={...vide(),...j};saveP();vSuivi();}catch(_){alert('Fichier non reconnu.');}};
   const del=$('#del'); if(del) del.onclick=()=>{if(!confirm('Effacer définitivement tout votre suivi sur cet appareil ?'))return;perso.del();P=null;Object.assign(MEM,vide());vSuivi();};
-  $('#cl').onclick=e=>copier(e.target,lien,'Copier le lien');
-  $('#qrb').onclick=async()=>{const q=$('#qr');q.hidden=!q.hidden;if(!q.hidden&&!q.innerHTML){try{await ENQ.qr(q,lien);}catch(e){q.textContent=e.message;}}};
+  if($('#cl'))$('#cl').onclick=e=>copier(e.target,lien,'Copier le lien');
+  if($('#qrb'))$('#qrb').onclick=async()=>{const q=$('#qr');q.hidden=!q.hidden;if(!q.hidden&&!q.innerHTML){try{await ENQ.qr(q,lien);}catch(e){q.textContent=e.message;}}};
 }
 
 /* ════════ 3. QUE FAIRE ? Soulager, s'organiser au travail, demander un aménagement ════════

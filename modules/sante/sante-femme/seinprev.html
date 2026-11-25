@@ -131,6 +131,7 @@ body.app .back,body.app .pp-top .pill{display:none}
 <main class="gut" id="app"></main>
 <div class="kiosk gut" id="kiosk" hidden></div>
 
+<script src="referent.js"></script>
 <script>
 (function(){
 const $=s=>document.querySelector(s), app=$('#app');
@@ -193,7 +194,7 @@ const bars=(rows,tot)=>rows.map(r=>`<div class="hbar"><span>${esc(r.l)}</span><s
 /* Mode application : ouvert depuis le lien ou le QR code donné à la salariée (?app=1), ou depuis l'icône installée.
    Seules les rubriques personnelles sont visibles ; rien ne quitte le téléphone. */
 const APP=new URLSearchParams(location.search).has('app')||matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
-const LIEN_APP=new URL('seinprev.html?app=1#connaitre',location.href).href;
+let LIEN_APP=REFERENT.lien('seinprev.html?app=1#connaitre');
 const ESPACES=[['moi','Pour moi'],['entreprise','Côté entreprise'],['ide','Espace infirmier·e']];
 const TABS=APP?[['connaitre','Connaître mes seins','moi'],['parcours','Mon dépistage','moi'],['travail','Sein & travail','moi'],['jeu','Super Maria','moi']]
   :[['parcours','Mon parcours','moi'],['connaitre','Connaître mes seins','moi'],['travail','Sein & travail','moi'],['jeu','Jeu Super Maria','moi'],['bord','Tableau de bord','entreprise'],['actions','Actions Octobre rose','entreprise'],['enquete','Enquête anonyme','entreprise'],['suivi','Suivi infirmier','ide']];
@@ -208,7 +209,7 @@ function route(){const h=(location.hash||'#'+TABS[0][0]).slice(1);
   if(esp!=='tous')route.e=esp; const e=route.e||'moi';
   const barre=APP?'':`<div class="esp">${ESPACES.map(([k,l])=>`<a href="#${TABS.find(t=>t[2]===k)[0]}" ${k===e?'aria-current="page"':''}>${l}</a>`).join('')}</div>`;
   const onglets=vis.filter(t=>t[2]===e||t[2]==='tous').map(([k,l])=>`<a href="#${k}" ${k===cur?'aria-current="page"':''}>${l}</a>`).join('');
-  $('#tabs').innerHTML=`${barre}<div class="in">${onglets}${APP?'<a href="assistant-droits.html">Poser une question ↗</a>':''}</div>`;
+  $('#tabs').innerHTML=`${barre}<div class="in">${onglets}${APP?`<a href="assistant-droits.html${location.search}">Poser une question ↗</a>`:''}</div>`;
   ({bord:vBord,actions:vActions,enquete:vEnquete,suivi:vSuivi,parcours:vParcours,connaitre:vConnaitre,travail:vTravail,jeu:vJeu})[cur]();}
 window.addEventListener('hashchange',()=>{route();scrollTo(0,0);});
 const intro=(e,t,p,ref)=>`<div class="intro"><div><p class="eyebrow">${e}</p><h2>${t}</h2><p class="muted">${p}</p></div>${ref?`<div class="ref">${ref}</div>`:''}</div>`;
@@ -858,8 +859,8 @@ function blocPartage(){
     <div class="partage" style="margin-top:14px"><div class="qrbox" id="qrApp" aria-label="QR code"></div>
     <div class="grid" style="gap:8px"><p>Chaque salariée scanne le QR code ou ouvre le lien, puis installe l'application <b>« Mes seins »</b> sur son écran d'accueil. Elle y retrouve le guide, son rappel mensuel, son journal et son passeport sein (examens, contrôles à ne pas manquer).</p>
       <div class="secret small">Le journal reste <b>uniquement sur son téléphone</b> : rien n'est transmis à l'infirmier·e ni à l'employeur. Elle ne voit pas les rubriques réservées au service (tableau de bord, enquête, suivi).</div>
-      <div class="small">Lien : <span class="lien">${esc(LIEN_APP)}</span></div>
-      <div class="row"><button class="btn sm" id="cpLien">Copier le lien</button><button class="btn sm ghost" id="cpMsg">Copier un message d'invitation</button><button class="btn sm ghost" id="prAff">Imprimer une affichette</button></div></div></div></details>`;
+      <div class="small">Lien : <span class="lien" id="lienApp">${esc(LIEN_APP)}</span></div>
+      <div class="row"><button class="btn sm" id="cpLien">Copier le lien</button><button class="btn sm ghost" id="cpMsg">Copier un message d'invitation</button><button class="btn sm ghost" id="prAff">Imprimer une affichette</button></div>${REFERENT.champs()}</div></div></details>`;
 }
 const MSG_APP=()=>`Bonjour,
 
@@ -878,6 +879,7 @@ async function dessinerQR(el,taille){qrLib||=new Promise((ok,ko)=>{const sc=docu
 function bindPartage(){
   const inst=$('#instBtn');if(inst)inst.onclick=async()=>{installPrompt.prompt();await installPrompt.userChoice.catch(()=>{});installPrompt=null;route();};
   const d=$('#partage');if(!d)return;
+  REFERENT.brancher(d,()=>{LIEN_APP=REFERENT.lien('seinprev.html?app=1#connaitre');$('#lienApp').textContent=LIEN_APP;if(d.open)dessinerQR($('#qrApp'),170);});
   d.addEventListener('toggle',()=>{if(d.open&&!$('#qrApp').innerHTML)dessinerQR($('#qrApp'),170);});
   const cp=(b,t,l)=>{try{navigator.clipboard.writeText(t).then(()=>{b.textContent='Copié ✓';setTimeout(()=>b.textContent=l,1500);});}catch(_){}};
   $('#cpLien').onclick=e=>cp(e.target,LIEN_APP,'Copier le lien');

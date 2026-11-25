@@ -114,3 +114,4 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--mute
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 .ref-form{margin-top:8px}.ref-form summary{cursor:pointer;font-weight:600;font-size:13px}
 .avis{gap:8px;flex-wrap:wrap}.contact{border-left:4px solid var(--acc,var(--rose))}
+.contact{scroll-margin-top:80px}

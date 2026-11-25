@@ -130,7 +130,7 @@ Légende : 🟢 **Nouveau** (version récente, utilisable) · 🟠 **Prototype**
 
 | Page | Contenu |
 |---|---|
-| `rps.html` | Diagnostic RPS à 4 sources (indicateurs, remontées, avis CSE / RH / médecin du travail, questionnaire COPSOQ anonyme), TF et TG repris du suivi AT/MP, **envoi des risques au DUERP** (grille alignée G × F × M) |
+| `rps.html` | Diagnostic RPS à 5 sources (indicateurs en mode essentiel ou complet, remontées, grille RPS-DU, avis des acteurs, questionnaires anonymes baromètre et COPSOQ), TF et TG comparés au secteur (code NAF), criticité Anact, **envoi des risques au DUERP** (grille alignée G × F × M). **Étapes et méthode de calcul détaillées : [`modules/sante/sante-mentale/README.md`](modules/sante/sante-mentale/README.md)** |
 | `indicateurs-rps.html` · `enquete-rps.html` | Saisie des indicateurs par les RH par lien sécurisé · questionnaire anonyme des salariés (aucun résultat sous 5 réponses) |
 | `burnout.html` | Pré-dépistage du risque de burn-out |
 | `violentometre.html` | Violentomètre centré sur les incivilités et la souffrance au travail |

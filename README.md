@@ -130,14 +130,32 @@ Légende : 🟢 **Nouveau** (version récente, utilisable) · 🟠 **Prototype**
 
 | Page | Contenu |
 |---|---|
-| `rps.html` | Diagnostic RPS à 4 sources (indicateurs, remontées, avis CSE / RH / médecin du travail, questionnaire COPSOQ anonyme), TF et TG repris du suivi AT/MP, **envoi des risques au DUERP** (grille alignée G × F × M) |
-| `indicateurs-rps.html` · `enquete-rps.html` | Saisie des indicateurs par les RH par lien sécurisé · questionnaire anonyme des salariés (aucun résultat sous 5 réponses) |
+| `rps.html` | Diagnostic RPS à 5 sources : indicateurs (mode essentiel 9 ou complet 27, tous facultatifs ; TF et TG comparés au secteur par code NAF, non interprétés sous 50 salariés), remontées, grille RPS-DU, avis des acteurs, questionnaires anonymes (baromètre PréventIA 28 items, COPSOQ lu par rapport à la référence française). Criticité Anact, rapport, **envoi des risques au DUERP**. Étapes et calculs : [`README du module`](modules/sante/sante-mentale/README.md) |
+| `indicateurs-rps.html` · `enquete-rps.html` | Saisie des indicateurs par les RH par lien sécurisé · questionnaire anonyme des salariés (aucun résultat sous 5 réponses, puis par paliers de 5) |
 | `burnout.html` | Pré-dépistage du risque de burn-out |
 | `violentometre.html` | Violentomètre centré sur les incivilités et la souffrance au travail |
 | `reperer-agir.html` | Repérer une personne en difficulté et conduite à tenir en urgence |
 | `premiers-jours.html` | « Mes 100 premiers jours » : accompagnement de l'intégration des nouveaux salariés, questionnaire mensuel, courbe d'évolution, conseils adaptés et aides complémentaires (hygiène de vie, ressources) |
 | `reprendre-pied.html` | « Reprendre pied » : préparer la reprise après un arrêt, fiche servant de base de réflexion pour échanger avec la santé au travail |
 | `detente.html` | Cohérence cardiaque et relaxation guidée |
+
+</details>
+
+<details>
+<summary><b>Détail du module Santé de la femme</b></summary>
+
+| Page | Contenu |
+|---|---|
+| `seinprev.html` | Dépistage du cancer du sein : rythme de suivi, score familial d'Eisinger, Octobre rose, bilan de campagne, retour au travail après un cancer |
+| `endoprev.html` | Règles douloureuses, endométriose, adénomyose : bilan personnel, calendrier, droits, message d'aménagement sans diagnostic, enquête collective et plan d'action |
+| `menoprev.html` | Ménopause et travail : sous-scores adaptés de la MRS, croisements avec le poste, suivi, cartographie des lieux, enquête collective |
+| `materprev.html` | Grossesse et allaitement : expositions interdites ou à aménager, droits, calendrier du congé, engagements de l'entreprise |
+| `assistant-droits.html` | Assistant droits et aménagements : l'IA répond uniquement à partir de fiches vérifiées (`droits-data.js`) et cite chacune |
+| `analyse-postes.html` | Postes à aménager en priorité : croise les enquêtes et les postes du DUERP, score expliqué, pistes, note IA |
+| `enquete.html` · `enquetes.js` | Enquête anonyme par lien ou QR code (Supabase UE) : rien sous 5 réponses, puis par paliers de 5 |
+| `presentation.html` | **Dossier de présentation à la direction**, généré à partir du module (chiffres à jour), modifiable, imprimable en PDF |
+
+Méthodes de calcul, origines et limites : [`README du module`](modules/sante/sante-femme/README.md) · protection des données : [`AIPD`](docs/AIPD-enquetes.md).
 
 </details>
 
@@ -402,6 +420,8 @@ python -m http.server 8000      # ou : npx serve
 | Arrêtés du 27/06/2018, 16/11/2023, 15/05/2024 | Radon : zonage, dose efficace, mesures |
 | Code de l'environnement · nomenclature ICPE | Régimes NC / D / DC / E / A, déchets, Trackdéchets |
 | Questionnaire COPSOQ · guides INRS / ANACT | Risques psychosociaux |
+| HAS / CNGOF 2017 · ESHRE 2022 · Menopause Rating Scale · CNGOF-GEMVi 2021 · HAS 2025 | Santé de la femme : endométriose, ménopause, traitements |
+| Code du travail (L1225-x, D4152-10, L4624-3, R4624-34) · INRS TJ 14 · INCa 2024 | Grossesse et allaitement, aménagements, retour au travail après un cancer |
 
 ---
 
@@ -416,9 +436,9 @@ flowchart LR
 
 **Prochains modules envisagés** : cartographie des risques, analyse de poste, VGP et maintenance, habilitations et formations, incendie, ATEX, amiante, radioprotection, tableau de bord de pilotage, intégration de PréventIA Visio et Audio dans l'infirmerie.
 
-**Chantiers transverses** : masquage des noms et des lieux dans les commentaires libres avant l'IA, suppression automatique des réponses d'enquête 12 mois après la fin de campagne, AIPD et registre des traitements avec le DPO, assistant FDS (recherche hybride texte + vecteurs, déjà prévue dans la base), éventuel nom de domaine dédié.
+**Chantiers transverses** : masquage des noms et des lieux dans les commentaires libres avant l'IA, validation de l'AIPD des enquêtes ([`docs/AIPD-enquetes.md`](docs/AIPD-enquetes.md)) et registre des traitements avec le DPO, migration « paliers de 5 » à appliquer sur la base, relecture médicale des fiches de l'assistant droits, mise à jour de pdf.js (risque chimique, version 3.11 vulnérable), assistant FDS (recherche hybride texte + vecteurs, déjà prévue dans la base), éventuel nom de domaine dédié.
 
-**Fait en novembre 2026** : passerelle IA sécurisée (fin de Make.com pour Protect), compte commun avec PréventIA Réseau, base FDS partagée, passerelle vers le DUERP, dossiers entreprise, suppression de l'ancienne architecture inutilisée (`core/ai-*.js`, `alerts.js`, `planning.js`, `stats.js`, `storage.js`, `reglementation.js`, dossier `config/`).
+**Fait en novembre 2026** : passerelle IA sécurisée (fin de Make.com pour Protect), compte commun avec PréventIA Réseau, base FDS partagée, passerelle vers le DUERP, dossiers entreprise, suppression de l'ancienne architecture inutilisée (`core/ai-*.js`, `alerts.js`, `planning.js`, `stats.js`, `storage.js`, `reglementation.js`, dossier `config/`). Diagnostic RPS : mode essentiel, TF/TG comparés au secteur, COPSOQ lu par rapport à la référence, baromètre à 28 items, documentation des calculs. Santé de la femme : enquêtes par paliers de 5, bibliothèques hébergées dans le dépôt (SheetJS 0.20.3), assistant droits sourcé, analyse des postes, dossier de présentation, AIPD des enquêtes, suppression automatique des enquêtes.
 
 ---
 

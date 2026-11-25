@@ -13,6 +13,7 @@ Ce module rassemble six outils de prévention, des étapes de vie des femmes au 
 | **Droits et aménagements** | `assistant-droits.html` · `droits-data.js` | Salariées, infirmier·e, managers | Assistant qui répond uniquement à partir de fiches vérifiées et cite chaque source |
 | **Postes à aménager en priorité** | `analyse-postes.html` | Infirmier·e, médecin du travail, RH, CSE | Croise les résultats des enquêtes et les postes pour cibler les aménagements |
 | Enquête anonyme | `enquete.html` · `enquetes.js` | Salariées (réponse) | Page de réponse commune aux enquêtes par lien ou QR code |
+| **Dossier de présentation** | `presentation.html` | Direction du SPSTI, financeurs | Document généré à partir du module (nombre d'outils, de fiches, de symptômes à jour), modifiable, imprimable en PDF |
 
 ---
 

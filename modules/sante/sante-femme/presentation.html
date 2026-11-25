@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Santé de la femme au travail · dossier de présentation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap">
+<style>
+/* Dossier de présentation du module Santé de la femme, pour la direction du SPSTI et l'appel à projets.
+   Généré à l'ouverture à partir des fichiers du module (outils, fiches, questionnaires) : il reste à jour
+   quand le projet évolue. Imprimer → « Enregistrer au format PDF ». Le texte est modifiable avant impression. */
+:root{--rose:#c2185b;--mauve:#7b3fa0;--ink:#1f2937;--muted:#5b6472;--line:#e3e6ec;--bg:#f6f7f9;--card:#fff;--soft:#fbeef3}
+*{box-sizing:border-box}
+body{margin:0;font-family:'DM Sans',system-ui,sans-serif;color:var(--ink);background:var(--bg);line-height:1.5;font-size:14.5px}
+.bar{position:sticky;top:0;z-index:2;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 16px;background:#1f2937;color:#fff}
+.bar a{color:#fff}.bar .sp{flex:1}
+.bar button{border:0;border-radius:9px;padding:8px 14px;font-weight:700;cursor:pointer;background:#fff;color:#1f2937}
+.bar button.on{background:var(--rose);color:#fff}
+.doc{max-width:860px;margin:20px auto;background:var(--card);box-shadow:0 2px 14px rgba(0,0,0,.08)}
+.page{padding:48px 56px}
+.garde{break-after:page}
+h2,h3{break-after:avoid}
+h1,h2{font-family:'DM Serif Display',serif;font-weight:400;line-height:1.2;margin:0}
+h1{font-size:40px;color:var(--rose)}
+h2{font-size:24px;color:var(--rose);margin:28px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--soft)}
+h2:first-child{margin-top:0}
+h3{font-size:15px;margin:16px 0 6px}
+p{margin:6px 0}
+.lead{font-size:17px}
+.muted{color:var(--muted)} .small{font-size:12.5px}
+.garde{min-height:900px;display:flex;flex-direction:column;justify-content:space-between;background:linear-gradient(160deg,#fff 55%,var(--soft))}
+.garde .eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--mauve)}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
+.kpi{border:1px solid var(--line);border-radius:12px;padding:12px}
+.kpi .v{font-family:'DM Serif Display',serif;font-size:26px;color:var(--rose);line-height:1.1}
+.kpi .l{font-size:12px;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:13px;margin:8px 0}
+th,td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:#fafbfc}
+.flow{display:flex;gap:6px;align-items:stretch;flex-wrap:wrap;margin:10px 0}
+.flow div{flex:1 1 120px;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:12.5px;background:#fff}
+.flow div b{display:block;color:var(--mauve);margin-bottom:2px}
+.flow span{align-self:center;color:var(--muted)}
+.ok{color:#16794c;font-weight:700} .todo{color:#b45309;font-weight:700}
+.box{border-left:4px solid var(--rose);background:var(--soft);padding:10px 14px;border-radius:0 10px 10px 0;margin:10px 0}
+ol,ul{margin:6px 0;padding-left:20px} li{margin:3px 0}
+[contenteditable="true"]{outline:2px dashed #f0a6c2;outline-offset:4px}
+@media (max-width:700px){.page{padding:28px 20px}.kpis{grid-template-columns:repeat(2,1fr)}h1{font-size:30px}}
+@media print{
+  @page{size:A4;margin:14mm}
+  body{background:#fff;font-size:11.5pt}
+  .bar{display:none}
+  .doc{box-shadow:none;margin:0;max-width:none}
+  .page{padding:0}
+  .page+.page{margin-top:6mm}
+  .garde{min-height:250mm}
+  [contenteditable="true"]{outline:none}
+  a{color:inherit;text-decoration:none}
+  tr,.kpi,.flow,.box{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="bar"><a href="index.html">← Santé de la femme</a><span class="sp"></span>
+  <button id="edit" type="button">Modifier le texte</button><button id="print" type="button">Imprimer / PDF</button></div>
+<div class="doc" id="doc"></div>
+
+<script src="enquetes.js"></script>
+<script src="endo-data.js"></script>
+<script src="meno-data.js"></script>
+<script src="droits-data.js"></script>
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const auj=new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+const nFiches=DROITS.FICHES.length, nSrc=new Set(DROITS.FICHES.map(f=>f.src.split(/[,;]/)[0].trim())).size;
+const nEndo=Object.keys(ENDO.MATRICE).length, nMeno=Object.keys(MENO.ITEMS).length;
+const nCtr=new Set([...Object.values(ENDO.CONTRAINTES),...Object.values(MENO.CONTRAINTES)]).size;
+
+const OUTILS=[
+ ['SeinPrév','Dépistage du cancer du sein, Octobre rose, retour au travail après un cancer','Salariées · infirmier·e · employeur','Rythme de suivi selon l\'âge, score familial d\'Eisinger, campagne et bilan anonymes'],
+ ['EndoPrév','Règles douloureuses, endométriose, adénomyose',"Salariées · infirmier·e · RH et CSE",`${nEndo} symptômes croisés avec les contraintes du poste, repères HAS/CNGOF 2017, droits, enquête collective`],
+ ['MénoPrév','Ménopause et travail','Salariées · infirmier·e · RH et CSE',`${nMeno} symptômes (adaptés de la Menopause Rating Scale), suivi dans le temps, cartographie des lieux difficiles, enquête collective`],
+ ['MaterPrév','Grossesse, allaitement et travail','Salariées · infirmier·e · employeur','Expositions interdites ou à aménager selon le Code du travail et l\'INRS, calendrier du congé'],
+ ['Droits et aménagements','Assistant à réponses sourcées','Salariées · infirmier·e · managers',`${nFiches} fiches vérifiées ; l'IA ne répond qu'à partir d'elles et cite chacune`],
+ ['Postes à aménager en priorité','Analyse collective','Infirmier·e · médecin du travail · RH et CSE','Croise enquêtes et postes du DUERP, score expliqué, pistes, note rédigée par l\'IA']
+];
+
+const H=`
+<section class="page garde">
+  <div><p class="eyebrow">PréventIA Protect · SPSTI 23/87</p>
+    <h1>Santé de la femme au travail</h1>
+    <p class="lead" style="margin-top:14px">Des outils numériques gratuits pour repérer, aménager et accompagner les étapes de vie des femmes au travail : règles douloureuses et endométriose, grossesse et allaitement, ménopause, cancer du sein.</p>
+    <p class="muted">Dossier de présentation à la direction · ${auj}</p></div>
+  <div class="kpis">
+    <div class="kpi"><div class="v">${OUTILS.length}</div><div class="l">outils en ligne</div></div>
+    <div class="kpi"><div class="v">${nFiches}</div><div class="l">fiches de droits vérifiées et sourcées</div></div>
+    <div class="kpi"><div class="v">${nCtr}</div><div class="l">contraintes de poste croisées avec les symptômes</div></div>
+    <div class="kpi"><div class="v">0</div><div class="l">donnée nominative dans les enquêtes</div></div></div>
+  <div><p><b>Laure Bonnefond</b>, infirmière en santé au travail et préventrice, SPSTI 23/87 (Creuse · Haute-Vienne)</p>
+    <p class="small muted">Solution d'intérêt général, gratuite et non commerciale. Document généré à partir du module en ligne : il reflète l'état du projet à la date ci-dessus.</p></div>
+</section>
+
+<section class="page">
+  <h2>1. Pourquoi ce projet</h2>
+  <p class="lead">Une grande partie de la santé des femmes se joue aussi au travail, souvent en silence. Le service de santé au travail est bien placé pour aider à adapter le poste, sans jamais révéler de diagnostic à l'employeur.</p>
+  <table><tr><th>Sujet</th><th>Repère chiffré</th><th>Source</th></tr>
+    <tr><td>Endométriose</td><td>Environ 1 femme sur 10 ; errance diagnostique de 7 ans en moyenne</td><td>Stratégie nationale (réponses ministérielles, Assemblée nationale)</td></tr>
+    <tr><td>Ménopause</td><td>400 000 à 500 000 femmes entrent dans la ménopause chaque année ; âge moyen 51 ans</td><td>Santé.fr</td></tr>
+    <tr><td>Cancer du sein</td><td>61 214 nouveaux cas estimés en 2023 ; participation au dépistage organisé retombée à 44 % en 2024</td><td>INCa, Santé publique France (via Caducée)</td></tr>
+    <tr><td>Fausse couche</td><td>Environ 15 % des grossesses</td><td>Caf, loi du 7 juillet 2023</td></tr></table>
+  <div class="box"><b>Le constat de terrain :</b> ces situations arrivent rarement jusqu'au service de santé au travail. Les salariées n'en parlent pas, les employeurs ne savent pas quoi aménager, et les outils existants ne sont pas pensés pour le poste de travail.</div>
+
+  <h2>2. Ce que fait le module</h2>
+  <table><tr><th>Outil</th><th>Sujet</th><th>Pour qui</th><th>Ce qu'il apporte</th></tr>
+    ${OUTILS.map(o=>`<tr><td><b>${o[0]}</b></td><td>${o[1]}</td><td>${o[2]}</td><td>${o[3]}</td></tr>`).join('')}</table>
+</section>
+
+<section class="page">
+  <h2>3. Comment ça marche</h2>
+  <h3>Pour la salariée</h3>
+  <div class="flow"><div><b>Je fais le point</b>symptômes, poste, travail</div><span>→</span><div><b>Je vois les croisements</b>ce que mon poste rend plus difficile</div><span>→</span><div><b>Je connais mes droits</b>réponses sourcées</div><span>→</span><div><b>J'en parle</b>message d'aménagement sans diagnostic, visite à la demande</div></div>
+  <h3>Pour l'entreprise, avec l'infirmier·e</h3>
+  <div class="flow"><div><b>Enquête anonyme</b>lien ou QR code, 3 minutes</div><span>→</span><div><b>Résultats regroupés</b>rien sous 5 réponses, puis par paliers de 5</div><span>→</span><div><b>Postes prioritaires</b>croisement avec le DUERP</div><span>→</span><div><b>Plan d'action</b>aménagements, information, managers</div></div>
+  <p class="small muted">Le calcul croise l'intensité de chaque symptôme et le poids de chaque contrainte du poste : un score de 4 ou plus signale un croisement prioritaire. Toutes les règles sont décrites dans la documentation du module.</p>
+
+  <h2>4. La place de l'intelligence artificielle</h2>
+  <p>L'IA est utilisée là où elle apporte un gain réel, et toujours encadrée :</p>
+  <ul>
+    <li><b>Assistant droits et aménagements</b> : l'IA ne connaît que ${nFiches} fiches vérifiées (${nSrc} sources : Code du travail, HAS, INRS, INCa, sociétés savantes). Chaque phrase est citée ; une réponse sans source est signalée.</li>
+    <li><b>Analyse des postes</b> : l'IA rédige la note de priorisation à partir du seul tableau de résultats regroupés.</li>
+    <li><b>Message d'aménagement</b> : l'IA rédige la demande de la salariée sans jamais mentionner la maladie ni les symptômes.</li>
+  </ul>
+  <p class="small muted">IA des modules santé : Mistral, traitement dans l'Union européenne, via une fonction serveur qui masque les données personnelles et ne conserve pas le contenu.</p>
+
+  <h2>5. Garanties</h2>
+  <table><tr><th>Exigence</th><th>Ce qui est en place</th></tr>
+    <tr><td>Anonymat des enquêtes</td><td>Ni nom, ni âge, ni service ; aucune date sur les réponses ; rien sous 5 réponses ; résultats par paliers de 5</td></tr>
+    <tr><td>Données personnelles</td><td>Bilans individuels gardés uniquement sur le téléphone ou l'ordinateur de la salariée</td></tr>
+    <tr><td>Hébergement</td><td>Union européenne ; suppression automatique des enquêtes après 12 mois</td></tr>
+    <tr><td>Fiabilité du contenu</td><td>Sources officielles citées et datées ; méthodes de calcul publiées, y compris leurs limites</td></tr>
+    <tr><td>Protection des données</td><td>Analyse d'impact (AIPD) rédigée, à valider par le délégué à la protection des données</td></tr></table>
+</section>
+
+<section class="page">
+  <h2>6. Où en est le projet</h2>
+  <table><tr><th>Élément</th><th>État</th></tr>
+    <tr><td>Six outils en ligne, utilisables sans compte</td><td class="ok">Fait</td></tr>
+    <tr><td>Enquête anonyme par lien ou QR code, hébergée dans l'UE</td><td class="ok">Fait</td></tr>
+    <tr><td>Méthodes de calcul et sources documentées</td><td class="ok">Fait</td></tr>
+    <tr><td>Analyse d'impact (AIPD)</td><td class="todo">Rédigée, à valider</td></tr>
+    <tr><td>Relecture médicale des fiches et des repères</td><td class="todo">À organiser</td></tr>
+    <tr><td>Charte d'usage signée par l'employeur avant une enquête</td><td class="todo">À rédiger</td></tr>
+    <tr><td>Expérimentation en entreprise</td><td class="todo">À lancer</td></tr></table>
+
+  <h2>7. Ce que nous demandons à la direction</h2>
+  <ol>
+    <li><b>Valider une expérimentation</b> dans 2 ou 3 entreprises adhérentes volontaires, sur 6 mois.</li>
+    <li><b>Désigner un médecin du travail référent</b> pour relire les fiches et les repères médicaux.</li>
+    <li><b>Saisir le délégué à la protection des données</b> pour valider l'AIPD et inscrire le traitement au registre.</li>
+    <li><b>Porter le projet</b> dans l'appel à projets « IA en santé » de Station [e]-Santé (réponses le 5 décembre 2026).</li>
+  </ol>
+
+  <h2>8. Comment mesurer l'effet</h2>
+  <table><tr><th>Indicateur</th><th>Ce qu'il montre</th></tr>
+    <tr><td>Nombre de campagnes et taux de réponse</td><td>Adhésion des salariées et des entreprises</td></tr>
+    <tr><td>Aménagements mis en place après l'analyse des postes</td><td>Passage du repérage à l'action</td></tr>
+    <tr><td>Visites à la demande liées à ces sujets</td><td>Parole libérée vers le service de santé au travail</td></tr>
+    <tr><td>Absences liées aux symptômes, avant et après</td><td>Effet sur le maintien en emploi (à interpréter avec prudence)</td></tr></table>
+  <p class="small muted">Ces indicateurs sont à recueillir pendant l'expérimentation ; ils ne sont pas encore mesurés.</p>
+
+  <h2>Sources des chiffres</h2>
+  <ul class="small">
+    <li>Endométriose : réponses ministérielles aux questions écrites, Assemblée nationale (stratégie nationale, 2022).</li>
+    <li>Ménopause : Santé.fr, « Ménopause et périménopause ».</li>
+    <li>Cancer du sein : INCa (incidence 2023) ; participation au dépistage 2024, synthèse Caducée.net, 2026.</li>
+    <li>Fausse couche : Caf.fr ; loi n° 2023-567 du 7 juillet 2023.</li>
+    <li>Sources des outils : documentation du module (README) et fiches de l'assistant, toutes datées et liées.</li>
+  </ul>
+</section>`;
+$('#doc').innerHTML=H;
+$('#print').onclick=()=>window.print();
+$('#edit').onclick=e=>{const on=$('#doc').contentEditable!=='true';$('#doc').contentEditable=on;e.target.classList.toggle('on',on);e.target.textContent=on?'Terminer les modifications':'Modifier le texte';};
+})();
+</script>
+</body>
+</html>

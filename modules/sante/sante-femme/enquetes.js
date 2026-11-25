@@ -12,6 +12,9 @@
    elle ne permet QUE d'appeler les 5 fonctions enq_*, jamais de lire les tables.
    ════════════════════════════════════════════════════════════════ */
 window.ENQ = (function () {
+  /* Bibliothèques hébergées dans le dépôt (assets/vendor), plus de CDN externe :
+     SheetJS 0.20.3 (corrige CVE-2023-30533 et CVE-2024-22363 de la 0.18.5) et qrcodejs 1.0.0. */
+  const VENDOR = new URL('../../../assets/vendor/', document.currentScript?.src || location.href).href;
   const CONFIG = {
     url: 'https://vjiryvqyijfljzsaekee.supabase.co',
     cle: 'sb_publishable_I7Ao0-YCve34t6qTrhGc7A_M5Fduxg1',
@@ -37,7 +40,19 @@ window.ENQ = (function () {
   const creer = async (outil, entreprise, fin) => (await rpc('enq_creer', { p_outil: outil, p_entreprise: entreprise || null, p_fin: fin || null }))[0];
   const info = async code => (await rpc('enq_info', { p_code: code }))[0] || null;
   const repondre = (code, reponses) => rpc('enq_repondre', { p_code: code, p_reponses: reponses });
-  const resultats = codeLecture => rpc('enq_resultats', { p_code_lecture: codeLecture });
+  /* Résultats publiés par paliers de 5 (voir docs/supabase-enquetes.sql § 7) :
+     n = réponses réellement analysées (multiple de 5), recues = réponses déposées,
+     prochain = nombre de réponses à atteindre pour la prochaine mise à jour. */
+  const resultats = async codeLecture => {
+    const r = await rpc('enq_resultats', { p_code_lecture: codeLecture });
+    if (!r) return r;
+    const recues = r.n, lu = Array.isArray(r.reponses) ? r.reponses.length : 0;
+    return { ...r, recues, n: r.reponses ? lu : recues,
+      prochain: r.palier && r.outil !== 'rps_ind' ? (Math.floor(recues / r.palier) + 1) * r.palier : null };
+  };
+  /* Libellé commun : « 15 réponses analysées sur 17 reçues · prochaine mise à jour à 20 » */
+  const libellePalier = r => r && r.reponses && r.recues > r.n
+    ? `${r.n} réponses analysées sur ${r.recues} reçues · mise à jour à ${r.prochain}` : '';
   const ouvrir = (codeLecture, ouverte) => rpc('enq_ouvrir', { p_code_lecture: codeLecture, p_ouverte: ouverte });
 
   /* Lien à envoyer aux salariées (même dossier que la page appelante) */
@@ -49,7 +64,7 @@ window.ENQ = (function () {
     return new Promise((ok, ko) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => ko(new Error('Bibliothèque indisponible (connexion ?)')); document.head.appendChild(s); });
   }
   async function qr(el, texte, taille = 180) {
-    qrLib ||= chargerScript('https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js');
+    qrLib ||= chargerScript(VENDOR + 'qrcode-1.0.0.min.js');
     await qrLib;
     el.innerHTML = '';
     new QRCode(el, { text: texte, width: taille, height: taille, correctLevel: QRCode.CorrectLevel.M });
@@ -59,7 +74,7 @@ window.ENQ = (function () {
   let xlsxLib = null;
   async function lireFichier(file) {
     if (/\.xlsx?$/i.test(file.name)) {
-      xlsxLib ||= chargerScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+      xlsxLib ||= chargerScript(VENDOR + 'xlsx-0.20.3.full.min.js');
       await xlsxLib;
       const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' });
       return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
@@ -88,5 +103,5 @@ window.ENQ = (function () {
   /* Questionnaires déclarés par chaque outil (voir endo-data.js) */
   const QUESTIONNAIRES = {};
 
-  return { CONFIG, rpc, creer, info, repondre, resultats, ouvrir, lienReponse, qr, lireFichier, norm, QUESTIONNAIRES };
+  return { CONFIG, rpc, creer, info, repondre, resultats, libellePalier, ouvrir, lienReponse, qr, lireFichier, norm, QUESTIONNAIRES };
 })();

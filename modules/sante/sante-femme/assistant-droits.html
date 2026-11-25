@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Droits et aménagements · assistant sourcé</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap">
+<link rel="stylesheet" href="femme.css">
+<style>
+/* Assistant droits et aménagements
+   Principe : l'IA ne rédige qu'à partir des fiches vérifiées de droits-data.js (sources officielles et scientifiques),
+   cite chaque fiche, et n'ajoute rien. Sans IA, les fiches trouvées s'affichent seules. */
+:root{--acc:oklch(50% .12 300)}
+.q{display:flex;gap:8px;flex-wrap:wrap}
+.q .i{flex:1 1 320px;font-size:15px;padding:11px 12px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips button{border:1px solid var(--line);background:var(--bg);border-radius:99px;padding:6px 11px;font-size:12.5px;cursor:pointer;color:var(--ink)}
+.fiche{display:grid;gap:6px;scroll-margin-top:80px}
+.fiche .n{display:inline-grid;place-items:center;min-width:24px;height:24px;border-radius:99px;background:var(--acc);color:#fff;font-size:12px;font-weight:700;margin-right:6px}
+.fiche .src{font-size:12.5px;color:var(--muted)}
+.fiche .src a{color:inherit}
+.fiche .rev{font-size:12px;color:var(--orange);font-weight:600}
+.rep{border-left:4px solid var(--acc);display:grid;gap:8px}
+.rep p{line-height:1.6}
+.rep a.cite{font-weight:700;text-decoration:none;color:var(--acc)}
+.th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--acc)}
+details.tout summary{cursor:pointer;font-weight:700}
+</style>
+</head>
+<body>
+<header class="pp-top gut"><div class="in">
+  <a class="back" href="index.html">← Santé de la femme</a>
+  <div class="ico" aria-hidden="true" style="background:linear-gradient(135deg,var(--acc),oklch(65% .12 330))"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 7h14M7 7l-3 7a3 3 0 0 0 6 0zM17 7l-3 7a3 3 0 0 0 6 0z"/></svg></div>
+  <div><small>PréventIA Protect · Santé de la femme</small><h1>Droits et aménagements</h1></div>
+  <span class="sp"></span><span class="pill">Réponses sourcées</span>
+</div></header>
+<main class="gut" id="app"></main>
+<aside class="gut lecture" role="note"><div class="in"><span aria-hidden="true">⚖️</span><p><b>Information générale, pas un avis personnalisé.</b> Les réponses s'appuient uniquement sur des fiches vérifiées (Code du travail, HAS, INRS, INCa, sociétés savantes), datées et citées. Elles ne remplacent ni le médecin du travail pour le poste, ni votre médecin pour la santé et les traitements, ni un conseil juridique.</p></div></aside>
+
+<script src="droits-data.js"></script>
+<script src="../../../core/preventia-ia.js"></script>
+<script>
+(function(){
+const $=s=>document.querySelector(s), app=$('#app');
+const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+const {FICHES,THEMES,chercher,V}=DROITS;
+const fr=d=>new Date(d).toLocaleDateString('fr-FR');
+const EXEMPLES=['Puis-je demander à voir le médecin du travail sans passer par mon employeur ?','Quels aménagements pour des règles très douloureuses ?','Combien de temps pour allaiter au travail ?','Je reprends après un cancer du sein : quelles étapes ?','Le traitement hormonal de la ménopause est-il recommandé ?','Je suis enceinte et je manipule des produits chimiques'];
+let Q='', TROUVE=[], IA={txt:'',etat:''};
+
+function fiche(f,i){
+  return `<div class="card fiche" id="f-${f.id}"><div class="th">${esc(THEMES[f.th])}</div>
+    <h3>${i!=null?`<span class="n">${i+1}</span>`:''}${esc(f.t)}</h3><p>${esc(f.x)}</p>
+    <p class="src">Source : <a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.src)}</a> · vérifiée le ${fr(V)}</p>
+    ${f.revoir?`<p class="rev">À surveiller : ${esc(f.revoir)}</p>`:''}</div>`;
+}
+/* Réponse IA : [n] → lien vers la fiche ; toute référence absente des fiches fournies est signalée */
+function rendreIA(t){
+  const invalides=new Set();
+  const h=esc(t).replace(/\[(\d+(?:\s*,\s*\d+)*)\]/g,(m,g)=>g.split(',').map(x=>{const n=+x.trim();const f=TROUVE[n-1];if(!f){invalides.add(n);return `[${n}?]`;}return `<a class="cite" href="#f-${f.id}">[${n}]</a>`;}).join(''))
+    .split(/\n{2,}/).map(p=>`<p>${p.replace(/\n/g,'<br>')}</p>`).join('');
+  const sans=!/\[\d/.test(t);
+  return h+(invalides.size||sans?`<p class="note small"><b>Attention :</b> ${sans?'cette réponse ne cite aucune fiche ; ne vous y fiez pas et lisez les fiches ci-dessous.':`les références ${[...invalides].join(', ')} ne correspondent à aucune fiche : ignorez les phrases concernées.`}</p>`:'');
+}
+function vue(){
+  app.innerHTML=`<div class="intro"><div><p class="eyebrow">Assistant sourcé</p><h2>Vos droits et les aménagements possibles</h2>
+    <p class="muted">Posez une question sur le travail et la santé des femmes : règles douloureuses, endométriose, grossesse, allaitement, ménopause, cancer du sein. L'assistant cherche d'abord dans des fiches vérifiées ; l'IA peut ensuite rédiger une réponse courte, <b>uniquement à partir de ces fiches</b>, en citant chacune.</p></div></div>
+  <div class="card grid"><form class="q" id="f"><input class="i" id="q" maxlength="300" placeholder="Ex. : puis-je obtenir un poste de jour pendant ma grossesse ?" value="${esc(Q)}" aria-label="Votre question"><button class="btn">Chercher</button></form>
+    <p class="small muted">N'écrivez ni votre nom, ni celui d'une autre personne, ni de détail médical personnel : une question générale suffit.</p>
+    <div class="chips">${EXEMPLES.map(e=>`<button type="button" data-ex="${esc(e)}">${esc(e)}</button>`).join('')}</div></div>
+  ${Q?(TROUVE.length?`
+    <div class="card rep"><div class="row"><b>Réponse rédigée</b><span class="sp"></span><button class="btn sm" id="ia" ${IA.etat?'disabled':''}>${IA.txt?'Rédiger à nouveau':'Rédiger une réponse avec l\'IA'}</button></div>
+      ${IA.etat?`<p class="muted small">${esc(IA.etat)}</p>`:IA.txt?rendreIA(IA.txt):`<p class="muted small">L'IA (Mistral, hébergée dans l'Union européenne) reçoit votre question et les ${TROUVE.length} fiches ci-dessous, rien d'autre. Vous pouvez aussi lire les fiches directement.</p>`}</div>
+    <h3>Fiches trouvées (${TROUVE.length})</h3>${TROUVE.map(fiche).join('')}`
+    :`<div class="card"><p><b>Aucune fiche vérifiée ne répond à cette question.</b> Plutôt que d'inventer une réponse, l'assistant s'arrête là.</p><p class="muted small">Reformulez avec d'autres mots, parcourez toutes les fiches ci-dessous, ou demandez une visite au service de santé au travail :</p></div>${fiche(FICHES.find(f=>f.id==='visite-demande'))}`):''}
+  <details class="card tout"><summary>Toutes les fiches (${FICHES.length}), par thème</summary>
+    ${Object.entries(THEMES).map(([k,l])=>{const L=FICHES.filter(f=>f.th===k);return L.length?`<h3 style="margin:14px 0 8px">${esc(l)}</h3><div class="grid">${L.map(f=>fiche(f)).join('')}</div>`:'';}).join('')}
+    <p class="small muted" style="margin-top:10px">Fiches vérifiées le ${fr(V)}. Une fiche se met à jour dans <code>droits-data.js</code>, après relecture par le médecin du travail.</p></details>`;
+  $('#f').onsubmit=e=>{e.preventDefault();lancer($('#q').value);};
+  app.querySelectorAll('[data-ex]').forEach(b=>b.onclick=()=>lancer(b.dataset.ex));
+  const bi=$('#ia'); if(bi) bi.onclick=rediger;
+}
+function lancer(q){Q=String(q||'').trim().slice(0,300);TROUVE=Q?chercher(Q,5):[];IA={txt:'',etat:''};vue();}
+async function rediger(){
+  if(!window.PIA){IA.etat='IA indisponible : lisez les fiches ci-dessous.';vue();return;}
+  IA={txt:'',etat:'Rédaction en cours…'};vue();
+  const fiches=TROUVE.map((f,i)=>`[${i+1}] ${f.t}\n${f.x}\n(Source : ${f.src})`).join('\n\n');
+  try{
+    IA.txt=await PIA.texte({max_tokens:600,
+      system:"Tu es l'assistant « droits et aménagements » d'un service de santé au travail en France. Tu réponds UNIQUEMENT à partir des FICHES fournies, numérotées [1], [2]… Règles strictes : 1) chaque phrase qui donne une information se termine par la ou les références des fiches qui la justifient, au format [1] ou [1, 2] ; 2) n'ajoute AUCUNE information absente des fiches : ni chiffre, ni article de loi, ni conseil, ni traitement, ni nom d'organisme ; 3) si les fiches ne permettent pas de répondre à la question, dis-le en une phrase, puis propose de demander une visite au médecin du travail [en citant la fiche correspondante si elle est fournie] ou d'en parler à son médecin ; 4) aucun diagnostic, aucune recommandation de traitement personnel : pour les traitements, résume ce que disent les recommandations citées et précise que le choix se fait avec le médecin ; 5) 150 mots au plus, phrases courtes, vouvoiement, en français, sans titre ni liste à puces, sans lien.",
+      messages:[{role:'user',content:`QUESTION : ${Q}\n\nFICHES :\n${fiches}`}]});
+    IA.etat='';
+  }catch(e){IA={txt:'',etat:'⚠ '+e.message+' Les fiches ci-dessous restent disponibles.'};}
+  vue();
+}
+vue();
+})();
+</script>
+</body>
+</html>

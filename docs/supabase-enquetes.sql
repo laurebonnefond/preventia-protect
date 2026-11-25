@@ -147,3 +147,30 @@ revoke all on function public.enq_purger() from public, anon, authenticated;  --
 create extension if not exists pg_cron with schema pg_catalog;
 select cron.unschedule('purge-enquetes') where exists (select 1 from cron.job where jobname = 'purge-enquetes');
 select cron.schedule('purge-enquetes', '17 3 * * *', 'select public.enq_purger()');
+
+-- ─────────────────────────────────────────────────────────────────
+-- 7. Résultats par paliers de 5 (migration « enq_resultats_paliers_de_5 », 25/11/2026)
+--    Sans palier, consulter les résultats à 5 puis à 6 réponses isole la 6e réponse
+--    par simple différence. Désormais seules les k premières réponses déposées sont
+--    renvoyées, k = multiple de 5 inférieur ou égal à n : le jeu affiché ne change
+--    qu'au palier suivant, et l'écart entre deux lectures porte sur au moins 5 réponses.
+--    Exception : 'rps_ind' (un seul envoi des RH, seuil 1).
+create or replace function public.enq_resultats(p_code_lecture text)
+returns jsonb
+language plpgsql stable security definer set search_path = public as $$
+declare cp enq_campagnes; n int; k int := 0; r jsonb;
+begin
+  select * into cp from enq_campagnes where code_lecture = p_code_lecture;
+  if cp.id is null then raise exception 'code de lecture inconnu'; end if;
+  select count(*) into n from enq_reponses where campagne_id = cp.id;
+  if n >= cp.seuil then
+    k := case when cp.outil = 'rps_ind' then n else (n / 5) * 5 end;
+    select jsonb_agg(x.reponses order by random()) into r
+      from (select reponses from enq_reponses where campagne_id = cp.id order by id limit k) x;
+  end if;
+  return jsonb_build_object('code', cp.code, 'outil', cp.outil, 'entreprise', cp.entreprise,
+    'ouverte', cp.ouverte and (cp.fin is null or cp.fin >= current_date), 'fin', cp.fin,
+    'n', n, 'n_lu', k, 'palier', 5, 'seuil', cp.seuil, 'reponses', r);
+end $$;
+revoke all on function public.enq_resultats(text) from public;
+grant execute on function public.enq_resultats(text) to anon, authenticated;

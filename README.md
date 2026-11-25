@@ -27,15 +27,16 @@
 1. [À quoi ça sert](#1-à-quoi-ça-sert)
 2. [Vue d'ensemble](#2-vue-densemble)
 3. [Les modules](#3-les-modules)
-4. [Architecture technique](#4-architecture-technique)
-5. [Comment fonctionne l'IA](#5-comment-fonctionne-lia)
-6. [Données et confidentialité](#6-données-et-confidentialité)
-7. [Lancer le projet en local](#7-lancer-le-projet-en-local)
-8. [Ajouter un module](#8-ajouter-un-module)
-9. [Réglementation intégrée](#9-réglementation-intégrée)
-10. [Feuille de route](#10-feuille-de-route)
-11. [Ménage technique à prévoir](#11-ménage-technique-à-prévoir)
-12. [Auteure et licence](#12-auteure-et-licence)
+4. [Projets phares : santé mentale et santé de la femme](#4-projets-phares--santé-mentale-et-santé-de-la-femme)
+5. [Architecture technique](#5-architecture-technique)
+6. [Comment fonctionne l'IA](#6-comment-fonctionne-lia)
+7. [Données et confidentialité](#7-données-et-confidentialité)
+8. [Lancer le projet en local](#8-lancer-le-projet-en-local)
+9. [Ajouter un module](#9-ajouter-un-module)
+10. [Réglementation intégrée](#10-réglementation-intégrée)
+11. [Feuille de route](#11-feuille-de-route)
+12. [Ménage technique à prévoir](#12-ménage-technique-à-prévoir)
+13. [Auteure et licence](#13-auteure-et-licence)
 
 ---
 
@@ -122,22 +123,40 @@ Légende : 🟢 **Nouveau** (version récente, utilisable) · 🟠 **Prototype**
 |---|:---:|---|---|
 | **Infirmière d'entreprise** | 🟢 | Registre des passages pseudonymisé, pré-dépistages Visio et Audio, trousses et DAE, couverture SST, actions de prévention, [protocoles d'urgence](modules/sante/infirmiere/protocoles/) | `modules/sante/infirmiere/` |
 | **Suivi AT / MP & indicateurs RH** | 🟢 | TF, TG, IF, turnover, AT par catégorie, MP par tableau, bonhomme des lésions, accidents graves > 30 j, rapport PDF au logo de l'entreprise. Vue anonyme pour direction, RH et CSE | `modules/sante/at-mp/` |
-| **Santé mentale** | 🟢 | Hub de 6 outils (voir ci-dessous) | `modules/sante/sante-mentale/` |
-| **Santé de la femme** | 🟢 | **SeinPrév** : dépistage du cancer du sein et Octobre rose · **EndoPrév** : règles douloureuses, endométriose, adénomyose (droits, RQTH, enquête anonyme par lien ou QR code) · **MénoPrév** : ménopause et travail, 9 symptômes × 8 contraintes de poste | `modules/sante/sante-femme/` |
+| **Santé mentale** | 🟢 | Diagnostic RPS et 6 outils d'accompagnement (détail ci-dessous, présentation au § 4.1) | `modules/sante/sante-mentale/` |
+| **Santé de la femme** | 🟢 | **SeinPrév** : dépistage du cancer du sein et Octobre rose · **EndoPrév** : règles douloureuses, endométriose, adénomyose · **MénoPrév** : ménopause et travail · **MaterPrév** : grossesse, allaitement et travail · **Droits et aménagements** : assistant IA qui répond uniquement à partir de fiches vérifiées et les cite · **Postes à aménager en priorité** : analyse croisant enquêtes et postes · enquête anonyme par lien ou QR code (résultats par paliers de 5). Présentation au § 4.2 ; méthodes et sources : [`modules/sante/sante-femme/README.md`](modules/sante/sante-femme/README.md) | `modules/sante/sante-femme/` |
 
 <details>
 <summary><b>Détail du module Santé mentale</b></summary>
 
 | Page | Contenu |
 |---|---|
-| `rps.html` | Diagnostic RPS à 4 sources (indicateurs, remontées, avis CSE / RH / médecin du travail, questionnaire COPSOQ anonyme), TF et TG repris du suivi AT/MP, **envoi des risques au DUERP** (grille alignée G × F × M) |
-| `indicateurs-rps.html` · `enquete-rps.html` | Saisie des indicateurs par les RH par lien sécurisé · questionnaire anonyme des salariés (aucun résultat sous 5 réponses) |
+| `rps.html` | Diagnostic RPS à 5 sources : indicateurs (mode essentiel 9 ou complet 27, tous facultatifs ; TF et TG comparés au secteur par code NAF, non interprétés sous 50 salariés), remontées, grille RPS-DU, avis des acteurs, questionnaires anonymes (baromètre PréventIA 28 items, COPSOQ lu par rapport à la référence française). Criticité Anact, rapport, **envoi des risques au DUERP**. Étapes et calculs : [`README du module`](modules/sante/sante-mentale/README.md) |
+| `indicateurs-rps.html` · `enquete-rps.html` | Saisie des indicateurs par les RH par lien sécurisé · questionnaire anonyme des salariés (aucun résultat sous 5 réponses, puis par paliers de 5) |
 | `burnout.html` | Pré-dépistage du risque de burn-out |
 | `violentometre.html` | Violentomètre centré sur les incivilités et la souffrance au travail |
 | `reperer-agir.html` | Repérer une personne en difficulté et conduite à tenir en urgence |
 | `premiers-jours.html` | « Mes 100 premiers jours » : accompagnement de l'intégration des nouveaux salariés, questionnaire mensuel, courbe d'évolution, conseils adaptés et aides complémentaires (hygiène de vie, ressources) |
 | `reprendre-pied.html` | « Reprendre pied » : préparer la reprise après un arrêt, fiche servant de base de réflexion pour échanger avec la santé au travail |
 | `detente.html` | Cohérence cardiaque et relaxation guidée |
+
+</details>
+
+<details>
+<summary><b>Détail du module Santé de la femme</b></summary>
+
+| Page | Contenu |
+|---|---|
+| `seinprev.html` | Dépistage du cancer du sein : rythme de suivi, score familial d'Eisinger, Octobre rose, bilan de campagne, retour au travail après un cancer |
+| `endoprev.html` | Règles douloureuses, endométriose, adénomyose : bilan personnel, calendrier, droits, message d'aménagement sans diagnostic, enquête collective et plan d'action |
+| `menoprev.html` | Ménopause et travail : sous-scores adaptés de la MRS, croisements avec le poste, suivi, cartographie des lieux, enquête collective |
+| `materprev.html` | Grossesse et allaitement : expositions interdites ou à aménager, droits, calendrier du congé, engagements de l'entreprise |
+| `assistant-droits.html` | Assistant droits et aménagements : l'IA répond uniquement à partir de fiches vérifiées (`droits-data.js`) et cite chacune |
+| `analyse-postes.html` | Postes à aménager en priorité : croise les enquêtes et les postes du DUERP, score expliqué, pistes, note IA |
+| `enquete.html` · `enquetes.js` | Enquête anonyme par lien ou QR code (Supabase UE) : rien sous 5 réponses, puis par paliers de 5 |
+| `presentation.html` | **Dossier de présentation à la direction**, généré à partir du module (chiffres à jour), modifiable, imprimable en PDF |
+
+Méthodes de calcul, origines et limites : [`README du module`](modules/sante/sante-femme/README.md) · protection des données : [`AIPD`](docs/AIPD-enquetes.md).
 
 </details>
 
@@ -197,7 +216,7 @@ Les coefficients d'évaluation sont **simplifiés** à partir de la méthode INR
 | **Dossier entreprise** | Sélecteur en haut des pages : un dossier par entreprise suivie, bascule, export / import. Les données de santé individuelles ne sont jamais exportées | `assets/js/pp-entreprise.js` |
 | **Compte commun** | Connexion avec le compte PréventIA Réseau (même session sur les deux sites), choix du SPSTI | `assets/js/pp-auth.js` |
 | **Passerelle DUERP** | Les modules proposent des risques ; ils n'entrent au DUERP qu'après validation dans l'onglet « À valider » | `assets/js/duerp-passerelle.js` |
-| **Passerelle IA** | Accès unique et sécurisé à l'IA (voir § 5) | `core/preventia-ia.js` |
+| **Passerelle IA** | Accès unique et sécurisé à l'IA (voir § 6) | `core/preventia-ia.js` |
 
 ### ⚪ Pages d'attente
 
@@ -205,7 +224,108 @@ Ces dossiers existent déjà et affichent une page « en construction » : `anal
 
 ---
 
-## 4. Architecture technique
+## 4. Projets phares : santé mentale et santé de la femme
+
+Deux modules portent l'essentiel de l'innovation de PréventIA Protect et la candidature à l'appel à projets « IA en santé » de Station [e]-Santé. Ils partagent le même socle : **enquête anonyme par lien ou QR code**, **croisement avec le poste de travail**, **IA encadrée** (Mistral, UE) et **méthodes de calcul publiées**.
+
+```mermaid
+flowchart LR
+    S["Socle commun<br/>enquête anonyme UE · seuil 5 · paliers de 5<br/>passerelle IA Mistral UE · masquage"] --> M["🧠 Santé mentale<br/>Diagnostic RPS"]
+    S --> F["🌸 Santé de la femme<br/>SeinPrév · EndoPrév · MénoPrév · MaterPrév"]
+    M --> D["DUERP · PAPRIPACT<br/>plan d'action"]
+    F --> D
+```
+
+### 4.1 Santé mentale — le Diagnostic RPS
+
+**Le besoin.** Les entreprises doivent évaluer les risques psychosociaux dans le DUERP, mais n'ont souvent ni la méthode ni les moyens de payer une enquête menée par un psychologue. Le diagnostic donne à l'infirmier·e en santé au travail une démarche structurée, gratuite, qui croise plusieurs sources au lieu de s'en remettre à un seul questionnaire.
+
+**Le parcours, en 7 étapes**
+
+```mermaid
+flowchart LR
+  A["1. Contexte"] --> B["2. Indicateurs"] --> C["3. Remontées"] --> D["4. Grille RPS-DU"] --> E["5. Avis des acteurs"] --> F["6. Questionnaires"] --> G["7. Synthèse"]
+  G --> H[Rapport · DUERP]
+```
+
+| Source | Ce qu'on recueille | Poids dans la synthèse |
+|---|---|:---:|
+| Grille RPS-DU (INRS) | 26 questions par équipe | 30 % |
+| Questionnaires anonymes | Baromètre PréventIA (28 items, 4 par famille) et/ou COPSOQ (46 items, 24 échelles, validé) | 30 % |
+| Avis des acteurs | Infirmier·e, médecin du travail, CSE, référents harcèlement, RH, direction, managers | 20 % |
+| Remontées | Situations signalées, par gravité, non nominatives | 10 % |
+| Indicateurs | Mode essentiel (9) ou complet (27), tous facultatifs ; TF et TG comparés au secteur (code NAF), non interprétés sous 50 salariés | 10 % |
+
+**Les points forts de la méthode**
+- **Sept familles de facteurs** (rapport Gollac), chacune notée de 0 à 100 : faible < 25, modéré < 50, élevé < 70, critique au-delà. Une source absente est retirée et les poids réajustés : **aucune question ni aucune étape n'est obligatoire**.
+- **COPSOQ lu par rapport à la référence française** (moyenne et écart-type de l'étude de validation) : un score n'est « rouge » que s'il est plus d'un écart-type moins bon que la référence.
+- **Criticité Anact** : exposition × gravité × maîtrise → priorités P1 (immédiat) à P4 (surveiller). La gravité est proposée automatiquement à partir des remontées, des indicateurs critiques et des signaux infirmiers agrégés.
+- **Indice de fiabilité** (0 à 100) : nombre de sources, nombre d'avis, taux de participation.
+- **Lecture assistée par l'IA**, facultative : thèmes récurrents des remontées et des notes, après masquage (entreprise, équipes, noms, e-mails, téléphones ; équipes de moins de 5 regroupées). L'utilisatrice relit exactement ce qui part, et valide la lecture avant qu'elle entre dans le rapport. **Les scores ne sont jamais calculés par l'IA.**
+- **Envoi au DUERP** des familles P1 à P3, à valider dans le module DUERP.
+
+**Garanties.** Aucun résultat de questionnaire sous 5 réponses, puis mise à jour par paliers de 5. Signaux infirmiers : uniquement des effectifs, affichés en pourcentage à partir de 5 salariés vus. Situation grave (violence, idées suicidaires repérées) : traitée hors diagnostic, sans attendre, avec le médecin du travail (INRS ED 6403).
+
+**Limites assumées.** Les pondérations et la plupart des seuils sont des **conventions PréventIA**, inspirées de l'INRS et de l'Anact, non validées. Le baromètre est un outil de repérage, en cours de fiabilisation (cohérence interne, corrélation avec le COPSOQ). Le diagnostic aide l'employeur ; il ne remplace ni son évaluation des risques ni l'avis du médecin du travail.
+
+**Les autres outils du hub santé mentale** : pré-dépistage du burn-out, violentomètre, repérer et agir face à une personne en difficulté, « Mes 100 premiers jours » (intégration), « Reprendre pied » (retour après un arrêt, message au manager rédigé sans aucune information de santé), cohérence cardiaque.
+
+📄 Étapes, formules et exemples chiffrés : [`modules/sante/sante-mentale/README.md`](modules/sante/sante-mentale/README.md)
+
+### 4.2 Santé de la femme
+
+**Le besoin.** Endométriose, ménopause, grossesse, cancer du sein : ces étapes de vie pèsent sur le travail mais arrivent rarement jusqu'au service de santé au travail. Les salariées n'en parlent pas, les employeurs ne savent pas quoi aménager.
+
+| Repère | Chiffre | Source |
+|---|---|---|
+| Endométriose | Environ 1 femme sur 10 ; errance diagnostique de 7 ans en moyenne | Stratégie nationale (réponses ministérielles, Assemblée nationale) |
+| Ménopause | 400 000 à 500 000 femmes y entrent chaque année ; âge moyen 51 ans | Santé.fr |
+| Cancer du sein | 61 214 nouveaux cas estimés en 2023 ; participation au dépistage organisé de 44 % en 2024 | INCa ; Santé publique France |
+| Fausse couche | Environ 15 % des grossesses | Caf ; loi du 7 juillet 2023 |
+
+| Outil | Pour la salariée | Pour l'entreprise, avec l'infirmier·e |
+|---|---|---|
+| **SeinPrév** | Connaître ses seins, rythme de suivi, score familial d'Eisinger, retour après un cancer | Campagne Octobre rose, freins au dépistage, bilan |
+| **EndoPrév** | 8 symptômes × 8 contraintes de poste, repères HAS/CNGOF 2017, droits, message d'aménagement sans diagnostic | Enquête anonyme, plan d'action |
+| **MénoPrév** | Symptômes adaptés de la Menopause Rating Scale, suivi, carte des lieux difficiles | Enquête anonyme, référent·e ménopause |
+| **MaterPrév** | Expositions interdites ou à aménager (Code du travail, INRS), calendrier du congé | Engagements de l'entreprise |
+| **Droits et aménagements** | Réponses sourcées à partir de 22 fiches vérifiées | Information des managers |
+| **Postes à aménager en priorité** | — | Croisement enquêtes × postes du DUERP, score expliqué, pistes |
+
+**Comment ça marche**
+
+```mermaid
+flowchart LR
+  E[Enquête anonyme<br/>lien ou QR code, 3 min] --> R[Résultats regroupés<br/>rien sous 5, paliers de 5] --> P[Postes prioritaires<br/>croisement avec le DUERP] --> A[Plan d'action<br/>aménagements, managers]
+```
+
+Le calcul croise l'intensité de chaque symptôme (0 à 3 ou 0 à 4) et le poids de chaque contrainte du poste (1 ou 2) : un score de 4 ou plus signale un croisement prioritaire.
+
+**L'IA, toujours encadrée**
+- **Assistant droits et aménagements** : l'IA ne connaît que les fiches vérifiées (Code du travail, HAS, INRS, INCa, CNGOF, ESHRE), cite chaque phrase, et une réponse sans source est signalée.
+- **Analyse des postes** : la note de priorisation est rédigée à partir du seul tableau regroupé.
+- **Message d'aménagement** : rédigé sans jamais mentionner la maladie ni les symptômes.
+
+**Garanties.** Enquêtes sans nom, âge, service ni date ; seuil de 5 et paliers de 5 ; bilans personnels gardés uniquement sur l'appareil de la salariée ; hébergement UE et suppression automatique à 12 mois ; analyse d'impact rédigée ([AIPD](docs/AIPD-enquetes.md)).
+
+**Où en est le projet**
+
+| Élément | État |
+|---|---|
+| Six outils en ligne, sans compte | ✅ Fait |
+| Enquête anonyme par lien ou QR code, UE | ✅ Fait |
+| Méthodes de calcul et sources documentées | ✅ Fait |
+| Migration « paliers de 5 » sur la base | 🟠 À appliquer |
+| AIPD | 🟠 Rédigée, à valider par le DPO |
+| Relecture médicale des fiches et repères | 🟠 À organiser |
+| Charte d'usage signée par l'employeur | 🟠 À rédiger |
+| Expérimentation dans 2 ou 3 entreprises adhérentes | 🟠 À lancer |
+
+📄 **Dossier de présentation à la direction**, généré à partir du module et imprimable en PDF : [`presentation.html`](https://laurebonnefond.github.io/preventia-protect/modules/sante/sante-femme/presentation.html) · méthodes et sources : [`modules/sante/sante-femme/README.md`](modules/sante/sante-femme/README.md)
+
+---
+
+## 5. Architecture technique
 
 ### Choix de base
 
@@ -267,7 +387,7 @@ flowchart LR
 
 ---
 
-## 5. Comment fonctionne l'IA
+## 6. Comment fonctionne l'IA
 
 Tous les modules passent par **un seul fichier** : `core/preventia-ia.js` (objet global `PIA`), qui appelle une **fonction serveur Supabase** (`ia`, hébergée dans l'UE). **Aucune clé ni aucun jeton dans le code** : les clés des IA sont des secrets du serveur.
 
@@ -305,7 +425,7 @@ sequenceDiagram
 
 ---
 
-## 6. Données et confidentialité
+## 7. Données et confidentialité
 
 ### Où sont les données ?
 
@@ -328,7 +448,7 @@ sequenceDiagram
 
 | Niveau | Données | Hébergement prévu |
 |---|---|---|
-| **Non médical** | Inventaires, échéances, registres, enquêtes anonymes, indicateurs collectifs | Supabase, région UE (schémas : `docs/supabase-sante-mentale.sql`, `docs/supabase-enquetes.sql` — ce dernier est **en service** pour EndoPrév) |
+| **Non médical** | Inventaires, échéances, registres, enquêtes anonymes, indicateurs collectifs | Supabase, région UE (analyse d'impact : [`docs/AIPD-enquetes.md`](docs/AIPD-enquetes.md) ; schémas : `docs/supabase-sante-mentale.sql`, `docs/supabase-enquetes.sql` — ce dernier est **en service** pour EndoPrév) |
 | **Santé** | Registre infirmier nominatif, suivi individuel, dépistages | Local, ou hébergeur certifié HDS, **jamais dans Supabase** |
 
 ### Clés de stockage principales
@@ -351,7 +471,7 @@ sequenceDiagram
 
 ---
 
-## 7. Lancer le projet en local
+## 8. Lancer le projet en local
 
 Certaines pages chargent des fichiers JSON : il faut un petit serveur local plutôt qu'un double-clic.
 
@@ -366,7 +486,7 @@ python -m http.server 8000      # ou : npx serve
 
 ---
 
-## 8. Ajouter un module
+## 9. Ajouter un module
 
 1. **Créer le dossier** : `modules/<domaine>/<mon-module>/index.html`.
 2. **Inclure les briques communes** si besoin :
@@ -388,7 +508,7 @@ python -m http.server 8000      # ou : npx serve
 
 ---
 
-## 9. Réglementation intégrée
+## 10. Réglementation intégrée
 
 | Référence | Domaine |
 |---|---|
@@ -402,10 +522,12 @@ python -m http.server 8000      # ou : npx serve
 | Arrêtés du 27/06/2018, 16/11/2023, 15/05/2024 | Radon : zonage, dose efficace, mesures |
 | Code de l'environnement · nomenclature ICPE | Régimes NC / D / DC / E / A, déchets, Trackdéchets |
 | Questionnaire COPSOQ · guides INRS / ANACT | Risques psychosociaux |
+| HAS / CNGOF 2017 · ESHRE 2022 · Menopause Rating Scale · CNGOF-GEMVi 2021 · HAS 2025 | Santé de la femme : endométriose, ménopause, traitements |
+| Code du travail (L1225-x, D4152-10, L4624-3, R4624-34) · INRS TJ 14 · INCa 2024 | Grossesse et allaitement, aménagements, retour au travail après un cancer |
 
 ---
 
-## 10. Feuille de route
+## 11. Feuille de route
 
 ```mermaid
 flowchart LR
@@ -416,13 +538,13 @@ flowchart LR
 
 **Prochains modules envisagés** : cartographie des risques, analyse de poste, VGP et maintenance, habilitations et formations, incendie, ATEX, amiante, radioprotection, tableau de bord de pilotage, intégration de PréventIA Visio et Audio dans l'infirmerie.
 
-**Chantiers transverses** : masquage des noms et des lieux dans les commentaires libres avant l'IA, suppression automatique des réponses d'enquête 12 mois après la fin de campagne, AIPD et registre des traitements avec le DPO, assistant FDS (recherche hybride texte + vecteurs, déjà prévue dans la base), éventuel nom de domaine dédié.
+**Chantiers transverses** : masquage des noms et des lieux dans les commentaires libres avant l'IA, validation de l'AIPD des enquêtes ([`docs/AIPD-enquetes.md`](docs/AIPD-enquetes.md)) et registre des traitements avec le DPO, migration « paliers de 5 » à appliquer sur la base, relecture médicale des fiches de l'assistant droits, mise à jour de pdf.js (risque chimique, version 3.11 vulnérable), assistant FDS (recherche hybride texte + vecteurs, déjà prévue dans la base), éventuel nom de domaine dédié.
 
-**Fait en novembre 2026** : passerelle IA sécurisée (fin de Make.com pour Protect), compte commun avec PréventIA Réseau, base FDS partagée, passerelle vers le DUERP, dossiers entreprise, suppression de l'ancienne architecture inutilisée (`core/ai-*.js`, `alerts.js`, `planning.js`, `stats.js`, `storage.js`, `reglementation.js`, dossier `config/`).
+**Fait en novembre 2026** : passerelle IA sécurisée (fin de Make.com pour Protect), compte commun avec PréventIA Réseau, base FDS partagée, passerelle vers le DUERP, dossiers entreprise, suppression de l'ancienne architecture inutilisée (`core/ai-*.js`, `alerts.js`, `planning.js`, `stats.js`, `storage.js`, `reglementation.js`, dossier `config/`). Diagnostic RPS : mode essentiel, TF/TG comparés au secteur, COPSOQ lu par rapport à la référence, baromètre à 28 items, documentation des calculs. Santé de la femme : enquêtes par paliers de 5, bibliothèques hébergées dans le dépôt (SheetJS 0.20.3), assistant droits sourcé, analyse des postes, dossier de présentation, AIPD des enquêtes, suppression automatique des enquêtes.
 
 ---
 
-## 11. Ménage technique à prévoir
+## 12. Ménage technique à prévoir
 
 | Élément | Constat | Proposition |
 |---|---|---|
@@ -435,7 +557,7 @@ flowchart LR
 
 ---
 
-## 12. Auteure et licence
+## 13. Auteure et licence
 
 **Laure Bonnefond** — Infirmière en santé au travail (IDE-ST) et préventrice, SPSTI 23/87 (Creuse · Haute-Vienne)
 Master IA & Data, IPSSI Bordeaux (à partir de novembre 2026)

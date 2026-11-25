@@ -59,7 +59,7 @@ input.i{padding:7px 9px;border:1px solid var(--line);border-radius:8px;backgroun
   const code = (P.get('c') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   const EQS = (P.get('e') || '').split('|').map(s => s.trim()).filter(Boolean).slice(0, 20);
   const { IND, EQ_IND, IND_SPST } = RPSQ;
-  const LI = IND.filter(d => !IND_SPST.includes(d.k)), LE = EQ_IND.filter(d => !IND_SPST.includes(d.k));
+  const LI = IND.filter(d => !IND_SPST.includes(d.k)), COMPL = LI.filter(d => !d.ess), LE = EQ_IND.filter(d => !IND_SPST.includes(d.k));
   const BROUILLON = 'pp_rps_ind_' + code;
   let D = { periode: '', ind: {}, eq: {} };
   try { D = { ...D, ...JSON.parse(localStorage.getItem(BROUILLON)) }; } catch (_) {}
@@ -68,17 +68,20 @@ input.i{padding:7px 9px;border:1px solid var(--line);border-radius:8px;backgroun
 
   function page(camp) {
     const groupes = [...new Set(LI.map(d => d.g))];
-    const u = d => d.u === '%' ? '%' : d.u === 'h' ? 'h' : d.u === 'j' ? 'jours' : d.u === 'nb' ? 'nombre' : '';
+    const u = d => d.u === '%' ? '%' : d.u === 'h' ? 'heures' : d.u === 'j' ? 'jours' : d.u === 'nb' ? 'nombre' : '';
+    const tableau = L => `<div class="tw"><table><thead><tr><th>Indicateur</th><th>Période N</th><th>N-1</th><th>Unité</th></tr></thead><tbody>
+        ${L.map(d => `<tr><td>${esc(d.l)} <span class="muted small">· facultatif</span>${d.calc ? `<div class="muted small">${esc(d.calc)}</div>` : ''}${d.aide ? `<div class="muted small">${esc(d.aide)}</div>` : ''}</td>
+          ${['n', 'n1'].map(p => `<td><input class="i" type="number" min="0" step="any" data-k="${d.k}" data-p="${p}" value="${esc(D.ind[d.k]?.[p])}" aria-label="${esc(d.l)} ${p === 'n' ? 'période N' : 'N-1'}"></td>`).join('')}
+          <td class="muted small">${u(d)}</td></tr>`).join('')}</tbody></table></div>`;
     M.innerHTML = `<div><p class="eyebrow">${esc(camp.entreprise || 'Votre entreprise')}</p><h1>Indicateurs de fonctionnement et de santé-sécurité</h1>
-      <p class="muted">Ces chiffres aident le service de santé au travail à repérer les facteurs de risques psychosociaux. Remplissez ce que vous connaissez, laissez vide le reste.</p></div>
+      <p class="muted">Ces chiffres aident le service de santé au travail à repérer les facteurs de risques psychosociaux. Tous les indicateurs sont facultatifs : remplissez ce que vous connaissez, laissez vide le reste. Les 9 premiers sont les plus utiles ; les autres sont regroupés plus bas.</p></div>
       <div class="secret"><b>Uniquement des chiffres globaux</b> (taux, nombres) : ne saisissez aucun nom ni aucune information sur un salarié identifiable. Votre brouillon est gardé sur cet ordinateur jusqu'à l'envoi.</div>
       <div class="card"><label class="small"><b>Période concernée</b> (ex. : « 2025-2026 » ou « oct. 2025 – sept. 2026 »)<br><input class="i" id="per" style="width:280px;margin-top:4px" maxlength="60" value="${esc(D.periode)}"></label>
         <p class="muted small">N = période concernée · N-1 = la période précédente, de même durée.</p></div>
-      ${groupes.map(g => `<div class="card"><h2>${esc(g)}</h2><div class="tw"><table><thead><tr><th>Indicateur</th><th>Période N</th><th>N-1</th><th>Unité</th></tr></thead><tbody>
-        ${LI.filter(d => d.g === g).map(d => `<tr><td>${esc(d.l)}${d.calc ? `<div class="muted small">${esc(d.calc)}</div>` : ''}</td>
-          ${['n', 'n1'].map(p => `<td><input class="i" type="number" min="0" step="any" data-k="${d.k}" data-p="${p}" value="${esc(D.ind[d.k]?.[p])}" aria-label="${esc(d.l)} ${p === 'n' ? 'période N' : 'N-1'}"></td>`).join('')}
-          <td class="muted small">${u(d)}</td></tr>`).join('')}</tbody></table></div></div>`).join('')}
-      ${EQS.length > 1 ? `<div class="card"><h2>Par équipe <span class="muted small">(période N, si vous l'avez)</span></h2><div class="tw"><table><thead><tr><th>Équipe</th>${LE.map(d => `<th>${esc(d.l)} (${d.u === 'nb' ? 'nombre' : d.u})</th>`).join('')}</tr></thead><tbody>
+      ${groupes.map(g => `<div class="card"><h2>${esc(g)}</h2>${tableau(LI.filter(d => d.g === g && d.ess))}</div>`).join('')}
+      <details class="card"${COMPL.some(d => D.ind[d.k]?.n || D.ind[d.k]?.n1) ? ' open' : ''}><summary style="cursor:pointer"><b>Indicateurs complémentaires</b> <span class="muted small">(${COMPL.length}, facultatifs : si vous les avez, ils affinent l'analyse)</span></summary>
+        ${groupes.filter(g => COMPL.some(d => d.g === g)).map(g => `<h3 style="margin:14px 0 8px">${esc(g)}</h3>${tableau(COMPL.filter(d => d.g === g))}`).join('')}</details>
+      ${EQS.length > 1 ? `<div class="card"><h2>Par équipe <span class="muted small">(période N, si vous l'avez)</span></h2><div class="tw"><table><thead><tr><th>Équipe</th>${LE.map(d => `<th>${esc(d.l)} (${d.u === 'nb' ? 'nombre' : d.u === 'h' ? 'heures' : d.u})</th>`).join('')}</tr></thead><tbody>
         ${EQS.map(e => `<tr><td><b>${esc(e)}</b></td>${LE.map(d => `<td><input class="i" type="number" min="0" step="any" data-e="${esc(e)}" data-k="${d.k}" value="${esc(D.eq[e]?.[d.k])}" aria-label="${esc(d.l)} ${esc(e)}"></td>`).join('')}</tr>`).join('')}</tbody></table></div></div>` : ''}
       <div class="card"><div class="row"><button class="btn" id="send">Envoyer au service de santé au travail</button><span class="small muted" id="st">Brouillon enregistré sur cet ordinateur.</span></div>
         <p class="muted small">Vous pouvez renvoyer plus tard une version corrigée : c'est le dernier envoi qui sera pris en compte.</p></div>`;
@@ -94,7 +97,7 @@ input.i{padding:7px 9px;border:1px solid var(--line);border-radius:8px;backgroun
     const ind = {}; LI.forEach(d => { const v = propre(D.ind[d.k]); if (Object.keys(v).length) ind[d.k] = v; });
     const eq = {}; EQS.forEach(e => { const v = propre(D.eq[e]); if (Object.keys(v).length) eq[e] = v; });
     if (!Object.keys(ind).length && !Object.keys(eq).length) { st.innerHTML = '<span style="color:var(--bad)">Aucune valeur saisie.</span>'; return; }
-    const rep = { periode: String(D.periode || '').slice(0, 60), ind, eq, d: new Date().toISOString().slice(0, 10), v: 1 };
+    const rep = { periode: String(D.periode || '').slice(0, 60), ind, eq, d: new Date().toISOString().slice(0, 10), v: 2 } // v2 : heures supplémentaires par mois (v1 : par an);
     if (JSON.stringify(rep).length > 3500) { st.innerHTML = '<span style="color:var(--bad)">Trop de données pour un envoi : réduisez le détail par équipe.</span>'; return; }
     b.disabled = true; st.textContent = 'Envoi…';
     try {

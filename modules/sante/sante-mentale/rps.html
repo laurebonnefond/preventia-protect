@@ -347,7 +347,8 @@ function demo(){
     ctx:{entreprise:'Logistique du Val (exemple fictif)',secteur:'Transport et entreposage',effectif:68,periode:'Septembre – novembre 2026',
       equipes:[{n:'Quai et préparation',eff:34},{n:'Conducteurs',eff:22},{n:'Administratif',eff:12}],
       pilotage:'Direction, RH, 2 élus CSE, infirmière en santé au travail, médecin du travail (avis)',demande:'Hausse de l\'absentéisme et plaintes de fatigue sur le quai. Demande conjointe direction et CSE.'},
-    ind:{abs:v(7.8,5.9),arrets_courts:v(41,28),turnover:v(18,12),demissions:v(6,3),mobilite:v(4,2),hsup:v(240,180),precaires:v(22,20),conflits:v(1,0),sanctions:v(2,2),at:v(9,7),tf:v(84.6,64.8),tg:v(2.31,1.62),vad:v(7,3),inf:v(11,4),inapt:v(2,1),violences_ext:v(5,2),harc:v(1,0),psy:v(0,0),grave:v(0,0)},
+    hsupMois:1,
+    ind:{abs:v(7.8,5.9),arrets_courts:v(41,28),turnover:v(18,12),demissions:v(6,3),mobilite:v(4,2),hsup:v(20,15),precaires:v(22,20),conflits:v(1,0),sanctions:v(2,2),at:v(9,7),tf:v(84.6,64.8),tg:v(2.31,1.62),vad:v(7,3),inf:v(11,4),inapt:v(2,1),violences_ext:v(5,2),harc:v(1,0),psy:v(0,0),grave:v(0,0)},
     rem:[
       {id:1,date:'2026-09-12',src:SOURCES[0],eq:'Quai et préparation',f:'f1',g:2,txt:'Cadences jugées intenables depuis le nouveau logiciel de préparation. Plusieurs salariés décrivent des douleurs et une fatigue persistante.',st:'En cours'},
       {id:2,date:'2026-09-20',src:SOURCES[3],eq:'Quai et préparation',f:'f4',g:2,txt:'Le CSE signale des tensions entre l\'équipe de nuit et le chef de quai : consignes contradictoires, remarques jugées humiliantes.',st:'À traiter'},
@@ -367,9 +368,9 @@ function demo(){
       autres:{f:[-1,-1,-1,-1,-1,-1,-1],c:''}},
     baro, copsoq:demoCop(r,bias),
     grille:demoGrille(r,bias),
-    indEq:{'Quai et préparation':{abs:10.2,turnover:24,hsup:290,arrets_courts:26,inf:7,violences_ext:0},
-      'Conducteurs':{abs:6.1,turnover:14,hsup:230,arrets_courts:10,inf:3,violences_ext:5},
-      'Administratif':{abs:4,turnover:8,hsup:120,arrets_courts:5,inf:1,violences_ext:0}},
+    indEq:{'Quai et préparation':{abs:10.2,turnover:24,hsup:24,arrets_courts:26,inf:7,violences_ext:0},
+      'Conducteurs':{abs:6.1,turnover:14,hsup:19,arrets_courts:10,inf:3,violences_ext:5},
+      'Administratif':{abs:4,turnover:8,hsup:10,arrets_courts:5,inf:1,violences_ext:0}},
     indiv:{vus:38,stress:11,sommeil:9,epuisement:8,conso:2,idees:0,orient:6,burnout_n:14,burnout_haut:3},
     crit:{f4:{m:1}}
   };
@@ -392,6 +393,10 @@ function demoCop(r,bias){
 }
 function blank(){return {demo:false,ctx:{entreprise:'',secteur:'',naf:'',ref:{},effectif:'',periode:'',equipes:[{n:'Équipe 1',eff:''}],pilotage:'',demande:''},ind:{},rem:[],avis:{},baro:[],copsoq:[],camps:[],campsInd:[],grille:{},indEq:{},indiv:{},crit:{}};}
 let S=store.get()||demo();
+// Migration : heures supplémentaires saisies par an → par mois (nov. 2026)
+if(!S.hsupMois){const m=v=>v===''||v==null||!isFinite(+v)?v:String(Math.round(+v/12*10)/10);
+  if(S.ind?.hsup){S.ind.hsup.n=m(S.ind.hsup.n);S.ind.hsup.n1=m(S.ind.hsup.n1);}
+  Object.values(S.indEq||{}).forEach(o=>{if(o&&o.hsup!=null)o.hsup=m(o.hsup);});S.hsupMois=1;}
 S.copsoq=S.copsoq||[]; S.camps=S.camps||[]; S.campsInd=S.campsInd||[]; S.grille=S.grille||{}; S.indEq=S.indEq||{}; S.indiv=S.indiv||{}; S.crit=S.crit||{};
 // Migration : avis enregistrés sur 6 familles → 7 (« Horaires » insérée en 2e position, non évaluée)
 Object.values(S.avis).forEach(a=>{if(a.f&&a.f.length===6)a.f.splice(1,0,-1);}); try{store.set(S);}catch(e){}
@@ -575,7 +580,20 @@ function vContexte(){
 }
 
 /* ---------- 2. Indicateurs ---------- */
+/* Mode « essentiel » (9 indicateurs marqués ess:1) ou « complet » (tous). Par défaut : essentiel sous 50 salariés ou effectif inconnu. */
+const indMode=()=>S.ctx.indMode||(+S.ctx.effectif>=50?'complet':'essentiel');
+const indRempli=k=>S.ind[k]?.n!==''&&S.ind[k]?.n!=null||S.ind[k]?.n1!==''&&S.ind[k]?.n1!=null;
+const ligneInd=d=>{const v=S.ind[d.k]||{},a=indAlert(d.k);const n=+v.n,p=+v.n1;const ev=(v.n!==''&&v.n!=null&&v.n1!==''&&v.n1!=null&&p>0)?Math.round((n-p)/p*100):null;
+     return `<tr><td>${d.l} <span class="muted small">· facultatif</span>${d.aide?` <span title="${esc(d.aide)}">ⓘ</span><div class="muted small">${esc(d.aide)}</div>`:''}</td>
+     <td><input class="i num" type="number" step="any" min="0" data-ind="${d.k}" data-p="n" value="${esc(v.n)}" aria-label="${esc(d.l)} période N"> <span class="muted small">${d.u}</span></td>
+     <td><input class="i num" type="number" step="any" min="0" data-ind="${d.k}" data-p="n1" value="${esc(v.n1)}" aria-label="${esc(d.l)} N-1"></td>
+     <td class="num">${ev==null?'<span class="muted">–</span>':`<span class="trend ${ev>0?'up':'down'}">${ev>0?'▲ +':'▼ '}${ev} %</span>`}</td>
+     <td class="muted small num" ${d.calc?`title="${esc(d.calc)}"`:''}>${TAUX_AT.includes(d.k)?`<input class="i num" type="number" step="any" min="0" data-ref="${d.k}" value="${esc(S.ctx.ref?.[d.k]??'')}" placeholder="secteur" style="max-width:90px" aria-label="${esc(d.l)} : repère du secteur">${refSect(d.k)&&!tauxFragile()&&v.n!==''&&v.n!=null?`<br>× ${(n/refSect(d.k)).toFixed(1).replace('.',',')} le secteur`:''} <span title="${esc(d.calc)}">ⓘ</span>`:d.calc?'tendance <span title="'+esc(d.calc)+'">ⓘ</span>':d.thr!=null?(d.crit?'dès 1':'≥ '+d.thr+(d.u==='%'?' %':d.u==='h'?' h':'')):'tendance'}</td>
+     <td class="small muted">${d.f.map(k=>F.find(x=>x.k===k).s).join(', ')}</td>
+     <td>${TAUX_AT.includes(d.k)&&tauxFragile()&&v.n!==''&&v.n!=null?`<span class="pill lvn" title="Moins de ${TAUX_EFF_MIN} salariés : un seul accident fait fortement varier le taux">Non interprétable</span>`:a===2?'<span class="pill lv3">Critique</span>':a===1?'<span class="pill lv2">Alerte</span>':(v.n!==''&&v.n!=null)?'<span class="pill lv0">RAS</span>':'<span class="pill lvn">–</span>'}</td></tr>`;};
+const IND_THEAD='<thead><tr><th>Indicateur</th><th>Période N</th><th>N-1</th><th>Évolution</th><th>Repère</th><th>Facteurs éclairés</th><th>État</th></tr></thead>';
 function vInd(){
+  const mode=indMode(), vis=d=>mode==='complet'||d.ess, caches=IND.filter(d=>!vis(d));
   const groups=[...new Set(IND.map(d=>d.g))];
   const nA=IND.filter(d=>indAlert(d.k)).length, nC=IND.filter(d=>indAlert(d.k)===2).length;
   app.innerHTML=`${demoBar()}${intro('Étape 2','Indicateurs : entreprise, équipes, individuel',"Trois niveaux : les indicateurs de l'entreprise (période et période précédente), leur déclinaison par équipe, et les signaux individuels agrégés de l'infirmerie. Une alerte se déclenche au-delà d'un repère, ou si la hausse dépasse 20 %.",'<b>Sources :</b> INRS ED 6012 « Dépister les RPS, des indicateurs pour vous guider » ; DGAFP, guide méthodologique RPS (indicateurs de fonctionnement, de santé, de vécu). Repères indicatifs, à adapter au secteur.')}
@@ -584,17 +602,14 @@ function vInd(){
   <div class="kpis"><div class="kpi"><div class="l">Indicateurs renseignés</div><div class="v">${IND.filter(d=>S.ind[d.k]?.n!==''&&S.ind[d.k]?.n!=null).length}<span class="muted small"> / ${IND.length}</span></div></div>
    <div class="kpi"><div class="l">En alerte</div><div class="v" style="color:var(--l2)">${nA}</div></div>
    <div class="kpi"><div class="l">Alertes critiques</div><div class="v" style="color:var(--l3)">${nC}</div><div class="d">Harcèlement, affection psychique, événement grave</div></div></div>
+  <div class="card row"><div style="max-width:720px"><h3>Indicateurs à renseigner</h3><p class="muted small">Tous sont facultatifs : renseignez ce que l'entreprise connaît. Le mode essentiel retient 9 indicateurs, suffisants pour une petite structure ; le mode complet reprend les ${IND.length} indicateurs inspirés de l'INRS (ED 6012).</p></div><span class="sp"></span>
+   <div class="row" role="group" aria-label="Nombre d'indicateurs">${[['essentiel','Essentiel (9)'],['complet',`Complet (${IND.length})`]].map(([k,l])=>`<button class="btn ${mode===k?'':'ghost'}" data-mode="${k}" aria-pressed="${mode===k}">${l}</button>`).join('')}</div></div>
   ${groups.map(g=>`<div class="card"><h3 style="margin-bottom:8px">${g}</h3>${g==='Santé et sécurité'?`<p class="muted small" style="margin:0 0 10px"><b>TF et TG :</b> ${tauxFragile()?`effectif inférieur à ${TAUX_EFF_MIN} salariés, les taux sont affichés mais ne déclenchent pas d'alerte (un seul accident les fait trop varier). Suivez plutôt le nombre d'AT et les jours d'arrêt.`:`saisissez dans « Repère » le TF et le TG du secteur${S.ctx.naf?` (code NAF ${esc(S.ctx.naf)})`:' (code NAF à indiquer à l\'étape 1)'}, publiés par l'Assurance Maladie (statistiques de sinistralité par code NAF, <a href="https://www.assurance-maladie.ameli.fr/etudes-et-donnees" target="_blank" rel="noopener">ameli.fr</a>). Alerte si l'entreprise atteint ${String(REF_SECT_X).replace('.',',')} fois le secteur, ou en cas de hausse de plus de 20 % sur N-1.`}</p>`:''}<div class="tw"><table>
-   <thead><tr><th>Indicateur</th><th>Période N</th><th>N-1</th><th>Évolution</th><th>Repère</th><th>Facteurs éclairés</th><th>État</th></tr></thead><tbody>
-   ${IND.filter(d=>d.g===g).map(d=>{const v=S.ind[d.k]||{},a=indAlert(d.k);const n=+v.n,p=+v.n1;const ev=(v.n!==''&&v.n!=null&&v.n1!==''&&v.n1!=null&&p>0)?Math.round((n-p)/p*100):null;
-     return `<tr><td>${d.l}</td>
-     <td><input class="i num" type="number" step="any" min="0" data-ind="${d.k}" data-p="n" value="${esc(v.n)}" aria-label="${esc(d.l)} période N"> <span class="muted small">${d.u}</span></td>
-     <td><input class="i num" type="number" step="any" min="0" data-ind="${d.k}" data-p="n1" value="${esc(v.n1)}" aria-label="${esc(d.l)} N-1"></td>
-     <td class="num">${ev==null?'<span class="muted">–</span>':`<span class="trend ${ev>0?'up':'down'}">${ev>0?'▲ +':'▼ '}${ev} %</span>`}</td>
-     <td class="muted small num" ${d.calc?`title="${esc(d.calc)}"`:''}>${TAUX_AT.includes(d.k)?`<input class="i num" type="number" step="any" min="0" data-ref="${d.k}" value="${esc(S.ctx.ref?.[d.k]??'')}" placeholder="secteur" style="max-width:90px" aria-label="${esc(d.l)} : repère du secteur">${refSect(d.k)&&!tauxFragile()&&v.n!==''&&v.n!=null?`<br>× ${(n/refSect(d.k)).toFixed(1).replace('.',',')} le secteur`:''} <span title="${esc(d.calc)}">ⓘ</span>`:d.calc?'tendance <span title="'+esc(d.calc)+'">ⓘ</span>':d.thr!=null?(d.crit?'dès 1':'≥ '+d.thr+(d.u==='%'?' %':d.u==='h'?' h':'')):'tendance'}</td>
-     <td class="small muted">${d.f.map(k=>F.find(x=>x.k===k).s).join(', ')}</td>
-     <td>${TAUX_AT.includes(d.k)&&tauxFragile()&&v.n!==''&&v.n!=null?`<span class="pill lvn" title="Moins de ${TAUX_EFF_MIN} salariés : un seul accident fait fortement varier le taux">Non interprétable</span>`:a===2?'<span class="pill lv3">Critique</span>':a===1?'<span class="pill lv2">Alerte</span>':(v.n!==''&&v.n!=null)?'<span class="pill lv0">RAS</span>':'<span class="pill lvn">–</span>'}</td></tr>`;}).join('')}
+   ${IND_THEAD}<tbody>
+   ${IND.filter(d=>d.g===g&&vis(d)).map(ligneInd).join('')}
    </tbody></table></div></div>`).join('')}
+  ${caches.length?`<details class="card"${caches.some(d=>indRempli(d.k))?' open':''}><summary style="cursor:pointer"><b>Indicateurs complémentaires</b> <span class="muted small">(${caches.length}, facultatifs)</span></summary>
+   ${groups.filter(g=>caches.some(d=>d.g===g)).map(g=>`<h3 style="margin:14px 0 8px">${g}</h3><div class="tw"><table>${IND_THEAD}<tbody>${caches.filter(d=>d.g===g).map(ligneInd).join('')}</tbody></table></div>`).join('')}</details>`:''}
   <div class="card"><h3>Indicateurs par équipe</h3><p class="muted small" style="margin:2px 0 10px">Une case passe en alerte si la valeur dépasse le repère, 1,25 fois la valeur de l'entreprise (taux) ou 1,5 fois la valeur par salarié (effectifs). Ces alertes alimentent la cartographie par équipe.</p>
    <div class="tw"><table><thead><tr><th>Équipe</th>${EQ_IND.map(d=>`<th>${d.l} <span style="text-transform:none">(${d.u})</span></th>`).join('')}</tr></thead><tbody>
    ${S.ctx.equipes.map(e=>`<tr><td><b>${esc(e.n)}</b>${e.eff?` <span class="muted small">${e.eff} sal.</span>`:''}</td>${EQ_IND.map(d=>{const a=eqIndAlert(e.n,d.k);return `<td><input class="i num ${a?'al':''}" type="number" step="any" min="0" data-eqi="${esc(e.n)}" data-k="${d.k}" value="${esc(S.indEq[e.n]?.[d.k])}" aria-label="${esc(d.l)} ${esc(e.n)}"></td>`;}).join('')}</tr>`).join('')}
@@ -607,7 +622,8 @@ function vInd(){
   <div class="row"><a class="btn ghost" href="#contexte">Retour</a><span class="sp"></span><a class="btn" href="#remontees">Étape suivante : remontées</a></div>`;
   app.querySelectorAll('[data-eqi]').forEach(el=>el.onchange=()=>{const e=el.dataset.eqi;S.indEq[e]=S.indEq[e]||{};S.indEq[e][el.dataset.k]=el.value;save();const y=scrollY;vInd();scrollTo(0,y);});
   app.querySelectorAll('[data-iv]').forEach(el=>el.onchange=()=>{S.indiv[el.dataset.iv]=el.value;save();const y=scrollY;vInd();scrollTo(0,y);});
-  app.querySelectorAll('[data-ind]').forEach(el=>el.onchange=()=>{const k=el.dataset.ind;S.ind[k]=S.ind[k]||{};S.ind[k][el.dataset.p]=el.value;save();vInd();});
+  app.querySelectorAll('[data-ind]').forEach(el=>el.onchange=()=>{const k=el.dataset.ind;S.ind[k]=S.ind[k]||{};S.ind[k][el.dataset.p]=el.value;save();const y=scrollY;vInd();scrollTo(0,y);});
+  app.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{S.ctx.indMode=b.dataset.mode;save();const y=scrollY;vInd();scrollTo(0,y);});
   app.querySelectorAll('[data-ref]').forEach(el=>el.onchange=()=>{S.ctx.ref=S.ctx.ref||{};S.ctx.ref[el.dataset.ref]=el.value;save();const y=scrollY;vInd();scrollTo(0,y);});
   bindIndRH();
   $('#imp').onclick=()=>{const r=importATMP();if(r.ok){save();vInd();renderTabs('indicateurs');} $('#impMsg').textContent=r.msg;};
@@ -684,10 +700,10 @@ Merci de votre aide.`,'Copier le message pour les RH');});
       const L=(r.reponses||[]).filter(x=>x&&x.ind).sort((a,b)=>String(b.d||'').localeCompare(String(a.d||'')));
       if(!L.length){st.textContent='Les RH n\'ont encore rien envoyé.';return;}
       const x=L[0], num=v=>v!==''&&v!=null&&isFinite(+v)&&+v>=0;
-      const pris=[...IND_SPST];let n=0;
+      const pris=[...IND_SPST];let n=0;const conv=(k,v)=>k==='hsup'&&(+x.v||1)<2?Math.round(+v/12*10)/10:v; // envois v1 : heures sup. par an
       if(!confirm(`Importer l'envoi des RH du ${x.d?new Date(x.d).toLocaleDateString('fr-FR'):'(date inconnue)'} ? Les valeurs renseignées par les RH remplaceront celles déjà saisies ici.`)){st.textContent='';return;}
-      IND.forEach(d=>{if(pris.includes(d.k))return;const v=x.ind[d.k];if(!v)return;['n','n1'].forEach(p=>{if(num(v[p])){S.ind[d.k]=S.ind[d.k]||{};S.ind[d.k][p]=String(v[p]);n++;}});});
-      Object.entries(x.eq||{}).forEach(([e,o])=>{if(!S.ctx.equipes.some(q=>q.n===e))return;EQ_IND.forEach(d=>{if(pris.includes(d.k))return;if(num(o?.[d.k])){S.indEq[e]=S.indEq[e]||{};S.indEq[e][d.k]=String(o[d.k]);n++;}});});
+      IND.forEach(d=>{if(pris.includes(d.k))return;const v=x.ind[d.k];if(!v)return;['n','n1'].forEach(p=>{if(num(v[p])){S.ind[d.k]=S.ind[d.k]||{};S.ind[d.k][p]=String(conv(d.k,v[p]));n++;}});});
+      Object.entries(x.eq||{}).forEach(([e,o])=>{if(!S.ctx.equipes.some(q=>q.n===e))return;EQ_IND.forEach(d=>{if(pris.includes(d.k))return;if(num(o?.[d.k])){S.indEq[e]=S.indEq[e]||{};S.indEq[e][d.k]=String(conv(d.k,o[d.k]));n++;}});});
       if(x.periode&&!S.ctx.periode)S.ctx.periode=String(x.periode).slice(0,60);
       c.importe=new Date().toISOString();save();vInd();renderTabs('indicateurs');
       const s2=$('#rhst-'+i);if(s2)s2.textContent=`${n} valeurs importées${L.length>1?` (envoi le plus récent sur ${L.length})`:''}. Vérifiez-les.`;

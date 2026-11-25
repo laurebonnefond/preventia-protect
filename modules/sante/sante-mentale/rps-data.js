@@ -91,12 +91,12 @@ const COP=[
 const COP_ITEMS=COP.flatMap(s=>s.items.map(it=>({...it,s:s.k,set:s.set})));
 // Indicateurs (d'après INRS ED 6012 « Dépister les RPS – des indicateurs pour vous guider »)
 const IND=[
- {k:'abs',g:'Fonctionnement de l\'entreprise',l:'Taux d\'absentéisme',u:'%',thr:5,f:['f1','f4']},
+ {k:'abs',ess:1,g:'Fonctionnement de l\'entreprise',l:'Taux d\'absentéisme',u:'%',thr:5,f:['f1','f4']},
  {k:'arrets_courts',g:'Fonctionnement de l\'entreprise',l:'Arrêts courts (moins de 3 jours)',u:'nb',f:['f1','f4']},
- {k:'turnover',g:'Fonctionnement de l\'entreprise',l:'Taux de rotation du personnel',u:'%',thr:15,f:['f4','f6']},
+ {k:'turnover',ess:1,g:'Fonctionnement de l\'entreprise',l:'Taux de rotation du personnel',u:'%',thr:15,f:['f4','f6']},
  {k:'demissions',g:'Fonctionnement de l\'entreprise',l:'Démissions et ruptures conventionnelles',u:'nb',f:['f4','f5']},
  {k:'mobilite',g:'Fonctionnement de l\'entreprise',l:'Demandes de mobilité interne',u:'nb',f:['f4']},
- {k:'hsup',g:'Fonctionnement de l\'entreprise',l:'Heures supplémentaires par salarié et par an',u:'h',thr:220,f:['f1','f7']},
+ {k:'hsup',ess:1,g:'Fonctionnement de l\'entreprise',l:'Heures supplémentaires par salarié et par mois',u:'h',thr:18,aide:'Moyenne mensuelle. 18 h par mois, soit environ 4 h par semaine, correspondent au contingent annuel de 220 h (art. D3121-24 du Code du travail).',f:['f1','f7']},
  {k:'conges',g:'Fonctionnement de l\'entreprise',l:'Jours de congés non pris par salarié',u:'j',f:['f1','f7']},
  {k:'postes_vacants',g:'Fonctionnement de l\'entreprise',l:'Postes vacants ou difficiles à pourvoir',u:'nb',f:['f1','f6']},
  {k:'reorg',g:'Fonctionnement de l\'entreprise',l:'Réorganisations, déménagements ou changements d\'outils dans l\'année',u:'nb',thr:2,f:['f6','f1']},
@@ -106,23 +106,25 @@ const IND=[
  {k:'precaires',g:'Fonctionnement de l\'entreprise',l:'Part d\'intérim et de CDD',u:'%',thr:15,f:['f6']},
  {k:'conflits',g:'Fonctionnement de l\'entreprise',l:'Conflits collectifs, grèves, débrayages',u:'nb',thr:1,f:['f4','f6']},
  {k:'sanctions',g:'Fonctionnement de l\'entreprise',l:'Procédures disciplinaires',u:'nb',f:['f4']},
- {k:'at',g:'Santé et sécurité',l:'Accidents du travail avec arrêt',u:'nb',f:['f1']},
+ {k:'at',ess:1,g:'Santé et sécurité',l:'Accidents du travail avec arrêt',u:'nb',f:['f1']},
  {k:'tf',g:'Santé et sécurité',l:'Taux de fréquence des AT (TF)',u:'',f:['f1'],calc:'AT avec arrêt × 1 000 000 ÷ heures travaillées'},
  {k:'tg',g:'Santé et sécurité',l:'Taux de gravité des AT (TG)',u:'',f:['f1'],calc:'Jours d\'arrêt × 1 000 ÷ heures travaillées'},
  {k:'vad',g:'Santé et sécurité',l:'Visites à la demande du salarié (SPST)',u:'nb',f:['f1','f4']},
  {k:'inf',g:'Santé et sécurité',l:'Passages infirmerie pour stress ou mal-être',u:'nb',f:['f1','f2','f4']},
  {k:'inapt',g:'Santé et sécurité',l:'Inaptitudes et restrictions d\'aptitude',u:'nb',f:['f1']},
- {k:'arrets_longs',g:'Santé et sécurité',l:'Arrêts maladie de plus de 30 jours',u:'nb',f:['f1','f4']},
+ {k:'arrets_longs',ess:1,g:'Santé et sécurité',l:'Arrêts maladie de plus de 30 jours',u:'nb',f:['f1','f4']},
  {k:'amenag',g:'Santé et sécurité',l:'Demandes d\'aménagement de poste',u:'nb',f:['f1','f3']},
- {k:'violences_ext',g:'Santé et sécurité',l:'Agressions et incivilités du public déclarées',u:'nb',thr:1,f:['f2']},
- {k:'harc',g:'Santé et sécurité',l:'Signalements de harcèlement ou de violences internes',u:'nb',thr:1,crit:1,f:['f4']},
- {k:'psy',g:'Santé et sécurité',l:'Affections psychiques déclarées en AT ou MP',u:'nb',thr:1,crit:1,f:['f1','f4']},
- {k:'grave',g:'Santé et sécurité',l:'Événements graves (tentative de suicide, décompensation au travail)',u:'nb',thr:1,crit:1,f:['f1','f2','f4','f5','f6']}
+ {k:'violences_ext',ess:1,g:'Santé et sécurité',l:'Agressions et incivilités du public déclarées',u:'nb',thr:1,f:['f2']},
+ {k:'harc',ess:1,g:'Santé et sécurité',l:'Signalements de harcèlement ou de violences internes',u:'nb',thr:1,crit:1,f:['f4']},
+ {k:'psy',ess:1,g:'Santé et sécurité',l:'Affections psychiques déclarées en AT ou MP',u:'nb',thr:1,crit:1,f:['f1','f4']},
+ {k:'grave',ess:1,g:'Santé et sécurité',l:'Événements graves (tentative de suicide, décompensation au travail)',u:'nb',thr:1,crit:1,f:['f1','f2','f4','f5','f6']}
 ];
+
+// ess:1 = indicateur du mode « essentiel » (9 indicateurs, proposé par défaut sous 50 salariés). Tous restent facultatifs.
 
 // Indicateurs suivis PAR ÉQUIPE (comparés à la valeur de l'entreprise)
 const EQ_IND=[
- {k:'abs',l:'Absentéisme',u:'%',taux:1},{k:'turnover',l:'Départs',u:'%',taux:1},{k:'hsup',l:'Heures sup. / salarié',u:'h',taux:1},
+ {k:'abs',l:'Absentéisme',u:'%',taux:1},{k:'turnover',l:'Départs',u:'%',taux:1},{k:'hsup',l:'Heures sup. / salarié / mois',u:'h',taux:1},
  {k:'arrets_courts',l:'Arrêts courts',u:'nb'},{k:'inf',l:'Passages infirmerie (stress, mal-être)',u:'nb'},{k:'violences_ext',l:'Agressions du public',u:'nb'}
 ];
 // Indicateurs propres au service de santé au travail : non demandés aux RH (page indicateurs-rps.html)

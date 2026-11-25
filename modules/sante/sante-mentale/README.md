@@ -19,12 +19,12 @@ Ce document explique comment fonctionne le diagnostic des risques psychosociaux 
 
 ```mermaid
 flowchart LR
-  A[1. Contexte] --> B[2. Indicateurs]
-  B --> C[3. Remontées]
-  C --> D[4. Grille RPS-DU]
-  D --> E[5. Avis des acteurs]
-  E --> F[6. Questionnaires]
-  F --> G[7. Synthèse]
+  A["1. Contexte"] --> B["2. Indicateurs"]
+  B --> C["3. Remontées"]
+  C --> D["4. Grille RPS-DU"]
+  D --> E["5. Avis des acteurs"]
+  E --> F["6. Questionnaires"]
+  F --> G["7. Synthèse"]
   G --> H[Rapport + DUERP]
 ```
 

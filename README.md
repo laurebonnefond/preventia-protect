@@ -244,7 +244,7 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-  A[1. Contexte] --> B[2. Indicateurs] --> C[3. Remontées] --> D[4. Grille RPS-DU] --> E[5. Avis des acteurs] --> F[6. Questionnaires] --> G[7. Synthèse]
+  A["1. Contexte"] --> B["2. Indicateurs"] --> C["3. Remontées"] --> D["4. Grille RPS-DU"] --> E["5. Avis des acteurs"] --> F["6. Questionnaires"] --> G["7. Synthèse"]
   G --> H[Rapport · DUERP]
 ```
 

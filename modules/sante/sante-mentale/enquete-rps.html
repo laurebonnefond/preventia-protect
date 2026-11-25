@@ -118,7 +118,7 @@ h1,h2{font-family:var(--f-display);font-weight:400;line-height:1.25}
       $('#send').disabled = true; $('#st').textContent = 'Envoi…';
       const rep = T.k === 'copsoq'
         ? { eq, a: T.Q.map((_, j) => a[j] ?? null), v: 1 }
-        : { eq, a: ITEMS.map((_, j) => a[j] ?? null), h: HEALTH.map((_, j) => a[ITEMS.length + j] ?? null), v: 1 };
+        : { eq, a: ITEMS.map((_, j) => a[j] ?? null), h: HEALTH.map((_, j) => a[ITEMS.length + j] ?? null), v: 2 }; // v2 : baromètre à 28 items
       try {
         await ENQ.repondre(code, rep);
         try { localStorage.setItem(DEJA, '1'); } catch (_) {}

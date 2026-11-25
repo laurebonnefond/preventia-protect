@@ -233,7 +233,7 @@ const FI=k=>F.findIndex(x=>x.k===k);
 const vide=()=>F.map(()=>-1);
 
 /* Questionnaires (baromètre PréventIA, COPSOQ) : rps-data.js, partagé avec la page de réponse à distance enquete-rps.html */
-const {ITEMS,HEALTH,LIK,COPSOQ_OFFICIEL,COPSOQ_SOURCE,COP_SETS,COP,COP_ITEMS}=RPSQ;
+const {ITEMS,BARO_V1,HEALTH,LIK,COPSOQ_OFFICIEL,COPSOQ_SOURCE,COP_SETS,COP,COP_ITEMS}=RPSQ;
 
 /* Grille RPS-DU (INRS ED 6403, version octobre 2022) : 26 questions, évaluation COLLECTIVE par unité de travail.
    Réponse 0..3 = Jamais/Non · Parfois/Plutôt non · Souvent/Plutôt oui · Toujours/Oui.
@@ -798,10 +798,22 @@ function copScores(eq){
     R.forEach(b=>{const v=s.items.map((it,j)=>{const x=b.a[idx+j]; return x==null?null:(it.rev?len-x:x);});
       if(v.some(x=>x==null))return; sum+=v.reduce((a,x)=>a+x,0)/(len*v.length)*100; c++;});
     idx+=s.items.length; sc[s.k]=c?sum/c:null;});
-  const ax={}; F.forEach(f=>{const v=COP.filter(s=>s.f===f.k&&sc[s.k]!=null).map(s=>s.risk?sc[s.k]:100-sc[s.k]); ax[f.k]=v.length?v.reduce((a,b)=>a+b,0)/v.length:null;});
+  // Score de famille : moyenne pondérée (poids w, défaut 1) des échelles lues par rapport à la référence française
+  const ax={}; F.forEach(f=>{const L=COP.filter(s=>s.f===f.k&&sc[s.k]!=null); const W=L.reduce((a,s)=>a+(s.w??1),0);
+    ax[f.k]=W?L.reduce((a,s)=>a+copRiskRef(s,sc[s.k])*(s.w??1),0)/W:null;});
   return {n:R.length,masked:false,sc,ax};
 }
-const copRisk=s=>v=>v==null?null:(s.risk?v:100-v);
+/* COPSOQ : lecture par rapport à la référence française (moyenne m, écart-type σ de l'étude de validation).
+   z = écart DÉFAVORABLE à la référence, en écarts-types. Converti en score de risque 0-100 calé sur les seuils 25 / 50 / 70 :
+   z < 0 (mieux que la référence) → < 25 faible · 0 à 0,5 σ → 25-50 modéré · 0,5 à 1 σ → 50-70 élevé · ≥ 1 σ → ≥ 70 critique.
+   Échelles sans référence (ajoutées en v3) : score brut orienté risque. */
+function copRiskRef(s,v){
+  if(v==null) return null; const r=s.risk?v:100-v; if(!s.ref) return r;
+  const z=(s.risk?v-s.ref[0]:s.ref[0]-v)/s.ref[1];
+  const x=z<0?25+25*z:z<.5?25+50*z:z<1?50+40*(z-.5):70+30*(z-1);
+  return Math.max(0,Math.min(100,x));
+}
+const copRisk=s=>v=>copRiskRef(s,v);
 function vBaro(){
   const eqs=S.ctx.equipes, g=baroScores(), c=copScores(), eff=+S.ctx.effectif||0;
   const part=n=>eff?`${Math.round(n/eff*100)} % de l'effectif`:'Renseignez l\'effectif à l\'étape 1';
@@ -822,7 +834,7 @@ function vBaro(){
    ${[{n:'Toute l\'entreprise',all:1},...eqs].map(e=>{const s=baroScores(e.all?null:e.n);
      return `<tr><td><b>${esc(e.n)}</b></td><td class="num">${s.n}${e.eff&&!e.all?` <span class="muted small">/ ${e.eff}</span>`:''}</td>${s.masked?`<td colspan="${F.length}"><span class="muted small">Moins de ${SEUIL_ANONYMAT} réponses : résultats masqués pour préserver l'anonymat.</span></td>`:F.map(f=>{const v=s.ax[f.k];return `<td><div class="cell ${LEVELS[levelOf(v)].c}">${Math.round(v)}</div></td>`;}).join('')}</tr>`;}).join('')}
   </tbody></table></div></div>
-  <div class="card"><h3 style="margin-bottom:4px">COPSOQ par échelle</h3><p class="muted small" style="margin-bottom:10px">Score de 0 à 100 sur le concept mesuré. La couleur indique s'il est favorable (vert) ou défavorable (rouge) selon le sens de l'échelle. Les seuils sont indicatifs : le COPSOQ compare normalement à une population de référence.</p>
+  <div class="card"><h3 style="margin-bottom:4px">COPSOQ par échelle</h3><p class="muted small" style="margin-bottom:10px">Score de 0 à 100 sur le concept mesuré. La couleur compare le score à la référence française : vert = meilleur que la référence, jaune = jusqu'à ½ écart-type moins bon, orange = ½ à 1 écart-type, rouge = plus d'un écart-type. Sans référence (–), seuils 25 / 50 / 70 sur le score brut. Les exigences cognitives comptent pour moitié dans le score « Intensité ».</p>
    <div class="tw"><table><thead><tr><th>Échelle</th><th>Domaine</th><th title="Moyenne (écart-type) de l'étude de validation française : 3 166 salariés d'une entreprise de l'aéronautique, 2010. Repère indicatif, pas une norme.">Repère FR ⓘ</th>${[{n:'Entreprise',all:1},...eqs].map(e=>{const s=copScores(e.all?null:e.n);return `<th style="text-align:center">${esc(e.n)}<br><span class="num" style="text-transform:none">n = ${s.n}</span></th>`;}).join('')}</tr></thead><tbody>
    ${COP.map(s=>`<tr><td>${s.l}${s.risk?' <span class="muted small">(↑ défavorable)</span>':''}</td><td class="small muted">${s.dom}</td><td class="num small muted">${s.ref?`${s.ref[0]} <span style="opacity:.7">(${s.ref[1]})</span>`:'–'}</td>${[{all:1},...eqs].map(e=>{const r=copScores(e.all?null:e.n);if(r.masked)return `<td><div class="cell lvn">–</div></td>`;const v=r.sc[s.k];return `<td><div class="cell ${LEVELS[levelOf(copRisk(s)(v))].c}">${Math.round(v)}</div></td>`;}).join('')}</tr>`).join('')}
    </tbody></table></div><p class="muted small" style="margin-top:8px">« – » : moins de ${SEUIL_ANONYMAT} réponses, résultats masqués. <b>Repère FR</b> : moyenne (écart-type) de l'étude de validation, 3 166 salariés d'une grande entreprise de l'aéronautique (65 % de cadres) — à lire comme un ordre de grandeur, pas comme une norme. Source : ${COPSOQ_SOURCE}</p></div>
@@ -877,7 +889,8 @@ function vDistance(){
 function formsQ(k){
   return k==='copsoq'
     ? COP_ITEMS.map((it,j)=>({c:'C'+String(j+1).padStart(2,'0'),t:it.t,o:COP_SETS[it.set],val:i=>COP_SETS[it.set].length-1-i}))
-    : [...ITEMS,...HEALTH].map((it,j)=>({c:'B'+String(j+1).padStart(2,'0'),t:it.t,o:[...LIK].reverse(),val:i=>LIK.length-1-i}));
+    : [...ITEMS,...HEALTH].map((it,j)=>{const h=j>=ITEMS.length, num=h?BARO_V1+1+(j-ITEMS.length):j<BARO_V1?j+1:j+1+HEALTH.length; // codes v1 conservés : santé = B26-B27, nouveaux items = B28…
+      return {c:'B'+String(num).padStart(2,'0'),t:it.t,o:[...LIK].reverse(),val:i=>LIK.length-1-i};});
 }
 function scriptGoogle(k){
   const Q=formsQ(k), eqs=S.ctx.equipes.map(e=>e.n).filter(Boolean), titre=(k==='copsoq'?'Questionnaire COPSOQ':'Baromètre de la qualité de vie au travail')+(S.ctx.entreprise?' — '+S.ctx.entreprise:'');
@@ -949,7 +962,8 @@ function bindDistance(){
       if(!r.reponses){st.textContent=`${r.n} réponse${r.n>1?'s':''} reçue${r.n>1?'s':''} : import possible à partir de ${r.seuil}.`;return;}
       const nA=c.k==='copsoq'?COP_ITEMS.length:ITEMS.length, ok=v=>v===null||(Number.isInteger(v)&&v>=0&&v<=4);
       const arr=(x,n)=>Array.isArray(x)&&x.length===n&&x.every(ok)?x:null;
-      const rows=r.reponses.map(x=>{const a=arr(x?.a,nA);if(!a||typeof x.eq!=='string')return null;
+      const arrA=x=>Array.isArray(x)&&x.length<=nA&&(c.k==='copsoq'?x.length===nA:x.length>=BARO_V1)&&x.every(ok)?[...x,...Array(nA-x.length).fill(null)]:null; // baromètre v1 : 25 items
+      const rows=r.reponses.map(x=>{const a=arrA(x?.a);if(!a||typeof x.eq!=='string')return null;
         if(c.k==='copsoq')return {eq:x.eq,a,src:c.code};const h=arr(x.h,HEALTH.length)||HEALTH.map(()=>null);return {eq:x.eq,a,h,src:c.code};}).filter(Boolean);
       S[c.k]=S[c.k].filter(b=>b.src!==c.code).concat(rows);save();route();
     }catch(e){st.innerHTML=`<span style="color:var(--l3)">⚠ ${esc(e.message)}</span>`;}});

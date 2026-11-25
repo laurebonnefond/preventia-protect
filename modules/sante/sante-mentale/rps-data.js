@@ -7,7 +7,9 @@
    Ne pas changer l'ordre des items : les réponses sont enregistrées par position.
    ════════════════════════════════════════════════════════════════ */
 window.RPSQ=(function(){
-// Baromètre : 24 items (4 par facteur), échelle 0-3. inv = item positif (risque = 3 - réponse)
+// Baromètre : 28 items, 4 par facteur, échelle 0-3. inv = item positif (risque = 3 - réponse).
+// Les 25 premiers forment la version 1 ; les 3 derniers (nov. 2026) rééquilibrent Intensité et Horaires.
+// Les réponses étant enregistrées par position, tout nouvel item s'ajoute EN FIN de liste.
 const ITEMS=[
  {f:'f1',t:"Je dois travailler très vite."},
  {f:'f1',t:"Je manque de temps pour faire correctement mon travail."},
@@ -33,8 +35,12 @@ const ITEMS=[
  {f:'f6',t:"Mon travail a changé sans que j'aie été informé·e ou consulté·e."},
  {f:'f6',t:"Je ne sais pas comment mon travail va évoluer dans les prochains mois."},
  {f:'f6',t:"Je crains de ne pas pouvoir tenir dans ce travail jusqu'à ma retraite."},
- {f:'f7',t:"Mes horaires (nuit, décalés, changements de planning) sont difficiles à concilier avec ma vie personnelle."}
+ {f:'f7',t:"Mes horaires (nuit, décalés, changements de planning) sont difficiles à concilier avec ma vie personnelle."},
+ {f:'f1',t:"Je dois penser à trop de choses à la fois."},
+ {f:'f7',t:"Je suis sollicité·e en dehors de mes heures de travail (appels, messages, courriels)."},
+ {f:'f7',t:"Je peux prendre mes pauses et mes congés quand j'en ai besoin.",inv:1}
 ];
+const BARO_V1=25; // nombre d'items de la version 1 (compatibilité des imports)
 const HEALTH=[
  {k:'h1',t:"Ces dernières semaines, je me suis senti·e épuisé·e par mon travail."},
  {k:'h2',t:"Mon travail a des effets négatifs sur mon sommeil ou ma santé."}
@@ -60,12 +66,14 @@ const COP_SETS={
  satis:['Très satisfait(e)','Satisfait(e)','Insatisfait(e)','Très insatisfait(e)']
 };
 // risk : true = un score élevé est défavorable. f = facteur Gollac alimenté (null = indicateur de santé / vécu).
+// w : poids dans le score de famille (défaut 1). Exigences cognitives à 0,5 : stimulantes à dose modérée,
+//     elles ne deviennent un facteur de risque qu'en excès (épuisement mental).
 // ref : moyenne française (0-100) et écart-type, COPSOQ v2, 3 166 salariés d'une entreprise de l'aéronautique, 2010
 //       (tableau I de l'article). Repère indicatif, pas une norme. Absent pour les 3 échelles ajoutées en v3.
 const COP=[
  {k:'charge',l:'Charge de travail',dom:'Contraintes quantitatives',set:'freq',risk:1,f:'f1',ref:[46,21],items:[{t:"Prenez-vous du retard dans votre travail ?"},{t:"Disposez-vous d'un temps suffisant pour accomplir vos tâches professionnelles ?",rev:1}]},
  {k:'rythme',l:'Rythme de travail',dom:'Contraintes quantitatives',set:'freq',risk:1,f:'f1',ref:[65,19],items:[{t:"Est-il nécessaire de maintenir un rythme soutenu au travail ?"},{t:"Travaillez-vous à une cadence élevée tout au long de la journée ?"}]},
- {k:'cognitif',l:'Exigences cognitives',dom:'Contraintes quantitatives',set:'freq',risk:1,f:'f1',items:[{t:"Durant votre travail, devez-vous avoir l'œil sur beaucoup de choses ?"},{t:"Votre travail exige-t-il que vous vous souveniez de beaucoup de choses ?"}]},
+ {k:'cognitif',l:'Exigences cognitives',dom:'Contraintes quantitatives',set:'freq',risk:1,f:'f1',w:.5,items:[{t:"Durant votre travail, devez-vous avoir l'œil sur beaucoup de choses ?"},{t:"Votre travail exige-t-il que vous vous souveniez de beaucoup de choses ?"}]},
  {k:'emotion',l:'Exigences émotionnelles',dom:'Santé et bien-être',set:'freq',risk:1,f:'f2',ref:[37,20],items:[{t:"Votre travail vous place-t-il dans des situations déstabilisantes sur le plan émotionnel ?"},{t:"Votre travail est-il éprouvant sur le plan émotionnel ?"}]},
  {k:'confiance_col',l:'Confiance entre les collègues',dom:'Relations horizontales',set:'mesure',f:'f4',ref:[69,17],items:[{t:"Y a-t-il une bonne coopération entre les collègues au travail ?"},{t:"Dans l'ensemble, les salariés se font-ils confiance entre eux ?"}]},
  {k:'soutien_col',l:'Soutien social de la part des collègues',dom:'Relations horizontales',set:'freq',f:'f4',ref:[61,20],items:[{t:"À quelle fréquence vos collègues se montrent-ils à l'écoute de vos problèmes au travail ?"},{t:"À quelle fréquence recevez-vous de l'aide et du soutien de vos collègues ?"}]},
@@ -130,5 +138,5 @@ const EQ_IND=[
 // Indicateurs propres au service de santé au travail : non demandés aux RH (page indicateurs-rps.html)
 const IND_SPST=['vad','inf'];
 
-return {ITEMS,HEALTH,LIK,COPSOQ_OFFICIEL,COPSOQ_SOURCE,COP_SETS,COP,COP_ITEMS,IND,EQ_IND,IND_SPST};
+return {ITEMS,BARO_V1,HEALTH,LIK,COPSOQ_OFFICIEL,COPSOQ_SOURCE,COP_SETS,COP,COP_ITEMS,IND,EQ_IND,IND_SPST};
 })();

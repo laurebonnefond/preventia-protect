@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Postes à aménager en priorité</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap">
+<link rel="stylesheet" href="femme.css">
+<style>
+/* Analyse collective : croise les résultats REGROUPÉS des enquêtes EndoPrév et MénoPrév avec les postes
+   (contraintes, effectif féminin, indicateurs) pour classer les postes à aménager en priorité.
+   Méthode détaillée dans README.md (§ Analyse collective). Aucune réponse individuelle n'est affichée ni conservée. */
+:root{--acc:oklch(52% .12 25)}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.cc{display:flex;flex-wrap:wrap;gap:4px}
+.cc label{display:flex;gap:4px;align-items:center;font-size:12px;border:1px solid var(--line);border-radius:8px;padding:3px 7px;cursor:pointer}
+.cc input{margin:0}
+.bar{height:8px;border-radius:99px;background:var(--card-2,var(--line));overflow:hidden;min-width:80px}
+.bar i{display:block;height:100%;background:var(--acc)}
+.p1{background:var(--bad-bg,#fde2e2);color:var(--bad)} .p2{background:var(--warn-bg,#fff1d6);color:var(--ink)} .p3{background:var(--card-2,#eee);color:var(--muted)}
+.poste{display:grid;gap:8px}
+.poste .row .i{max-width:220px}
+.src-l{display:grid;gap:6px}
+</style>
+</head>
+<body>
+<header class="pp-top gut"><div class="in">
+  <a class="back" href="index.html">← Santé de la femme</a>
+  <div class="ico" aria-hidden="true" style="background:linear-gradient(135deg,var(--acc),oklch(68% .12 50))"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></div>
+  <div><small>PréventIA Protect · Santé de la femme</small><h1>Postes à aménager en priorité</h1></div>
+  <span class="sp"></span><span class="pill">Analyse collective</span>
+</div></header>
+<main class="gut" id="app"></main>
+<aside class="gut lecture" role="note"><div class="in"><span aria-hidden="true">⚕️</span><p><b>Aide à la décision, pas un diagnostic.</b> Les enquêtes reposent sur le volontariat : elles ne mesurent pas une fréquence dans l'entreprise et n'établissent aucun lien de cause avec le travail. Le classement sert à choisir où regarder d'abord, avec le médecin du travail, les salariées et le CSE.</p></div></aside>
+
+<script src="enquetes.js"></script>
+<script src="endo-data.js"></script>
+<script src="meno-data.js"></script>
+<script src="../../../core/preventia-ia.js"></script>
+<script>
+(function(){
+const $=s=>document.querySelector(s), app=$('#app');
+const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+const keep=fn=>{const y=scrollY;fn();scrollTo(0,y);};
+const pct=v=>v==null?'–':Math.round(v*100)+' %';
+
+/* ── Vocabulaire commun des contraintes de poste (les deux enquêtes n'ont pas les mêmes codes) ── */
+const U={
+  san:   {l:'Accès aux sanitaires limité',            endo:'C1', meno:'C3'},
+  debout:{l:'Station debout prolongée',               endo:'C2'},
+  assis: {l:'Station assise prolongée, conduite',     endo:'C3'},
+  charge:{l:'Port de charges, postures pénibles',     endo:'C4', meno:'C4'},
+  horair:{l:'Horaires imposés, travail de nuit',      endo:'C5', meno:'C2'},
+  tenue: {l:'Tenue, EPI ou uniforme imposé',          endo:'C6', meno:'C8'},
+  vigil: {l:'Vigilance, sécurité, conduite',          endo:'C7', meno:'C5'},
+  fixe:  {l:'Impossible de quitter son poste',        endo:'C8'},
+  chaud: {l:'Ambiance chaude',                        meno:'C1'},
+  public:{l:'Contact public, charge émotionnelle',    meno:'C6'},
+  bruit: {l:'Open space, bruit, interruptions',       meno:'C7'},
+  ecran: {l:'Travail sur écran prolongé',             meno:'C9'}
+};
+const OUTILS={endo:{l:'EndoPrév',lib:ENDO,K:'pp_endo_campagnes',syms:ENDO.MATRICE},meno:{l:'MénoPrév',lib:MENO,K:'pp_meno_campagnes',syms:MENO.ITEMS}};
+const MIN_EXPOSEES=5; // un taux par contrainte n'est calculé qu'à partir de 5 répondantes exposées (anonymat)
+
+/* ── État : postes (enregistrés dans ce navigateur, sans donnée individuelle) et résultats chargés (jamais enregistrés) ── */
+const KP='pp_femme_postes';
+const lire=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch(_){return d}};
+const ecrire=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(_){}};
+let POSTES=lire(KP,[]);
+const RES={endo:null,meno:null}; // {label, reponses}
+let NOTE={txt:'',etat:''};
+
+/* ── 1. Taux par contrainte et par enquête ──
+   r(outil, contrainte) = part des répondantes EXPOSÉES à la contrainte qui ont au moins un croisement « prioritaire »
+   (intensité du symptôme × poids de la contrainte ≥ 4, moteur ENDO/MENO.calculerScores) portant sur cette contrainte.
+   On retient aussi les symptômes qui expliquent ces croisements, pour proposer les pistes correspondantes. */
+function taux(o){
+  const R=RES[o]?.reponses; if(!R||!R.length) return null;
+  const lib=OUTILS[o].lib, out={};
+  for(const [u,def] of Object.entries(U)){
+    const cc=def[o]; if(!cc) continue;
+    const expo=R.filter(r=>(r.c||[]).includes(cc));
+    if(expo.length<MIN_EXPOSEES){out[u]={n:expo.length,r:null,sym:{}};continue;}
+    let k=0; const sym={};
+    expo.forEach(r=>{const P=lib.calculerScores(r.s,r.c).resultats.filter(x=>x.codeC===cc&&x.niveau==='prioritaire');
+      if(P.length){k++;P.forEach(x=>sym[x.code]=(sym[x.code]||0)+1);}});
+    out[u]={n:expo.length,r:k/expo.length,sym};
+  }
+  return out;
+}
+/* ── 2. Score de chaque poste ──
+   Impact I = 100 × r de la contrainte la plus pénalisante du poste (r = le plus élevé des deux enquêtes),
+     + 5 points par autre contrainte du poste dont r ≥ 50 % (cumul, plafonné à 15).
+   Signaux S (0 à 30) : +10 si absentéisme du poste > 1,25 × celui de l'établissement (ou > 5 % si inconnu),
+     +10 si au moins une visite à la demande liée à ces symptômes, +10 si au moins une demande d'aménagement en cours.
+   Priorité = I + cumul + S, plafonnée à 100 · ≥ 60 « prioritaire » · 35 à 59 « à planifier » · < 35 « à surveiller ».
+   Ordre de grandeur = effectif féminin × r de la contrainte la plus pénalisante (pas une prévalence). */
+function scorer(T,absEtab){
+  return POSTES.map(p=>{
+    const det=(p.c||[]).map(u=>{const re=T.endo?.[u]?.r, rm=T.meno?.[u]?.r;const r=Math.max(re??-1,rm??-1);return {u,r:r<0?null:r,re,rm};});
+    const connus=det.filter(d=>d.r!=null);
+    const tri=[...connus].sort((a,b)=>b.r-a.r), rmax=tri[0]?.r;
+    const I=connus.length?100*rmax:null, C=Math.min(15,5*tri.slice(1).filter(d=>d.r>=.5).length);
+    const ab=+p.abs, sig=[];
+    if(p.abs!==''&&p.abs!=null&&(absEtab?ab>absEtab*1.25:ab>5)) sig.push('absentéisme élevé');
+    if(+p.vad>0) sig.push('visites à la demande');
+    if(+p.amen>0) sig.push('demandes d\'aménagement');
+    const S=sig.length*10, P=I==null?null:Math.min(100,I+C+S);
+    return {p,det,I,C,S,sig,P,niv:P==null?null:P>=60?1:P>=35?2:3,conc:I==null||!+p.f?null:Math.round(+p.f*rmax)};
+  }).sort((a,b)=>(b.P??-1)-(a.P??-1));
+}
+/* Pistes : symptômes qui expliquent les croisements prioritaires sur les contraintes du poste → leurs pistes d'aménagement */
+function pistes(T,poste){
+  const c={};
+  for(const o of ['endo','meno']) for(const u of poste.c||[]) for(const [s,n] of Object.entries(T[o]?.[u]?.sym||{})) (OUTILS[o].syms[s]?.pistes||[]).forEach(x=>c[x]=(c[x]||0)+n);
+  return Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([x])=>x);
+}
+
+/* ── Chargement des résultats d'enquête ── */
+async function charger(o,lecture){
+  const r=await ENQ.resultats(lecture);
+  if(r.outil!==(o==='endo'?'endoprev':'menoprev')) throw new Error(`Ce code ne correspond pas à une campagne ${OUTILS[o].l}.`);
+  if(!r.reponses) throw new Error(`${r.recues??r.n} réponse(s) : résultats masqués sous ${r.seuil}.`);
+  RES[o]={label:`${OUTILS[o].l} · « ${r.entreprise||r.code} » · ${r.n} réponses${ENQ.libellePalier(r)?' ('+ENQ.libellePalier(r)+')':''}`,reponses:r.reponses};
+}
+/* Exemple fictif : réponses simulées et postes types d'un établissement de soins */
+function exemple(){
+  let s=11;const rnd=()=>{s=(s*16807)%2147483647;return (s-1)/2147483646;};
+  const tirer=(lib,syms,cc,n,bias)=>Array.from({length:n},()=>{const c=cc.filter(()=>rnd()<.5);const S={};Object.keys(syms).forEach(k=>{S[k]=Math.max(0,Math.min(lib===ENDO?3:4,Math.round(rnd()*bias*(lib===ENDO?3:4))));});return {s:S,c};});
+  RES.endo={label:'EndoPrév · exemple fictif · 30 réponses',reponses:tirer(ENDO,ENDO.MATRICE,Object.keys(ENDO.CONTRAINTES),30,.62)};
+  RES.meno={label:'MénoPrév · exemple fictif · 25 réponses',reponses:tirer(MENO,MENO.ITEMS,Object.keys(MENO.CONTRAINTES),25,.55)};
+  POSTES=[{n:'IDE de nuit, médecine',f:12,c:['horair','fixe','san','charge'],abs:9.8,vad:2,amen:1},
+          {n:'Aide-soignante, chirurgie',f:18,c:['debout','charge','fixe','tenue'],abs:8,vad:1,amen:0},
+          {n:'Agent de stérilisation',f:6,c:['chaud','tenue','debout'],abs:6,vad:0,amen:0},
+          {n:'Secrétaire médicale',f:8,c:['assis','ecran','public','bruit'],abs:4,vad:0,amen:0},
+          {n:'Brancardière',f:4,c:['charge','debout','vigil'],abs:5,vad:0,amen:1}];
+  NOTE={txt:'',etat:''};
+}
+
+function vue(){
+  const T={endo:taux('endo'),meno:taux('meno')}, absEtab=+lire('pp_femme_abs_etab','')||null, L=(T.endo||T.meno)?scorer(T,absEtab):[];
+  const camps=o=>lire(OUTILS[o].K,[]);
+  app.innerHTML=`<div class="intro"><div><p class="eyebrow">Analyse collective</p><h2>Où aménager en premier ?</h2>
+    <p class="muted">Croise les résultats regroupés des enquêtes EndoPrév et MénoPrév avec la liste des postes (contraintes, effectif féminin, indicateurs) pour classer les postes à examiner en priorité. Chaque score est détaillé et expliqué.</p></div></div>
+  <div class="card grid"><h3>1. Résultats d'enquête</h3>
+    ${['endo','meno'].map(o=>`<div class="src-l"><b>${OUTILS[o].l}</b>${RES[o]?`<span class="small">✓ ${esc(RES[o].label)}</span>`:'<span class="small muted">non chargé</span>'}
+      <div class="row">${camps(o).map((c,i)=>`<button class="btn sm ghost" data-ch="${o}:${i}">${esc(c.entreprise||c.code)}</button>`).join('')||`<span class="small muted">Aucune campagne enregistrée dans ce navigateur : créez-la dans <a href="${o==='endo'?'endoprev':'menoprev'}.html#collectif">${OUTILS[o].l}</a>, ou saisissez le code de lecture.</span>`}
+      <input class="i" style="max-width:260px" placeholder="Code de lecture" data-code="${o}" aria-label="Code de lecture ${OUTILS[o].l}"><button class="btn sm" data-go="${o}">Charger</button></div></div>`).join('')}
+    <p class="small" id="st" role="status"></p>
+    <div class="row"><button class="btn sm ghost" id="demo">Voir avec un exemple fictif</button><span class="small muted">Les réponses chargées ne sont jamais enregistrées ; seuls les résultats regroupés sont utilisés.</span></div></div>
+
+  <div class="card grid"><h3>2. Postes ou unités de travail</h3>
+    <p class="small muted">Reprenez les unités de travail du DUERP. Effectif féminin et indicateurs sont facultatifs mais affinent le classement. Aucune donnée nominative.</p>
+    <label class="small">Absentéisme moyen de l'établissement (%) <input class="i" type="number" min="0" step="any" style="max-width:100px" id="abs-etab" value="${absEtab??''}"></label>
+    ${POSTES.map((p,i)=>`<div class="card poste" style="box-shadow:none"><div class="row">
+        <input class="i" data-p="${i}" data-k="n" value="${esc(p.n)}" placeholder="Nom du poste" aria-label="Nom du poste">
+        <label class="small">Femmes <input class="i" type="number" min="0" style="max-width:80px" data-p="${i}" data-k="f" value="${esc(p.f??'')}"></label>
+        <label class="small">Absentéisme % <input class="i" type="number" min="0" step="any" style="max-width:80px" data-p="${i}" data-k="abs" value="${esc(p.abs??'')}"></label>
+        <label class="small">Visites à la demande <input class="i" type="number" min="0" style="max-width:70px" data-p="${i}" data-k="vad" value="${esc(p.vad??'')}"></label>
+        <label class="small">Demandes d'aménagement <input class="i" type="number" min="0" style="max-width:70px" data-p="${i}" data-k="amen" value="${esc(p.amen??'')}"></label>
+        <span class="sp"></span><button class="btn sm ghost" data-rm="${i}" aria-label="Supprimer ce poste">✕</button></div>
+      <div class="cc">${Object.entries(U).map(([u,d])=>`<label><input type="checkbox" data-pc="${i}" value="${u}" ${(p.c||[]).includes(u)?'checked':''}>${esc(d.l)}</label>`).join('')}</div></div>`).join('')}
+    <div class="row"><button class="btn sm" id="add">+ Ajouter un poste</button></div></div>
+
+  ${!(T.endo||T.meno)?`<div class="card"><p class="muted">Chargez au moins une enquête pour obtenir le classement.</p></div>`:`
+  <div class="card grid"><h3>3. Ce que disent les enquêtes, contrainte par contrainte</h3>
+    <p class="small muted">Part des répondantes <b>exposées</b> à la contrainte qui ont au moins un croisement « prioritaire » avec un symptôme (intensité × poids ≥ 4). « – » : moins de ${MIN_EXPOSEES} répondantes exposées, taux non calculé pour protéger l'anonymat.</p>
+    <div class="tw"><table><tr><th>Contrainte</th><th class="num">EndoPrév</th><th class="num">MénoPrév</th></tr>
+    ${Object.entries(U).map(([u,d])=>`<tr><td>${esc(d.l)}</td>${['endo','meno'].map(o=>{const x=T[o]?.[u];return `<td class="num">${!d[o]?'<span class="muted small">non posé</span>':!x?'':x.r==null?`<span class="muted">–</span>`:`${pct(x.r)} <span class="muted small">(${x.n} exposées)</span>`}</td>`;}).join('')}</tr>`).join('')}</table></div></div>
+
+  <div class="card grid"><h3>4. Classement des postes</h3>
+    ${L.length?`<div class="tw"><table><tr><th>Poste</th><th>Priorité</th><th class="num">Score</th><th>Impact des contraintes</th><th>Signaux</th><th class="num">Ordre de grandeur*</th><th>Pistes d'aménagement</th></tr>
+    ${L.map(x=>`<tr><td><b>${esc(x.p.n||'(sans nom)')}</b><div class="small muted">${(x.p.c||[]).map(u=>U[u].l).join(' · ')||'aucune contrainte cochée'}</div></td>
+      <td>${x.niv?`<span class="pill p${x.niv}">${['','Prioritaire','À planifier','À surveiller'][x.niv]}</span>`:'<span class="muted small">non calculable</span>'}</td>
+      <td class="num">${x.P==null?'–':Math.round(x.P)}</td>
+      <td>${x.I==null?'–':`<div class="bar" title="${Math.round(x.I)}"><i style="width:${x.I}%"></i></div><div class="small muted">${Math.round(x.I)}${x.C?` + ${x.C} (cumul)`:''} · ${x.det.filter(d=>d.r!=null).sort((a,b)=>b.r-a.r).slice(0,2).map(d=>`${U[d.u].l} ${pct(d.r)}`).join(', ')}</div>`}</td>
+      <td class="small">${x.sig.length?x.sig.join(', ')+` (+${x.S})`:'<span class="muted">aucun</span>'}</td>
+      <td class="num">${x.conc==null?'–':x.conc+' / '+x.p.f}</td>
+      <td class="small">${pistes(T,x.p).map(esc).join(' · ')||'–'}</td></tr>`).join('')}</table></div>
+    <p class="small muted">* Salariées du poste qui pourraient avoir besoin d'un aménagement si elles sont concernées : effectif féminin × taux de la contrainte la plus pénalisante. À lire comme un ordre de grandeur pour dimensionner les actions, pas comme une prévalence.</p>
+    <details class="small"><summary><b>Comment le score est calculé</b></summary><ul>
+      <li><b>Impact</b> (0 à 100) = taux de la section 3 pour la contrainte la plus pénalisante du poste (le plus élevé des deux enquêtes). <b>Cumul</b> : +5 points par autre contrainte du poste dont le taux atteint 50 %, au plus 15.</li>
+      <li><b>Signaux</b> (0 à 30) : +10 si l'absentéisme du poste dépasse 1,25 fois celui de l'établissement (ou 5 % s'il n'est pas renseigné), +10 si au moins une visite à la demande, +10 si au moins une demande d'aménagement en cours.</li>
+      <li><b>Priorité</b> = impact + cumul + signaux, plafonnée à 100 : 60 et plus « prioritaire », 35 à 59 « à planifier », moins de 35 « à surveiller ».</li>
+      <li>Les croisements et leurs poids sont ceux d'EndoPrév et de MénoPrév (voir README du module).</li></ul></details>`:`<p class="muted">Ajoutez au moins un poste et cochez ses contraintes.</p>`}</div>
+
+  ${L.some(x=>x.P!=null)?`<div class="card grid"><div class="row"><h3>5. Note de priorisation</h3><span class="sp"></span><button class="btn sm" id="note" ${NOTE.etat?'disabled':''}>${NOTE.txt?'Rédiger à nouveau':'Rédiger avec l\'IA'}</button><button class="btn sm ghost" onclick="window.print()">🖨 Imprimer</button></div>
+    ${NOTE.etat?`<p class="muted small">${esc(NOTE.etat)}</p>`:NOTE.txt?`<div>${esc(NOTE.txt).split(/\n{2,}/).map(p=>`<p>${p.replace(/\n/g,'<br>')}</p>`).join('')}</div><p class="small muted">Texte rédigé par l'IA (Mistral, UE) à partir du seul tableau ci-dessus : à relire avant diffusion.</p>`:`<p class="small muted">L'IA reçoit uniquement le tableau de classement (postes, scores, contraintes, pistes), jamais de réponse individuelle, et rédige une note pour la direction et le CSE.</p>`}</div>`:''}`}`;
+  bind(T,L);
+}
+function bind(T,L){
+  const st=$('#st');
+  app.querySelectorAll('[data-ch]').forEach(b=>b.onclick=async()=>{const [o,i]=b.dataset.ch.split(':');st.textContent='Chargement…';try{await charger(o,lire(OUTILS[o].K,[])[+i].lecture);st.textContent='';keep(vue);}catch(e){st.innerHTML=`<span style="color:var(--bad)">⚠ ${esc(e.message)}</span>`;}});
+  app.querySelectorAll('[data-go]').forEach(b=>b.onclick=async()=>{const o=b.dataset.go,k=app.querySelector(`[data-code="${o}"]`).value.trim();if(!k)return;st.textContent='Chargement…';try{await charger(o,k);st.textContent='';keep(vue);}catch(e){st.innerHTML=`<span style="color:var(--bad)">⚠ ${esc(e.message)}</span>`;}});
+  $('#demo').onclick=()=>{exemple();keep(vue);};
+  $('#abs-etab').onchange=e=>{ecrire('pp_femme_abs_etab',e.target.value);keep(vue);};
+  $('#add').onclick=()=>{POSTES.push({n:'',f:'',c:[],abs:'',vad:'',amen:''});ecrire(KP,POSTES);keep(vue);};
+  app.querySelectorAll('[data-p]').forEach(el=>el.onchange=()=>{POSTES[+el.dataset.p][el.dataset.k]=el.value.slice(0,80);ecrire(KP,POSTES);keep(vue);});
+  app.querySelectorAll('[data-pc]').forEach(el=>el.onchange=()=>{const p=POSTES[+el.dataset.pc];p.c=p.c||[];el.checked?p.c.push(el.value):p.c=p.c.filter(x=>x!==el.value);ecrire(KP,POSTES);keep(vue);});
+  app.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{POSTES.splice(+b.dataset.rm,1);ecrire(KP,POSTES);keep(vue);});
+  const bn=$('#note'); if(bn) bn.onclick=()=>rediger(T,L);
+}
+async function rediger(T,L){
+  if(!window.PIA){NOTE.etat='IA indisponible.';keep(vue);return;}
+  NOTE={txt:'',etat:'Rédaction en cours…'};keep(vue);
+  const tab=L.filter(x=>x.P!=null).map(x=>`- ${x.p.n||'poste'} : priorité ${['','prioritaire','à planifier','à surveiller'][x.niv]} (score ${Math.round(x.P)}/100 ; impact ${Math.round(x.I)} ; signaux : ${x.sig.join(', ')||'aucun'}${x.C?' ; cumul de contraintes +'+x.C:''}) ; contraintes : ${(x.p.c||[]).map(u=>U[u].l).join(', ')} ; pistes : ${pistes(T,x.p).join(', ')||'à définir'}`).join('\n');
+  try{
+    NOTE.txt=await PIA.texte({max_tokens:900,
+      system:"Tu es préventeur en santé au travail en France. À partir d'un tableau REGROUPÉ et anonyme qui classe des postes selon le besoin d'aménagement lié aux règles douloureuses, à l'endométriose et à la ménopause, rédige une note courte (250 mots au plus) pour la direction et le CSE. Structure : 1) lecture prudente en 2 phrases (enquêtes volontaires, pas de prévalence, aucun lien de cause avec le travail) ; 2) les postes à traiter en premier et pourquoi, en reprenant uniquement les éléments du tableau ; 3) trois actions concrètes par poste prioritaire, choisies parmi les pistes fournies, avec un responsable et un délai proposés ; 4) une phrase sur l'association des salariées concernées et du médecin du travail. N'invente aucun chiffre, aucun poste, aucune piste absente du tableau. Pas de diagnostic. Français, phrases courtes.",
+      messages:[{role:'user',content:tab}]});
+    NOTE.etat='';
+  }catch(e){NOTE={txt:'',etat:'⚠ '+e.message};}
+  keep(vue);
+}
+vue();
+})();
+</script>
+</body>
+</html>

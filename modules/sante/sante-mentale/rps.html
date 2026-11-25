@@ -966,6 +966,7 @@ function bindDistance(){
       const rows=r.reponses.map(x=>{const a=arrA(x?.a);if(!a||typeof x.eq!=='string')return null;
         if(c.k==='copsoq')return {eq:x.eq,a,src:c.code};const h=arr(x.h,HEALTH.length)||HEALTH.map(()=>null);return {eq:x.eq,a,h,src:c.code};}).filter(Boolean);
       S[c.k]=S[c.k].filter(b=>b.src!==c.code).concat(rows);save();route();
+      const s2=$('#dst-'+i);if(s2)s2.textContent=`${rows.length} réponses importées${ENQ.libellePalier(r)?' ('+ENQ.libellePalier(r)+')':''}. Les résultats se mettent à jour par paliers de 5 réponses.`;
     }catch(e){st.innerHTML=`<span style="color:var(--l3)">⚠ ${esc(e.message)}</span>`;}});
 }
 function invitationRPS(c){return `Objet : Questionnaire anonyme sur vos conditions de travail

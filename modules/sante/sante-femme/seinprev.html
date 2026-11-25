@@ -700,7 +700,7 @@ function vJeu(){
     <p class="small muted">Pensez à consigner l'animation dans « Actions Octobre rose » pour le bilan de la campagne.</p></div></div></div>`}`;
   const b=$('#qrJeuBtn');
   if(b)b.onclick=async()=>{const c=$('#qrJeuCard');c.hidden=!c.hidden;if(!c.hidden&&!$('#qrJeu').innerHTML){
-    qrLib||=new Promise((ok,ko)=>{const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';sc.onload=ok;sc.onerror=ko;document.head.appendChild(sc);});
+    qrLib||=new Promise((ok,ko)=>{const sc=document.createElement('script');sc.src='../../../assets/vendor/qrcode-1.0.0.min.js';sc.onload=ok;sc.onerror=ko;document.head.appendChild(sc);});
     try{await qrLib;new QRCode($('#qrJeu'),{text:JEU_URL,width:170,height:170});}catch(_){$('#qrJeu').textContent='QR code indisponible';}}};
 }
 /* ---------- 6. Sein & travail ----------
@@ -866,7 +866,7 @@ Ce guide ne remplace pas le dépistage (examen clinique dès 25 ans, mammographi
 
 Le service de santé au travail reste à votre écoute.`;
 let qrLib=null;
-async function dessinerQR(el,taille){qrLib||=new Promise((ok,ko)=>{const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';sc.onload=ok;sc.onerror=ko;document.head.appendChild(sc);});
+async function dessinerQR(el,taille){qrLib||=new Promise((ok,ko)=>{const sc=document.createElement('script');sc.src='../../../assets/vendor/qrcode-1.0.0.min.js';sc.onload=ok;sc.onerror=ko;document.head.appendChild(sc);});
   try{await qrLib;el.innerHTML='';new QRCode(el,{text:LIEN_APP,width:taille,height:taille,correctLevel:QRCode.CorrectLevel.M});}catch(_){el.textContent='QR code indisponible (connexion ?)';}}
 function bindPartage(){
   const inst=$('#instBtn');if(inst)inst.onclick=async()=>{installPrompt.prompt();await installPrompt.userChoice.catch(()=>{});installPrompt=null;route();};

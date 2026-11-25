@@ -600,7 +600,7 @@ function vCollectif(){
       st.textContent='';dash();
     }catch(err){st.innerHTML=`<span style="color:var(--bad)">⚠ ${esc(err.message)}</span>`;}e.target.value='';};
   app.querySelectorAll('[data-res]').forEach(b=>b.onclick=async()=>{const c=camps[+b.dataset.res];b.textContent='Chargement…';
-    try{const r=await ENQ.resultats(c.lecture);SRC={label:`Campagne « ${r.entreprise||c.code} » · ${r.ouverte?'en cours':'terminée'}`,reponses:r.reponses,n:r.n,seuil:r.seuil};dash();}
+    try{const r=await ENQ.resultats(c.lecture);SRC={label:`Campagne « ${r.entreprise||c.code} » · ${r.ouverte?'en cours':'terminée'}${ENQ.libellePalier(r)?' · '+ENQ.libellePalier(r):''}`,reponses:r.reponses,n:r.n,seuil:r.seuil};dash();}
     catch(e){alert(e.message);}b.textContent='Voir les résultats';});
   app.querySelectorAll('[data-cl]').forEach(b=>b.onclick=()=>copier(b,ENQ.lienReponse(camps[+b.dataset.cl].code),'Copier le lien'));
   app.querySelectorAll('[data-msg]').forEach(b=>b.onclick=()=>copier(b,invitation(camps[+b.dataset.msg]),'Copier le message d\'invitation'));

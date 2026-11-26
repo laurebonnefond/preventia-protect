@@ -77,7 +77,9 @@
 .duo-img{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:#fff;border-radius:14px;padding:8px}
 .duo-img img{width:100%;height:auto;display:block}
 .duo-img.solo{grid-template-columns:1fr;max-width:340px;margin:0 auto;background:transparent}
-.illbox.photo.peint{background:transparent;padding:0}.illbox.photo.peint img{max-width:560px;border-radius:14px}
+.illbox.photo.peint{background:transparent;padding:0}
+.peint-wrap{position:relative;max-width:560px;width:100%}.peint-wrap img{width:100%}
+.peint-lab{position:absolute;left:59%;right:6%;transform:translateY(-115%);font-weight:700;font-size:clamp(10px,1.45vw,13.5px);line-height:1.15;color:#7a2448}.illbox.photo.peint img{max-width:560px;border-radius:14px}
 .carte{width:100%;max-width:380px;height:auto;display:block;margin-inline:auto}
 .carte .zn{fill:var(--card-2);stroke:var(--card);stroke-width:2;cursor:pointer;transition:fill .15s}
 .carte .zn:hover{fill:var(--rose-bg)} .carte .zn.on{fill:var(--rose)}
@@ -512,8 +514,11 @@ const torse=(x,bras)=>{
 const IMG={miroir:'Trois positions devant le miroir : bras le long du corps, bras levés, mains sur les hanches',allongee:'Allongée sur le dos, coussin sous l\'épaule, bras derrière la tête, palpation de l\'aisselle',doigts:'Trois doigts à plat sur le sein, petits mouvements circulaires',pressions:'Trois niveaux de pression : légère, moyenne, profonde jusqu\'aux côtes',zone:'Zone à examiner : de la clavicule au sillon sous les seins, du sternum à l\'aisselle',parcours:'Parcours en bandes verticales, ou en spirale'};
 const IMG_SPSTI={allongee:[['nuque','Une main derrière la nuque : le sein s\'étale sur le thorax']],doigts:[['doigts','Trois doigts à plat, petits cercles sur tout le sein']],aisselle:[['aisselle','Palpation de l\'aisselle par petits cercles'],['clavicule','Palpation du creux au-dessus de la clavicule']]};
 /* Grandes illustrations peintes (même charte que les affiches) */
-const IMG_PEINT={miroir:['spsti-miroir',1100,618,'Trois positions devant le miroir : bras le long du corps, bras levés, mains sur les hanches']};
-const illHtml=k=>IMG_PEINT[k]?`<div class="illbox photo peint"><img src="img/${IMG_PEINT[k][0]}.webp" alt="${IMG_PEINT[k][3]}" width="${IMG_PEINT[k][1]}" height="${IMG_PEINT[k][2]}" loading="lazy"></div>`:IMG_SPSTI[k]?`<div class="duo-img${IMG_SPSTI[k].length===1?' solo':''}">${IMG_SPSTI[k].map(([f,alt])=>`<img src="img/spsti-palp-${f}.webp" alt="${alt}" width="360" height="360" loading="lazy">`).join('')}</div>`:IMG[k]?`<div class="illbox photo"><img src="img/auto-${k}.webp" alt="${IMG[k]}" width="960" height="720" loading="lazy"></div>`:`<div class="illbox">${ILL[k]}</div>`;
+const IMG_PEINT={zone:['spsti-zone',1100,821,'Zone à examiner tracée en pointillés : de la clavicule au sillon sous le sein, du sternum au milieu de l\'aisselle'],
+ parcours:['spsti-parcours',1100,614,'Deux parcours possibles sur le sein : bandes verticales de haut en bas, ou spirale du mamelon vers l\'extérieur'],
+ mamelon:['spsti-mamelon',1100,614,'Gros plan de l\'aréole et du mamelon avec quatre points à observer',[[23.7,'Aspect, couleur de l\'aréole'],[42.1,'Mamelon qui rentre ou dévie ?'],[60.7,'Croûte, plaie, desquamation'],[78.4,'Peau autour : rougeur, « peau d\'orange »']]],
+ miroir:['spsti-miroir',1100,618,'Trois positions devant le miroir : bras le long du corps, bras levés, mains sur les hanches']};
+const illHtml=k=>IMG_PEINT[k]?`<div class="illbox photo peint"><div class="peint-wrap"><img src="img/${IMG_PEINT[k][0]}.webp" alt="${IMG_PEINT[k][3]}" width="${IMG_PEINT[k][1]}" height="${IMG_PEINT[k][2]}" loading="lazy">${(IMG_PEINT[k][4]||[]).map(([y,t])=>`<span class="peint-lab" style="top:${y}%">${t}</span>`).join('')}</div></div>`:IMG_SPSTI[k]?`<div class="duo-img${IMG_SPSTI[k].length===1?' solo':''}">${IMG_SPSTI[k].map(([f,alt])=>`<img src="img/spsti-palp-${f}.webp" alt="${alt}" width="360" height="360" loading="lazy">`).join('')}</div>`:IMG[k]?`<div class="illbox photo"><img src="img/auto-${k}.webp" alt="${IMG[k]}" width="960" height="720" loading="lazy"></div>`:`<div class="illbox">${ILL[k]}</div>`;
 const ILL={
  miroir:`<svg viewBox="0 0 330 140" class="ill" role="img" aria-label="Trois positions devant le miroir"><g>${torse(55,'bas')}${torse(165,'haut')}${torse(275,'hanches')}</g>
    <g class="lab"><text x="55" y="132">Bras le long du corps</text><text x="165" y="132">Bras levés</text><text x="275" y="132">Mains sur les hanches</text></g></svg>`,

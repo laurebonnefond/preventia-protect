@@ -209,12 +209,6 @@ details.acteur summary::-webkit-details-marker{display:none}
 .flow .st.cur{border-color:var(--teal);box-shadow:0 0 0 1px var(--teal),0 6px 16px -6px rgb(15 30 60/.25)}
 .narr{min-height:2.6em;font-size:13px;background:var(--card-2);border-radius:10px;padding:8px 12px}
 .narr:empty{display:none}
-/* Apparition au défilement (façon Elementor « fadeInUp ») : la section monte en fondu, le ruban glisse depuis la gauche,
-   puis les cases arrivent l'une après l'autre (--i = rang de la case). Classes retirées après coup pour ne pas gêner la lecture animée. */
-.gsec.rv{opacity:0;transform:translateY(28px);transition:opacity .6s ease,transform .7s cubic-bezier(.2,.7,.2,1)}
-.gsec.rv .ban{opacity:0;transform:translateX(-40px);transition:opacity .5s ease .15s,transform .6s cubic-bezier(.2,.7,.2,1) .15s}
-.gsec.rv .flow > .st{opacity:0;transform:translateY(16px) scale(.97);transition:opacity .45s ease,transform .5s cubic-bezier(.2,.7,.2,1);transition-delay:calc(var(--i,0) * 80ms + .3s)}
-.gsec.rv.in,.gsec.rv.in .ban,.gsec.rv.in .flow > .st{opacity:1;transform:none}
 .kiosk{position:fixed;inset:0;z-index:100;background:var(--bg);overflow:auto;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 .kiosk .in{max-width:640px;margin:0 auto;padding-block:20px 40px;display:flex;flex-direction:column;gap:18px;min-height:100%}
 .kq{font-family:var(--f-display);font-size:1.6rem;line-height:1.25}
@@ -659,17 +653,10 @@ function guideDemarche(){
 let gTimer=null;
 function bindGuide(){
   const btn=$('#gPlay'); if(!btn) return;
-  const secs=[...document.querySelectorAll('#guide .gsec')];
-  if(!matchMedia('(prefers-reduced-motion: reduce)').matches&&'IntersectionObserver' in window){
-    const io=new IntersectionObserver(es=>es.forEach(e=>{if(!e.isIntersecting)return; const sc=e.target; io.unobserve(sc);
-      sc.classList.add('in'); setTimeout(()=>sc.classList.remove('rv','in'),1600);}),{threshold:.15});
-    secs.forEach(sc=>{sc.querySelectorAll('.flow > .st').forEach((st,i)=>st.style.setProperty('--i',i)); sc.classList.add('rv'); io.observe(sc);});
-  }
   const flows=[...document.querySelectorAll('#guide .flow')], narr=$('#gNarr');
   const stop=()=>{clearTimeout(gTimer);gTimer=null;flows.forEach(f=>{f.classList.remove('play');f.querySelectorAll('.on,.cur').forEach(e=>e.classList.remove('on','cur'));});narr.textContent='';btn.textContent='▶ Voir en animation';};
   btn.onclick=()=>{
     if(gTimer){stop();return;}
-    secs.forEach(sc=>sc.classList.remove('rv','in'));
     const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
     const seq=[]; flows.forEach((f,fi)=>{const titre=f.parentElement.querySelector('.ban')?.textContent||''; [...f.children].forEach(el=>seq.push({f,el,titre}));});
     flows.forEach(f=>f.classList.add('play')); btn.textContent='■ Arrêter'; let i=0;

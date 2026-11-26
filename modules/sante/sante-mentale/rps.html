@@ -172,6 +172,24 @@ details.acteur summary::-webkit-details-marker{display:none}
 .report{white-space:pre-wrap;font-size:13px;line-height:1.6;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:14px;max-height:520px;overflow:auto}
 
 /* kiosque */
+/* Guide de la démarche : schémas horizontaux (flux de gauche à droite), défilement latéral sur mobile */
+.guide > div{margin-top:18px}
+.guide > summary h3{font-family:var(--f-display);font-weight:400;font-size:1.25rem}
+.flow{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding-bottom:6px}
+.flow .st{flex:1 1 0;min-width:118px;background:var(--card-2);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;font-size:12.5px}
+.flow .st b.t{font-size:13px}
+.flow .st .n{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--teal);color:var(--on-accent);font-size:11px;font-weight:700}
+.flow .st .qui{color:var(--teal);font-weight:700}
+.flow .st.hl{outline:2px solid var(--orange)}
+.flow .ar{flex:none;align-self:center;color:var(--muted);font-size:18px;padding:0 4px}
+.flow .tag{display:inline-block;font-size:10.5px;font-weight:700;border-radius:99px;padding:1px 7px;background:var(--card);border:1px solid var(--line);width:max-content}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+/* Animation du guide : apparition progressive des cases, case en cours surlignée, commentaire sous le schéma */
+.flow.play > *{opacity:0;transform:translateX(-10px);transition:opacity .45s ease,transform .45s ease}
+.flow.play > .on{opacity:1;transform:none}
+.flow .st.cur{outline:2px solid var(--teal);background:var(--card)}
+.narr{min-height:2.6em;font-size:13px;background:var(--card-2);border-radius:10px;padding:8px 12px}
+.narr:empty{display:none}
 .kiosk{position:fixed;inset:0;z-index:100;background:var(--bg);overflow:auto;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 .kiosk .in{max-width:640px;margin:0 auto;padding-block:20px 40px;display:flex;flex-direction:column;gap:18px;min-height:100%}
 .kq{font-family:var(--f-display);font-size:1.6rem;line-height:1.25}
@@ -401,6 +419,7 @@ S.copsoq=S.copsoq||[]; S.camps=S.camps||[]; S.campsInd=S.campsInd||[]; S.grille=
 // Migration : avis enregistrés sur 6 familles → 7 (« Horaires » insérée en 2e position, non évaluée)
 Object.values(S.avis).forEach(a=>{if(a.f&&a.f.length===6)a.f.splice(1,0,-1);}); try{store.set(S);}catch(e){}
 const save=()=>store.set(S);
+let goDist=0; // raccourci étape 1 → bloc « Envoyer un lien aux salariés » de l'étape 6
 
 /* =========================================================
    CALCULS
@@ -549,10 +568,81 @@ function bindDemo(){bindBackup();const b=$('#newEval');if(!b)return;b.onclick=()
 const intro=(eyebrow,title,txt,ref)=>`<div class="intro"><div><p class="eyebrow">${eyebrow}</p><h2>${title}</h2><p class="muted">${txt}</p></div>${ref?`<div class="ref">${ref}</div>`:''}</div>`;
 const pill=lv=>lv==null?`<span class="pill lvn">Non évalué</span>`:`<span class="pill ${LEVELS[lv].c}">${LEVELS[lv].l}</span>`;
 
+/* ---------- Guide de la démarche : déroulement, qui fait quoi, circuit des données, calcul ----------
+   Les chiffres affichés reprennent les constantes du calcul (compute, levelOf, criticite, synthData) : à modifier ensemble. */
+function guideDemarche(){
+  const box=(n,t,qui,how,tag,hl)=>`<div class="st${hl?' hl':''}">${n?`<span class="n">${n}</span>`:''}<b class="t">${t}</b><span class="qui">${qui}</span><span class="muted">${how}</span>${tag?`<span class="tag">${tag}</span>`:''}</div>`;
+  const flow=a=>`<div class="flow">${a.join('<span class="ar" aria-hidden="true">→</span>')}</div>`;
+  return `<details class="card acteur guide" id="guide" ${S.ctx.entreprise&&!S.demo?'':'open'}>
+  <summary><h3>Comment se déroule l'évaluation ?</h3><span class="muted small">Qui fait quoi · où vont les données · comment le score est calculé</span></summary>
+  <div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn sm" id="gPlay" type="button">▶ Voir en animation</button><span class="muted small">Les cases s'affichent une à une, avec un commentaire : pratique pour présenter la démarche au comité de pilotage.</span></div>
+  <p class="narr" id="gNarr" aria-live="polite"></p>
+
+  <div class="grid" style="gap:8px"><p class="eyebrow">1 · Déroulement et qui fait quoi</p>
+  ${flow([
+    box(1,'Contexte','IST + comité de pilotage','Direction, CSE, RH : cadrage, équipes, information des salariés','👥 réunion'),
+    box(2,'Indicateurs','RH de l\'entreprise','Absentéisme, turnover, AT… + signaux agrégés de l\'infirmerie','🔗 lien RH'),
+    box(3,'Remontées','IST','Faits rapportés en entretien, par le CSE, les managers, le référent. Sans nom','✍️ saisie IST'),
+    box(4,'Grille RPS-DU','Groupe de travail par équipe','Salariés et encadrant, animé par l\'IST : réponse délibérée','👥 réunion'),
+    box(5,'Avis des acteurs','Direction, RH, CSE, MdT…','Chacun cote les 7 familles ; l\'IST reporte','✍️ saisie IST'),
+    box(6,'Questionnaires','Chaque salarié, seul','Baromètre (4 min) ou COPSOQ (10 min), anonymes','🔗 lien / QR code',1),
+    box(7,'Synthèse','L\'outil calcule, l\'IST interprète','Avec le MdT, restitution au COPIL et au CSE','→ DUERP')])}
+  <div class="legend"><span>👥 temps collectif</span><span>✍️ l'IST saisit dans l'outil</span><span>🔗 la personne répond elle-même via un lien, sans compte</span></div></div>
+
+  <div class="grid" style="gap:8px"><p class="eyebrow">2 · Où se rassemblent les données</p>
+  ${flow([
+    box('','Ils répondent','Salariés · RH','Ouvrent le lien (ou flashent le QR code) sur leur téléphone ou ordinateur','🔗 sans compte'),
+    box('','Dépôt anonyme','Serveur Supabase (UE)','Ni nom, ni e-mail, ni heure. Personne ne lit une réponse isolée','🔒 chiffré'),
+    box('','Import','IST, avec le code secret',`Possible à partir de ${SEUIL_ANONYMAT} réponses, dans un ordre mélangé`,'🔑 code secret'),
+    box('','Évaluation','Ce navigateur, poste de l\'IST','Rejoint les saisies de l\'IST (étapes 1 à 5)','💾 + sauvegarde .json'),
+    box('','Résultat','Synthèse → DUERP','Familles P1 à P3 proposées dans le DUERP, onglet « À valider »','✅ validation')])}
+  <p class="muted small">Par équipe, les questionnaires ne s'affichent qu'à partir de ${SEUIL_ANONYMAT} répondants. Rangez la sauvegarde .json sur le réseau du service : l'évaluation n'existe que sur ce poste.</p></div>
+
+  <div class="grid" style="gap:8px"><p class="eyebrow">3 · Comment le score est calculé (pour chacune des 7 familles de facteurs)</p>
+  ${flow([
+    box('A','5 sources','ramenées sur 0 à 100','Grille : niveau moyen. Questionnaires : moyenne des réponses (COPSOQ comparé à la référence française). Avis : cotation 0-3. Remontées : points selon la gravité. Indicateurs : +25 par alerte, 100 si critique',''),
+    box('B','Pondération','Grille 30 % · Questionnaires 30 %','Avis 20 % · Remontées 10 % · Indicateurs 10 %. Une source absente est retirée et les poids se répartissent sur les autres',''),
+    box('C','Niveau d\'exposition','0-24 faible · 25-49 modéré','50-69 élevé · 70-100 critique. Une situation grave non traitée force au moins « élevé »',''),
+    box('D','Criticité','Exposition × Gravité × Maîtrise','Exposition et gravité de 1 à 4 ; maîtrise : aucune ×1, partielle ×0,8, efficace ×0,5',''),
+    box('E','Priorité DUERP','P1 ≥ 10 · P2 ≥ 6','P3 ≥ 3 · P4 en dessous. Gravité 4 : jamais sous P2','')])}
+  <div class="secret"><b>Exemple : famille « Intensité ».</b> Grille 60, questionnaires 55, avis 40, indicateurs 25, pas de remontée.
+    Score = (0,3×60 + 0,3×55 + 0,2×40 + 0,1×25) ÷ (0,3+0,3+0,2+0,1) = 45 ÷ 0,9 = <b>50 → élevé</b> (exposition 3).
+    Gravité 3, mesures partielles : 3 × 3 × 0,8 = 7,2 → <b>P2, action sous 6 mois</b>.</div>
+  <p class="muted small"><b>Indice de fiabilité (sur 100)</b>, affiché en synthèse : nombre de sources renseignées (60 points), nombre d'acteurs consultés (20 points, maximum à 6), taux de participation aux questionnaires (20 points, maximum à 60 %).</p></div>
+  </details>`;
+}
+
+/* Lecture animée : révèle les cases des 3 schémas dans l'ordre (≈ 2,4 s par case), commentaire tiré du texte de la case.
+   Un nouveau clic arrête et réaffiche tout. Sans animation si l'utilisateur a réduit les mouvements. */
+let gTimer=null;
+function bindGuide(){
+  const btn=$('#gPlay'); if(!btn) return;
+  const flows=[...document.querySelectorAll('#guide .flow')], narr=$('#gNarr');
+  const stop=()=>{clearTimeout(gTimer);gTimer=null;flows.forEach(f=>{f.classList.remove('play');f.querySelectorAll('.on,.cur').forEach(e=>e.classList.remove('on','cur'));});narr.textContent='';btn.textContent='▶ Voir en animation';};
+  btn.onclick=()=>{
+    if(gTimer){stop();return;}
+    const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const seq=[]; flows.forEach((f,fi)=>{const titre=f.parentElement.querySelector('.eyebrow')?.textContent||''; [...f.children].forEach(el=>seq.push({f,el,titre}));});
+    flows.forEach(f=>f.classList.add('play')); btn.textContent='■ Arrêter'; let i=0;
+    const step=()=>{
+      if(!document.body.contains(btn)){clearTimeout(gTimer);gTimer=null;return;}
+      if(i>=seq.length){gTimer=null;btn.textContent='↻ Rejouer';document.querySelectorAll('#guide .cur').forEach(e=>e.classList.remove('cur'));narr.textContent='Fin. Le détail reste affiché ci-dessus.';return;}
+      const {f,el,titre}=seq[i++]; f.querySelectorAll('.cur').forEach(e=>e.classList.remove('cur')); el.classList.add('on');
+      if(el.classList.contains('st')){el.classList.add('cur');
+        const t=[...el.querySelectorAll('b.t,.qui,.muted')].map(x=>x.textContent.trim()).filter(Boolean);
+        narr.innerHTML=`<b>${esc(titre)}</b> — <b>${esc(t[0]||'')}</b> · ${esc(t[1]||'')} : ${esc(t.slice(2).join(' '))}`;
+        if(!reduce) el.scrollIntoView({block:'nearest',inline:'nearest',behavior:'smooth'});}
+      gTimer=setTimeout(step,el.classList.contains('st')?(reduce?3000:2400):250);
+    };
+    step();
+  };
+}
+
 /* ---------- 1. Contexte ---------- */
 function vContexte(){
   const c=S.ctx;
   app.innerHTML=`${demoBar()}<div class="row" style="margin-bottom:12px"><span class="sp"></span><button class="btn ghost sm" id="bkOpen">📂 Reprendre une évaluation enregistrée (.json)</button></div>${intro('Étape 1','Cadre de la démarche',"Une évaluation des RPS se mène en démarche collective : comité de pilotage, information des salariés, consultation du CSE. Le résultat s'intègre au DUERP.",'<b>Références :</b> art. L4121-1 et L4121-2 (obligation de prévention, dont le harcèlement), R4121-1 (DUERP), INRS ED 6349 et ED 6403 (2022) ; kit Anact-Aract « RPS dans le DU » (2017) ; guide DGAFP.')}
+  ${guideDemarche()}
   <div class="grid g2">
     <div class="card grid">
       <label class="f">Entreprise<input class="i" data-c="entreprise" value="${esc(c.entreprise)}"></label>
@@ -568,6 +658,8 @@ function vContexte(){
       <p class="muted small">Le baromètre est restitué par équipe à partir de ${SEUIL_ANONYMAT} répondants. En dessous, les résultats sont masqués pour protéger l'anonymat.</p>
       <div class="grid" id="eqs">${c.equipes.map((e,i)=>`<div class="row"><input class="i" style="flex:2" data-eq="${i}" data-p="n" value="${esc(e.n)}" aria-label="Nom de l'équipe ${i+1}"><input class="i num" style="flex:1;max-width:110px" type="number" min="0" data-eq="${i}" data-p="eff" value="${esc(e.eff)}" placeholder="Effectif" aria-label="Effectif"><button class="btn ghost sm" data-del="${i}" aria-label="Supprimer">✕</button></div>`).join('')}</div>
       <button class="btn ghost sm" id="addEq" style="justify-self:start">+ Ajouter une équipe</button>
+      <div class="note"><b>Questionnaires salariés.</b> Le lien à envoyer (et son QR code) se crée à l'étape 6. Les équipes saisies ici sont celles que les salariés choisiront : finalisez-les avant de créer le lien.
+        <div style="margin-top:8px"><button class="btn sm" id="goDist">Créer le lien salariés →</button></div></div>
       <div class="secret"><b>Confidentialité.</b> L'infirmier·e est tenu·e au secret professionnel. Cet outil ne contient que des données collectives : aucun nom de salarié ne doit y figurer.</div>
     </div>
   </div>
@@ -575,6 +667,8 @@ function vContexte(){
   app.querySelectorAll('[data-c]').forEach(el=>el.oninput=()=>{S.ctx[el.dataset.c]=el.value;save();});
   app.querySelectorAll('[data-eq]').forEach(el=>el.oninput=()=>{S.ctx.equipes[+el.dataset.eq][el.dataset.p]=el.value;save();});
   app.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{S.ctx.equipes.splice(+b.dataset.del,1);save();vContexte();});
+  bindGuide();
+  $('#goDist').onclick=()=>{goDist=1;location.hash='barometre';};
   $('#addEq').onclick=()=>{S.ctx.equipes.push({n:'Équipe '+(S.ctx.equipes.length+1),eff:''});save();vContexte();};
   bindDemo();
 }
@@ -817,15 +911,16 @@ const copRisk=s=>v=>copRiskRef(s,v);
 function vBaro(){
   const eqs=S.ctx.equipes, g=baroScores(), c=copScores(), eff=+S.ctx.effectif||0;
   const part=n=>eff?`${Math.round(n/eff*100)} % de l'effectif`:'Renseignez l\'effectif à l\'étape 1';
-  app.innerHTML=`${demoBar()}${intro('Étape 6','Questionnaires anonymes',"Deux questionnaires au choix, ou les deux : le baromètre PréventIA pour un repérage rapide, le COPSOQ pour une mesure reconnue. Chaque salarié répond seul sur une tablette ou un poste en mode kiosque. Aucune identité ni heure de réponse n'est enregistrée.",'<b>COPSOQ :</b> Copenhagen Psychosocial Questionnaire, version courte française validée (Dupret et al., <i>Santé Publique</i>, 2012). <b>Baromètre PréventIA :</b> repérage construit sur les 7 familles INRS (axes Gollac), non validé.')}
+  app.innerHTML=`${demoBar()}${intro('Étape 6','Questionnaires anonymes',"Deux questionnaires au choix, ou les deux : le baromètre PréventIA pour un repérage rapide, le COPSOQ pour une mesure reconnue. Chaque salarié répond seul : <b>par un lien ou un QR code</b> sur son téléphone ou son ordinateur (ci-dessous, recommandé), ou sur une tablette prêtée en mode kiosque. Aucune identité ni heure de réponse n'est enregistrée.",'<b>COPSOQ :</b> Copenhagen Psychosocial Questionnaire, version courte française validée (Dupret et al., <i>Santé Publique</i>, 2012). <b>Baromètre PréventIA :</b> repérage construit sur les 7 familles INRS (axes Gollac), non validé.')}
   ${!COPSOQ_OFFICIEL?`<div class="note"><b>COPSOQ, libellés à vérifier.</b> La structure (46 items, 24 échelles), les modalités de réponse et la cotation suivent la version validée. Les formulations sont des libellés de travail : remplacez-les par ceux de l'annexe 2 de l'article de validation avant d'utiliser les résultats.</div>`:''}
+  ${vDistance()}
+  <p class="eyebrow" style="margin-top:4px">Sur place · tablette ou poste en mode kiosque</p>
   <div class="grid g2">
     <div class="card grid" style="align-content:start"><div><p class="eyebrow">Repérage · 4 min</p><h3>Baromètre PréventIA</h3><p class="muted small">${ITEMS.length} affirmations sur les 7 familles de facteurs, 2 questions de santé perçue.</p></div>
       <div class="row"><span class="num"><b>${S.baro.length}</b> réponses · <span class="muted">${part(S.baro.length)}</span></span><span class="sp"></span><button class="btn" data-k="baro">Lancer la saisie</button></div></div>
     <div class="card grid" style="align-content:start"><div><p class="eyebrow">Échelle reconnue · 10 min</p><h3>COPSOQ, version courte</h3><p class="muted small">Version française V3 (Dupret, Bocéréan et al., <i>Santé Publique</i> 2012), libre de droit. ${COP_ITEMS.length} questions, ${COP.length} échelles, 6 domaines. Scores de 0 à 100.</p></div>
       <div class="row"><span class="num"><b>${S.copsoq.length}</b> réponses · <span class="muted">${part(S.copsoq.length)}</span></span><span class="sp"></span><button class="btn" data-k="copsoq">Lancer la saisie</button></div></div>
   </div>
-  ${vDistance()}
   <div class="kpis">
    ${!g.masked?HEALTH.map((h,i)=>`<div class="kpi"><div class="l">${i?'Effets sur sommeil ou santé':'Épuisement ressenti'} · baromètre</div><div class="v" style="color:var(--l${levelOf(g.h[i].pct)??0})">${Math.round(g.h[i].pct)} %</div><div class="d">« souvent » ou « toujours »</div></div>`).join(''):''}
    ${!c.masked?['stress','epuisement','sante','satisfaction'].map(k=>{const s=COP.find(x=>x.k===k),v=c.sc[k],r=copRisk(s)(v);return `<div class="kpi"><div class="l">${s.l} · COPSOQ</div><div class="v" style="color:var(--l${levelOf(r)})">${Math.round(v)}</div><div class="d">${s.risk?'0 = absent, 100 = maximal':'100 = très favorable'}</div></div>`;}).join(''):''}
@@ -846,6 +941,7 @@ function vBaro(){
   app.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>kiosk(b.dataset.k));
   bindDistance();
   bindDemo();
+  if(goDist){goDist=0;setTimeout(()=>$('#dist')?.scrollIntoView({block:'start'}),0);}
 }
 
 /* ---------- 5 bis. Réponse à distance : lien + QR code ----------
@@ -857,7 +953,7 @@ const DIST={baro:{outil:'rps_baro',l:'Baromètre PréventIA',min:4},copsoq:{outi
 const lienRPS=c=>new URL(`enquete-rps.html?c=${encodeURIComponent(c.code)}&e=${encodeURIComponent(c.eqs.join('|'))}`,location.href).href;
 function vDistance(){
   const cs=S.camps;
-  return `<div class="card grid"><div><p class="eyebrow">À distance · sans compte</p><h3>Envoyer un lien aux salariés</h3>
+  return `<div class="card grid" id="dist" style="scroll-margin-top:110px"><div><p class="eyebrow">À distance · sans compte</p><h3>Envoyer un lien aux salariés</h3>
     <p class="muted small">Chaque salarié répond seul, sur son téléphone ou son ordinateur, en ouvrant un lien ou en flashant un QR code. Les réponses sont déposées anonymement (serveur Supabase en Union européenne) : ni nom, ni e-mail, ni heure. Vous les importez ici avec un code secret, à partir de ${SEUIL_ANONYMAT} réponses ; par équipe, le seuil de ${SEUIL_ANONYMAT} reste appliqué à l'affichage.</p></div>
     ${S.demo?`<div class="note">Vous êtes sur les données d'exemple. Démarrez une évaluation vierge (bandeau en haut) et renseignez les équipes à l'étape 1 pour créer un vrai lien.</div>`:`
     <div class="row" style="flex-wrap:wrap;gap:8px"><select class="i" id="d-k" style="max-width:240px"><option value="baro">Baromètre PréventIA (4 min)</option><option value="copsoq">COPSOQ (10 min)</option></select>

@@ -172,6 +172,7 @@ label.f{display:grid;gap:4px;font-size:12px;font-weight:600;color:var(--muted)}
 <aside class="gut lecture" role="note"><div class="in"><span aria-hidden="true">⚕️</span><p><b>Lecture médicale indispensable.</b> Outil de prévention en cours de validation. Les repères, scores et conseils sont donnés à titre indicatif et <b>doivent être vérifiés par un médecin</b> : médecin traitant ou gynécologue pour votre santé, médecin du travail pour l'adaptation de votre poste. Ils ne remplacent ni un examen, ni un diagnostic, ni une prescription.</p></div></aside>
 
 <script src="enquetes.js"></script>
+<script src="referent.js"></script>
 <script src="meno-data.js"></script>
 <script src="meno-metiers.js"></script>
 
@@ -218,7 +219,7 @@ function route(){stopRespi();const h=(location.hash||'#auto').slice(1);
   if(esp!=='tous')route.e=esp; const e=route.e||'moi';
   const barre=APP?'':`<div class="esp">${ESPACES.map(([k,l])=>`<a href="#${TABS.find(t=>t[2]===k)[0]}" ${k===e?'aria-current="page"':''}>${l}</a>`).join('')}</div>`;
   const onglets=vis.filter(t=>t[2]===e||t[2]==='tous').map(([k,l])=>`<a href="#${k}" ${k===cur?'aria-current="page"':''}>${l}</a>`).join('');
-  $('#tabs').innerHTML=`${barre}<div class="in">${onglets}${APP?'<a href="assistant-droits.html">Poser une question ↗</a>':''}</div>`;
+  $('#tabs').innerHTML=`${barre}<div class="in">${onglets}${APP?`<a href="assistant-droits.html${location.search}">Poser une question ↗</a>`:''}</div>`;
   ({auto:vAuto,suivi:vSuivi,journal:vJournal,programme:vProgramme,carte:vCarte,conseils:vConseils,parler:vParler,collectif:vCollectif,amenagements:vAmen,visite:vVisite,comprendre:vComprendre})[cur]();}
 window.addEventListener('hashchange',()=>{route();scrollTo(0,0);});
 
@@ -321,7 +322,7 @@ function vAuto(){
 /* ════════ 2. MON SUIVI (J0 · J90 · J180) ════════ */
 function vSuivi(){
   const E=S().evals, last=E.at(-1), prochaine=last?new Date(new Date(last.d).getTime()+90*864e5):null, retard=prochaine&&prochaine<new Date();
-  const lien=new URL('menoprev.html?app=1#auto',location.href).href;
+  let lien=REFERENT.lien('menoprev.html?app=1#auto');
   const delta=(a,b)=>{if(a==null||b==null)return '';const d=b-a;return d===0?'<span class="muted">=</span>':`<span class="${d<0?'ok-t':'bad-t'}">${d>0?'+':''}${d}</span>`;};
   const deltaW=(a,b)=>{if(a==null||b==null)return '';const d=b-a;return d===0?'<span class="muted">=</span>':`<span class="${d>0?'ok-t':'bad-t'}">${d>0?'+':''}${d}</span>`;};
   app.innerHTML=`${intro('Pour chaque salariée · sur votre appareil uniquement','Mon suivi',"Refaites le point tous les 3 mois (J0, J90, J180) pour voir si les symptômes, les aménagements ou un traitement changent les choses. C'est la méthode des programmes qui marchent : mesurer avant, puis après.",'<b>Confidentialité :</b> rien ne quitte ce navigateur. Ni l\'entreprise, ni le service de santé au travail n\'y ont accès. Pensez à sauvegarder le fichier si vous changez de téléphone.')}
@@ -350,12 +351,13 @@ function vSuivi(){
     <div class="row" style="margin-top:10px"><button class="btn sm" id="exp">💾 Télécharger ma sauvegarde</button><label class="btn sm ghost" style="cursor:pointer">📂 Restaurer une sauvegarde<input type="file" id="imp" accept=".json" hidden></label><button class="btn sm ghost" id="del">Tout effacer</button></div>
     <p class="small muted" style="margin-top:6px">La sauvegarde est un fichier sur votre appareil : vous seule décidez où il va.</p></details>`}
   ${APP?'':`<div class="card"><h3 style="margin-bottom:6px">Pour l'infirmier·e : proposer le suivi aux salariées</h3><p class="small muted" style="margin-bottom:8px">Ce lien ouvre l'appli personnelle. Aucune donnée n'est collectée : chaque salariée garde son suivi sur son téléphone.</p>
-    <div class="row"><span class="code">${esc(lien)}</span><button class="btn sm ghost" id="cl">Copier le lien</button><button class="btn sm ghost" id="qrb">QR code</button></div><div class="qrbox" id="qr" hidden style="margin-top:8px"></div></div>`}`;
+    <div class="row"><span class="code" id="lienTxt">${esc(lien)}</span><button class="btn sm ghost" id="cl">Copier le lien</button><button class="btn sm ghost" id="qrb">QR code</button></div><div class="qrbox" id="qr" hidden style="margin-top:8px"></div>${REFERENT.champs()}</div>`}`;
   const on=$('#on'); if(on) on.onclick=()=>{P={...MEM};saveP();vSuivi();};
   const imp=$('#imp'); if(imp) imp.onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const j=JSON.parse(await f.text());if(!Array.isArray(j.evals))throw 0;P={...vide(),...j};saveP();vSuivi();}catch(_){alert('Fichier non reconnu.');}};
   const ex=$('#exp'); if(ex) ex.onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(P,null,1)],{type:'application/json'}));a.download=`menoprev-suivi-${new Date().toISOString().slice(0,10)}.json`;a.click();};
   const del=$('#del'); if(del) del.onclick=()=>{if(!confirm('Effacer définitivement tout votre suivi sur cet appareil ?'))return;perso.del();P=null;Object.assign(MEM,vide());vSuivi();};
   app.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{if(!confirm('Supprimer cette évaluation ?'))return;P.evals.splice(+b.dataset.rm,1);saveP();vSuivi();});
+  REFERENT.brancher(app,()=>{lien=REFERENT.lien('menoprev.html?app=1#auto');if($('#lienTxt'))$('#lienTxt').textContent=lien;if($('#qr')){$('#qr').innerHTML='';$('#qr').hidden=true;}});
   if($('#cl'))$('#cl').onclick=e=>copier(e.target,lien,'Copier le lien');
   if($('#qrb'))$('#qrb').onclick=async()=>{const q=$('#qr');q.hidden=!q.hidden;if(!q.hidden&&!q.innerHTML){try{await ENQ.qr(q,lien);}catch(e){q.textContent=e.message;}}};
 }
@@ -558,7 +560,7 @@ function indicateurs(E){
 }
 
 function vCollectif(){
-  const camps=mesCamps.get(), lienPerso=new URL('menoprev.html?app=1#auto',location.href).href;
+  const camps=mesCamps.get(); let lienPerso=REFERENT.lien('menoprev.html?app=1#auto');
   app.innerHTML=`${intro('Pour l\'infirmier·e, les RH, le CSE','Enquête collective anonyme',"Les salariées volontaires répondent sur leur téléphone. Vous ne voyez que des résultats regroupés, à partir de "+SEUIL+" réponses, pour décider où aménager l'organisation du travail. Refaites une vague 3 à 6 mois après les aménagements pour mesurer l'effet.",'<b>Avant de lancer :</b> présenter la démarche au CSE, expliquer l\'anonymat, fixer une date de fin. Le questionnaire ne contient aucune question sur la vie intime, l\'âge ou le service.')}
   ${VIGIL}
   <div class="steps3">
@@ -571,7 +573,7 @@ function vCollectif(){
       <label class="btn ghost sm" style="cursor:pointer;width:max-content">📂 Importer l'export Forms<input type="file" id="f-in" accept=".csv,.xlsx,.xls" hidden></label>
       <p class="small" style="color:var(--warn)">⚠ Dans Forms, l'administrateur voit chaque réponse : réglez bien l'anonymat.</p><span id="f-st" class="small"></span></div>
     <div class="card step"><span class="n">ⓒ</span><h3>Appli de suivi personnel</h3><p class="muted small">Sans enquête : chaque salariée reçoit un lien vers MénoPrév, fait son auto-évaluation et suit son évolution sur son propre téléphone. Aucune donnée ne vous parvient.</p>
-      <div class="row"><button class="btn sm ghost" id="p-cl">Copier le lien</button><button class="btn sm ghost" id="p-msg">Copier le message</button><button class="btn sm ghost" id="p-qr">QR code</button></div><div class="qrbox" id="p-qrbox" hidden></div>
+      <div class="row"><button class="btn sm ghost" id="p-cl">Copier le lien</button><button class="btn sm ghost" id="p-msg">Copier le message</button><button class="btn sm ghost" id="p-qr">QR code</button></div><div class="qrbox" id="p-qrbox" hidden></div>${REFERENT.champs()}
       <button class="btn ghost sm" id="d-go" style="width:max-content;margin-top:auto">Voir un exemple de tableau de bord</button></div>
   </div>
 
@@ -587,6 +589,7 @@ function vCollectif(){
   <div id="dash"></div>`;
 
   $('#f-cp').onclick=e=>copier(e.target,MENO.MODELE_FORMS,'Copier le modèle');
+  REFERENT.brancher(app,()=>{lienPerso=REFERENT.lien('menoprev.html?app=1#auto');const q=$('#p-qrbox');q.innerHTML='';q.hidden=true;});
   $('#p-cl').onclick=e=>copier(e.target,lienPerso,'Copier le lien');
   $('#p-msg').onclick=e=>copier(e.target,invitationPerso(lienPerso),'Copier le message');
   $('#p-qr').onclick=async()=>{const q=$('#p-qrbox');q.hidden=!q.hidden;if(!q.hidden&&!q.innerHTML){try{await ENQ.qr(q,lienPerso);}catch(e){q.textContent=e.message;}}};

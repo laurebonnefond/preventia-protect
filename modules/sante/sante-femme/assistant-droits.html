@@ -39,6 +39,7 @@ details.tout summary{cursor:pointer;font-weight:700}
 <aside class="gut lecture" role="note"><div class="in"><span aria-hidden="true">⚖️</span><p><b>Information générale, pas un avis personnalisé.</b> Les réponses s'appuient uniquement sur des fiches vérifiées (Code du travail, HAS, INRS, INCa, sociétés savantes), datées et citées. Elles ne remplacent ni le médecin du travail pour le poste, ni votre médecin pour la santé et les traitements, ni un conseil juridique.</p></div></aside>
 
 <script src="droits-data.js"></script>
+<script src="referent.js"></script>
 <script src="../../../core/preventia-ia.js"></script>
 <script>
 (function(){
@@ -47,7 +48,27 @@ const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&g
 const {FICHES,THEMES,chercher,V}=DROITS;
 const fr=d=>new Date(d).toLocaleDateString('fr-FR');
 const EXEMPLES=['Puis-je demander à voir le médecin du travail sans passer par mon employeur ?','Quels aménagements pour des règles très douloureuses ?','Combien de temps pour allaiter au travail ?','Je reprends après un cancer du sein : quelles étapes ?','Le traitement hormonal de la ménopause est-il recommandé ?','Je suis enceinte et je manipule des produits chimiques'];
-let Q='', TROUVE=[], IA={txt:'',etat:''};
+const APP=new URLSearchParams(location.search).has('app'); if(APP)document.body.classList.add('app');
+const REF=REFERENT.recu();
+/* IA désactivée tant que le jeu de test n'est pas validé par le médecin du travail : passer à true pour la réactiver */
+const IA_ACTIVE=false;
+let Q='', TROUVE=[], IA={txt:'',etat:''}, AVIS='';
+/* Après la réponse : la salariée dit si elle lui suffit ; sinon, contact du référent */
+function avis(){
+  if(AVIS==='oui')return `<p class="small muted">Tant mieux. Vous pouvez à tout moment en parler au service de santé au travail.</p>`;
+  if(AVIS==='non')return contact();
+  return `<div class="card row avis"><b>Cette réponse vous aide-t-elle ?</b><span class="sp"></span><button class="btn sm ghost" data-avis="oui">Oui</button><button class="btn sm" data-avis="non">Non, je veux en parler à quelqu'un</button></div>`;
+}
+function contact(){
+  const objet='Question santé au travail', corps=`Bonjour,\n\nJ'ai une question sur ma santé au travail :\n« ${Q} »\n\nPourriez-vous me recontacter ?\n\nMerci.`;
+  const qui=REF.ref||(REF.mail||REF.tel?'Votre référent·e santé au travail':'');
+  return `<div class="card contact grid" id="contact"><h3>Parler à un professionnel de santé</h3>
+  <p class="small muted">Ces fiches donnent l'information générale. Pour votre situation, posez votre question à un professionnel.</p>
+  ${qui?`<p><b>${esc(qui)}</b></p><div class="row">${REF.mail?`<a class="btn" href="mailto:${esc(REF.mail)}?subject=${encodeURIComponent(objet)}&body=${encodeURIComponent(corps)}">✉️ Écrire un message</a>`:''}${REF.tel?`<a class="btn ghost" href="tel:${esc(REF.tel.replace(/[ .-]/g,''))}">📞 Appeler ${esc(REF.tel)}</a>`:''}</div>
+    <p class="small muted">${REF.mail?'Le message s\'ouvre dans votre propre messagerie, avec votre question déjà écrite : relisez-la et modifiez-la avant d\'envoyer. ':''}PréventIA ne garde rien.</p>`
+  :`<p>Adressez-vous à l'infirmier·e ou au médecin du travail de votre service de prévention et de santé au travail. Vous pouvez demander une visite à tout moment, sans passer par votre employeur.</p>`}
+  </div>${fiche(FICHES.find(f=>f.id==='visite-demande'))}`;
+}
 
 function fiche(f,i){
   return `<div class="card fiche" id="f-${f.id}"><div class="th">${esc(THEMES[f.th])}</div>
@@ -65,23 +86,27 @@ function rendreIA(t){
 }
 function vue(){
   app.innerHTML=`<div class="intro"><div><p class="eyebrow">Assistant sourcé</p><h2>Vos droits et les aménagements possibles</h2>
-    <p class="muted">Posez une question sur le travail et la santé des femmes : règles douloureuses, endométriose, grossesse, allaitement, ménopause, cancer du sein. L'assistant cherche d'abord dans des fiches vérifiées ; l'IA peut ensuite rédiger une réponse courte, <b>uniquement à partir de ces fiches</b>, en citant chacune.</p></div></div>
+    <p class="muted">Posez une question sur le travail et la santé des femmes : règles douloureuses, endométriose, grossesse, allaitement, ménopause, cancer du sein. ${IA_ACTIVE?`L'assistant cherche d'abord dans des fiches vérifiées ; l'IA rédige ensuite une réponse courte, <b>uniquement à partir de ces fiches</b>, en citant chacune. Si elle ne vous suffit pas, vous pouvez joindre un professionnel.`:`L'assistant affiche les fiches vérifiées qui correspondent à votre question. Pour votre situation personnelle, un professionnel de santé au travail vous répond.`}</p></div></div>
   <div class="card grid"><form class="q" id="f"><input class="i" id="q" maxlength="300" placeholder="Ex. : puis-je obtenir un poste de jour pendant ma grossesse ?" value="${esc(Q)}" aria-label="Votre question"><button class="btn">Chercher</button></form>
     <p class="small muted">N'écrivez ni votre nom, ni celui d'une autre personne, ni de détail médical personnel : une question générale suffit.</p>
     <div class="chips">${EXEMPLES.map(e=>`<button type="button" data-ex="${esc(e)}">${esc(e)}</button>`).join('')}</div></div>
-  ${Q?(TROUVE.length?`
+  ${Q?(TROUVE.length?(!IA_ACTIVE?`
+    <p class="small"><a href="#contact">Parler à un professionnel de santé ↓</a></p>
+    <h3>Fiches vérifiées (${TROUVE.length})</h3>${TROUVE.map(fiche).join('')}${contact()}`:`
     <div class="card rep"><div class="row"><b>Réponse rédigée</b><span class="sp"></span><button class="btn sm" id="ia" ${IA.etat?'disabled':''}>${IA.txt?'Rédiger à nouveau':'Rédiger une réponse avec l\'IA'}</button></div>
       ${IA.etat?`<p class="muted small">${esc(IA.etat)}</p>`:IA.txt?rendreIA(IA.txt):`<p class="muted small">L'IA (Mistral, hébergée dans l'Union européenne) reçoit votre question et les ${TROUVE.length} fiches ci-dessous, rien d'autre. Vous pouvez aussi lire les fiches directement.</p>`}</div>
-    <h3>Fiches trouvées (${TROUVE.length})</h3>${TROUVE.map(fiche).join('')}`
-    :`<div class="card"><p><b>Aucune fiche vérifiée ne répond à cette question.</b> Plutôt que d'inventer une réponse, l'assistant s'arrête là.</p><p class="muted small">Reformulez avec d'autres mots, parcourez toutes les fiches ci-dessous, ou demandez une visite au service de santé au travail :</p></div>${fiche(FICHES.find(f=>f.id==='visite-demande'))}`):''}
+${IA.etat==='Rédaction en cours…'?'':avis()}
+    <h3>Fiches trouvées (${TROUVE.length})</h3>${TROUVE.map(fiche).join('')}`)
+    :`<div class="card"><p><b>Aucune fiche vérifiée ne répond à cette question.</b> Plutôt que d'inventer une réponse, l'assistant s'arrête là.</p><p class="muted small">Reformulez avec d'autres mots, parcourez toutes les fiches ci-dessous, ou parlez-en à un professionnel :</p></div>${contact()}`):''}
   <details class="card tout"><summary>Toutes les fiches (${FICHES.length}), par thème</summary>
     ${Object.entries(THEMES).map(([k,l])=>{const L=FICHES.filter(f=>f.th===k);return L.length?`<h3 style="margin:14px 0 8px">${esc(l)}</h3><div class="grid">${L.map(f=>fiche(f)).join('')}</div>`:'';}).join('')}
     <p class="small muted" style="margin-top:10px">Fiches vérifiées le ${fr(V)}. Une fiche se met à jour dans <code>droits-data.js</code>, après relecture par le médecin du travail.</p></details>`;
   $('#f').onsubmit=e=>{e.preventDefault();lancer($('#q').value);};
   app.querySelectorAll('[data-ex]').forEach(b=>b.onclick=()=>lancer(b.dataset.ex));
   const bi=$('#ia'); if(bi) bi.onclick=rediger;
+  app.querySelectorAll('[data-avis]').forEach(b=>b.onclick=()=>{AVIS=b.dataset.avis;vue();});
 }
-function lancer(q){Q=String(q||'').trim().slice(0,300);TROUVE=Q?chercher(Q,5):[];IA={txt:'',etat:''};vue();}
+function lancer(q){Q=String(q||'').trim().slice(0,300);TROUVE=Q?chercher(Q,5):[];IA={txt:'',etat:''};AVIS='';vue();if(TROUVE.length&&IA_ACTIVE)rediger();}
 async function rediger(){
   if(!window.PIA){IA.etat='IA indisponible : lisez les fiches ci-dessous.';vue();return;}
   IA={txt:'',etat:'Rédaction en cours…'};vue();

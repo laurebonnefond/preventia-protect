@@ -37,7 +37,7 @@ Tous les appels passent par `core/preventia-ia.js` puis par la fonction serveur 
 | Identité | Modules professionnels : compte PréventIA obligatoire. Modules santé : sans compte, avec limites |
 | Quotas par jour | 60 par professionnel ; 15 par appareil (empreinte d'IP du jour, non réversible) ; 500 au total sans compte |
 | Masquage | E-mails, n° de sécurité sociale, IBAN, téléphones, dates de naissance : dans le navigateur, puis à nouveau sur le serveur |
-| Fournisseurs | Modules santé : **Mistral, point d'accès UE**, entraînement sur nos données désactivé, jamais de repli hors UE. Modules professionnels (documents techniques, sans donnée de salarié) : Claude (Anthropic) |
+| Fournisseurs | Questions **sensibles** : **Mistral, point d'accès UE**, entraînement sur nos données désactivé, jamais de repli hors UE. Ce sont toujours celles des modules santé, et toute question qu'un module marque `sensibilite: 'sensible'` (parole de salariés, situation d'entreprise), y compris depuis PréventIA Réseau. Questions **techniques** (réglementation, chimie, documents publics, sans donnée de salarié) : Claude (Anthropic). Un module santé ne peut pas demander Claude |
 | Fichiers | Refusés dans les modules santé |
 | Traçabilité | `ia_journal` : qui, quand, quel module, volume, statut — jamais le texte |
 | Coûts | Plafonds de dépense mensuels chez chaque fournisseur |

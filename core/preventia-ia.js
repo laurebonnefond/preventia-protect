@@ -103,7 +103,12 @@
     setTimeout(() => el.remove(), 4500);
   }
 
-  /* ------------------ Appel principal ------------------------------------ */
+  /* ------------------ Appel principal ------------------------------------
+     options.sensibilite : 'sensible' → Mistral (UE) même hors modules santé
+     (parole de salariés, situation d'entreprise). Par défaut : modules santé
+     → Mistral, autres modules → Claude. Exemple :
+       PIA.texte({ messages:[…] }, { sensibilite: 'sensible' })
+     ----------------------------------------------------------------------- */
   async function piaFetch(body, options = {}) {
     const bilan = {};
     const corps = filtrerCorps(body, bilan);
@@ -125,7 +130,7 @@
       r = await fetch(CONFIG.fonction, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', apikey: CONFIG.cle, ...(tok ? { Authorization: 'Bearer ' + tok } : {}) },
-        body: JSON.stringify({ usage: usage(), body: corps }),
+        body: JSON.stringify({ usage: usage(), body: corps, ...(options.sensibilite === 'sensible' ? { sensibilite: 'sensible' } : {}) }),
         signal: ctrl.signal
       });
     } catch (e) {

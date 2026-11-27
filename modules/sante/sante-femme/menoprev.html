@@ -209,7 +209,7 @@ const A={s:{},c:derniere()?.c?[...derniere().c]:[],t:{},saved:false,metier:S().m
 /* ════════ NAVIGATION ════════ */
 const APP=new URLSearchParams(location.search).has('app');
 if(APP)document.body.classList.add('app');
-const ESPACES=[['moi','Pour moi'],['entreprise','Côté entreprise'],['ide','Espace infirmier·e']];
+const ESPACES=[['moi','Espace salarié·e'],['entreprise','Espace entreprise'],['ide','Espace infirmier·e']];
 const TABS=[['auto','Mon auto-évaluation','moi'],['suivi','Mon suivi','moi'],['journal','Mon journal','moi'],['programme','Programme TCC','moi'],['carte','Cartographie','moi'],['conseils','Que faire ?','moi'],['parler','En parler','moi'],['collectif','Enquête collective','entreprise'],['amenagements','Aménagements','entreprise'],['visite','Visite mi-carrière','ide'],['comprendre','Comprendre','tous']];
 let stopRespi=()=>{};
 function route(){stopRespi();const h=(location.hash||'#auto').slice(1);

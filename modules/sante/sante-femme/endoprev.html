@@ -134,7 +134,7 @@ const S=()=>P||MEM, saveP=()=>{if(P)perso.set(P);};
 /* ---------- Navigation ---------- */
 const APP=new URLSearchParams(location.search).has('app');
 if(APP)document.body.classList.add('app');
-const ESPACES=[['moi','Pour moi'],['entreprise','Côté entreprise'],['ide','Espace infirmier·e']];
+const ESPACES=[['moi','Espace salarié·e'],['entreprise','Espace entreprise'],['ide','Espace infirmier·e']];
 const TABS=[['auto','Mon bilan','moi'],['suivi','Mon suivi','moi'],['soulager','Que faire ?','moi'],['droits','Droits & démarches','moi'],['collectif','Enquête collective','entreprise'],['entreprise','Plan d\'action','entreprise'],['infirmier','Crise et entretien','ide'],['comprendre','Comprendre','tous']];
 function route(){const h=(location.hash||'#auto').slice(1);
   const vis=TABS.filter(t=>!APP||t[2]==='moi'||t[2]==='tous');

@@ -199,7 +199,7 @@ const bars=(rows,tot)=>rows.map(r=>`<div class="hbar"><span>${esc(r.l)}</span><s
    Seules les rubriques personnelles sont visibles ; rien ne quitte le téléphone. */
 const APP=new URLSearchParams(location.search).has('app')||matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 let LIEN_APP=REFERENT.lien('seinprev.html?app=1#connaitre');
-const ESPACES=[['moi','Pour moi'],['entreprise','Côté entreprise'],['ide','Espace infirmier·e']];
+const ESPACES=[['moi','Espace salarié·e'],['entreprise','Espace entreprise'],['ide','Espace infirmier·e']];
 const TABS=APP?[['connaitre','Connaître mes seins','moi'],['parcours','Mon dépistage','moi'],['travail','Sein & travail','moi'],['jeu','Super Maria','moi']]
   :[['parcours','Mon parcours','moi'],['connaitre','Connaître mes seins','moi'],['travail','Sein & travail','moi'],['jeu','Jeu Super Maria','moi'],['bord','Tableau de bord','entreprise'],['actions','Actions Octobre rose','entreprise'],['enquete','Enquête anonyme','entreprise'],['suivi','Suivi infirmier','ide']];
 if(APP){document.body.classList.add('app');document.title='Mes seins';

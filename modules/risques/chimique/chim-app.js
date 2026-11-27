@@ -737,6 +737,7 @@
       <div class="row"><label class="btn sm">📄 Analyser une FDS (PDF)<input type="file" accept="application/pdf" data-ia="pdf-ed" hidden></label>
         <label class="btn sm">📷 Photo de l'étiquette<input type="file" accept="image/*" capture="environment" data-ia="photo-ed" hidden></label>
         <button class="btn sm" data-act="ia-nom-ed">🔎 Rechercher par nom (IA)</button><span id="ed-ia-statut" class="small"></span></div></div>
+        <div id="fds-base"></div>
       </fieldset>
 
       <fieldset id="ed-dangers"><legend>Dangers (FDS rubriques 2, 3, 8, 9)</legend>
@@ -782,6 +783,7 @@
       </fieldset>`;
     rendreChips();
     $('#editeur').showModal();
+    if (window.ChimFDS) ChimFDS.boite($('#fds-base'));   /* base FDS partagée (chim-fds.js) */
     if (section) setTimeout(() => $('#ed-' + section)?.scrollIntoView({ block: 'start' }), 60);
   }
   function rendreChips() {
@@ -829,7 +831,16 @@
   /* --- Ajout via IA (fenêtre « Ajouter ») et depuis l'éditeur --- */
   async function lancerIA(mode, fichier, statutEl, base) {
     const st = m => { if (statutEl) statutEl.innerHTML = m; };
+    const garder = base ? { id: base.id, nom: base.nom, lieu: base.lieu, usage: base.usage, quantite: base.quantite, unite: base.unite, exposes: base.exposes, conditionnement: base.conditionnement, usageCond: base.usageCond, fds_lien: base.fds_lien } : {};
+    let sha = '';
     try {
+      /* Même PDF déjà dans la base FDS ? On le reprend, sans IA (chim-fds.js) */
+      if (mode === 'pdf' && window.ChimFDS) {
+        st('<span class="spin"></span> Recherche de cette FDS dans la base…');
+        const k = await ChimFDS.dejaConnue(fichier).catch(() => null);
+        if (k) sha = k.sha;
+        if (k?.produit) { st(''); toast('FDS déjà dans la base : reprise sans IA', 'ok'); return normaliser(Object.assign({}, k.produit, garder, { nom: garder.nom || k.produit.nom })); }
+      }
       if (!IA_ON) throw new Error("Activez le mode IA (en haut de la page) pour utiliser l'analyse automatique.");
       let j;
       if (mode === 'nom') {
@@ -850,8 +861,9 @@
         j = await iaImages([img], "Voici la photo d'une étiquette ou d'une page de FDS.");
       }
       st('');
-      const garder = base ? { id: base.id, nom: base.nom, lieu: base.lieu, usage: base.usage, quantite: base.quantite, unite: base.unite, exposes: base.exposes, conditionnement: base.conditionnement, usageCond: base.usageCond, fds_lien: base.fds_lien } : {};
-      return depuisIA(j, garder);
+      const r = depuisIA(j, garder);
+      if (sha) r.fds_sha = sha;   /* empreinte du PDF : reconnaît la même FDS la prochaine fois */
+      return r;
     } catch (e) {
       st(`<span class="err">⚠ ${esc(e.message || e)}</span>`);
       return null;
@@ -1024,5 +1036,7 @@
   rendre();
 
   /* Pour déboguer dans la console : PCHIM.produits, PCHIM.evaluer(p)… */
-  window.PCHIM = { get produits() { return produits; }, evaluer, fiche, groupe, compat, classeDanger };
+  window.PCHIM = { get produits() { return produits; }, evaluer, fiche, groupe, compat, classeDanger,
+    /* utilisés par chim-fds.js (base FDS partagée) */
+    get brouillon() { return brouillon; }, ouvrirEditeur, normaliser, lireFormulaire, toast };
 })();

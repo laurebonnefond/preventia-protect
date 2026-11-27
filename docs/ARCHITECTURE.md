@@ -80,6 +80,7 @@ Chaque table porte une étiquette de catégorie dans Supabase : `[Comptes]`, `[R
 3. Déclarer le module dans la liste `MODULES` de `index.html` (voir README, § 8).
 4. Choisir une clé `pp_<module>_…` et l'ajouter au registre de `pp-entreprise.js` si elle dépend de l'entreprise suivie (jamais pour des données de santé individuelles).
 5. Module destiné aux salariés sans compte ? Le placer sous `modules/sante/` : l'IA y passe alors par Mistral (UE), avec les limites prévues pour les accès sans compte.
+6. Question sensible hors module santé (parole de salariés, situation d'entreprise) ? Appeler `PIA.texte(body, { sensibilite: 'sensible' })` : elle part chez Mistral (UE) au lieu de Claude.
 
 ## Feuille de route technique
 
